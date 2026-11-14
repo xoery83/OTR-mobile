@@ -10,28 +10,32 @@ import type { CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository"
 function localItemImportDocuments(
   scope: AccountRequestContext,
   snapshot: CoreAcceptedSnapshot | null,
-  itemId: string,
+  itemId?: string,
 ) {
   if (!snapshot) return [];
   const { actor, graph } = snapshot;
   if (actor.accountId !== scope.accountId || actor.tripId !== scope.tripId) return [];
-  const item = graph.itinerary_events.find((row) => row.id === itemId);
-  if (!item || item.hidden_at || !coreCanRead(graph, actor, "ITEM", item)) return [];
-
-  const linked = new Set(
-    graph.trip_item_document_links
-      .filter(
-        (link) =>
-          link.active === true &&
-          link.trip_id === scope.tripId &&
-          link.item_id === itemId,
+  if (itemId) {
+    const item = graph.itinerary_events.find((row) => row.id === itemId);
+    if (!item || item.hidden_at || !coreCanRead(graph, actor, "ITEM", item)) return [];
+  }
+  const linked = itemId
+    ? new Set(
+        graph.trip_item_document_links
+          .filter(
+            (link) =>
+              link.active === true &&
+              link.trip_id === scope.tripId &&
+              link.item_id === itemId,
+          )
+          .map((link) => link.document_id),
       )
-      .map((link) => link.document_id),
-  );
+    : null;
   return graph.trip_operational_documents.flatMap((row) => {
     const { id, title, sha256, media_type: mediaType, byte_size: byteCount } = row;
     if (
-      !linked.has(id) ||
+      (linked !== null && !linked.has(id)) ||
+      row.trip_id !== scope.tripId ||
       row.custody !== "LOCAL_ONLY" ||
       row.hidden_at ||
       row.owner_account_id !== scope.accountId ||
@@ -53,13 +57,29 @@ function localItemImportDocuments(
       id !== localImportDocumentId(scope.accountId, scope.tripId, sha256)
     )
       return [];
-    return [{ id, title, sha256, mediaType, byteCount, originalFilename: title }];
+    return [
+      {
+        id,
+        title,
+        sha256,
+        mediaType,
+        byteCount,
+        originalFilename: title,
+        recordedAt: typeof row.created_at === "string" ? row.created_at : null,
+        visibility:
+          row.visibility === "GROUP"
+            ? ("GROUP" as const)
+            : row.visibility === "SELECTED_PERSONS"
+              ? ("SELECTED_PERSONS" as const)
+              : ("PRIVATE" as const),
+      },
+    ];
   });
 }
 
 export async function localItemImportOriginals(
   tripId: string,
-  itemId: string,
+  itemId: string | undefined,
   generation: number,
 ) {
   const [
@@ -95,6 +115,11 @@ export async function localItemImportOriginals(
       );
       await assertAccountRequestContext(scope, requireAdoptedUserId);
       return available;
+    },
+    async metadata() {
+      const rows = await documents();
+      await assertAccountRequestContext(scope, requireAdoptedUserId);
+      return rows;
     },
     async original(id: string) {
       const document = (await documents()).find((entry) => entry.id === id);

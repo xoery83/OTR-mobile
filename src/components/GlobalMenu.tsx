@@ -228,15 +228,39 @@ export function GlobalMenu({
         {
           icon: "doc.text",
           label: t("tripHome.documents"),
-          disabled: true,
-          onPress: () => {},
+          onPress: () => {
+            if (
+              currentReturn.current === returnLease &&
+              generation === getAccountGeneration()
+            )
+              router.push({ pathname: "/documents", params: { tripId: tripContextId! } });
+          },
         },
         { icon: "photo", label: t("tripHome.photos"), disabled: true, onPress: () => {} },
       ]
     : [];
   const returnTo = moduleReturnPath(module);
   const sections: AppNavigationMenuItem[][] = [
-    ...(hasTripItems ? [tripItems] : []),
+    ...(hasTripItems
+      ? [tripItems]
+      : [
+          [
+            {
+              icon: "doc.text" as const,
+              label: t("tripHome.documents"),
+              onPress: () => {
+                if (
+                  currentReturn.current === returnLease &&
+                  generation === getAccountGeneration()
+                )
+                  router.push({
+                    pathname: "/documents",
+                    params: workingTrip ? { tripId: workingTrip.tripId } : {},
+                  });
+              },
+            },
+          ],
+        ]),
     ...(contextItems.length ? [contextItems] : []),
     ...(pathname === "/trip" &&
     !selectedTripMenuId(pathname, params) &&

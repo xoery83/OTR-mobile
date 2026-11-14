@@ -192,3 +192,21 @@ it("does not expose bytes if the association is revoked during the device read",
   const scoped = await reader();
   expect(await scoped.original(id)).toBeNull();
 });
+
+it("directory metadata survives missing local bytes and does not require an Item link", async () => {
+  h.snapshot!.graph.trip_item_document_links = [];
+  const directory = await localItemImportOriginals(trip, undefined, 4);
+  expect(await directory.metadata()).toMatchObject([
+    { id, title: "retained.txt", visibility: "PRIVATE" },
+  ]);
+  expect(await directory.original(id)).toBeNull();
+  expect(h.read).not.toHaveBeenCalled();
+  expect(await (await reader()).list()).toEqual([]);
+});
+it("directory metadata cannot expose another Account's private document", async () => {
+  h.accountId = member;
+  h.snapshot!.actor.accountId = member;
+  expect(await (await localItemImportOriginals(trip, undefined, 4)).metadata()).toEqual(
+    [],
+  );
+});

@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   cleanup: null as null | (() => void),
   navigate: vi.fn(),
+  push: vi.fn(),
   alerts: vi.fn(),
   readMembers: vi.fn(),
 }));
@@ -47,7 +48,7 @@ vi.mock("react", async (original) => ({
 vi.mock("expo-router", () => ({
   useGlobalSearchParams: () => state.params,
   usePathname: () => state.path,
-  router: { navigate: state.navigate },
+  router: { navigate: state.navigate, push: state.push },
 }));
 vi.mock("react-native", () => ({ Alert: { alert: state.alerts } }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
@@ -87,6 +88,7 @@ const back = () =>
     .find((item) => item.label === "navigation.allTrips");
 beforeEach(() => {
   state.effects = [];
+  state.push.mockClear();
   vi.mocked(readCommittedLocalSession).mockReset().mockResolvedValue(null);
   vi.mocked(getDefaultLedgerReportingRepository).mockClear();
   state.generation = 1;
@@ -191,7 +193,7 @@ it("Native Home All Trips preserves the current owner guard across a hot cross-T
   }
 });
 
-it("Home and Day share the same scoped utility menu with disabled future Documents and Photos", () => {
+it("Home and Day open scoped Documents while Photos keeps its existing future boundary", () => {
   const editTrip = vi.fn(),
     chooseDay = vi.fn(),
     members = vi.fn();
@@ -208,11 +210,15 @@ it("Home and Day share the same scoped utility menu with disabled future Documen
         .filter((item) => item.label.startsWith("tripHome."))
         .map((item) => item.label),
     ).toEqual(["tripHome.members", "tripHome.documents", "tripHome.photos"]);
-    for (const label of ["tripHome.documents", "tripHome.photos"]) {
-      const item = items.find((entry) => entry.label === label);
-      expect(item.disabled).toBe(true);
-      item.onPress();
-    }
+    const documents = items.find((entry) => entry.label === "tripHome.documents");
+    expect(documents.disabled).not.toBe(true);
+    documents.onPress();
+    expect(state.push).toHaveBeenLastCalledWith({
+      pathname: "/documents",
+      params: { tripId: "a" },
+    });
+    const photos = items.find((entry) => entry.label === "tripHome.photos");
+    expect(photos.disabled).toBe(true);
   }
   expect(editTrip).not.toHaveBeenCalled();
   expect(chooseDay).not.toHaveBeenCalled();
@@ -315,4 +321,22 @@ it("ignores a late identity snapshot from a superseded account generation", asyn
   await Promise.resolve();
   await Promise.resolve();
   expect(state.setters[2]).not.toHaveBeenCalled();
+});
+
+it("does not navigate a retained Documents action across an account generation change", () => {
+  const item = (render().props.sections as any[][])
+    .flat()
+    .find((row) => row.label === "tripHome.documents");
+  state.generation = 2;
+  item.onPress();
+  expect(state.push).not.toHaveBeenCalled();
+});
+it("makes Documents discoverable outside the selected Trip without borrowing another scope", () => {
+  state.path = "/trip";
+  state.params = { tripId: "", view: "trips" };
+  const item = (render().props.sections as any[][])
+    .flat()
+    .find((row) => row.label === "tripHome.documents");
+  item.onPress();
+  expect(state.push).toHaveBeenCalledWith({ pathname: "/documents", params: {} });
 });

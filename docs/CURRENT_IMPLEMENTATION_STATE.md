@@ -2,9 +2,13 @@
 
 ## Active checkpoint
 
-**Main Merge/Push PASS — Owner-authorized four-lane integration complete.** Independent merge `532b32aa` preserves accepted source `08ad06c9` exactly; post-source changes are evidence/docs only. Final receipt: `docs/integration/functional-recovery-20261114/MAIN_INTEGRATION_RECEIPT.md`. Normal non-force push and independent remote verification completed at `20775143`; subsequent receipt status update is documentation-only. Original dirty local Main remains untouched; new work must start from refreshed GitHub Main. Settlement intermittent read503 remains an explicitly unresolved Beta follow-up, not comprehensive PASS. Main Merge GO is not Beta Release GO.
+Owner authorized **Import V3 Slice5 Documents only** after completed four-lane Main Merge/Push. Fresh fetched GitHub Main is `431a893b3ecba5b6eb9c6557bd81bc6e8d4e6cc8`, containing accepted source `08ad06c9`; no new remote divergence. New branch `codex/import-v3-slice5-documents`, independent worktree `/Users/xoery/Project/otr-mobile-import/import-v3-slice5-documents`. Old Import branch is historical reference only; no wholesale cherry-pick. Main remains untouched.
 
-Active worktree `/Users/xoery/Project/otr-mobile-import/integration-four-lane-20261114`, branch `codex/four-lane-integration-20261114`. Integrated base `5a5ca447`; product recovery checkpoints `8297ab8e`, `95345e4d`, latest candidate `08ad06c9`, including product fixes `65b0cf65` and test-port maintenance `34aa0d9c`. Main last independently observed `ec282ce6`; old local main `5648818e` is stale. No Main merge/push or Production operation. Owner-approved DEV Expense deployment/recovery is complete.
+Bounded gap and two-preview plan: `docs/ops/import-slice5-20261114/PLAN.md`. Preview1 adds normal Documents entry, scoped Trip Docs/Inbox, compact metadata lists and typed filters, reusing Core accepted snapshot and original store plus legacy Capture reader. iPhone has9existing Core Documents and0legacy Capture rows; old list alone would incorrectly look empty. Metadata survives absent original bytes; only explicit open reads/verifies bytes. No Source Proof, new storage/queue/receipt/SQL or Cloud Sync.
+
+Preview1 implementation is in progress; targeted checks and full App Native preview must be recorded before acceptance. Preview2 covers full information-first Detail, direct links versus same-Batch outcomes, real Batch/other originals, search and scoped return. Stop at each bounded Owner preview checkpoint. No DeepSeek or repeated B1 Save needed. Slice6 begins only after Slice5 accepted and merged, on a fresh updated Main branch. No automatic Main merge/push authorized.
+
+All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
 
 ## Restored and actually checked
 
@@ -43,7 +47,7 @@ Still deferred: Invite/Claim full Native, private profile cloud editor, Version/
 
 ## Next execution
 
-Expense P0 complete. Review `CONSOLIDATED_MERGE_GATE_REPORT.md` final execution receipt and GO recommendation; wait for Owner Main Merge/Push authorization. Preserve source08ad06c9 and same-version evidence; do not repeat stable E2E or initiate another Recovery. Historical render/QA158 fixture/type debt, external login evidence, Settlement read-availability observation and approved deferred Beta features remain explicitly separated from confirmed merge regressions.
+Finish Slice5 preview1 validation on complete iPhone16 App, retain device/Session/SQLite/originals/Queue, then provide screenshots and operation evidence for Owner. Use existing iPad for minimal adaptation without copying private data. After preview1 acceptance, implement preview2. Do not resume Recovery, activate deferred capabilities or start Slice6.
 
 ## Latest runtime / Owner Header correction
 
