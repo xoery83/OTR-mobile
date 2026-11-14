@@ -12,6 +12,8 @@ import { uiPalette } from "@/ui/palette";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(element: ReactNode): string;
 };
+// Directory native controls have their own owning tests.
+vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
 const state = vi.hoisted(() => ({
   scheme: "light" as "light" | "dark",
   buttons: [] as Record<string, any>[],
