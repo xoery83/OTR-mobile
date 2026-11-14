@@ -1,0 +1,139 @@
+{
+  "baseMain": "431a893b3ecba5b6eb9c6557bd81bc6e8d4e6cc8",
+  "remoteMainRechecked": "431a893b3ecba5b6eb9c6557bd81bc6e8d4e6cc8",
+  "productCandidate": "90d42294d1e998b50e258c23b68f5c8b9d9251a6",
+  "status": "SLICE5_READY_FOR_OWNER_REVIEW",
+  "ownerUXAcceptance": "PENDING",
+  "branch": "codex/import-v3-slice5-documents",
+  "nativeBuild": "FULL_RELEASE_PASS_IPHONE_AND_RETAINED_IPAD",
+  "nativeBuildLogs": [
+    "/private/tmp/slice5-final-iphone-build.log",
+    "/private/tmp/slice5-final-ipad-build.log"
+  ],
+  "preservation": {
+    "iphone": {
+      "bundle": "com.xoery.otrmobile.uxc1iphone16",
+      "container": "A22EEC18-C1B4-43A6-9FA5-DE1646BA4680",
+      "checkedPrivateFiles": 9,
+      "changedPrivateFiles": [],
+      "counts": {
+        "capture_submission_batches": 0,
+        "capture_submission_inputs": 0,
+        "local_capture_inbox": 0,
+        "trip_core_trip_operational_documents": 9,
+        "trip_core_trip_item_document_links": 14,
+        "sync_operations": 13
+      },
+      "countsMatchBaseline": true,
+      "queue": [
+        [
+          "COMPLETED",
+          13
+        ]
+      ],
+      "executableSHA256": "7528d2851fa757a654314f50434cf1d50848e9056509ab2044f6f087a6957525",
+      "jsBundleSHA256": "914e64c4e7db6757a44f2aa30df1284bb47c49cae25807262f9d28fa0e28ac34"
+    },
+    "ipad": {
+      "bundle": "com.xoery.otrmobile.b1full20261113",
+      "container": "78D4B3B0-2109-4A2A-8329-D132BDBED755",
+      "checkedPrivateFiles": 30,
+      "changedPrivateFiles": [],
+      "counts": {
+        "capture_submission_batches": 7,
+        "capture_submission_inputs": 13,
+        "local_capture_inbox": 13,
+        "trip_core_trip_operational_documents": 9,
+        "trip_core_trip_item_document_links": 14,
+        "sync_operations": 33
+      },
+      "countsMatchBaseline": true,
+      "queue": [
+        [
+          "COMPLETED",
+          33
+        ]
+      ],
+      "executableSHA256": "5d5c3b651b4eac475bf81a19ea2ec1d8a9b08d3007596d66fdfcf6a6eda85a54",
+      "jsBundleSHA256": "914e64c4e7db6757a44f2aa30df1284bb47c49cae25807262f9d28fa0e28ac34"
+    },
+    "sourceCorrespondence": {
+      "files": 1787,
+      "mismatches": []
+    }
+  },
+  "targetedTests": {
+    "files": 7,
+    "pass": 84,
+    "fail": 0,
+    "skipped": 0
+  },
+  "uiGuard": "PASS174",
+  "lint": "PASS",
+  "typecheck": "3 unchanged Main baseline errors; zero new",
+  "previews": [
+    {
+      "id": 1,
+      "scope": "Entry, scoped Trip Docs/Inbox, compact rows and filters",
+      "earlyEvidence": "preview1-* screenshots, d0a78787",
+      "finalEvidence": "iphone-documents-release.png, final candidate"
+    },
+    {
+      "id": 2,
+      "scope": "Detail, direct links, real Batch/originals, distinct Receipt outcomes, scoped search",
+      "finalEvidence": [
+        "iphone-detail-missing-original-release.png",
+        "iphone-detail-dark-larger-text-fixed.png",
+        "iphone-search-release.png",
+        "ipad-real-batch-receipts-final.png"
+      ],
+      "reusedUnchangedViewerEvidence": "preview2-gif-original.png, intermediate preview2; original viewer unchanged; final private hashes checked"
+    }
+  ],
+  "nativeObserved": [
+    "Normal complete App entry, cached normal sessions retained, no QA route",
+    "Trip1 seven metadata rows; separate Trip two; Account/Trip readers fenced",
+    "Core direct Document→hotel Item→native Back; same Document retained",
+    "Holding iPad Document A→real Batch→Document B→original→Back, plus same-Batch original without a Core Item",
+    "14:43 B1 Batch: actual Receipt projection Created hotel and Linked walk, separate from current document associations",
+    "20:50 historical Batch: results not verified; original/direct associations remain readable; no replay",
+    "Phone missing originals retain metadata and Item associations; no originals copied",
+    "Search Travel→two actual files; All authorized local scopes retain original working Trip; Offline excludes absent originals",
+    "Dark/larger Dynamic Type defect observed, fixed and actually reverified; Light/text size3 restored",
+    "Full cold Native launches retained normal sessions, metadata and relations; no Analyze/Save replay"
+  ],
+  "notVerified": [
+    "Physical device",
+    "Horizontal swipe/complete collapsed-header scroll gesture acceptance: DeviceHub drag did not establish a successful swipe",
+    "Real account switching and all Member role combinations; owning isolation tests pass",
+    "New full offline network-cut run; existing B1 offline evidence reused for unchanged storage/viewer"
+  ],
+  "limits": [
+    "Only authorized locally synchronized/indexed metadata is searched",
+    "Retained submitted text search is bounded to64KiB per TEXT input; larger contents and PDF/image OCR are not indexed",
+    "Metadata sharing/Move/Add consume no unproven owning write capability; no new controls fabricated",
+    "No Document Cloud Sync; no private originals migrated to iPhone",
+    "Slice6 Activity/Updates and cross-device Batch history remain separate"
+  ],
+  "providerCalls": 0,
+  "newAnalyzeSave": 0,
+  "sqlBackendACLProductionChanged": false,
+  "mainMergePush": false,
+  "slice6Started": false,
+  "screenshots": {
+    "before-fix-dark-large-text.png": "8d22f0dc0546a3a2da2e35516e44cfae34cc885339a6892d827c14fd280f5c3d",
+    "intermediate-linked-item.png": "8efbc4121c87d1042d81e605faf0732c5036355c19cc640a47b7ab69600c2cde",
+    "ipad-real-batch-receipts-final.png": "b55af1851db9702efda72c81dc39cd833da5ff9fbab99c87825e1496e8039f12",
+    "iphone-detail-dark-larger-text-fixed.png": "9f4e30e96e9c99a64110da24e8192ab6657faf8080a4815a407fd5a5069274f4",
+    "iphone-detail-missing-original-release.png": "d26d92a4620fb9a5683ac9122a8bc942a45b4fa2ec7d4d5ce719ddeeb7795ead",
+    "iphone-documents-release.png": "0b39b745170b70da5aaa94154a19931842cb36f296944919480fee8f29e1946f",
+    "iphone-inbox-empty.png": "544235d4ed120bd77787b79dddfdff75e4eb6231e136297963f2cd3288a9a188",
+    "iphone-search-release.png": "82accde3f031e6c15d1a410a3a2c609c0cca3c01c8d842e8a3ebfd970feb525e",
+    "iphone-trip-docs-all.png": "6df180c109f1a2588aa7b3acefc993d74a6a275c9ab8722a406ea012be7cca42",
+    "preview1-dark-cold.png": "616402589b74889e1e0872fe09275c6148f2a05ca9b7ea0c7b1a457604dc0838",
+    "preview1-inbox.png": "060405e494f0a51698432fd2ef88753c3dacaa04ab76f9139a7965d17cae7656",
+    "preview1-ipad-docs.png": "c13aa9ef32b0857c56e4bf5bec6d7db88b9d7eff7d6c2d5f24d678832f8341ab",
+    "preview1-trip-docs.png": "ee55e60e3a610450732e758a18fb523eecbb6c5ec30c1efcb619c5b634176d72",
+    "preview2-gif-original.png": "ed7f33670229169038d589e38a61e3c144bbb23a80a4f3c62cb3df3078a3460d"
+  }
+}

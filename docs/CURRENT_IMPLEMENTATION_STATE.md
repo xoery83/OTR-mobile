@@ -6,7 +6,7 @@ Owner authorized **Import V3 Slice5 Documents only** after completed four-lane M
 
 Bounded gap and two-preview plan: `docs/ops/import-slice5-20261114/PLAN.md`. Preview1 adds normal Documents entry, scoped Trip Docs/Inbox, compact metadata lists and typed filters, reusing Core accepted snapshot and original store plus legacy Capture reader. iPhone has9existing Core Documents and0legacy Capture rows; old list alone would incorrectly look empty. Metadata survives absent original bytes; only explicit open reads/verifies bytes. No Source Proof, new storage/queue/receipt/SQL or Cloud Sync.
 
-Preview1 is implemented (4804956c/d0a78787): full Native iPhone and auxiliary iPad lists, MIME filters, account/Trip fencing and metadata without local bytes. Preview2 now implements information-first Detail, ACL-checked direct Item links, exact accepted-input→Batch mapping, independently readable other originals, scoped filename/retained-text search and metadata filters. Reuses existing readers and local storage; no SQL/Core/Receipt/Sync contract change. Targeted77 checks currently pass, UI guard174 files and scoped lint pass; only3 unchanged Main TypeScript baseline errors. Final full Native runtime checks/evidence are in progress. No DeepSeek, repeated B1 Save, Main merge/push or Slice6 execution. Stop after Slice5 report for Owner acceptance and Main integration approval.
+Slice5 implementation is submitted for Owner review, product `90d42294`. Two bounded preview packages: normal scoped Documents/Inbox/compact lists, then information-first Detail, ACL-checked direct links, real Batch→other originals, separate formal Receipt outcomes and local scoped search. Existing readers/viewer/Receipt projection reused; no SQL/Core/Queue/Sync contract change or Cloud Sync. Complete Release Native iPhone/iPad installations pass with1,787 source files matched. Final targeted84 checks pass; UI guard174 and lint pass; exactly3 unchanged Main TypeScript errors. Actual dark/larger-text defects were found, fixed and reverified. Private hashes9/9 on iPhone and30/30 on original iPad unchanged; Documents9/links14, queues13/33 COMPLETED unchanged. Details and screenshots: `docs/ops/import-slice5-20261114/README.md`, machine evidence `verification.json`. Owner UX acceptance and Main integration remain pending. No DeepSeek/repeated Save, shared DEV/Production mutation or Slice6 execution.
 
 All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
 
@@ -43,11 +43,11 @@ Six required reports under `docs/integration/functional-recovery-20261114/`: ACC
 
 SQLite79 retained; both legitimate76 histories and Import76–78/Auth79 ordering preserved. Original selected8 tables and9 private files remained intact after rebuild; latest9 file hashes remain unchanged. New synthetic Trip/P1/Expense were deliberately added via normal UI, so do not claim the full database/queue hash stayed unchanged. Original iPad and QA179 were not cleared or replayed; original worktrees and dirty ops patches untouched.
 
-Still deferred: Invite/Claim full Native, private profile cloud editor, Version/private Realtime activation, full Hosted MCP Consumer/owning ports, Import Slice5/6/full UPDATE, Document Cloud Sync. Source presence is not permission to activate these.
+Still deferred: Invite/Claim full Native, private profile cloud editor, Version/private Realtime activation, full Hosted MCP Consumer/owning ports, Import Slice6/full UPDATE (Slice5 now submitted separately), Document Cloud Sync. Source presence is not permission to activate these.
 
 ## Next execution
 
-Finish Slice5 second-preview Native validation, actual retained iPad Batch/original navigation and private-state preservation checks; provide both bounded previews and final candidate. Do not copy private device data, resume Recovery or start Slice6. Main remains untouched.
+Wait for Owner review of the Slice5 preview packages. Known limits: no physical/complete swipe gesture acceptance, search uses authorized local indexes and TEXT≤64KiB, no invented Share/Move owning writes, no cross-device originals. Real B1 14:43 Batch projects Created hotel/Linked walk;20:50 history is not verified and is not replayed. Do not resume Recovery, Merge/Push Main or start Slice6 without the relevant Owner approval.
 
 ## Latest runtime / Owner Header correction
 
