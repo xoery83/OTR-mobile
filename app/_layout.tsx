@@ -147,9 +147,9 @@ export default function RootLayout() {
             <Stack.Screen
               name="import-updates"
               options={{
-                presentation: "card",
+                presentation: "fullScreenModal",
                 headerShown: true,
-                animation: "slide_from_right",
+                gestureEnabled: false,
               }}
             />
             <Stack.Screen
