@@ -7,9 +7,10 @@ export type DocumentListEntry = {
   mediaType: string | null;
   byteCount: number | null;
   recordedAt: string | null;
+  localAvailable: boolean;
   visibility: "PRIVATE" | "GROUP" | "SELECTED_PERSONS";
 };
-export type DocumentFormat = "ALL" | "PDF" | "IMAGE" | "TEXT";
+export type DocumentFormat = "ALL" | "PDF" | "IMAGE" | "TEXT" | "PRIVATE" | "OFFLINE";
 export function documentFormat(entry: Pick<DocumentListEntry, "mediaType">) {
   return entry.mediaType === "application/pdf"
     ? "PDF"
@@ -23,7 +24,15 @@ export function filterDocumentRows(
   rows: readonly DocumentListEntry[],
   format: DocumentFormat,
 ) {
-  return rows.filter((entry) => format === "ALL" || documentFormat(entry) === format);
+  return rows.filter(
+    (entry) =>
+      format === "ALL" ||
+      (format === "PRIVATE"
+        ? entry.visibility === "PRIVATE"
+        : format === "OFFLINE"
+          ? entry.localAvailable
+          : documentFormat(entry) === format),
+  );
 }
 export function captureDocumentRow(
   doc: ImportDocument,
@@ -37,6 +46,7 @@ export function captureDocumentRow(
     byteCount: doc.byteCount,
     recordedAt: doc.recordedAt,
     visibility: "PRIVATE",
+    localAvailable: false,
   };
 }
 

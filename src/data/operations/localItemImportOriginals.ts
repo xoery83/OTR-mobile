@@ -119,7 +119,10 @@ export async function localItemImportOriginals(
     async metadata() {
       const rows = await documents();
       await assertAccountRequestContext(scope, requireAdoptedUserId);
-      return rows;
+      return rows.map((row) => ({
+        ...row,
+        localAvailable: hasImportOriginal(scope.accountId, row.sha256, row.byteCount),
+      }));
     },
     async original(id: string) {
       const document = (await documents()).find((entry) => entry.id === id);

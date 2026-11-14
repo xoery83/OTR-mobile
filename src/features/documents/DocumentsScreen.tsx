@@ -55,12 +55,14 @@ const tabKey = {
   PERSONAL_INBOX: "importDocuments.inbox",
   ACTIVITY: "capture.progress.activeImports",
 } as const;
-const filters: DocumentFormat[] = ["ALL", "PDF", "IMAGE", "TEXT"];
+const filters: DocumentFormat[] = ["ALL", "PDF", "IMAGE", "TEXT", "OFFLINE", "PRIVATE"];
 const filterKey = {
   ALL: "documents.all",
   PDF: "attachment.pdf",
   IMAGE: "importDocuments.format.IMAGE",
   TEXT: "importDocuments.format.TEXT",
+  OFFLINE: "documents.offline",
+  PRIVATE: "importDocuments.private",
 } as const;
 const icons = {
   PDF: "doc.richtext",
@@ -512,17 +514,19 @@ function DocumentDirectory({
         style={styles.filters}
         contentContainerStyle={styles.filterContent}
       >
-        {filters.map((filter) => (
-          <UiChoiceChip
-            key={filter}
-            label={t(filterKey[filter])}
-            selected={format === filter}
-            onPress={() => {
-              setFormat(filter);
-              setLimit(30);
-            }}
-          />
-        ))}
+        {filters
+          .filter((filter) => scope === "TRIP" || filter !== "PRIVATE")
+          .map((filter) => (
+            <UiChoiceChip
+              key={filter}
+              label={t(filterKey[filter])}
+              selected={format === filter}
+              onPress={() => {
+                setFormat(filter);
+                setLimit(30);
+              }}
+            />
+          ))}
       </ScrollView>
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -601,7 +605,16 @@ function DocumentDirectory({
                   })}
                 </UiText>
               </View>
-              <AppIcon name="chevron.right" size={14} color={colors.textSecondary} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("documents.fileInfo")}
+                style={styles.more}
+                onPress={() => {
+                  if (active()) setSelected(entry);
+                }}
+              >
+                <AppIcon name="ellipsis" size={20} color={colors.textSecondary} />
+              </Pressable>
             </Pressable>
           ))
         )}
@@ -663,6 +676,7 @@ const createStyles = (colors: UiColors) =>
       borderBottomColor: colors.separator,
     },
     rowCopy: { flex: 1, gap: 4 },
+    more: { width: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
     icon: {
       width: 44,
       height: 44,
