@@ -853,73 +853,74 @@ function DocumentDirectory({
           </UiText>
         ) : (
           filtered.slice(0, limit).map((entry) => (
-            <Pressable
-              key={`${entry.origin}:${entry.id}`}
-              style={styles.row}
-              accessibilityRole="button"
-              accessibilityLabel={entry.title}
-              onPress={() => {
-                if (active()) {
-                  onScrollOffset(0, -10, true);
-                  openDetail(entry);
-                }
-              }}
-            >
-              <View style={styles.icon}>
-                <AppIcon
-                  name={icons[documentFormat(entry)]}
-                  size={22}
-                  color={colors.textSecondary}
-                />
-                <View style={styles.privacy}>
+            <View key={`${entry.origin}:${entry.id}`} style={styles.row}>
+              <Pressable
+                style={styles.rowMain}
+                accessibilityRole="button"
+                accessibilityLabel={entry.title}
+                onPress={() => {
+                  if (active()) {
+                    onScrollOffset(0, -10, true);
+                    openDetail(entry);
+                  }
+                }}
+              >
+                <View style={styles.icon}>
                   <AppIcon
-                    name={
-                      entry.visibility === "GROUP"
-                        ? "person.2"
-                        : entry.visibility === "SELECTED_PERSONS"
-                          ? "person"
-                          : "lock"
-                    }
-                    size={10}
+                    name={icons[documentFormat(entry)]}
+                    size={22}
                     color={colors.textSecondary}
                   />
+                  <View style={styles.privacy}>
+                    <AppIcon
+                      name={
+                        entry.visibility === "GROUP"
+                          ? "person.2"
+                          : entry.visibility === "SELECTED_PERSONS"
+                            ? "person"
+                            : "lock"
+                      }
+                      size={10}
+                      color={colors.textSecondary}
+                    />
+                  </View>
                 </View>
-              </View>
-              <View style={styles.rowCopy}>
-                <UiText numberOfLines={2} style={styles.title}>
-                  {entry.title}
-                </UiText>
-                <UiText style={styles.meta}>
-                  {t("documents.rowMetadata", {
-                    format: t(documentFormatLabel[documentFormat(entry)]),
-                    size: entry.byteCount
-                      ? t("documents.byteSize", {
-                          count: formatUiNumber(entry.byteCount),
-                        })
-                      : t("documents.sizeUnknown"),
-                    date: entry.recordedAt
-                      ? formatUiDate(new Date(entry.recordedAt), {
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : t("documents.dateUnknown"),
-                  })}
-                </UiText>
-                {searching && searchScope === "ALL"
-                  ? groups
-                      .find((group) => group[0] === entry)
-                      ?.map((location) => (
-                        <UiButton
-                          key={`${location.origin}:${location.tripId}:${location.id}`}
-                          variant="text"
-                          label={location.tripTitle ?? t("documents.unknownLocation")}
-                          onPress={() => {
-                            if (active()) openDetail(location);
-                          }}
-                        />
-                      ))
-                  : null}
-              </View>
+                <View style={styles.rowCopy}>
+                  <UiText numberOfLines={2} style={styles.title}>
+                    {entry.title}
+                  </UiText>
+                  <UiText style={styles.meta}>
+                    {t("documents.rowMetadata", {
+                      format: t(documentFormatLabel[documentFormat(entry)]),
+                      size: entry.byteCount
+                        ? t("documents.byteSize", {
+                            count: formatUiNumber(entry.byteCount),
+                          })
+                        : t("documents.sizeUnknown"),
+                      date: entry.recordedAt
+                        ? formatUiDate(new Date(entry.recordedAt), {
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : t("documents.dateUnknown"),
+                    })}
+                  </UiText>
+                  {searching && searchScope === "ALL"
+                    ? groups
+                        .find((group) => group[0] === entry)
+                        ?.map((location) => (
+                          <UiButton
+                            key={`${location.origin}:${location.tripId}:${location.id}`}
+                            variant="text"
+                            label={location.tripTitle ?? t("documents.unknownLocation")}
+                            onPress={() => {
+                              if (active()) openDetail(location);
+                            }}
+                          />
+                        ))
+                    : null}
+                </View>
+              </Pressable>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("documents.fileInfo")}
@@ -933,7 +934,7 @@ function DocumentDirectory({
               >
                 <AppIcon name="ellipsis" size={20} color={colors.textSecondary} />
               </Pressable>
-            </Pressable>
+            </View>
           ))
         )}
         {!error && (filtered.length > limit || hasMore) ? (
@@ -989,6 +990,13 @@ const createStyles = (colors: UiColors) =>
       minHeight: 76,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.separator,
+    },
+    rowMain: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.card,
+      minHeight: 44,
     },
     rowCopy: { flex: 1, gap: 4 },
     more: { width: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
