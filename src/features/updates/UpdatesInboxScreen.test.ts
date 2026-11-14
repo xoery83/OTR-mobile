@@ -227,7 +227,7 @@ it("card opens the normal same Job with a bounded Updates return origin, preserv
   nodes(render(), "Row")[0].onPress();
   await flush();
   expect(s.push).toHaveBeenCalledWith({
-    pathname: "/capture",
+    pathname: "/import-plans",
     params: {
       jobId: data.request.jobId,
       origin: "UPDATES",

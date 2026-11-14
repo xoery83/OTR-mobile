@@ -242,7 +242,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       if (!current(ticket, owner)) return;
       assertAccountRequestGeneration(reader.context);
       router.push({
-        pathname: "/capture",
+        pathname: "/import-plans",
         params: {
           jobId: target.job.batch.jobId,
           origin: "UPDATES",
