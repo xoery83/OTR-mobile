@@ -3,12 +3,14 @@ import { randomUUID } from "node:crypto";
 import { getAccountGeneration } from "./accountGeneration";
 import { readPendingGuestAdoption } from "./pendingGuestAdoption";
 import { createAuthRepository } from "./authSessionRepository";
+const prepared = vi.hoisted(() => ({ inspect: vi.fn(), resume: vi.fn() }));
+vi.mock("./guestTripP1Adoption", () => ({ prepareGuestTripP1Adoption: prepared.resume }));
 const m = vi.hoisted(() => ({ principal: vi.fn(), inspect: vi.fn(), record: vi.fn(), finish: vi.fn(), read: vi.fn(), revoke: vi.fn(), frozen: vi.fn(), status: vi.fn(), receipt: vi.fn(), cancel: vi.fn() }));
 vi.mock("./authRepository", () => ({ clearLocalSession: vi.fn(), readCommittedLocalPrincipal: m.principal, guestVerificationSession: { read: m.read, revoke: m.revoke } }));
-vi.mock("./guestAdoptionRecovery", () => ({ openGuestAdoptionRecovery: async () => ({ inspectPublicationRequests: m.inspect, recordServerCancellation: m.record, finishServerCancellation: m.finish }) }));
+vi.mock("./guestAdoptionRecovery", () => ({ openGuestAdoptionRecovery: async () => ({ inspectPublicationRequests: m.inspect, inspectPreparedAttempts: prepared.inspect, recordServerCancellation: m.record, finishServerCancellation: m.finish }) }));
 vi.mock("./guestLocalWorkspace", () => ({ hasActiveGuestInventory: m.frozen }));
 vi.mock("./guestAdoptionTransport", () => ({ createGuestAdoptionTransport: () => ({ status: m.status, receipt: m.receipt, cancel: m.cancel }) }));
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => { vi.resetAllMocks(); prepared.inspect.mockResolvedValue([]); });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 function fixture() {
   const preparation = { sourceGuestLocalId: randomUUID(), targetAccountId: randomUUID(), adoptionId: randomUUID(), inventorySha256: "a".repeat(64) };
@@ -30,6 +32,26 @@ it("reads the original target/attempt after restart without preflight or publica
   await expect(pending.attempt.publish()).rejects.toThrow("AUTHORITATIVE_STATUS_REQUIRED");
   expect(m.cancel).not.toHaveBeenCalled();
   expect(m.receipt).not.toHaveBeenCalled();
+});
+it("restores a PREPARED attempt with its original ID without submitting on mount", async () => {
+  const f = fixture(), attempt = { publish: vi.fn(), cancel: vi.fn(), canCancel: true };
+  m.inspect.mockResolvedValue([]);
+  prepared.inspect.mockResolvedValue([{ ...f.prior, nextAction: "RESUME_PREFLIGHT" }]);
+  prepared.resume.mockResolvedValue(attempt);
+  const pending = (await readPendingGuestAdoption(f.signal))!;
+  expect(pending.attempt).toBe(attempt);
+  expect(prepared.resume).toHaveBeenCalledWith(f.session, f.preparation.targetAccountId, getAccountGeneration(), f.signal, { adoptionId: f.preparation.adoptionId, cancel: expect.any(Function) });
+  expect(attempt.publish).not.toHaveBeenCalled();
+  expect(m.status).not.toHaveBeenCalled();
+});
+it.each(["foreign-session", "multiple-attempts", "publication-and-prepared"])("refuses unsafe prepared recovery: %s", async (mode) => {
+  const f = fixture();
+  m.inspect.mockResolvedValue(mode === "publication-and-prepared" ? [f.prior] : []);
+  prepared.inspect.mockResolvedValue(mode === "multiple-attempts" ? [f.prior, f.prior] : [f.prior]);
+  if (mode === "foreign-session") m.read.mockResolvedValue({ status: "SESSION", session: { ...f.session, identity: { ...f.session.identity, userId: randomUUID() } } });
+  await expect(readPendingGuestAdoption(f.signal)).rejects.toThrow();
+  expect(prepared.resume).not.toHaveBeenCalled();
+  expect(m.revoke).not.toHaveBeenCalled();
 });
 it("does not release or revoke on unresolved cancellation; records server proof before revoking", async () => {
   const f = fixture(), pending = (await readPendingGuestAdoption(f.signal))!;
@@ -108,4 +130,23 @@ it.each(["refresh-and-logout-unknown", "bad-jwt", "invalid-refresh", "foreign-us
     }
   }
   expect(await repository.readCommittedLocalPrincipal()).toEqual({ kind: "GUEST", localId: p.sourceGuestLocalId });
+});
+
+it("persists prepared cancellation before credential UNKNOWN and resumes after restart", async () => {
+  const f = fixture();
+  m.inspect.mockResolvedValue([]);
+  prepared.inspect.mockResolvedValue([{ ...f.prior, nextAction: "RESUME_PREFLIGHT" }]);
+  prepared.resume.mockImplementation(async (_session, _target, _generation, _signal, recovery) => ({ cancel: recovery.cancel }));
+  const pending = (await readPendingGuestAdoption(f.signal))!;
+  const receipt = { outcome: "CANCELLED" };
+  m.cancel.mockResolvedValue(receipt);
+  m.revoke.mockRejectedValueOnce(Error("LOGOUT_UNKNOWN"));
+  await expect(pending.attempt.cancel()).rejects.toThrow("LOGOUT_UNKNOWN");
+  expect(m.record).toHaveBeenCalledWith(f.preparation.adoptionId, f.preparation.targetAccountId, receipt);
+  expect(m.record.mock.invocationCallOrder[0]).toBeLessThan(m.revoke.mock.invocationCallOrder[0]);
+  prepared.inspect.mockResolvedValue([{ ...f.prior, nextAction: "RESUME_PREFLIGHT", cancellationReceipt: receipt }]);
+  m.read.mockResolvedValue({ status: "REVOCATION_PENDING" });
+  await expect(readPendingGuestAdoption(f.signal)).resolves.toBeNull();
+  expect(m.cancel).toHaveBeenCalledOnce();
+  expect(m.finish).toHaveBeenCalledOnce();
 });

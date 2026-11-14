@@ -1,0 +1,15 @@
+{
+  "recorded_at": "2026-11-03T01:46:41.870109+00:00",
+  "status": "CURRENT_SUPPLEMENT_VERIFIED_CLOSE_CANDIDATE_PREPARED",
+  "readback_sha256": "af16c4e9a7290ddc2cf22f9264bb513880cacb735fd7a3df8acf0c53a3b7070d",
+  "verified": [
+    "Exact current00f7 CID/imagefbc245",
+    "Healthy and protected401",
+    "Reported runtime fence disabled/Provider0/shared lock released"
+  ],
+  "missing": [],
+  "decision": "New a3cbfe58 candidate prepared from complete source; independent review/Root unchanged-close still pending. Old11faa remains superseded.",
+  "window_started": false,
+  "business_applies": 0,
+  "dcr_status": "UNVERIFIED_NO_ACTIVATION"
+}

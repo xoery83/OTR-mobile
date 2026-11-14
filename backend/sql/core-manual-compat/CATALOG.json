@@ -1,0 +1,51 @@
+{
+  "trip_core_finite_read_state_guard": {
+    "oid": "65713",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+    "beforeSha256": "69018163d06c73eac84b161e09f3dc10a29346dc9d49057051bde0e80e8edf84",
+    "afterSha256": "69018163d06c73eac84b161e09f3dc10a29346dc9d49057051bde0e80e8edf84"
+  },
+  "trip_core_finite_scope_allowed": {
+    "oid": "65712",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres,otr_trip_create_gateway=X/postgres}",
+    "beforeSha256": "0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a",
+    "afterSha256": "0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a"
+  },
+  "trip_core_guard_write": {
+    "oid": "65263",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+    "beforeSha256": "3e1f13d31a35c346710d877e1d47414e6b75f19c2d9952081bdac99b7a59e77f",
+    "afterSha256": "3e1f13d31a35c346710d877e1d47414e6b75f19c2d9952081bdac99b7a59e77f"
+  },
+  "trip_core_lock_actor_scope": {
+    "oid": "65465",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+    "beforeSha256": "e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b",
+    "afterSha256": "e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b"
+  },
+  "trip_sustained_core_capabilities": {
+    "oid": "66181",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+    "beforeSha256": "15f5fb12e76642dbf49bafd851f0c73962999e297186e3b6dd6a733d8186666c",
+    "afterSha256": "15f5fb12e76642dbf49bafd851f0c73962999e297186e3b6dd6a733d8186666c"
+  },
+  "trip_sustained_core_read_scope_allowed": {
+    "oid": "67421",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+    "beforeSha256": "57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5",
+    "afterSha256": "7c072259fd4e486d8e2ce84a61157871447111ad37c267abb204590cfd50ba99"
+  },
+  "trip_sustained_dev_scope_allowed": {
+    "oid": "66180",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+    "beforeSha256": "cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618",
+    "afterSha256": "fed3debfde2a8dbd24eebfa3ff14fe1884c4451623d8473cbf22021998e5cf9d"
+  }
+}

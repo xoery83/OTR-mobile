@@ -1,0 +1,37 @@
+{
+  "requestId": "MCP-C02-S1-HOSTED-QUALIFY-20261104-001",
+  "hostEvidence": "evidence/READ_ONLY_QUALIFICATIONS_20261104/HOST_SAFE.json",
+  "pgEvidence": "evidence/READ_ONLY_QUALIFICATIONS_20261104/PG_SAFE.json",
+  "hostObservedAt": "2026-11-03T18:28:06.216934+00:00",
+  "pgObservedAt": "2026-11-03T18:27:14.518209+00:00",
+  "deployedSource": "4c8d0fd9dc4d0210f02b6bfaace5ced0f59f454a",
+  "containerId": "d5ed2ea737f4ef6221301eb17ec64f87f4bf6efec7f3f1bc8487c5b1fa3d9c15",
+  "image": "sha256:3f02f0e02688699cea2fadfa7b5a5ecdf019a12f7565bd76a28e7284485d8d66",
+  "configSHA256": "874777a26729b314eb2133a69483358dbc6f9032c3c3dc2b44035ef42600c971",
+  "mode": "READ_ONLY_NO_EXECUTION_AUTHORITY",
+  "sqlWrites": 0,
+  "businessCalls": 0,
+  "providerCalls": 0,
+  "hostLockAcquired": false,
+  "windowStarted": false,
+  "clockBound": false,
+  "status": "S1_RETAINED_SOFTWARE_DEFAULT_CLOSED_QUALIFIED_FRESH_CONSUMER_GATE_PENDING",
+  "package": "MCP-C02/S1",
+  "currentQualification": [
+    "Active default d5ed/3f02/config874 is healthy. MCP Host6c9b and Consent6040 bytes match prior approved software; server/capture exact current hashes are in HOST_SAFE. No finite selector, no held service lock.",
+    "Issuer OID67215 is still non-SECURITY-DEFINER postgres-owned closed definition7e582585/bodyMD5b0f7e. Metadata only, issuer not invoked.",
+    "Auth03e24 consumed and independently closed; both own timers inactive/not-found. Old MCP a2f/679c/e325 windows are historical and cannot authorize discovery/Preview now.",
+    "Retained S1 package5343/loader2b71 evidence remains software lineage; current3f02 is software qualification, not a fresh Consumer discovery or server Preview PASS. S2cc999 unmounted adapter is not an S1 prerequisite."
+  ],
+  "consumerEvidenceLimits": [
+    "MCP reported browser settings authentication-update-required; Root2 did not inspect or modify browser/Auth settings. Current OAuth/DCR/SiteURL are not independently recertified by Root2.",
+    "Readonly connector get_otr_operating_guide Internal error and recovered rendered ChatGPT response are diagnostics only; no verified Trip/Item read or formal server Preview/save. No inferred Auth/Gateway root cause.",
+    "Old consumer task must not be replayed; attachment summary is not Consumer PASS."
+  ],
+  "requiredBeforeGate": [
+    "MCP/Auth fix exact consumer/client/audience/grant/normal consent prerequisites, current settings/readiness and supported S1 discovery -> CreatePreview acceptance. No session/token sharing.",
+    "Separate direct precise authority for any temporary issuer/runtime/resource action, bound to current3f02/config874 and reviewed fresh controller/packet, T/D and independent dual close. No old68aa restore plan.",
+    "Exact no-Apply/no-Command/no-confirmation preview-only scope; any actual mutation requires its own authority. Preserve actual read/Preview receipt and independent close readback."
+  ],
+  "remainingIntegrationDelta": "MCP prepares concrete fresh Owner request after qualification; Root2 has neither reserved resources nor activated an issuer/consumer window."
+}

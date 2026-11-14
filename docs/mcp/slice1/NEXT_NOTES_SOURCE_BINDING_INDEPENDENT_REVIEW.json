@@ -1,0 +1,38 @@
+{
+  "status": "NO_BLOCKER_SOURCE_BINDING_CANDIDATE_ONLY",
+  "reviewer": "Auth primary independent of Root writer",
+  "expectedLoad": "ONE_SERIAL_DEV_QA_WINDOW_NO_CONCURRENT_CONFIRM_WRITER",
+  "candidateSHA256": "2ee651282e3c415c1616266ca19326c09bc8c890e006c15081b126d5883c11ad",
+  "actualDiff": "ONE_LINE_FIXED_AUTH_THREAD_TO_FIXED_ROOT_THREAD_ONLY",
+  "otherHelpers": "SIX_HELPERS_BYTE_IDENTICAL_TO_FROZEN_BASE",
+  "confirmCaller": "DIFF_ONLY_ROOT_SOURCE_CLIENT_ID_PRECLAIM_CHECK_UPDATED_CONFIG_HASH_NOT_EXECUTABLE_NEW_WINDOW",
+  "independentExecution": {
+    "status": "LOCAL_SOURCE_BINDING_CONTRACT_PASS_NOT_AUTHORIZED",
+    "checks": [
+      "OLD_AUTH_SOURCE_REJECTED",
+      "OTHER_SOURCE_REJECTED",
+      "NOT_APPROVED_REJECTED",
+      "MISSING_MESSAGE_REJECTED",
+      "WRONG_CLIENT_REJECTED",
+      "MISSING_CLIENT_REJECTED",
+      "WRONG_OPERATION_REJECTED",
+      "WRONG_DIGEST_REJECTED",
+      "ROOT_SOURCE_FULL_CLIENT_WIRE_PURE_PLAN_PASS",
+      "EXPIRED_WINDOW_REJECTED"
+    ],
+    "checkCount": 10,
+    "fixture": "Actual V2 complete shape and existing QA config; Root source/message are explicitly synthetic; Docker metadata is synthetic without credentials",
+    "hostCalls": 0,
+    "casCalls": 0,
+    "databaseCalls": 0,
+    "clockStarted": false,
+    "actualOwnerApprovalForE389": false,
+    "oldFrozenFilesModified": false
+  },
+  "notClaimed": [
+    "Final new Gate/default/close dispatcher assembly",
+    "Actual e389 human approval",
+    "Actual final approval bytes preclock validation",
+    "Hosted installation or access activation"
+  ]
+}

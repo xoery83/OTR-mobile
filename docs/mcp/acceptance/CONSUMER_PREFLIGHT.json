@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-31",
+  "phase": "PHASE3_CONSUMER_PREFLIGHT",
+  "business_calls": 0,
+  "chatgpt": {
+    "plugin_name": "OTR DEV QA",
+    "plugin_id": "plugin_asdk_app_6ae59a2086a481918a9d9bef984507ef",
+    "actual_visible_read_tools": [
+      "get_trip",
+      "get_trip_item",
+      "list_trip_items",
+      "list_trips"
+    ],
+    "write_tools_visible": false,
+    "cause": "OTR current Read-only policy; client Write capability not tested",
+    "fresh_oauth_or_refresh": false,
+    "item_read": "NOT_TESTED",
+    "evidence": "CHATGPT_READ_TOOL_VISIBILITY.jpg",
+    "reconnect_preflight": {
+      "management_path": "/settings/plugins-settings/plugin_asdk_app_6ae59a2086a481918a9d9bef984507ef",
+      "existing_account_label": "STILL_CONNECTED_IN_CLIENT_UI_AFTER_SERVER_REVOCATION",
+      "account_menu_actions": [
+        "RENAME",
+        "RECONNECT",
+        "DISCONNECT"
+      ],
+      "reconnect_clicked": false,
+      "interpretation": "Client account label is not current server grant evidence."
+    }
+  },
+  "claude": {
+    "custom_connector_form": "ACCESSIBLE",
+    "step": 2,
+    "name": "OTR DEV QA",
+    "server_url": "https://api-dev.xoery.art/mcp",
+    "authentication": "SIGN_IN_NOW",
+    "client_mode": "OWN_REGISTERED_OAUTH_CLIENT",
+    "transport": "STREAMABLE_HTTP",
+    "client_id_entered": false,
+    "secret_entered": false,
+    "add_submitted": false,
+    "connector_created": false,
+    "oauth": "NOT_TESTED",
+    "read": "NOT_TESTED",
+    "write": "NOT_TESTED",
+    "server_probe": {
+      "http_status": 404,
+      "context": "Default-closed OTR MCP runtime",
+      "oauth_checks": "SKIPPED",
+      "classification": "OTR_CLOSED_ENDPOINT; not a proven account-plan limitation"
+    },
+    "documented_callback_candidate": "https://claude.ai/api/mcp/auth_callback",
+    "actual_authorize_redirect_verified": false,
+    "callback_source": "https://claude.com/docs/connectors/building/authentication",
+    "evidence": "CLAUDE_CONFIG_DRAFT.jpg"
+  },
+  "boundary": "No OAuth activation, grant, token, tool dispatch, real Owner Trip access or business write in this preflight."
+}

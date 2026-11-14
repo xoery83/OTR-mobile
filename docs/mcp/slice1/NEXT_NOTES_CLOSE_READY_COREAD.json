@@ -1,0 +1,28 @@
+{
+  "status": "ROOT_CLOSED_RESTORE_ACTUAL_NO_CHANGE_PASS",
+  "windowId": "e389fb93736b401c9e9b5f1437e852dc",
+  "rootPath": "/opt/otr/dev-backend/build/auth-consumer-write-qa-e389fb93736b401c9e9b5f1437e852dc",
+  "closePlanSHA256": "cb0db7f85270f157fa6e5954a1de0235b5bab61c2167ed27e4f64c51bbfe825a",
+  "result": {
+    "result": {
+      "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+      "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+      "image": "sha256:0ffd444c102405d3cb7844a40258dfa561d5b8b8af0add026233eb9580cf2d0a",
+      "finiteConfigAbsent": true,
+      "health": "healthy"
+    },
+    "deliveryTrace": {
+      "requestedAt": "2026-11-02T04:11:43.432888+00:00",
+      "readyAt": "2026-11-02T04:11:43.447096+00:00",
+      "acquiredAt": "2026-11-02T04:11:43.447152+00:00",
+      "mutationFinishedAt": "2026-11-02T04:11:43.575248+00:00",
+      "releasedAt": "2026-11-02T04:11:43.575280+00:00"
+    }
+  },
+  "clockStarted": false,
+  "timerArmed": false,
+  "qaKeysAdded": false,
+  "sourceCandidateInstalled": false,
+  "priorPlanPreserved": true,
+  "checkedAt": "2026-11-02T04:11:43.589994+00:00"
+}

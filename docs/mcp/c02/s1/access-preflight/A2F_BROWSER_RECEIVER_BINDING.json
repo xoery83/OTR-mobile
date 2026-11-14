@@ -1,0 +1,12 @@
+{
+  "status": "MECHANICAL_BROWSER_RECEIVER_REBIND_NOT_RUN",
+  "sourceSHA256": "96abd4e55f810de36286c28c74d34dbcd17993469ce6d2b45a35bbadbfe98a8e",
+  "candidateSHA256": "ff203c57e8b969b6ca8d2f6ae196b5d4134f17d25b4d9c3f567342386642d306",
+  "receiverSourceSHA256": "0a024c95f3aa8e00a32f8ed3924008dbb933cdabc421fc56c4a44381eb9f24ce",
+  "inverseDiff": "EXACT_SOURCE_RESTORED_BY_WINDOW_PATH_REPLACEMENT_ONLY",
+  "scope": "Existing dedicated QA inbox receiver only; requires same-window normal control READY and cooldown; no borrowed Session, no new recipient, no OTP/key/token retained in report.",
+  "normalControl": "CLOSED_PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "browserOtpRequested": false,
+  "additionalDelta": "Read current real normal-control READY from authstart status path; failed original marker remains preserved.",
+  "actualNormalReadyAt": "2026-11-03T07:49:11.127Z"
+}

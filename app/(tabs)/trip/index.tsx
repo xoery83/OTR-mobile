@@ -10,7 +10,11 @@ import { GlobalMenu } from "@/components/GlobalMenu";
 import { TripSearchEntry } from "@/features/trip-search/TripSearchEntry";
 import { NavigationContentFrame } from "@/components/navigationChrome";
 export default function TripRoute() {
-  const params = useLocalSearchParams<{ tripId?: string; view?: string }>();
+  const params = useLocalSearchParams<{
+    tripId?: string;
+    view?: string;
+    importJobId?: string;
+  }>();
   const selectedTrip =
     !!params.tripId && !["trips", "create"].includes(params.view ?? "");
   const home = selectedTrip && params.view !== "day";
@@ -28,7 +32,9 @@ export default function TripRoute() {
     !dayShellChrome.navigationVisible;
   return (
     <>
-      {!hideActions ? <GlobalMenu module="TRIP" nativeToolbar /> : null}
+      {!hideActions && !params.importJobId ? (
+        <GlobalMenu module="TRIP" nativeToolbar />
+      ) : null}
       {!hideActions ? (
         <TripSearchEntry
           nativeToolbar

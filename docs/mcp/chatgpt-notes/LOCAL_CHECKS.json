@@ -1,0 +1,6 @@
+{
+  "wrapperTests": 9,
+  "sourceCaseChecks": 11,
+  "heldRequestToExistingPurePlanner": "RED_WITH_STALE_FIELDS_GREEN_CURRENT_FIELDS",
+  "externalCalls": 0
+}

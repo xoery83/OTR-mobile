@@ -1,0 +1,43 @@
+{
+  "newProviderCalls": 0,
+  "existingSuccessfulAttempts": [
+    {
+      "import_id": "48181fe2-1355-4d79-b34f-39d95999f8d4",
+      "task_id": "8cc058e7-dfb2-8046-b192-50a3b181494d",
+      "task_created": "2026-11-13T02:07:21.054Z",
+      "task_updated": "2026-11-13T02:07:32.957Z",
+      "completed_at": "2026-11-13T02:07:32.957Z",
+      "work_disposition": "PUBLISHED",
+      "attempt_id": "2a985de8-c42c-850f-b48a-7cdf3155286b",
+      "provider_id": "DeepSeek",
+      "model_id": "deepseek-flash",
+      "request_id": "1617b381-f6e8-87a2-8ccf-0db841ceac37",
+      "execution_observation": "TERMINAL",
+      "execution_outcome": "SUCCEEDED",
+      "started_at": "2026-11-13T02:07:29.066Z",
+      "ended_at": null,
+      "latency_ms": null,
+      "reported_usage_summary": "{\"accelerator_ms\":null,\"audio_units\":null,\"bytes\":null,\"cached_input_tokens\":256,\"call_count\":1,\"cpu_ms\":null,\"gpu_ms\":null,\"image_units\":null,\"input_tokens\":982,\"output_tokens\":351,\"reasoning_tokens\":null,\"total_tokens\":1333,\"usage_quality\":\"ACTUAL_REPORTED\",\"version\":1,\"wall_ms\":null}",
+      "response_sha256": "be2589e1f1abdfc52fe56989577397dcd7eab2d028e6dc1b2beba88157ded40a"
+    },
+    {
+      "import_id": "3d2789c7-f234-49f5-9b8d-c5479c496209",
+      "task_id": "7baec78d-cb17-883c-9326-d2134d9cb647",
+      "task_created": "2026-11-13T02:17:21.771Z",
+      "task_updated": "2026-11-13T02:17:32.503Z",
+      "completed_at": "2026-11-13T02:17:32.503Z",
+      "work_disposition": "PUBLISHED",
+      "attempt_id": "f02a21f9-220b-8b47-a226-f66e103a6c18",
+      "provider_id": "DeepSeek",
+      "model_id": "deepseek-flash",
+      "request_id": "95d09e27-302b-8eae-881c-2604d60e96cd",
+      "execution_observation": "TERMINAL",
+      "execution_outcome": "SUCCEEDED",
+      "started_at": "2026-11-13T02:17:28.764Z",
+      "ended_at": null,
+      "latency_ms": null,
+      "reported_usage_summary": "{\"accelerator_ms\":null,\"audio_units\":null,\"bytes\":null,\"cached_input_tokens\":256,\"call_count\":1,\"cpu_ms\":null,\"gpu_ms\":null,\"image_units\":null,\"input_tokens\":1506,\"output_tokens\":247,\"reasoning_tokens\":null,\"total_tokens\":1753,\"usage_quality\":\"ACTUAL_REPORTED\",\"version\":1,\"wall_ms\":null}",
+      "response_sha256": "ab0265e2c330006f24cd2772f020e780484fe19523273b66f5ca7d875fd890d6"
+    }
+  ]
+}

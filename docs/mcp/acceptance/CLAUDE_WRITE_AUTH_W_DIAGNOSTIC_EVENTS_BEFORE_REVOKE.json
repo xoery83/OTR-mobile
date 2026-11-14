@@ -1,0 +1,119 @@
+{
+  "status": "PROJECTED_METADATA_ONLY",
+  "events": [
+    {
+      "at": "2026-11-01T01:40:29.679152549Z",
+      "requestId": "398b5993-2d71-4077-916e-6ce65dd3a24f",
+      "status": 400,
+      "durationMs": 1783
+    },
+    {
+      "at": "2026-11-01T01:40:31.866832282Z",
+      "requestId": "e731a848-e91c-4ec1-8290-b2cca8b3711c",
+      "status": 200,
+      "durationMs": 1454
+    },
+    {
+      "at": "2026-11-01T01:40:34.116517487Z",
+      "requestId": "5e784a1b-b019-4d0a-9c1a-45f9268e5761",
+      "status": 202,
+      "durationMs": 1363
+    },
+    {
+      "at": "2026-11-01T01:40:36.073709008Z",
+      "requestId": "3c019be6-353d-49b0-81a8-26d9ae09fe3d",
+      "status": 200,
+      "durationMs": 1432
+    },
+    {
+      "at": "2026-11-01T01:40:43.806982377Z",
+      "requestId": "ee4fffa4-4d29-44a5-88a2-768de221b1d9",
+      "status": 400,
+      "durationMs": 1396
+    },
+    {
+      "at": "2026-11-01T01:40:45.554114915Z",
+      "requestId": "0ea67d7f-a501-488d-8944-7f45ae02b5cd",
+      "status": 200,
+      "durationMs": 1361
+    },
+    {
+      "at": "2026-11-01T01:40:47.321206041Z",
+      "requestId": "ef0b1758-9f26-40e1-87f5-40c3e085ddd9",
+      "status": 202,
+      "durationMs": 1373
+    },
+    {
+      "at": "2026-11-01T01:40:49.829465859Z",
+      "requestId": "260af86b-a135-4ec5-aca1-26bc9b3bd4bb",
+      "status": 200,
+      "durationMs": 2009
+    },
+    {
+      "at": "2026-11-01T01:41:13.148726944Z",
+      "requestId": "623a8557-e430-4384-a871-6b7bae111cc5",
+      "status": 400,
+      "durationMs": 2096
+    },
+    {
+      "at": "2026-11-01T01:41:15.096374665Z",
+      "requestId": "f59d8d76-b697-4ac5-a84b-8883f02782f9",
+      "status": 202,
+      "durationMs": 1400
+    },
+    {
+      "at": "2026-11-01T01:41:17.007473864Z",
+      "requestId": "d70a6d74-841c-4c13-b0bc-d0de4e31e4ed",
+      "status": 200,
+      "durationMs": 1435,
+      "tool": "create_trip_item"
+    },
+    {
+      "at": "2026-11-01T01:42:02.612507275Z",
+      "requestId": "08a88375-d60c-4e47-b404-56a5a10ae651",
+      "status": 401,
+      "durationMs": 2
+    },
+    {
+      "at": "2026-11-01T01:42:29.170336813Z",
+      "requestId": "c2eb8f03-7260-44aa-88f4-1f7b17b8ec9b",
+      "status": 200,
+      "durationMs": 25111,
+      "tool": "create_trip_item"
+    },
+    {
+      "at": "2026-11-01T01:44:19.145834608Z",
+      "requestId": "096534d5-08ad-4986-9bad-ed584ab6c5b2",
+      "status": 401,
+      "durationMs": 2
+    },
+    {
+      "at": "2026-11-01T01:44:30.653528762Z",
+      "requestId": "7277ddd2-b8c2-486b-b9b0-6fc564ab54e1",
+      "status": 200,
+      "durationMs": 9965,
+      "tool": "get_trip_item"
+    },
+    {
+      "at": "2026-11-01T01:46:22.549270599Z",
+      "requestId": "5bc83078-7306-4330-ab24-67fc4410a723",
+      "status": 401,
+      "durationMs": 1
+    },
+    {
+      "at": "2026-11-01T01:46:33.446513847Z",
+      "requestId": "e7aae907-148a-4ba8-8b3c-071e5483df6e",
+      "status": 200,
+      "durationMs": 9171,
+      "tool": "update_trip_item"
+    },
+    {
+      "at": "2026-11-01T01:47:23.006290407Z",
+      "requestId": "06af7bc1-b690-488e-8964-44c53aac9a18",
+      "status": 200,
+      "durationMs": 15497,
+      "tool": "update_trip_item"
+    }
+  ],
+  "rawOutputRecorded": false
+}

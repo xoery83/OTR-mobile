@@ -1,0 +1,18 @@
+{
+  "status": "2377_CLOSED_ROOT2_PROBE_CONFIGURATION_FAILURE",
+  "windowConsumed": true,
+  "failureOwner": "Root2",
+  "defaultRestored": "d5ed/3f02/config874 healthy",
+  "timersDisarmed": true,
+  "issuerDenyAllVerified": true,
+  "oauthEnabled": false,
+  "hookEnabled": false,
+  "normalControlStatus": "CONTROL_FAILED_OR_UNKNOWN; GRANT_CLEANUP_UNCONFIRMED from normal route preserved",
+  "independentOwnSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "independentActiveGrantCount": 0,
+  "consumerReconnect": false,
+  "preview": false,
+  "businessSave": false,
+  "probeCorrection": "MINIMAL_PROBE_CORRECTION.json",
+  "next": "MCP binds only verified Host probe correction into new minimal package; no repeat full audit and no same2377 replay."
+}

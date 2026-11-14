@@ -1,0 +1,17 @@
+{
+  "status": "IMAGE_PREBUILT_NOT_DEPLOYED",
+  "sourceCommit": "5343f4f5",
+  "baseImage": "sha256:1efe1fad902475bcfe4047290e59c944c78453f6d32c88d24aac64cb60d8d6dc",
+  "image": "sha256:0b46836523c57968e8e2270a5e7ce62c4a007a2fe1a280f09063b2541b5de59a",
+  "candidateCaptureSHA256": "17d4812319262931dd27061a8d8f5a254dd80cd881dffdaf5acc0fafc2a92584",
+  "allOtherBundlesUnchanged": true,
+  "imageConfigUnchanged": true,
+  "serviceStill": "920f1038c3dd891971a2cb63c3e6b8c968df31060b25803f65f2d807db7b5ea6",
+  "planSHA256": "8c1a2d879b6c5992d6254b24b86a97c9a9335d9250da8b038bd0380003301343",
+  "releaseSHA256": "e2b8cbbe7c6b256800a5ff43453aef824d39ab576ca2a15dd33fc755430a4f6e",
+  "readyAt": "2026-11-02T22:26:48.103186+00:00",
+  "authorityChanges": 0,
+  "sqlCalls": 0,
+  "paidCalls": 0,
+  "rollbackOriginalContainerRetainedByRelease": true
+}

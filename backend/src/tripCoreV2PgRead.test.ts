@@ -432,3 +432,26 @@ it("member read scope is requalified before returning a snapshot", async () => {
   expect(reads).toBe(2);
   expect(f.lease.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
 });
+it("derives an authorized version through the same qualified collection snapshot, without claiming cheaper SQL", async () => {
+  const f = fixture();
+  const collection = await f.reader.collection(f.actor.accountId, f.actor.tripId);
+  const collectionQueries = f.lease.query.mock.calls.length;
+  f.lease.query.mockClear();
+  const version = await f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId);
+  expect(version).toMatchObject({
+    actorAccountId: f.actor.accountId,
+    tripId: f.actor.tripId,
+  });
+  expect(Object.keys(version).sort()).toEqual([
+    "actorAccountId",
+    "token",
+    "tripId",
+    "version",
+  ]);
+  expect(f.lease.query.mock.calls.length).toBe(collectionQueries);
+  expect(JSON.stringify(version).length).toBeLessThan(JSON.stringify(collection).length);
+  f.gate.runtime_enabled = false;
+  await expect(
+    f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+});

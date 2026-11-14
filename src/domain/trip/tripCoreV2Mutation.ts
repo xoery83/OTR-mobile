@@ -232,7 +232,7 @@ function executeCoreMutation(
         throw new Error("AUTO_CLEAR_FORBIDDEN");
       state[address] = {
         state: value === null ? "CLEARED" : "KNOWN",
-        origin: q.admission.mode === "MANUAL" ? "MANUAL" : "SOURCE",
+        origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
         protected: q.admission.mode === "MANUAL",
         changed_revision: r[k === "ITEM" ? "semantic_revision" : "revision"] as number,
         evidence_ref: null,
@@ -380,7 +380,7 @@ function executeCoreMutation(
         throw new Error("AUTO_CLEAR_FORBIDDEN");
       state[address + key] = {
         state: v === null ? "CLEARED" : "KNOWN",
-        origin: q.admission.mode === "MANUAL" ? "MANUAL" : "SOURCE",
+        origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
         protected: q.admission.mode === "MANUAL",
         changed_revision: rev(item, "ITEM"),
         evidence_ref: null,
@@ -413,7 +413,7 @@ function executeCoreMutation(
         if (!f.isCoreFieldAddress(address)) continue;
         state[address] = {
           state: "CLEARED",
-          origin: q.admission.mode === "MANUAL" ? "MANUAL" : "SOURCE",
+          origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
           protected: q.admission.mode === "MANUAL",
           changed_revision: rev(item, "ITEM"),
           evidence_ref: null,
@@ -581,7 +581,7 @@ function executeCoreMutation(
           }
           state[key] = {
             state: value === null ? "CLEARED" : "KNOWN",
-            origin: q.admission.mode === "MANUAL" ? "MANUAL" : "SOURCE",
+            origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
             protected: q.admission.mode === "MANUAL",
             changed_revision: rev(r, "ITEM"),
             evidence_ref: null,
@@ -631,6 +631,9 @@ function executeCoreMutation(
       const existing = g.itinerary_events.find((x) => x.id === q.target.id);
       if (formal && (!existing || existing.owner_account_id !== actor.accountId))
         throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+      if (q.admission.mode === "IMPORT" && (!existing || existing.semantic_revision !== 1 ||
+          Object.values(existing.field_state as Record<string, { origin: string }>).some(field => field.origin !== "PROVIDER")))
+        throw new Error("PROTECTED_FIELD");
       const intent = g.trip_flight_intents.find((x) => x.event_id === q.target.id);
       if (
         existing &&
@@ -1414,6 +1417,18 @@ function executeCoreMutation(
         p.transferEntitlementIds,
         [],
       );
+      break;
+    }
+    case "CREATE_DOCUMENT_METADATA": {
+      const row = create("DOCUMENT", q.target.id, {
+        title: p.title,
+        media_type: p.media_type,
+        byte_size: p.byte_size,
+        sha256: p.sha256,
+        custody: "LOCAL_ONLY",
+        content_version: 1,
+      });
+      setAcl("DOCUMENT", row, { visibility: "PRIVATE", people: [] });
       break;
     }
     // These need the owning verified custody/Source/Ledger capability, not a boolean from a caller.

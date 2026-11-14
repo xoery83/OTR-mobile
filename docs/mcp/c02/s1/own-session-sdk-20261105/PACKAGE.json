@@ -1,0 +1,96 @@
+{
+  "status": "ACTIVATION_SOURCE_BOUND_PENDING_FINAL_REVIEW_NOT_EXECUTION_READY",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "sourceMode": "SDK_OAUTH_CONSENT",
+  "windowId": "6d49f895-887d-437c-9294-d381bcd8005d",
+  "windowHex": "6d49f895887d437c9294d381bcd8005d",
+  "gateSHA256": "0a4fdc188d708fd42be384081f8b8ca9c02e0a601673696829799804aaa4ef0f",
+  "scopeSHA256": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+  "generatedStaticDirectory": "dist/mcp-c02-own-session-sdk-6d49/static",
+  "templatePackage": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/PACKAGE.json",
+    "sha256": "1067ea07cd79372ebb1fa5778ea042067a10843dce514b57f4ce73f585fd0bc4"
+  },
+  "consumerInputs": {
+    "FRESH_CHAT_TASK.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/FRESH_CHAT_TASK.txt",
+      "sha256": "17db04bb474fdc99ed04031f5fdd8be958e1b5c5625779c6245e94e3dfbe9cce"
+    },
+    "MATERIAL_1.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_1.txt",
+      "sha256": "9e7850badbf63ed4b1219966eb0175704f0bda6166416fe54043440383d28f03"
+    },
+    "MATERIAL_2.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_2.txt",
+      "sha256": "363c991e08a5db1b1d5c63e94fdb87dcde545052c2f41855a934936691d543dc"
+    },
+    "INDEPENDENT_INTENT.json": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/INDEPENDENT_INTENT.json",
+      "sha256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6"
+    }
+  },
+  "hostSHA256": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+  "softwareDeploymentNecessary": false,
+  "staticFiles": {
+    "SCOPE.json": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "c02-normal-control.py": "dc67096380c8113e9216edf3dca5ec1c46b34b8495f8139aa6246f3497316673",
+    "c02-timers.py": "cdc90483e3aad7b9af52141242dc8876b7829b6394f2fb1652e26c6f45c36c87",
+    "c02-timers.test.py": "9aabcba8af8637fd10a7af7b572ddcc08f7dcab89c60b76a20994506ac3fc550",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "issuer-source/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "issuer-source/scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "issuer-source/scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "normal-control.mts": "26b934964dd36a994ed8a4814142b64b1dbfe7d38a84e77b73cf904cca50d5e6",
+    "operators/config_cas.py": "ed2f4782506095b2be5b4426adaf247901bc21682f788fd0dbfecf3220b074db",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "prepare-c02-access-window.py": "06206d5c3786a6c56686fe539a2f825f3d100c50e4208d6f4aea701355232486",
+    "own-session-consent.mjs": "caebaa2d1eea2ef7c4b33831d793830bccce53c47c8385263b7b54f045a8643a",
+    "own-callback-pipe.mjs": "0f31f4f43b5de2936687f4dac4ef8582a4e250849649775bc96aca98c23da803"
+  },
+  "sourceReadiness": "ACTIVATION_BINDING_LOCAL_ONLY_PENDING_FINAL_REVIEW",
+  "ownerSourceReference": {
+    "path": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/own-session-sdk-20261105/OWNER_SOURCE.json",
+    "sha256": "4cfb3e49a5e6ee33606da5011772fdd04ca3bb2c6f541f09ee67fa84e1bdc387",
+    "meaning": "Actual original human raw wire/text/context unchanged; all3 source literals bound. SDK mapping via Root2 scope-only receipt, final activation review pending; platformfalse."
+  },
+  "platformRecognizedExecutionApproval": false,
+  "root2ScopeRevisionReceipt": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/SDK_SOURCE_REVISION_BOUNDARY.json",
+    "sha256": "c1b087c8681f93d700bb3f336a3f28cb40a6f1c6bd51c1393dfe65191c8ed76e",
+    "status": "SCOPE_INTERPRETATION_ONLY_NOT_EXECUTION_APPROVAL",
+    "priorPackageTarget": "43b2f509aa229cd19e5ad9597ec5d80c5e466d88dc8198bc62219b578fb586f7",
+    "repairedPackageNeedsDeltaQualification": true
+  },
+  "startsAt": null,
+  "normalCloseAt": null,
+  "hardExpiresAt": null,
+  "clockStarted": false,
+  "authorityActivated": false,
+  "command": null,
+  "confirmations": [],
+  "saveApproved": false,
+  "browserOtp": "NOT_RUN",
+  "browserReceiver": "NOT_USED",
+  "browserReservationCaller": "DEFAULT_OFF_NOT_USED",
+  "normalControlCredentialImplementation": "Original owning helper unchanged; no new browser credential access",
+  "callbackSecretHandling": "One private FIFO only, not regularfile/log/tooloutput",
+  "needsBeforeExecution": [
+    "Independent source and scope mapping Review",
+    "Final independent actual3guard/Node-entry/release-producer review",
+    "Main/source integration if required",
+    "Root2 current qualifications/platform/livewaiter and actual file binder",
+    "Root2 private original prelogin binding with sdkSourcePackageSHA256 and exact final source pins; main revalidates via same Python guard",
+    "Root2 actual release producer and derived hash-only private relay must be independently qualified"
+  ],
+  "releaseProducerContract": {
+    "path": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/own-session-sdk-20261105/ROOT2_SDK_RELEASE_CONTRACT.md",
+    "sha256": "94c6c4dcd8ee8119f6e768b5b3a692f0f57df4e2a2009ff25420dcbdc55be2b8",
+    "actualProducerAccepted": false,
+    "actualRelease": null
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "device": "89935253-B3B0-4851-ADCA-87AFED548C7E",
+  "bundleId": "com.xoery.otrmobile.uxc1iphone16",
+  "installedBundleSHA256": "203d0266884ffdb41e7ce5ec7c5e676da8c4e6a80b7a51db18e02d79f19bd5ee",
+  "matchesFinalExport": true,
+  "productSourceDifferences": [],
+  "temporaryEntryRemoved": true,
+  "normalEntry": "expo-router/entry",
+  "devConfirmBeforeSaveVerifiedInBundle": true,
+  "iPadOriginalProgramRestored": true,
+  "formatOnlyRebuildIdentical": true
+}

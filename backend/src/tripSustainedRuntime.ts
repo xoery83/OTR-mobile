@@ -20,6 +20,16 @@ export function createSustainedDevTripPorts(
     if (closed) throw new TripCreateError(503, "TRIP_SUSTAINED_DEV_CLOSED");
   };
   const create: TripCreatePort = {
+    ...(ports.create.parentReceipt
+      ? {
+          async parentReceipt(actor: string, trip: string) {
+            guard(actor);
+            const result = await ports.create.parentReceipt!(actor, trip);
+            guard(actor);
+            return result;
+          },
+        }
+      : {}),
     async create(actor, request) {
       guard(actor);
       if (!("formatVersion" in request) || request.formatVersion !== 2)

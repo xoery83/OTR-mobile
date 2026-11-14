@@ -1,0 +1,15 @@
+{
+  "status": "INPUTS_ARTIFACTS_COLLECTOR_TESTS_VERIFIED",
+  "sourceMain": "7c1301c6a2ac7bdfe22e3c00f31f747db2810977",
+  "hostCandidate": "978f02009544188b844870331aa1aa81b1b5d82b",
+  "inputChecks": 938,
+  "artifacts": {
+    "c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+    "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "c02-close.test.py": "76fb5bacfe66d4d648ae0b4d4a882eee9bba55e560c0082629da435c56c0ac8b"
+  },
+  "coreReaderAndImportLeavesUnchanged": true,
+  "collectorTests": "PASS",
+  "deploymentExecuted": false
+}

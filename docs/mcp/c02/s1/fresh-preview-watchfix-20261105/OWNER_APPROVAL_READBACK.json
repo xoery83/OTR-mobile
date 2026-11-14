@@ -1,0 +1,12 @@
+{
+  "method": "mcp__codex_app__read_thread",
+  "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "turnId": "01a1a88a-36e5-7771-953b-d22be354ddfb",
+  "messageId": "01a1a88a-37ad-71c2-8dcc-59afaec7c78b",
+  "itemType": "userMessage",
+  "role": "human_user",
+  "toolResultError": false,
+  "wrapperPreserved": true,
+  "platformRecognizedExecutionApproval": "PENDING_ROOT2_INDEPENDENT_SOURCE_AND_PLATFORM_REVIEW",
+  "parentParaphraseUsedAsSource": false
+}

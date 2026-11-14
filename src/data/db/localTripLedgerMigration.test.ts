@@ -50,7 +50,7 @@ it("normal67→68 upgrade and replay preserve every existing table and journal r
     const before = existing();
     const journal = sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
     await runMigrations(database);
-    expect(await getSchemaVersion(database)).toBe(68);
+    expect(await getSchemaVersion(database)).toBe(79);
     expect(existing()).toEqual(before);
     expect(
       sql.prepare("SELECT * FROM schema_migrations WHERE id<=67 ORDER BY id").all(),

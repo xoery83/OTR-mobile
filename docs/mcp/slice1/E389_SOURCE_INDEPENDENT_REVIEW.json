@@ -1,0 +1,28 @@
+{
+  "status": "NO_BLOCKER_FIVE_ENTRY_SCOPE_AFTER_STALE_BINDING_FIX",
+  "independentRegression": "REAL_REQUEST_UPDATE_RED_WITHOUT_FOUR_FIELDS_GREEN_THROUGH_EXISTING_EMPTY_PURE_PLANNER",
+  "testsPassed": 1,
+  "processHostSqlSessionConsoleCalls": 0,
+  "timingReview": "D=min(now+30min,controlLaunch+30min); existing control35min cleanup leaves >=5min; >10min remaining required before fixed artifacts",
+  "approvalReview": "Root source/Gate/window/client/op/digest preflight binds exact original bytes before prepare-fixed-window clock; no authority from offline simulated time",
+  "filesSHA256": {
+    "preflight-actual-owner-wire.py": "d7a1989286e8750cca0c32eb937820fc129d14d3030cf1039b720d87db9a2120",
+    "install-root-source-guard.py": "57d0928e3f9d412c658e64bb0bda66a1ac16b84ca1db124d9ee722f563777ab9",
+    "launch-own-control.py": "77d4e68ebb848caf76ab25fe00b0d83ea624e9d47a445c1bfda0ef2ef836bb86",
+    "activate-issuer.py": "5f1c96a7aca13f5fadafd6e7171f12c613dcd1f7c9b8a9183c64335bf2ec792b",
+    "prepare-fixed-window.py": "8126af38d2c7c7e007051ed0be255f2058e3bead968c79ac97d8b52181c3f670"
+  },
+  "notChecked": [
+    "MCP final Gate hash after new default and close pins update",
+    "Actual human approval bytes and live execution intentionally not present"
+  ],
+  "closedDefaultBindingReadback": {
+    "containerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+    "configSHA256": "0ebea28102b868a112bf410cc51fc8883cb249bc84cdfcc6f08ff1ce0e77fb66",
+    "image": "sha256:0ffd444c102405d3cb7844a40258dfa561d5b8b8af0add026233eb9580cf2d0a",
+    "checkedAt": "2026-11-02T04:11:43.589994+00:00",
+    "closeEntrySHA256": "471a338ae9a66cab8865b3bab00f2ad5f587737b62371cdbebf56ed0c4687f83",
+    "closePlanSHA256": "cb0db7f85270f157fa6e5954a1de0235b5bab61c2167ed27e4f64c51bbfe825a",
+    "sourceGuardInstalled": false
+  }
+}

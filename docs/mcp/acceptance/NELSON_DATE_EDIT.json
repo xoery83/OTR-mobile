@@ -4,9 +4,9 @@
   "auth": "INTERNAL_NORMAL_ACCOUNT_SESSION_NOT_REMOTE_OAUTH",
   "targetTrip": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
   "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
-  "observedAt": "2026-10-31T04:30:28.995Z",
+  "observedAt": "2026-10-31T09:13:48.260Z",
   "phase": "get_operation_status",
-  "nativeCheckpoint": "ACTUAL_NATIVE_OWNER_READY_BEFORE_THIS_QA_ACTION",
+  "nativeCheckpoint": "BLOCKED_DEVICE_AUTOMATION_NO_NATIVE_BEFORE_OR_AFTER_PASS",
   "nelsonTripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
   "itemId": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
   "sameOperationLookups": [
@@ -25,7 +25,7 @@
           "target": "ITEM"
         },
         "outcome": "UNKNOWN",
-        "error_code": "RECOVERY_UNAVAILABLE"
+        "error_code": "QUERY_SAME_OPERATION"
       },
       "status": {
         "version": "otr.mcp.status/1",
@@ -52,7 +52,7 @@
       "target": "ITEM"
     },
     "outcome": "UNKNOWN",
-    "error_code": "RECOVERY_UNAVAILABLE"
+    "error_code": "QUERY_SAME_OPERATION"
   },
   "failureClass": "ASSERTION"
 }

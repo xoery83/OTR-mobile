@@ -1,0 +1,19 @@
+{
+  "status": "DIRECT_AUTH_CHAT_HUMAN_COMBINED_APPROVAL_VERIFIED",
+  "sourceThreadId": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "sourceTurnId": "01a199f7-d751-7ad2-bd46-b9dc99377364",
+  "sourceMessageId": "01a199f7-d7cd-77c3-aa06-cfbed19f9c68",
+  "sourceQuestionCallId": "call_05e932d2b32b471ead09a95e70d0fcf4",
+  "answer": "\u6279\u51c6\u672c\u8f6e\u6709\u9650\u8fde\u63a5\u53ca\u4e0a\u8ff0\u7cbe\u786e\u4fdd\u5b58\u4e0e\u6d41\u7a0b\u8c03\u6574",
+  "executionGateSHA256": "e5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d",
+  "gateCommit": "7da5a4e6",
+  "windowId": "78c1610ecf5f43409106fb67ecd36489",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "expectedRevision": 1,
+  "maxWindowMinutes": 30,
+  "tokenMaxSeconds": 60,
+  "requiresFreshExactPreview": true,
+  "confirmInstalled": false,
+  "clockStarted": false
+}

@@ -1,0 +1,19 @@
+{
+  "status": "INDEPENDENT_SUPABASE_NOTES_AND_PRESERVATION_PASS_NOT_CONSUMER_PROOF",
+  "client": "ChatGPT",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "outcome": "APPLIED",
+  "revision": 3,
+  "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.\nSlice1 Fresh ChatGPT Notes QA verified.",
+  "otherRootFieldsAndFieldStateUnchanged": true,
+  "allItemChildrenUnchanged": true,
+  "receiptCount": 1,
+  "observedAt": "2026-11-02T09:25:32.560378+00:00",
+  "beforeRootSHA256": "364ff49b465a43e455fe0cfa97dc137ee36bb8a7e6fd6dfab8a03a6118755b61",
+  "afterRootSHA256": "2d7f8bb0b17e4c031f7687ccaf2e23a27776f56ae5a3dbb04d0353274b2f2572",
+  "receiptSHA256": "7dac9d3f647a4f1535cdeeca7b5bcf07312ebee3998bfb52837be25a49e447c9",
+  "businessPosts": 0
+}

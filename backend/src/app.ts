@@ -1,3 +1,5 @@
+import type { UniversalV3Execution } from "./universalV3Execution";
+import { universalV3IntakeBoundary, universalV3IntakePath, type UniversalV3Intake } from "./universalV3Intake";
 import { sourcePngPreparationBoundary, type SourcePngPreparationForRequest } from "./sourcePngPreparationHttp";
 import { mcpIngressBodyLimit } from "./mcpIngress";
 import { guestAdoptionBodyLimit, guestAdoptionHttpBoundary } from "./guestAdoptionHttp";
@@ -668,6 +670,8 @@ export type BackendDependencies = {
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   memberClaimPort?: MemberClaimAuthorityPort;
   universalImportPort?: UniversalPort;
+  universalV3Intake?: UniversalV3Intake;
+  universalV3Execution?: UniversalV3Execution;
   universalRuntimeForRequest?(
     request: Request,
     actorId: string,
@@ -2533,6 +2537,8 @@ export function createDevBackendHandler({
   tripPersonCloudCreatePort,
   memberClaimPort,
   universalImportPort,
+  universalV3Intake,
+  universalV3Execution,
   universalRuntimeForRequest,
   flightEnrichmentService,
   flightEnrichmentEnabled = false,
@@ -2704,6 +2710,34 @@ export function createDevBackendHandler({
           actor.id,
           captureRemoteProcessing,
         );
+      } else if (universalV3IntakePath.test(url.pathname)) {
+        route = "/v2/import-batches/:batchId/interpretations/intake";
+        const actor = await authenticate(request, gateway);
+        response = await universalV3IntakeBoundary(
+          request,
+          actor.id,
+          (account, trip) => isNormalAccount(actor)
+            ? gateway.canReadTrip(account, trip)
+            : Promise.resolve(false),
+          universalV3Intake,
+          universalV3Execution && {
+            ...universalV3Execution,
+            async available(scope, currentRequest) {
+              if (universalV3Execution.ordinary)
+                return universalV3Execution.available(scope, currentRequest);
+              const capability = await coreConnection?.read?.capabilities?.(scope.accountId, scope.tripId);
+              return capability?.activationState === "ENABLED" &&
+                capability.enabledAdmissionModes.includes("MANUAL") &&
+                capability.enabledCommands.includes("CREATE_ITEM") &&
+                await universalV3Execution.available(scope, currentRequest);
+            },
+          },
+          universalV3Execution?.ordinary
+            ? (account, trip) => isNormalAccount(actor)
+              ? gateway.canWriteTrip(account, trip)
+              : Promise.resolve(false)
+            : undefined,
+        );
       } else if (
         /^\/v2\/import-batches\/[^/]+\/interpretations(?:\/[^/]+)?$/.test(url.pathname)
       ) {
@@ -2859,7 +2893,8 @@ export function createDevBackendHandler({
           : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
       } else if (
         url.pathname === "/v2/trips" ||
-        /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname)
+        /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname) ||
+        /^\/v2\/trips\/[^/]+\/create-receipt$/.test(url.pathname)
       ) {
         route = "/v2/trips:create";
         const actor = await authenticateNormalAccount(request, gateway);
@@ -3105,6 +3140,30 @@ export function createDevBackendHandler({
                     "BACKEND_UNAVAILABLE",
                     "The backend is unavailable.",
                   );
+      const cause = error instanceof Error ? error.cause : null;
+      if (
+        normalized.status === 503 &&
+        cause &&
+        typeof cause === "object" &&
+        "stage" in cause &&
+        ["expense_replay", "expense_causal_base", "expense_execute"].includes(
+          String(cause.stage),
+        )
+      ) {
+        const code = "databaseCode" in cause ? cause.databaseCode : null;
+        console.error(
+          JSON.stringify({
+            level: "error",
+            event: "expense_backend_failure",
+            requestId,
+            stage: cause.stage,
+            databaseCode:
+              typeof code === "string" && /^(?:[A-Z0-9]{5}|PGRST[0-9]{3})$/.test(code)
+                ? code
+                : null,
+          }),
+        );
+      }
       response = json(normalized.status, {
         error: {
           code: normalized.code,

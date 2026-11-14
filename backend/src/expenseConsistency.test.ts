@@ -634,3 +634,49 @@ it.each([true, false])(
     expect(result.conflicts[0].changedGroups).toEqual(proof ? [] : ["DESCRIPTIVE"]);
   },
 );
+
+it.each(["42501", "PGRST202", "secret unsafe value"])(
+  "keeps only safe RPC diagnostics for %s without changing business rejection",
+  async (code) => {
+    const client = {
+      rpc: vi.fn(async () => ({
+        data: null,
+        error: { code, message: "private database values" },
+      })),
+    } as unknown as SupabaseClient;
+    await expect(execute(client)).rejects.toMatchObject({
+      message: "Supabase Dev financial evidence operation failed.",
+      cause: {
+        stage: "expense_replay",
+        databaseCode: code === "secret unsafe value" ? null : code,
+      },
+    });
+  },
+);
+
+it("prepares an unnamed participant by stable identity without rewriting the frozen CREATE intent or key", async () => {
+  const mocked = service();
+  const input = command();
+  input.envelope.observedServerRevision = 0;
+  input.envelope.boundExecutionRevision = 0;
+  input.envelope.patchOrIntent = {
+    type: "CREATE",
+    expense: {
+      ...base,
+      businessStatus: "RATE_REQUIRED",
+      participants: [{ ...base.participants[0], displayNameSnapshot: "" }],
+    },
+  };
+  const before = JSON.stringify(input);
+  await execute(mocked.client, input);
+  expect(JSON.stringify(input)).toBe(before);
+  const prepared = args(mocked.rpc);
+  expect(prepared.envelope_value).toEqual(input.envelope);
+  expect(prepared.response_body_value).toMatchObject({
+    entity: {
+      participants: [{ ...base.participants[0], displayNameSnapshot: memberId }],
+      original: base.original,
+      splits: base.splits,
+    },
+  });
+});

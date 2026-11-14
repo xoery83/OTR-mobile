@@ -1,0 +1,17 @@
+{
+  "status": "CUA_ORIGIN_REVIEW_UNAVAILABLE_ABORT_CONSUMER_NOT_STARTED",
+  "observedAt": "2026-11-03T08:00:41.813605+00:00",
+  "attempts": 2,
+  "eachOutcome": "Automatic browser security review timed out without decision; no page observation authority. Not a safety rejection.",
+  "action": "domSnapshot only on existing ChatGPT settings page",
+  "browserReconnectClicked": false,
+  "browserOtpRequested": false,
+  "consumerConsent": false,
+  "refreshAttempted": false,
+  "travelTaskSent": false,
+  "businessApply": false,
+  "normalControlCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED; selected835 grant independently absent; globalQA lock released",
+  "rootClose": "REQUESTED_AFTER_OWN_RECONCILIATION",
+  "T_D_Reset": false,
+  "normalControlProcessExitMeaning": "Intentional CANCEL propagates exit1; owning cleanup journal proves cleanup PASS, not an unresolved session"
+}

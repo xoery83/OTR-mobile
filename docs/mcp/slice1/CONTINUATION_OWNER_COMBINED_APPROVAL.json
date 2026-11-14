@@ -1,0 +1,16 @@
+{
+  "sourceThread": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "humanMessageId": "01a199f7-d7cd-77c3-aa06-cfbed19f9c68",
+  "humanTurnId": "01a199f7-d751-7ad2-bd46-b9dc99377364",
+  "questionCall": "call_05e932d2b32b471ead09a95e70d0fcf4",
+  "answer": "批准本轮有限连接及上述精确保存与流程调整",
+  "gateSHA256": "e5cf4d1b796568607e60052ef64bf8f4dd6839c57a78e633a051a312b344303d",
+  "gateCommit": "7da5a4e6",
+  "windowId": "78c1610ecf5f43409106fb67ecd36489",
+  "exactConditionalNotesApproved": true,
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "expectedRevision": 1,
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "singletonInstalled": false,
+  "applyCount": 0
+}

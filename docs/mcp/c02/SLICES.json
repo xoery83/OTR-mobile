@@ -1,0 +1,138 @@
+{
+  "package_id": "MCP-C02",
+  "updated_at": "2026-11-03T18:11:29.331160+00:00",
+  "dri": "MCP / 01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "overall": "IN_PROGRESS_MIXED_SLICE_STATES_NOT_COMPLETED",
+  "slices": [
+    {
+      "slice_id": "C02-S1",
+      "current_code": [
+        "mcp/c02Host.ts",
+        "mcp/c02Execution.ts",
+        "scripts/mcp/build-c02-package.mjs",
+        "scripts/mcp/c02-close.py",
+        "scripts/mcp/prepare-c02-window.py",
+        "scripts/mcp/build-c02-control.py"
+      ],
+      "evidence": [
+        "docs/mcp/c02/ACCEPTANCE.json",
+        "docs/mcp/c02/s1/BUILD_MANIFEST.json",
+        "docs/mcp/c02/s1/PACKET_IDENTITIES.json",
+        "docs/mcp/c02/s1/EXECUTION_PACKAGE.md",
+        "docs/mcp/c02/s1/ROOT_QUALIFICATION.json",
+        "docs/mcp/c02/s1/SOURCE_RECEIPT.json",
+        "docs/mcp/c02/s1/software-release/MCP_VERIFIED.json",
+        "docs/mcp/c02/s1/access-preflight/CONSUMER_MATERIALS_READY.json",
+        "docs/mcp/c02/s1/access-preflight/current-11faa/INDEPENDENT_READBACK.json",
+        "docs/mcp/c02/s1/access-preflight/current-11faa/OWNER_SOURCE_BINDING.json",
+        "docs/mcp/c02/s1/access-preflight/A2F_E2E_ACCEPTANCE.json",
+        "docs/mcp/c02/s1/access-preflight/LOADER_COMPATIBILITY_INDEPENDENT_REVIEW.json",
+        "docs/mcp/ownership-v4/CONSUMER_PREFLIGHT_20261104.json"
+      ],
+      "met": [
+        "Existing S1 local model/regressions/independent review retained without rerun",
+        "MCP prepared unmounted Host+loader software, canonical command/confirmation guard, immutable issuer/close ports and private window binder",
+        "Auth ACK local composition boundary; Root Core ACK separate S2 scope",
+        "Latest920f Import baseline reproduced and preserved, no shared lock held",
+        "Auth incremental SCOPED_NO_BLOCKER_SOURCE_ONLY; fifteen new boundary tests and pure publisher/close regression PASS",
+        "Root bounded current21:47Z tuple/source/close compatibility ACK; original receipt9ab frozen, metadata drift repaired without business rebuild",
+        "Owner approved exact software-only fe7508f4; Root actual-source verification/execution requested",
+        "fe750 fulfilled: actual software newdefault a96a/image0b468/configf3d937 and unchanged-close probe PASS; short locks released",
+        "Actual Owner c231 finite connection+Preview source verified by Root; both synthetic attachments uploaded and ordinary task drafted, no prompt or Session started",
+        "Latest guarded C02 loader software deployed, independent16tests/NO_BLOCKER, full newdefault0c723 closed proof",
+        "Actual a2f EMPTY normalQA Session/control and early issuer/Console/Host/timer cleanup verified",
+        "20261104 bounded readonly ChatGPT settings observation succeeded; no actions or authority changes"
+      ],
+      "unique_blocker": "Readonly ChatGPT page now PASS; connection requires authentication update. Fresh Hosted/access qualification and current discovery remain unqualified; no live window/Save authority.",
+      "next": "Root2 readonly current software/runtime/close qualification request MCP-C02-S1-HOSTED-QUALIFY-20261104-001; then precise unused access authorization, real discovery before Fresh Chat. No old window replay.",
+      "acceptance": {
+        "local": "SUPPORTED_P3_PACKET_AND_FROZEN_HOST_SDK_PASS",
+        "hosted": "GUARDED_SOFTWARE_DEPLOYMENT_AND_EMPTY_RUNTIME_CLOSE_PASS",
+        "consumer_e2e": "NOT_RUN_CUA_INFRASTRUCTURE_BLOCKED_BEFORE_RECONNECT",
+        "native": "NOT_RUN_NO_NEW_CLOUD_OPERATION",
+        "consumer_preflight": "PAGE_READ_PASS_REAUTH_REQUIRED_NO_RECONNECT"
+      },
+      "event_id": "mcp-c02-s1-a2f8-20261103-closed-001",
+      "mission_control_ack": "SUBMITTED_NOT_ACKNOWLEDGED",
+      "mission_control_ack_evidence": "Pending structured ACK for this final event; older ACKs do not cover this window.",
+      "software_deployment_event_id": "mcp-c02-s1-software-deploy-20261103-owner-approved-001",
+      "software_deployment_approval": "SOFTWARE_ONLY_APPROVED_NO_FINITE_ACCESS_OR_APPLY",
+      "latest_default": "0c723151\u2026/68aa588f\u2026/eb99ebf6\u2026; full A2F_FINAL_DEFAULT_CLOSED.json. Fresh CAS required if another lane deploys.",
+      "previous_event_id": "mcp-c02-s1-packet-20261103-handoff-001"
+    },
+    {
+      "slice_id": "C02-S2",
+      "current_code": [
+        "mcp/sparseStay.ts",
+        "mcp/fieldAdapter.ts internal prepareSparseStayUpdate",
+        "mcp/mutation.ts default-closed sparse guard",
+        "mcp/goldenReadback.ts complete room-set proof"
+      ],
+      "evidence": [
+        "docs/mcp/c02/s2/ACCEPTANCE.json",
+        "docs/mcp/c02/s2/MCP_ADAPTER_REVIEW.json",
+        "docs/mcp/c02/s2/CORE_DEPENDENCY.json",
+        "docs/mcp/c02/s2/SOURCE_INTEGRATION_PACKET.md",
+        "docs/mcp/c02/s2/SOURCE_INTEGRATION_REVIEW.json"
+      ],
+      "met": [
+        "Owning Core main4c8d0fd9 delivered; original sparse interface gap resolved",
+        "Reviewed default-closed Adapter cc9997fc;103affected MCP +21owning tests PASS",
+        "Latest remote main74f182c9 minimal candidate98470d01;59focused tests/typecheck/lint/build PASS, final independent NO_BLOCKER"
+      ],
+      "unique_blocker": "Root1 source integration ACK pending; then independent qualified Hosted/Consumer activation, not missing Core Source",
+      "next": "Root1 integrates98470d01+d3f6864f, returns main SHA/compatibility; S1 separately proceeds current Hosted qualification",
+      "acceptance": {
+        "local": "PASS_REVIEWED_UNMOUNTED",
+        "latest_main_compatibility": "PASS_59_TESTS_FINAL_INDEPENDENT_NO_BLOCKER",
+        "hosted": "NOT_RUN",
+        "consumer_e2e": "NOT_RUN",
+        "native": "NOT_RUN"
+      },
+      "event_id": "mcp-c02-s2-source-20261104-ready-001",
+      "mission_control_ack": "NOT_YET_SUBMITTED",
+      "mission_control_ack_evidence": "MISSION_CONTROL_ACKS.json",
+      "local_commit": "cc9997fc",
+      "source_candidate": "98470d017e138dbed68dcb95af820555354d2559",
+      "source_packet_commit": "d3f6864f3356f397cee8fa6618d8298b9711d705"
+    },
+    {
+      "slice_id": "C02-S3",
+      "current_code": [
+        "mcp/fieldAdapter.ts",
+        "mcp/mutation.ts",
+        "mcp/goldenReadback.ts",
+        "mcp/guide.ts",
+        "mcp/mutation.test.ts",
+        "mcp/structuredPlace.ts",
+        "mcp/structuredPlace.test.ts"
+      ],
+      "evidence": [
+        "docs/mcp/c02/s3/ACCEPTANCE.md",
+        "docs/mcp/c02/s3/STRUCTURED_PLACE_CONTRACT.md"
+      ],
+      "met": [
+        "Mandatory full legal EditBase + current DTO/revision check",
+        "Simple manual label/address path saves via existing Core; omission retained, explicit null clear",
+        "Local formal receipt recovery/readback/room/time/unrelated provenance assertions PASS; independent NO_BLOCKER",
+        "Nine authored structured leaves mapped from full Base; 8 local tests PASS, not exposed by public tools",
+        "Internal existing executor now verifies current full record+exact patch/payload on Preview/Apply; original Receipt/recovery/readback PASS",
+        "Existing opt-in fields Tool and FIELD_UPDATE batch path support structured manual patch; actual standard SDK single/batch original-ID recovery PASS"
+      ],
+      "unique_blocker": null,
+      "next": "P4 Rental field/provenance coverage audit using existing commands/readers, local only; no Provider or shared S1 artifact changes",
+      "limits": "Structured manual local opt-in candidate available; source/matched/Provider facts remain blocked. Frozen Hosted S1 profile excludes field tools.",
+      "acceptance": {
+        "local": "CORE_RECEIPT_READBACK_PASS_SIMPLE_MANUAL_TEXT_ONLY",
+        "hosted": "NOT_RUN",
+        "consumer_e2e": "NOT_RUN",
+        "native": "NOT_RUN_NO_NEW_CLOUD_OPERATION",
+        "structured_contract": "LOCAL_STANDARD_SDK_PREVIEW_APPLY_RECEIPT_RECOVERY_PASS_OPT_IN_ONLY"
+      },
+      "event_id": "mcp-c02-s3-manual-place-20261103-local-pass-001",
+      "commit": "3aa4107d",
+      "mission_control_ack": "PENDING_VERIFICATION",
+      "mission_control_ack_evidence": "MISSION_CONTROL_ACKS.json"
+    }
+  ]
+}

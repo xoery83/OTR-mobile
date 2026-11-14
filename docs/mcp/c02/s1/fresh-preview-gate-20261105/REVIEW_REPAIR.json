@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-11-04T19:43:21.321718+00:00",
+  "status": "LOCAL_FIX_PASS_INDEPENDENT_REREVIEW_REQUIRED",
+  "sourceCandidateReviewed": "39977775890f84af7f90174e7bb7aad0783176ab",
+  "finding": "BLOCKER: actual config_cas.py validate_actual_owner/run path retained old generic Root2 source because initial generator/checker covered only normal-control and binder.",
+  "rootCause": "Manual two-entry guard list omitted the third actual runtime authority guard.",
+  "fix": "Add config_cas.py to source literal/UNBOUND fail-closed transformation and focused source tests. Checker discovers all validate_actual_owner functions in17 derived Python sources and requires exact known three-entry set, preventing another silent omission.",
+  "actualGuardEntrypoints": [
+    "c02-normal-control.py",
+    "prepare-c02-access-window.py",
+    "operators/config_cas.py"
+  ],
+  "pureCases": 21,
+  "newCodeScope": "No authority expansion; only close obsolete-source path and verify all3 gates.",
+  "unchanged": {
+    "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+    "scopeSHA256": "75af8c314c86d3bef4050572a8cd1467e8855a1f720e58889fb0f4fe802c8045",
+    "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+    "taskEvidenceSHA256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6",
+    "OwnerSource": null,
+    "T": null,
+    "command": null,
+    "confirmations": []
+  },
+  "proposalOrdinalClarification": "OWNER_GATE.md hash stays fixed as directed. Its wording two existing guards refers to originally described normal-control/binder; repaired execution protection additionally covers the actual CAS guard. Authority, user-visible task, identity and timing remain identical; all three must pass before execution.",
+  "stagePreservation": "Original ignored generated stage retained. Corrected derived bytes use a distinct local owner-guards-v2 directory; neither stage executed.",
+  "independentReview": "Previous BLOCKER remains until independent reviewer rechecks fixed candidate; local focused PASS is not Review PASS.",
+  "AuthHostedConsumerActions": 0
+}

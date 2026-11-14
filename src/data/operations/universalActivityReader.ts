@@ -10,6 +10,66 @@ import type {
   UniversalImportResult,
 } from "../api/universalImportContracts";
 
+import type { UniversalV3ExecutionStatus } from "../api/universalV3Contracts";
+import {
+  projectUniversalV3Activity,
+  readV3UnknownCandidates,
+  type V3SaveObservation,
+} from "./universalV3Activity";
+export type V3ActivityProgress = ReturnType<typeof projectUniversalV3Activity>;
+
+// Read-only V3 history. Never use the V2 context endpoint for a V3 Batch.
+export async function readV3Activities(
+  jobs: readonly CaptureJobReadModel[],
+  dependencies: {
+    getAccountId(): Promise<string>;
+    isCurrent(): boolean;
+    execution(
+      context: Awaited<ReturnType<typeof captureAccountRequestContext>>,
+      batchId: string,
+    ): Promise<UniversalV3ExecutionStatus | null | undefined>;
+    saves(
+      job: CaptureJobReadModel,
+      result: Extract<UniversalV3ExecutionStatus, { state: "REVIEW_READY" }>,
+    ): Promise<Record<string, V3SaveObservation>>;
+    onObservation(batchId: string, progress: V3ActivityProgress): void;
+  },
+) {
+  const generation = getAccountGeneration();
+  const current = () => dependencies.isCurrent() && generation === getAccountGeneration();
+  for (const job of jobs) {
+    if (!current()) break;
+    const trip = job.batch.context.tripPrior?.id ?? job.assignedTripId;
+    if (!trip || !job.allInputsAccepted) continue;
+    let execution: UniversalV3ExecutionStatus | null = null;
+    try {
+      const context = await captureAccountRequestContext(trip, dependencies.getAccountId);
+      if (!current()) break;
+      if (context.accountId !== job.batch.accountId) continue;
+      const state = await dependencies.execution(context, job.batch.batchId);
+      if (state === undefined) continue;
+      execution = state;
+      if (!current()) break;
+      dependencies.onObservation(job.batch.batchId, projectUniversalV3Activity(state));
+      if (state?.state === "REVIEW_READY" && state.candidates.length) {
+        const saves = await dependencies.saves(job, state);
+        if (!current()) break;
+        dependencies.onObservation(
+          job.batch.batchId,
+          projectUniversalV3Activity(state, saves),
+        );
+      }
+    } catch {
+      if (current() && execution)
+        dependencies.onObservation(
+          job.batch.batchId,
+          projectUniversalV3Activity(execution, {}, true),
+        );
+      // No observation is safer than calling an unreachable task failed or complete.
+    }
+  }
+}
+
 // Sequential context GETs; completion reads are opt-in and never dispatch or mutate.
 export async function readUniversalActivities(
   jobs: readonly CaptureJobReadModel[],
@@ -29,8 +89,7 @@ export async function readUniversalActivities(
   },
 ): Promise<Record<string, UniversalTaskActivity>> {
   const generation = getAccountGeneration();
-  const current = () =>
-    dependencies.isCurrent() && generation === getAccountGeneration();
+  const current = () => dependencies.isCurrent() && generation === getAccountGeneration();
   const observed: Record<string, UniversalTaskActivity> = {};
   const ready: {
     job: CaptureJobReadModel;
@@ -92,18 +151,14 @@ export async function readDefaultUniversalActivities(
   jobs: readonly CaptureJobReadModel[],
   isCurrent: () => boolean,
   onObservation?: (batchId: string, activity: UniversalTaskActivity) => void,
-  onResult?: (
-    job: CaptureJobReadModel,
-    result: UniversalImportResult,
-  ) => Promise<void>,
+  onResult?: (job: CaptureJobReadModel, result: UniversalImportResult) => Promise<void>,
+  onV3Observation?: (batchId: string, progress: V3ActivityProgress) => void,
 ) {
   const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
   if (!baseUrl || !isCurrent()) return {};
-  const [{ requireActiveUserId }, { createUniversalImportTransport }] =
-    await Promise.all([
-      import("../auth/authRepository"),
-      import("../api/universalImportTransport"),
-    ]);
+  const [{ requireActiveUserId }, { createUniversalImportTransport }] = await Promise.all(
+    [import("../auth/authRepository"), import("../api/universalImportTransport")],
+  );
   if (!isCurrent()) return {};
   const transport = createUniversalImportTransport(requireActiveUserId, {
     baseUrl,
@@ -111,7 +166,47 @@ export async function readDefaultUniversalActivities(
       if (!isCurrent()) throw Error("UNIVERSAL_ACTIVITY_STALE");
     },
   });
-  return readUniversalActivities(jobs, {
+  let legacyJobs = jobs;
+  if (
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" &&
+    onV3Observation
+  ) {
+    const legacyIds = new Set<string>();
+    await readV3Activities(jobs, {
+      getAccountId: requireActiveUserId,
+      isCurrent,
+      execution: async (context, batchId) => {
+        const capability = await transport.localFirstCapability(context, batchId);
+        if (!capability.localFirst) {
+          legacyIds.add(batchId);
+          return undefined;
+        }
+        return capability.existing;
+      },
+      saves: async (job, result) => {
+        const { openUniversalV3Review } = await import("./universalV3Review");
+        const unknown = await readV3UnknownCandidates(
+          job,
+          result.candidates.map((c) => c.candidateId),
+        );
+        if (!isCurrent()) return {};
+        const owner = await openUniversalV3Review(job);
+        const observations: Record<string, V3SaveObservation> = {};
+        for (const candidate of result.candidates) {
+          if (!isCurrent()) break;
+          const observed = await owner.check(candidate);
+          observations[candidate.candidateId] =
+            observed !== "VERIFIED" && unknown.has(candidate.candidateId)
+              ? "OUTCOME_UNKNOWN"
+              : observed;
+        }
+        return observations;
+      },
+      onObservation: (batchId, progress) => onV3Observation?.(batchId, progress),
+    });
+    legacyJobs = jobs.filter((job) => legacyIds.has(job.batch.batchId));
+  }
+  return readUniversalActivities(legacyJobs, {
     getAccountId: requireActiveUserId,
     isCurrent,
     context: transport.context,

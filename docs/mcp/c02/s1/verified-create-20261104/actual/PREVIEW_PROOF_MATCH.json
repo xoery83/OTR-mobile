@@ -1,0 +1,18 @@
+{
+  "status": "SERVER_PREVIEW_HASHES_MATCH_ORIGINAL",
+  "windowId": "eed8fa4b93044f31a5d03244bea1051b",
+  "matchedRecord": {
+    "timestamp": "2026-11-03T21:53:57.046855271Z",
+    "requestId": "2fc80228-48a5-4a03-8220-f5286d5ef69c",
+    "status": 200,
+    "durationMs": 1864,
+    "tool": "create_trip_item",
+    "responseProof": {
+      "version": "otr.mcp.response-proof/1",
+      "kind": "PREVIEW",
+      "inputSHA256": "d0092f662a03971a1ca24b0ed07961f50572a46abd112347242f62d72bf589f7",
+      "outputSHA256": "ff5d986caccc96d946588865d90672ed0b90c3f3b12fba7185b60038a1434c0f",
+      "previewDigest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "status": "ACTUAL_ADVANCE_SDK_SOURCE_BOUND_PENDING_FINAL_REVIEW_NOT_RUNTIME_APPROVAL",
+  "recordedAt": "2026-11-05T01:05:45.773629+00:00",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "actualHumanSource": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "messageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+    "wireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+    "rawTextSHA256": "5d42b013912d183f14fcdc9e12ed013bad3c48d2c298dc9030d62b484bcc5b6d",
+    "contextSHA256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+    "textUnchanged": true,
+    "fakeQuestionOrGateHash": false,
+    "relabeledRoot2": false
+  },
+  "SDKScopeMapping": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/SDK_SOURCE_REVISION_BOUNDARY.json",
+    "sha256": "c1b087c8681f93d700bb3f336a3f28cb40a6f1c6bd51c1393dfe65191c8ed76e",
+    "meaning": "Same actor/original scopes/one nextPreview; source-flow interpretation only, no runtime/platform approval"
+  },
+  "OWNER_SOURCE": {
+    "path": "docs/mcp/c02/s1/own-session-sdk-20261105/OWNER_SOURCE.json",
+    "sha256": "4cfb3e49a5e6ee33606da5011772fdd04ca3bb2c6f541f09ee67fa84e1bdc387"
+  },
+  "sourceGuards": {
+    "c02-normal-control.py": "dc67096380c8113e9216edf3dca5ec1c46b34b8495f8139aa6246f3497316673",
+    "prepare-c02-access-window.py": "06206d5c3786a6c56686fe539a2f825f3d100c50e4208d6f4aea701355232486",
+    "operators/config_cas.py": "ed2f4782506095b2be5b4426adaf247901bc21682f788fd0dbfecf3220b074db"
+  },
+  "validation": "Pure extracted3guards accept exact original human bytes; UNBOUND/genericold/wrongscope/Save reject. Not actualruntime binding/Root2readiness.",
+  "platformApproved": false,
+  "T": null,
+  "SaveApproved": false
+}

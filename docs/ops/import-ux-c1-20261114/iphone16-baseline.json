@@ -1,0 +1,16 @@
+{
+  "deviceModel": "iPhone 16 Pro",
+  "deviceId": "89935253-B3B0-4851-ADCA-87AFED548C7E",
+  "bundleId": "com.xoery.otrmobile.uxc1iphone16",
+  "appName": "OTR DEV",
+  "backend": "https://api-dev.xoery.art",
+  "normalDevLogin": true,
+  "sessionCopied": false,
+  "sqliteCopied": false,
+  "keychainCopied": false,
+  "privateOriginalsCopied": false,
+  "nativeEntry": "expo-router/entry",
+  "providerTransport": "product real DEV transport; no synthetic Provider seam",
+  "localBatchCloudSync": "not implemented by this slice",
+  "primaryDevicePersistent": true
+}

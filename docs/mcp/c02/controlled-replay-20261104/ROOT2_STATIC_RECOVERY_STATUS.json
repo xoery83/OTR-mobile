@@ -1,0 +1,70 @@
+{
+  "status": "NON_SENSITIVE_STATIC_ARTIFACTS_RECOVERED_NO_AUTHORITY",
+  "b0b7StaticFiles": {
+    "c02-close.py": {
+      "sha256": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/c02-close.py",
+      "source": "Host retained exact static artifact"
+    },
+    "c02-timers.py": {
+      "sha256": "3339755463e9836a75e2226697c4906f7c476e194f939bd7e12267050d94ffb7",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/c02-timers.py",
+      "source": "Host retained exact static artifact"
+    },
+    "c02-host.mjs": {
+      "sha256": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/c02-host.mjs",
+      "source": "Host retained exact static artifact"
+    },
+    "operators/deploy.py": {
+      "sha256": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/operators/deploy.py",
+      "source": "Host retained exact static artifact"
+    },
+    "operators/prepare_cas.py": {
+      "sha256": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/operators/prepare_cas.py",
+      "source": "Host retained exact static artifact"
+    },
+    "operators/config_cas.py": {
+      "sha256": "52cacbaea91c2bd22976937bb6d158a5763e93aedcde71d947552aa1f57f7940",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/operators/config_cas.py",
+      "source": "MCP committed static source"
+    },
+    "operators/restore.py": {
+      "sha256": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/operators/restore.py",
+      "source": "Host retained exact static artifact"
+    },
+    "operators/universal_runtime_close.py": {
+      "sha256": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/operators/universal_runtime_close.py",
+      "source": "Host retained exact static artifact"
+    },
+    "c02-normal-control.py": {
+      "sha256": "394609657f02a270e7f2a106e7080170ff9478301d41133ede3dabd7b2bd4ad5",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/c02-normal-control.py",
+      "source": "MCP committed static source"
+    },
+    "prepare-c02-access-window.py": {
+      "sha256": "edc65c71942b4645d4d345bb977fa07dae4cfc6a9787bd2754f11df2fbb260ef",
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/b0b7-static/prepare-c02-access-window.py",
+      "source": "MCP committed static source"
+    }
+  },
+  "b0b7MissingNotRecovered": [
+    "SCOPE.json",
+    "c02-timers.test.py",
+    "normal-control.mts"
+  ],
+  "candidateHost": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-static-recovery/candidate-68a54bb4-c02-host.mjs",
+    "sha256": "68a54bb4eacbc0a74b7832e04751cc1ca5fcbcb82858141d143797175bcbe973",
+    "qualifiedImage": "sha256:5a33c03597da26d655a417e5a36b2277f99d2b3132db1dd15ebcbdd0dd59c058"
+  },
+  "c2d7UnfrozenDraftThreeHelpers": "NOT_RETAINED_NOT_REVIEWED_BY_ROOT2; historical72casePASS cannot qualify a current full package",
+  "dynamicBindingsFetched": false,
+  "tokensOrSessionsFetched": false,
+  "executionAuthorized": false,
+  "oldWindowReusable": false
+}

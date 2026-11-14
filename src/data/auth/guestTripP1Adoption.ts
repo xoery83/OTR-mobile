@@ -8,6 +8,7 @@ import { createGuestAdoptionTransport } from "./guestAdoptionTransport";
 import { guestVerificationSession } from "./authRepository";
 import { assertAccountRequestGeneration } from "./accountRequestContext";
 import { revokeSupabaseDevSession, SupabaseDevAuthError } from "./devSupabaseAuth";
+import { coreUuid } from "@/domain/trip/tripCoreV2";
 
 // Retain the attempt before its first local write; every Retry keeps the same UUID.
 // This flow never installs a Session, deletes source data or resumes after publication.
@@ -16,6 +17,7 @@ export async function prepareGuestTripP1Adoption(
   confirmedTargetAccountId: string,
   generation: number,
   signal: AbortSignal,
+  resume?: { adoptionId: string; cancel(): Promise<void> },
 ) {
   const session = JSON.parse(JSON.stringify(inputSession)) as LocalSession;
   if (!session.identity || confirmedTargetAccountId !== session.identity.userId)
@@ -25,7 +27,7 @@ export async function prepareGuestTripP1Adoption(
     assertAccountRequestGeneration({ accountId: confirmedTargetAccountId, generation });
   };
   check();
-  const adoptionId = createUuid();
+  const adoptionId = resume === undefined ? createUuid() : coreUuid.parse(resume.adoptionId);
   let inventory: Awaited<ReturnType<typeof freezeGuestHandoffInventory>> | undefined;
   let checkpoint: Awaited<ReturnType<typeof prepareGuestHandoffCheckpoint>> | undefined;
   let recovery: Awaited<ReturnType<typeof openGuestAdoptionRecovery>> | undefined;
@@ -143,6 +145,12 @@ export async function prepareGuestTripP1Adoption(
       return exclusive(async () => {
         if (phase !== "PREPARED")
           throw Error("GUEST_ADOPTION_AUTHORITATIVE_STATUS_REQUIRED");
+        if (resume) {
+          await resume.cancel();
+          await inventory?.resumeGuestBeforePublication();
+          phase = "CANCELLED";
+          return;
+        }
         if (grantRequested && !serverCancelled) {
           const { resources: _resources, ...expected } = checkpoint!.preflight;
           await transport!.cancel(expected);

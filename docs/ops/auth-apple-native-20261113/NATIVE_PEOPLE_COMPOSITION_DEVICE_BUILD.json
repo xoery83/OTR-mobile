@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "a50a9fd9",
+  "team": "3K49Z2Q5X7",
+  "bundleIdentifier": "art.xoery.otr",
+  "strictSignature": "PASS",
+  "actualScopeFirstPeopleBundle": "PASS",
+  "jsSHA256": "9dfd76b01ae56306cc739905c397926013ab629461ac37eb55bef3845b9bcb70",
+  "binarySHA256": "5f6696da59aac4e899f13bb7972218dbbf319ff84c7d06fc13dcca18d103196c",
+  "qaScope": "Normal read-only qualification; no Add or adoption replay"
+}

@@ -1,0 +1,32 @@
+{
+  "originalPayloadUnchanged": true,
+  "allCoreQueueCompleted": true,
+  "coreQueueCount": 19,
+  "sixOriginalHashesUnchanged": true,
+  "originals": [
+    {
+      "bytes": 218,
+      "sha256": "ea83d3f8b5662bac52e652587ceda133b654fd8da50808c1e7c5ec89b2b199e7"
+    },
+    {
+      "bytes": 17226,
+      "sha256": "f803f82974f7053717b49b69a2abc297210b2e1c45ba70c45bc24a49ed7fc4df"
+    },
+    {
+      "bytes": 21480,
+      "sha256": "9e873eb9af30bb432146319db4e96e66d83ee8ce825926050949ad6e50d51e60"
+    },
+    {
+      "bytes": 50064,
+      "sha256": "79febdf86a8c15bc898c0306ff909392887f3cabfd0ea0dd4be29a333452f860"
+    },
+    {
+      "bytes": 35051,
+      "sha256": "1a82c5c61cbd583d24b3475584f75be03435cbb30ed238e42943863982a0c698"
+    },
+    {
+      "bytes": 950,
+      "sha256": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da"
+    }
+  ]
+}

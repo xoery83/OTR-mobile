@@ -1,0 +1,16 @@
+{
+  "status": "MCP_SLICE1_CONFIG_CAS_HEALTHY",
+  "phase": "CONFIRM",
+  "containerId": "53f22c61fcfb865b6b235c2f83118c5688cad4cdfa27068c3f524f75e91ebe2e",
+  "defaultContainerId": "dc58a1f22b5b47d5f2da85a19f2fd8a5a024b4fb5314606fbecb85226757a950",
+  "configSHA256": "714d19ca6009b338f985be4bcdc9473e7103921da3e1e5ec7a8d1c4009352e81",
+  "deadlineMs": 1793597684999,
+  "closePlanPublishedBeforeServe": true,
+  "approvalRecordSHA256": "38c1441d841241cb73f8cab2aecbebefd3104e708ea81f0f9443d352fd082d9d",
+  "deliveryTrace": {
+    "readyAt": "2026-11-02T05:16:05.096369+00:00",
+    "acquiredAt": "2026-11-02T05:16:05.097056+00:00",
+    "mutationFinishedAt": "2026-11-02T05:16:19.000342+00:00",
+    "releasedAt": "2026-11-02T05:16:19.000371+00:00"
+  }
+}

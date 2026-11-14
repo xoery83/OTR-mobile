@@ -2,6 +2,7 @@ import { readReviewedP1Gate, readCoreGate, type CoreGateMode } from "./tripSusta
 import { isReviewedP1Gate, normalManualCapabilities } from "./tripNormalP1Policy";
 import { z } from "zod";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import { authorizedTripVersionFromCollection } from "../../src/domain/trip/tripAuthorizedVersion";
 import {
   coreClosedCapabilities,
   coreCapabilitiesSchema,
@@ -83,6 +84,7 @@ export function createCorePgReader(
     actorAccountId: string,
     tripId: string,
     ordinaryOrderVersion?: 1,
+    localDocumentMetadata = false,
   ) {
     coreUuid.parse(actorAccountId);
     coreUuid.parse(tripId);
@@ -95,6 +97,8 @@ export function createCorePgReader(
         await lease.query("SET LOCAL lock_timeout='1000ms'");
         await lease.query("SET LOCAL TIME ZONE 'UTC'");
         await setCoreReadIdentity(lease, actorAccountId, tripId);
+        if (gateMode?.sustainedDev)
+          await lease.query("SELECT set_config('otr.core.manual_compat','READ',true)");
         const actor = await requireCoreReadActor(lease, actorAccountId, tripId, gateMode);
         const state = (
           await lease.query(
@@ -148,6 +152,7 @@ export function createCorePgReader(
           rights.ledgerExpenseIds,
           rights.sourceEvidenceRefs,
           ordinaryOrderVersion,
+          localDocumentMetadata,
         );
         await assertCoreReadScope(lease, actorAccountId, tripId, gateMode);
         await lease.query("COMMIT");
@@ -191,6 +196,8 @@ export function createCorePgReader(
             await lease.query("SELECT set_config('otr.core.operation',$1,true)", [
               operationId,
             ]);
+          if (gateMode?.sustainedDev)
+            await lease.query("SELECT set_config('otr.core.manual_compat','READ',true)");
           const allowed = async () =>
             (
               await lease.query(
@@ -264,7 +271,7 @@ export function createCorePgReader(
                     ? ["REVIEWED_SOURCE"]
                     : reviewed
                       ? ["MANUAL", "REVIEWED_SOURCE"]
-                      : ["MANUAL"],
+                      : normal && manual!.importEnabled ? ["MANUAL", "IMPORT"] : ["MANUAL"],
                 sourceEvidenceAvailable: !!reviewed,
               })
             : coreClosedCapabilities;
@@ -294,8 +301,27 @@ export function createCorePgReader(
         accessRevision: current.collection.manifest.accessRevision,
       };
     },
-    async collection(actorAccountId: string, tripId: string, ordinaryOrderVersion?: 1) {
-      return (await snapshot(actorAccountId, tripId, ordinaryOrderVersion)).collection;
+    async collection(
+      actorAccountId: string,
+      tripId: string,
+      ordinaryOrderVersion?: 1,
+      localDocumentMetadata = false,
+    ) {
+      return (await snapshot(actorAccountId, tripId, ordinaryOrderVersion, localDocumentMetadata)).collection;
+    },
+    async authorizedVersion(
+      actorAccountId: string,
+      tripId: string,
+      ordinaryOrderVersion?: 1,
+      localDocumentMetadata = false,
+    ) {
+      const { collection } = await snapshot(actorAccountId, tripId, ordinaryOrderVersion, localDocumentMetadata);
+      return authorizedTripVersionFromCollection(
+        collection,
+        actorAccountId,
+        tripId,
+        hash,
+      );
     },
     async item(actorAccountId: string, tripId: string, itemId: string) {
       coreUuid.parse(itemId);

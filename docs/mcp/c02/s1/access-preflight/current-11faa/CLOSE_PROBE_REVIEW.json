@@ -1,0 +1,27 @@
+{
+  "status": "LOCAL_CLOSE_PROBE_METADATA_REBIND_NO_BLOCKER",
+  "reviewer": "/root/c02_s1_packet_review",
+  "reviewedAt": "2026-11-03T01:25:54.940759+00:00",
+  "candidateSHA256": "8ac5b145d9ab9db511f088515e3e73bceea33efc3ead57530ac37017b4137200",
+  "privateCandidateSHA256": "8ac5b145d9ab9db511f088515e3e73bceea33efc3ead57530ac37017b4137200",
+  "sourceScript": "/private/tmp/otr-auth-c04-runtime-release-20261103/close_probe.py",
+  "sourceSHA256": "c7d7ac01d4de28e39ed05f23e8d74d9495ef66510f4058964ac0d29528393b7c",
+  "onlyChanges": "Exactly7 metadata substitutions: local output directory, remote release directory/status, currentCID/image/config, current Owner Gate. Original probe/close logic unchanged.",
+  "readbackSHA256": "a9106454ee1d69179ab909a6e4cc249339b2879dc49f00b452ca38f07a964ab6",
+  "expectedPlanSHA256": "6cc0a2d50c5c967296c3700dbba20c24ae0c8d44a762dc37c2cf82753b143477",
+  "checks": [
+    "Exact private/repository candidate byte match and expected8ac5 hash",
+    "No additional code or command changes beyond mapped metadata; syntax parsed without execution",
+    "Initial current CID/image/config/health and all3 QA-key absence guards retained",
+    "Plan before/current/default all use same current11faa image/config; no old94ee/a96/920f restore target",
+    "Pinned c02-close/deploy/restore/universal close identities unchanged; close port delegates exact retained-container check under existing short lock",
+    "After-probe current CID/config/HostConfig/health unchanged check retained; exclusive local receipt output retained",
+    "No issuer, timer, Scope/Grant/SQL/Provider or business mutation activation path introduced"
+  ],
+  "executionPerformed": false,
+  "networkCalls": 0,
+  "hostCalls": 0,
+  "sqlCalls": 0,
+  "oldTestsRerun": false,
+  "limit": "Source/metadata review only. Actual Root probe, fresh same-default verification and all finite-access runtime conditions remain separate; no EXECUTION_QUALIFIED or new approval is inferred."
+}

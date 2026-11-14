@@ -1,0 +1,64 @@
+{
+  "event_id": "mcp-chatgpt-p3-notes-751-20261102-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "step_id": "CAP-MCP-CONSUMER-EDIT-S4",
+  "work_item_id": "WI-MCP-001",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "E2E_PASS",
+  "reported_event_type": "E2E_PASS",
+  "created_at": "2026-11-02T09:56:46.217844+00:00",
+  "occurred_at": "2026-11-02T09:29:05.316614+00:00",
+  "expected_updated_at": null,
+  "current_status": "CHATGPT_P3_NOTES_CONSUMER_EDIT_E2E_PASS_CLOSED",
+  "commit": "b3c1f94a",
+  "summary": "Real ChatGPT normal OAuth/Guide/current Base/Preview, independently matched handler hashes, explicit confirmation and Allow once, one original277 Apply/APPLIED, same-ID revision3 readback and independent unique Supabase receipt/preservation; fully CLOSED.",
+  "scope": {
+    "client": "ChatGPT",
+    "family": "P3 Stay",
+    "field": "Notes",
+    "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "item_id": "3616da44-0d35-4400-a739-01f1029565ea",
+    "operation_id": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+    "revision_before": 2,
+    "revision_after": 3,
+    "consumer_apply_count": 1,
+    "receipt_count": 1,
+    "native_downstream": "PENDING_INDEPENDENT_HANDOFF"
+  },
+  "evidence_paths": [
+    "docs/mcp/chatgpt-notes/continuation-20261102/ACCEPTANCE.json",
+    "docs/mcp/chatgpt-notes/continuation-20261102/ACTUAL_CONSUMER_APPLY.json",
+    "docs/mcp/chatgpt-notes/continuation-20261102/ACTUAL_CONSUMER_APPLY_READBACK.txt",
+    "docs/mcp/chatgpt-notes/continuation-20261102/ACTUAL_VERIFIED_PREVIEW_PROOF.json",
+    "docs/mcp/slice1/FRESH_CHATGPT_READBACK.json",
+    "docs/mcp/chatgpt-notes/continuation-20261102/ROOT_FINAL_CLOSE_READBACK.json",
+    "docs/mcp/chatgpt-notes/continuation-20261102/ROOT_FINAL_HOOK_READBACK.json"
+  ],
+  "completed": [
+    "Actual consumer OAuth/Consent, Guide and FullDetails canEdit true; formal Before/After preview.",
+    "Trusted actual handler log/input/output SHA match before single exact confirmation.",
+    "Real consumer explicit confirmation and Allow once, one277 APPLIED/rev3, no replay or new operation.",
+    "Supabase09:25:32Z exact Notes/one canonical receipt, other root/field_state and11children unchanged.",
+    "Grant/ownSession/issuer/runtime/console closed, actual6ebe/bcb/97 default and original ACL independently verified; DEV released."
+  ],
+  "unfinished": [
+    "Native legal Pull/SQLite/DayFeed/Detail/cold validation separately handed off.",
+    "All-P1\u2013P6, full Nelson/People/AKA/Expense/Source remain outside this scoped acceptance."
+  ],
+  "blocked_by": [],
+  "dependency_party": "Native owns independent downstream; Mission Control owns ACK/snapshot publication. No new Notes Core/Auth interface gap.",
+  "next_action": "Mission Control verify/register exact scoped ChatGPT Notes evidence; Native returns independent result when legally ready. No new business scope activated.",
+  "not_claimed": [
+    "Entire MCP Beta Ready",
+    "All P1\u2013P6 consumer edit",
+    "Real Nelson import",
+    "Native Downstream/Realtimes SLA",
+    "Production connection",
+    "Main merge"
+  ],
+  "historical_unknown_replayed": false,
+  "shared_dev_released": true,
+  "affected_node_ids": []
+}

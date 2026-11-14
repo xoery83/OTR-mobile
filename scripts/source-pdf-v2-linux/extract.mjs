@@ -29,25 +29,29 @@ function inspect(value) {
       }
   }
 }
-const run = (binary, args) => {
+const run = (binary, args, libraryPath) => {
   const result = spawnSync(binary, args, {
     encoding: "utf8",
     timeout: 15000,
     maxBuffer: profile.maxInspectionBytes,
-    env: { PATH: "/usr/bin:/bin", LANG: "C.UTF-8" },
+    env: {
+      PATH: "/usr/bin:/bin",
+      LANG: "C.UTF-8",
+      ...(libraryPath ? { LD_LIBRARY_PATH: libraryPath } : {}),
+    },
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.error || result.signal || result.status === null)
     throw new Error("PDF_V2_PROCESS_FAILED");
   return result;
 };
-const execute = (binary, args) => {
-  const r = run(binary, args);
+const execute = (binary, args, libraryPath) => {
+  const r = run(binary, args, libraryPath);
   if (r.status !== 0) throw new Error("PDF_V2_DECODE_FAILED");
   return r.stdout;
 };
 
-export function qpdfWarnings(result, metadata) {
+export function qpdfWarnings(result, metadata, file = "/tmp/original.pdf") {
   if (result.status === 0) {
     if (result.stderr.trim()) throw new Error("PDF_V2_WARNING_UNSUPPORTED");
     return [];
@@ -61,9 +65,11 @@ export function qpdfWarnings(result, metadata) {
   )
     throw new Error("PDF_V2_WARNING_UNSUPPORTED");
   const ids = lines.map((line) => {
+    const prefix = "WARNING: " + file;
     const match =
-      /^WARNING: \/tmp\/original\.pdf \(object ([1-9][0-9]* [0-9]+)\): object has offset 0$/.exec(
-        line,
+      line.startsWith(prefix) &&
+      /^ \(object ([1-9][0-9]* [0-9]+)\): object has offset 0$/.exec(
+        line.slice(prefix.length),
       );
     if (!match) throw new Error("PDF_V2_WARNING_UNSUPPORTED");
     return match[1] + " R";
@@ -86,7 +92,15 @@ export function qpdfWarnings(result, metadata) {
 }
 
 // Only called inside the no-network, read-only, resource-limited worker container.
-export async function extractPdf(bytes) {
+export async function extractPdf(
+  bytes,
+  {
+    file = "/tmp/original.pdf",
+    qpdf = "/usr/bin/qpdf",
+    pdftotext = "/usr/bin/pdftotext",
+    libraryPath,
+  } = {},
+) {
   if (
     !(bytes instanceof Uint8Array) ||
     !bytes.length ||
@@ -95,37 +109,42 @@ export async function extractPdf(bytes) {
     !Buffer.from(bytes).subarray(-1024).toString("latin1").trimEnd().endsWith("%%EOF")
   )
     throw new Error("PDF_V2_FORMAT_UNSUPPORTED");
-  const file = "/tmp/original.pdf";
   await writeFile(file, bytes, { mode: 0o400, flag: "wx" });
   try {
-    const checked = run("/usr/bin/qpdf", ["--check", file]);
-    const inspected = run("/usr/bin/qpdf", ["--json", "--json-stream-data=none", file]);
+    const checked = run(qpdf, ["--check", file], libraryPath);
+    const inspected = run(qpdf, ["--json", "--json-stream-data=none", file], libraryPath);
     if (![0, 3].includes(inspected.status)) throw new Error("PDF_V2_DECODE_FAILED");
     const metadata = JSON.parse(inspected.stdout);
-    const warnings = qpdfWarnings(checked, metadata);
-    if (JSON.stringify(qpdfWarnings(inspected, metadata)) !== JSON.stringify(warnings))
+    const warnings = qpdfWarnings(checked, metadata, file);
+    if (
+      JSON.stringify(qpdfWarnings(inspected, metadata, file)) !== JSON.stringify(warnings)
+    )
       throw new Error("PDF_V2_WARNING_UNSUPPORTED");
     if (metadata.encrypt?.encrypted !== false)
       throw new Error("PDF_V2_ENCRYPTED_UNSUPPORTED");
     inspect(metadata);
-    const pageCount = Number(execute("/usr/bin/qpdf", ["--show-npages", file]).trim());
+    const pageCount = Number(execute(qpdf, ["--show-npages", file], libraryPath).trim());
     if (!Number.isInteger(pageCount) || pageCount < 1 || pageCount > profile.maxPages)
       throw new Error("PDF_V2_PAGE_LIMIT");
     let text = "";
     const pages = [];
     for (let page = 1; page <= pageCount; page++) {
-      const content = execute("/usr/bin/pdftotext", [
-        "-f",
-        String(page),
-        "-l",
-        String(page),
-        "-layout",
-        "-enc",
-        "UTF-8",
-        "-nopgbrk",
-        file,
-        "-",
-      ]);
+      const content = execute(
+        pdftotext,
+        [
+          "-f",
+          String(page),
+          "-l",
+          String(page),
+          "-layout",
+          "-enc",
+          "UTF-8",
+          "-nopgbrk",
+          file,
+          "-",
+        ],
+        libraryPath,
+      );
       if (!content.trim() || content.includes("\0") || content.includes("\ufffd"))
         throw new Error("PDF_V2_TEXT_UNAVAILABLE");
       const start = Buffer.byteLength(text);

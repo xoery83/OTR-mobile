@@ -1,0 +1,23 @@
+{
+  "status": "ROOT_IMPORT_RELEASE_RECEIPT_READ_NOT_MCP_LIVE_HOST_PROBE",
+  "recorded_at": "2026-11-02T19:27:44.777100+00:00",
+  "source_thread": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "source_receipt_path": "/private/tmp/otr-import-results-diag-release-20261103/INDEPENDENT_READBACK.json",
+  "source_receipt_sha256": "8eefdea0c764f56d3b951a7e099329ce3bb97255cc45a569671d5e6b83afce65",
+  "observed_at": "2026-11-02T19:26:38.915908+00:00",
+  "released_at": "2026-11-02T19:26:25.372199+00:00",
+  "container_id": "d6c367dd860faa63b0fc4610d052e29731f3d983dcd4dbb08216685b1f97f5b7",
+  "config_sha256": "dbcb043b6c09616600af1e08fe336e78269cc467a25da654246a2d481a8188a3",
+  "image": "sha256:ecdbf5b6f639d4c86e21b9400da3a35733e4213b76751c7b21721c6d8cfbbb0d",
+  "capture_sha256": "7de254ce0bd7ae77d281ab8b9e203b2a72150a7efa78f83277e808737a295039",
+  "healthy": true,
+  "environment_same_as_retained_original": true,
+  "mounts_same_as_retained_original": true,
+  "old_container_retained": true,
+  "authority_changes": 0,
+  "paid_calls": 0,
+  "mcp_runtime_sdk_unchanged": "ROOT_REPORTED_NOT_INDEPENDENTLY_LIVE_HASHED_BY_MCP",
+  "mcp_holds_backend_lock": false,
+  "c02_hosted_activation": false,
+  "rule": "Latest known default supersedes historical6ebe only; future deploy must fresh-CAS actual current state and restore that new current default, never overwrite later Import releases with old751 image."
+}

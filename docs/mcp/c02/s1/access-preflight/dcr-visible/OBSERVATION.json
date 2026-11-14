@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-11-03T02:09:32.753Z",
+  "source": "Visible existing Supabase DEV configuration form after unsaved OAuth-enable draft expansion; DCR itself untouched",
+  "dcrAriaChecked": "false",
+  "authorizationPath": "/oauth/consent",
+  "saveClicked": false,
+  "serverDraftOnly": true,
+  "oauthServerCheckedAfterCancelReload": "false",
+  "saveEnabledAfterCancelReload": false
+}

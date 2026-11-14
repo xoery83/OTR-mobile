@@ -1,3 +1,4 @@
+import { LocalItemImportOriginals } from "./LocalItemImportOriginals";
 import { useDetailCloudRefresh } from "./useDetailCloudRefresh";
 import { DayReadSkeleton } from "./DayReadSkeleton";
 import { flightAirportTargets, openFlightAirport } from "./flightAirportActions";
@@ -27,7 +28,11 @@ import { ManualFlightEditor } from "./ManualFlightForm";
 import { useTripView } from "./TripViewContext";
 export function P2Detail() {
   useUiLocale();
-  const params = useLocalSearchParams<{ tripId?: string; itemId?: string }>();
+  const params = useLocalSearchParams<{
+    tripId?: string;
+    itemId?: string;
+    importJobId?: string;
+  }>();
   const tripId = typeof params.tripId === "string" ? params.tripId : "";
   const itemId = typeof params.itemId === "string" ? params.itemId : "";
   const generation = useSyncExternalStore(
@@ -105,7 +110,7 @@ export function P2Detail() {
           headerShown: true,
           title: "",
           headerTitle: "",
-          headerBackVisible: true,
+          headerBackVisible: !params.importJobId,
           headerBackButtonDisplayMode: "minimal",
           headerTransparent: true,
           headerTintColor: colors.accent,
@@ -113,6 +118,15 @@ export function P2Detail() {
           headerShadowVisible: false,
         }}
       />
+      {params.importJobId ? (
+        <Stack.Toolbar placement="left">
+          <Stack.Toolbar.Button
+            icon="chevron.left"
+            accessibilityLabel={t("common.back")}
+            onPress={() => router.back()}
+          />
+        </Stack.Toolbar>
+      ) : null}
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
           icon="square.and.pencil"
@@ -174,6 +188,14 @@ export function P2Detail() {
           ) : (
             <DayReadSkeleton />
           )}
+          {visible ? (
+            <LocalItemImportOriginals
+              tripId={tripId}
+              itemId={itemId}
+              generation={generation}
+              revision={revision}
+            />
+          ) : null}
         </ScrollView>
       </NavigationContentFrame>
       {editing && visible?.editable ? (

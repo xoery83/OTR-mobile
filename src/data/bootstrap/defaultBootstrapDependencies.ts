@@ -11,7 +11,6 @@ import {
   type AccountScope,
 } from "@/data/auth/accountRequestContext";
 import { chooseJourneyEntry } from "@/domain/ledger/journeyContext";
-import { openGuestLocalWorkspace } from "../auth/guestLocalWorkspace";
 import { openDatabase } from "@/data/db/database";
 import {
   allowLedgerOperationalSync,
@@ -46,7 +45,8 @@ export const defaultBootstrapDependencies: FoundationBootstrapDependencies = {
   openDatabase,
   readLocalSession,
   readAuthSnapshot: readLocalAuthSnapshot,
-  openGuestWorkspace: openGuestLocalWorkspace,
+  openGuestWorkspace: async () =>
+    (await import("../auth/guestLocalWorkspace")).openGuestLocalWorkspace(),
   adoptLegacyState: async (userId) =>
     adoptLegacyAccountState(await openDatabase(), userId),
   pauseSync: pauseOperationalSync,

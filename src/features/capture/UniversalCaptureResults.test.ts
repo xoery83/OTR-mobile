@@ -2,7 +2,8 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
-import { UniversalResultView } from "./UniversalCaptureResults";
+import { UniversalResultView, UniversalCaptureResults } from "./UniversalCaptureResults";
+import { useUniversalCapture } from "./useUniversalCapture";
 import type { UniversalImportResult } from "@/data/api/universalImportContracts";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { setUiLocale, t } from "@/ui/locale";
@@ -12,6 +13,7 @@ const state = vi.hoisted(() => ({
   buttons: [] as { label: string; disabled?: boolean; onPress(): void }[],
 }));
 vi.mock("./useUniversalCapture", () => ({ useUniversalCapture: vi.fn() }));
+vi.mock("./useUniversalP1Admission", () => ({ useUniversalP1Admission: () => ({}) }));
 vi.mock("react-native", () => ({
   View: "div",
   Modal: "dialog",
@@ -728,6 +730,7 @@ it.each([
       expect(onOpenAcceptedItem).toHaveBeenCalledExactlyOnceWith({
         tripId: f.result.tripId,
         itemId,
+        family: "P1",
       });
       current = false;
       button.onPress();
@@ -802,3 +805,139 @@ it("keeps real result evidence names and unprocessed warnings when the parent li
   expect(JSON.stringify(f.result)).toBe(before);
   expect(f.props.start).not.toHaveBeenCalled();
 });
+
+it("shows a new V3 batch as awaiting Analyze rather than a processing failure", () => {
+  vi.mocked(useUniversalCapture).mockReturnValue({
+    localFirstSelected: true,
+    localFirst: { state: "NEEDS_ACTION" },
+    unavailable: false,
+    busy: false,
+    canStart: true,
+    start: vi.fn(),
+    recover: vi.fn(),
+  } as never);
+  const input = {
+    id: randomUUID(),
+    itemKey: randomUUID(),
+    ordinal: 0,
+    acquisitionSource: "files" as const,
+    kind: "FILE" as const,
+    originalFilename: "sample.txt",
+    declaredContentType: "text/plain",
+    continuesFromInputId: null,
+  };
+  const accountId = randomUUID(),
+    batchId = randomUUID(),
+    createdAt = "2026-11-14T00:00:00Z";
+  const model: CaptureJobReadModel = {
+    batch: {
+      formatVersion: 2,
+      manifestVersion: 2,
+      accountId,
+      batchId,
+      jobId: randomUUID(),
+      submissionKey: randomUUID(),
+      createdAt,
+      inputs: [input],
+      context: {
+        id: randomUUID(),
+        version: 1,
+        accountId,
+        batchId,
+        observedAt: createdAt,
+        clock: "DEVICE_WALL",
+        entrySurface: "CAPTURE",
+        tripPrior: null,
+      },
+    },
+    inputs: [
+      {
+        ...input,
+        revision: 1,
+        contentSha256: null,
+        contentByteCount: null,
+        state: "PENDING",
+        pendingReason: "READ",
+        failureCode: null,
+        captureId: null,
+        payloadId: null,
+        captureRevision: null,
+        acceptedAt: null,
+        continuedIn: [],
+        continuesFromJobId: null,
+      },
+    ],
+    counts: { selected: 1, accepted: 0, failed: 0, pending: 1 },
+    allInputsAccepted: false,
+    intakeSettled: false,
+    processing: {
+      capability: "NOT_INSTALLED",
+      assessedInputs: null,
+      totalInputs: null,
+      currentPassComplete: null,
+    },
+    results: { admittedCreates: 0, admittedUpdates: 0, currentAttention: null },
+    availableActions: {
+      canHide: true,
+      canReopen: true,
+      canAddMore: true,
+      canResumeAcceptedLocalWork: false,
+      canReviewNow: false,
+      canOpenCurrentReview: false,
+      canRetryKnownFailedItem: false,
+      reacquireInputIds: [],
+      unavailableReasons: ["PROCESSING_NOT_INSTALLED"],
+    },
+  };
+  const html = renderToStaticMarkup(
+    createElement(UniversalCaptureResults, {
+      model,
+      isCurrent: () => true,
+    }),
+  );
+  expect(html).toContain(t("capture.activityStatus.waiting"));
+  expect(html).not.toContain(t("capture.ai.unavailable"));
+});
+
+it("offline capability discovery waits rather than showing endless processing or enabling Analyze", () => {
+  const start = vi.fn(),
+    recover = vi.fn();
+  vi.mocked(useUniversalCapture).mockReturnValue({
+    localFirstSelected: null,
+    unavailable: true,
+    busy: false,
+    start,
+    recover,
+  } as never);
+  const html = renderToStaticMarkup(
+    createElement(UniversalCaptureResults, {
+      model: { batch: { batchId: "offline", context: {} } } as CaptureJobReadModel,
+      isCurrent: () => true,
+      processingDetails: true,
+    }),
+  );
+  expect(html).toContain(t("capture.activityStatus.waiting"));
+  expect(html).not.toContain(t("capture.jobLoading"));
+  expect(state.buttons.some((button) => button.label === t("capture.ai.process"))).toBe(
+    false,
+  );
+  state.buttons.find((button) => button.label === t("capture.ai.check"))!.onPress();
+  expect(recover).toHaveBeenCalledOnce();
+  expect(start).not.toHaveBeenCalled();
+});
+
+vi.mock("@/data/operations/universalV3Review", () => ({
+  openUniversalV3Review: vi.fn(async () => {
+    throw Error("TEST_UNEXPECTED_V3_WRITE_PATH");
+  }),
+  applyUniversalV3Batch: vi.fn(async () => {
+    throw Error("TEST_UNEXPECTED_V3_WRITE_PATH");
+  }),
+}));
+
+vi.mock("@/data/repositories/importSubmissionRepository", () => ({
+  readImportSubmission: vi.fn(async () => null),
+  updateImportSubmission: vi.fn(async () => {
+    throw Error("TEST_UNEXPECTED_SUBMISSION_WRITE");
+  }),
+}));

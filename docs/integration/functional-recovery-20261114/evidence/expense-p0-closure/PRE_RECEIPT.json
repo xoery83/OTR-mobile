@@ -1,0 +1,18 @@
+{
+  "status": "CONFIRMED_NOT_COMMITTED_AT_PRE_SNAPSHOT",
+  "observedAt": "2026-11-14T03:07:56.582632+00:00",
+  "executionId": "49144d1ea43f472981c156c5d52722f6",
+  "operation": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+  "key": "ledger-idempotency_mwfnz7vm_umzru4w06b",
+  "innerKey": "v2-40066d7abb60a31cf938970591e57e97",
+  "serverExpenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+  "receiptCount": 0,
+  "expenseCount": 0,
+  "participantCount": 0,
+  "splitCount": 0,
+  "matchingVisibleActiveTransactions": 0,
+  "readOnly": true,
+  "querySHA256": "0f8afa8c0b8697bf1bd1719ea08864028c85bfc686ba060cfdde6329f9513a1e",
+  "rawSHA256": "91ce00f7d7ccd2f5936671fa53e2f5c07eb75315b130285265e6b86765f2908d",
+  "scopeLimit": "A committed-result read snapshot; activity query only detects visible queries containing exact identifiers and does not prove absence of parameterized or future writers. No authorization to retry is inferred."
+}

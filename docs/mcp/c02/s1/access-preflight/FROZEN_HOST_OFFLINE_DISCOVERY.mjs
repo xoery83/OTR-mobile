@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {createHash,randomUUID} from 'node:crypto';
+import {readFile,writeFile} from 'node:fs/promises';
+const require=createRequire('/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/mcp/package.json');
+const {generateKeyPair,exportJWK,SignJWT}=await import(require.resolve('jose'));
+const {Client,StreamableHTTPClientTransport}=await import(require.resolve('@modelcontextprotocol/client'));
+const path='/private/tmp/otr-mcp-c02-s1-package-20261103/c02-host.mjs';
+assert.equal(createHash('sha256').update(await readFile(path)).digest('hex'),'6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d');
+const {createC02Host}=await import(path);
+const resource='https://api-dev.xoery.art/mcp',issuer='https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1';
+const accountId='1f3d7935-1bdc-4952-8d7f-0f72077368c1',clientId='83504d3f-59d4-43fd-99b1-bebc54c40f7d';
+const now=Date.now(),keys=await generateKeyPair('ES256'),jwk={...await exportJWK(keys.publicKey),kid:'offline-only',alg:'ES256',use:'sig'};
+const token=await new SignJWT({client_id:clientId,session_id:randomUUID(),role:'authenticated',otr_scopes:['otr.trips.read','otr.trips.write']}).setProtectedHeader({alg:'ES256',kid:jwk.kid,typ:'JWT'}).setIssuer(issuer).setAudience(resource).setSubject(accountId).setIssuedAt().setExpirationTime(Math.floor(now/1000)+55).sign(keys.privateKey);
+let authCalls=0,businessCalls=0; const logs=[];let revoked=false;
+const originalFetch=globalThis.fetch;
+globalThis.fetch=async(input)=>{const url=String(input instanceof Request?input.url:input);authCalls++;
+ if(url===issuer+'/.well-known/jwks.json')return Response.json({keys:[jwk]});
+ if(url===issuer+'/user')return Response.json({id:accountId,is_anonymous:false});
+ if(url===issuer+'/user/oauth/grants')return Response.json(revoked?[]:[{client:{id:clientId},scopes:['openid','offline_access'],granted_at:new Date(now).toISOString()}]);
+ throw Error('UNEXPECTED_OFFLINE_ROUTE');
+};
+const forbidden=async()=>{businessCalls++;throw Error('BUSINESS_PORT_MUST_NOT_RUN');};
+let client;
+try{
+ const host=createC02Host({plan:{gateSHA256:'1'.repeat(64),windowId:randomUUID(),startsAt:now-2000,normalCloseAt:now+180000,expiresAt:now+300000,command:null},ports:{discovery:{discoverTrips:forbidden},canReadTrip:forbidden,core:{read:forbidden}},publishableKey:'sb_publishable_unit_local_fixture_only',consentJavascript:new Uint8Array([1]),confirm:forbidden,log:e=>logs.push(e)});
+ const anonymous=await host(new Request(resource,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'})}));
+ assert.equal(anonymous.status,401);assert.match(anonymous.headers.get('WWW-Authenticate'),/resource_metadata/);
+ client=new Client({name:'c02-frozen-offline-diagnostic',version:'1'});
+ await client.connect(new StreamableHTTPClientTransport(new URL(resource),{fetch:async(input,init)=>{const q=new Request(input,init),headers=new Headers(q.headers);headers.set('Authorization','Bearer '+token);const r=await host(new Request(q,{headers}));assert.ok(r);return r;}}));
+ const tools=(await client.listTools()).tools;assert.equal(tools.length,10);assert.deepEqual(tools.filter(t=>t.annotations?.readOnlyHint===false).map(t=>t.name).sort(),['create_trip_item','update_trip_item']);
+ assert.equal(tools.find(t=>t.name==='create_trip_item').inputSchema.properties.item.properties.family.const,'P3');
+ revoked=true;
+ await assert.rejects(()=>client.listTools());assert.equal(businessCalls,0);
+ const result={status:'FROZEN_HOST_OFFLINE_DISCOVERY_PASS',hostSHA256:'6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d',scope:'Local generated JWT/test JWKS/normal-user+Grant fixtures. Actual frozen createC02Host and SDK. No DEV network/Session/Grant activation.',anonymousStatus:anonymous.status,tools:tools.map(t=>t.name).sort(),revocationDenied:true,businessCalls,fixtureAuthCalls:authCalls,loggerStatuses:logs.map(x=>x.status),limits:'Not Hosted auth or ChatGPT acceptance. Does not identify lost679c refresh failure.'};
+ await writeFile('/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/access-preflight/FROZEN_HOST_OFFLINE_DISCOVERY.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
+}finally{await client?.close();globalThis.fetch=originalFetch;}

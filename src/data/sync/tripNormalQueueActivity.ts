@@ -1,7 +1,12 @@
 import type * as SQLite from "expo-sqlite";
 import {
+  normalTripReadbackTrigger,
+  serverParentQueueSql,
+  serverParentQueueKind,
   cloudSourceP1QueueSql,
   cloudSourceP1Command,
+  normalManualQueueCommand,
+  cloudManualCreatePerson,
   normalTripSyncScopeSchema,
   type NormalTripSyncScope,
 } from "./tripNormalSync";
@@ -15,6 +20,8 @@ import { retainedDeferredTripMetadataSchema } from "@/domain/trip/tripDeferredMe
 import {
   validateCoreCommand,
   isReviewedSourceCreate,
+  isNormalManualCoreCommand,
+  isNormalImportCoreCommand,
 } from "@/domain/trip/tripCoreV2Commands";
 import { readTripMetadataConfirmation } from "../repositories/tripMetadataConfirmation";
 import { createTripPersonRepository } from "../repositories/tripPersonRepository";
@@ -141,17 +148,19 @@ export async function getNormalTripQueueActivity(
             if (
               op.status === "DEPENDENCY_BLOCKED" &&
               op.last_error_code &&
-              op.last_error_code !== "DEPENDENCY_BLOCKED"
+              !["DEPENDENCY_BLOCKED", "CORE_DOCUMENT_DEPENDENCY_PENDING"].includes(
+                op.last_error_code,
+              )
             )
               continue;
             const c = validateCoreCommand(JSON.parse(op.payload_json));
-            if (scope.manualOnly && c.admission.mode !== "MANUAL") continue;
+            if (scope.manualOnly && !["MANUAL", "IMPORT"].includes(c.admission.mode)) continue;
             if (
               c.tripId !== create.trip_id ||
               c.operationId !== op.id ||
-              c.target.kind !== "ITEM" ||
+              (c.target.kind !== "ITEM" && c.command !== "CREATE_DOCUMENT_METADATA") ||
               c.target.id !== op.entity_id ||
-              (c.admission.mode !== "MANUAL" && !isReviewedSourceCreate(c))
+              (c.admission.mode !== "MANUAL" && !isNormalImportCoreCommand(c) && !isReviewedSourceCreate(c))
             )
               continue;
             const item = await database.getFirstAsync<{
@@ -163,60 +172,15 @@ export async function getNormalTripQueueActivity(
               c.target.id,
             );
             const manual =
-              isReviewedSourceCreate(c) ||
-              (c.admission.mode === "MANUAL" && c.command === "CREATE_SPARSE_FLIGHT") ||
-              (c.admission.mode === "MANUAL" &&
-                item?.experience_family === "P2" &&
-                ["SET_AUTHORED_FLIGHT_DETAILS", "SET_ITEM_PARTICIPATION"].includes(
-                  c.command,
-                )) ||
-              (c.command === "CREATE_ITEM"
-                ? ["P1", "P3", "P4", "P5", "P6"].includes(
-                    (c.payload as { family: string }).family,
-                  )
-                : item?.experience_family === "P1" &&
-                  [
-                    "SET_ITEM_TEXT",
-                    "SET_ITEM_SCHEDULE",
-                    "SET_ITEM_PLACE",
-                    "SET_ITEM_PARTICIPATION",
-                  ].includes(c.command)) ||
-              (item?.experience_family === "P3" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_SCHEDULE",
-                  "SET_ITEM_PLACE",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_STAY_DETAILS",
-                ].includes(c.command)) ||
-              (item?.experience_family === "P4" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_SCHEDULE",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_RENTAL_DETAILS",
-                ].includes(c.command)) ||
-              (item?.experience_family === "P5" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_TRANSPORT_DETAILS",
-                ].includes(c.command)) ||
-              (item?.experience_family === "P6" &&
-                c.admission.mode === "MANUAL" &&
-                [
-                  "SET_ITEM_TEXT",
-                  "SET_ITEM_SCHEDULE",
-                  "SET_ITEM_PLACE",
-                  "SET_ITEM_PARTICIPATION",
-                  "SET_ACTIVITY_DETAILS",
-                ].includes(c.command));
+              isReviewedSourceCreate(c) || isNormalImportCoreCommand(c) ||
+              isNormalManualCoreCommand(c, item?.experience_family);
             eligible =
               !!manual &&
-              p1SharedParticipantsReady(c, await roster.listTripPersons(create.trip_id));
+              (!!cloudManualCreatePerson(c) ||
+                p1SharedParticipantsReady(
+                  c,
+                  await roster.listTripPersons(create.trip_id),
+                ));
           }
           if (!eligible) continue;
           if (op.dependency_operation_id) {
@@ -247,28 +211,98 @@ export async function getNormalTripQueueActivity(
       /* Invalid owning Create does not authorize this Trip's queue. */
     }
   }
-  const sourceRows = scope.manualOnly
-    ? []
-    : await database.getAllAsync<Row>(
-        cloudSourceP1QueueSql,
+  const parentRows = await database.getAllAsync<Row>(
+    serverParentQueueSql,
+    scope.accountId,
+    scope.newTripsFrom,
+  );
+  const consideredReadbacks = new Set<string>();
+  for (const selected of parentRows) {
+    const kind = serverParentQueueKind(selected);
+    if (selected.failure_category === "AUTH" || !kind) continue;
+    let op = selected;
+    if (kind === "readback" || (kind === "metadata" && selected.status === "COMPLETED")) {
+      if (consideredReadbacks.has(selected.trip_id)) continue;
+      consideredReadbacks.add(selected.trip_id);
+      const prior = await database.getFirstAsync<Row>(
+        "SELECT * FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND entity_type='TRIP_READBACK' AND operation_type='TRIP_NORMAL_READBACK' ORDER BY rowid LIMIT 1",
         scope.accountId,
-        scope.newTripsFrom,
+        selected.trip_id,
       );
+      if (!prior) {
+        actionableNow++;
+        continue;
+      }
+      if (
+        prior.failure_category === "AUTH" ||
+        ["FAILED", "CONFLICT"].includes(prior.status)
+      )
+        continue;
+      const trigger = await normalTripReadbackTrigger(
+        database,
+        scope.accountId,
+        selected.trip_id,
+      );
+      let same = false;
+      try {
+        same = JSON.parse(prior.payload_json).triggerVersion === trigger;
+      } catch {
+        /* Owning readback replaces malformed local read intent. */
+      }
+      if (same && prior.status === "COMPLETED") continue;
+      op = prior;
+      if (!same && prior.status !== "PROCESSING") {
+        actionableNow++;
+        continue;
+      }
+    }
+    if (op.dependency_operation_id) {
+      const dependency = await database.getFirstAsync<{ status: string }>(
+        "SELECT status FROM sync_operations WHERE id=? AND owner_user_id=? AND trip_id=?",
+        op.dependency_operation_id,
+        scope.accountId,
+        op.trip_id,
+      );
+      if (dependency?.status !== "COMPLETED") continue;
+    }
+    const due =
+      op.status === "PROCESSING"
+        ? op.lease_expires_at
+          ? Date.parse(op.lease_expires_at)
+          : NaN
+        : op.next_attempt_at
+          ? Date.parse(op.next_attempt_at)
+          : now;
+    if (!Number.isFinite(due)) continue;
+    if (due <= now) actionableNow++;
+    else nextActionableAt = Math.min(nextActionableAt ?? Infinity, due);
+  }
+  const sourceRows = await database.getAllAsync<Row>(
+    cloudSourceP1QueueSql,
+    scope.accountId,
+    scope.newTripsFrom,
+  );
   for (const op of sourceRows) {
     if (op.failure_category === "AUTH") continue;
-    const command = cloudSourceP1Command(op);
+    const command =
+      normalManualQueueCommand(op) ??
+      (scope.manualOnly ? null : cloudSourceP1Command(op));
     if (!command) continue;
     if (
       op.status === "DEPENDENCY_BLOCKED" &&
       op.last_error_code &&
       ![
         "DEPENDENCY_BLOCKED",
+        "CORE_DOCUMENT_DEPENDENCY_PENDING",
         "CORE_SOURCE_EVIDENCE_PENDING",
         "CORE_SOURCE_FINALIZER_CLOSED",
       ].includes(op.last_error_code)
     )
       continue;
-    if (!p1SharedParticipantsReady(command, await roster.listTripPersons(op.trip_id)))
+    if (
+      !cloudManualCreatePerson(command) &&
+      !p1SharedParticipantsReady(command, await roster.listTripPersons(op.trip_id))
+    )
       continue;
     if (op.dependency_operation_id) {
       const parent = await database.getFirstAsync<{ status: string }>(

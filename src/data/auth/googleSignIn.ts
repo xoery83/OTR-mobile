@@ -29,6 +29,10 @@ export function createGoogleNonce(bytes?: Uint8Array) {
 }
 
 function loadNativeGoogle(): GoogleSdk | null {
+  const { default: Constants } =
+    require("expo-constants") as typeof import("expo-constants");
+  // The retained Google iOS Client belongs to com.xoery.otrmobile only.
+  if (Constants.expoConfig?.ios?.bundleIdentifier === "art.xoery.otr") return null;
   const { Platform, TurboModuleRegistry } =
     require("react-native") as typeof import("react-native");
   if (Platform.OS !== "ios" || !TurboModuleRegistry.get("RNGoogleSignin")) return null;

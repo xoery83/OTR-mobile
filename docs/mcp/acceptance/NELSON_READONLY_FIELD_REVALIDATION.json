@@ -1,0 +1,22 @@
+{
+  "status": "READ_ONLY_ITEM_SCHEMA_REVALIDATION_NOT_CLOUD_ACCEPTANCE",
+  "sourceSha256": "602082e7c2493d178f86449b35d4ed6d15b9e1ad6745ed765b8339ac40244191",
+  "rowCount": 25,
+  "families": {
+    "P2": 3,
+    "P4": 2,
+    "P3": 8,
+    "P5": 3,
+    "P1": 9
+  },
+  "nonFlightSchemaValid": 22,
+  "sparseFlightCreateSchemaValid": 1,
+  "missingFlightLiteralBlocked": 2,
+  "schemaMismatchCount": 0,
+  "checkinProtectedPortPending": 2,
+  "cloudRequests": 0,
+  "cloudWrites": 0,
+  "operationIdsAssigned": false,
+  "accountOrTripSelected": false,
+  "privateSourceCopiedToRepository": false
+}

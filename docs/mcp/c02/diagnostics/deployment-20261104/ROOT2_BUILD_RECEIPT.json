@@ -1,0 +1,34 @@
+{
+  "status": "IMAGE_BUILT_ISOLATED_SMOKE_PASS_NOT_DEPLOYED",
+  "sourceMain": "7c1301c6a2ac7bdfe22e3c00f31f747db2810977",
+  "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "parentImage": "sha256:0e7586fcfacd8278df0cc7c025500ab633a375f104a0cabff805892538107db5",
+  "imageConfigExactParent": true,
+  "bundles": {
+    "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb",
+    "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+    "c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92"
+  },
+  "checks": [
+    {
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+      "status": 401
+    },
+    {
+      "path": "/v1/auth/guest-adoptions/status",
+      "status": 401
+    },
+    {
+      "path": "/v1/auth/guest-adoptions/preflight",
+      "status": 401
+    }
+  ],
+  "network": "none",
+  "privateMounts": 0,
+  "serviceTouched": false,
+  "observedAt": "2026-11-03T22:51:39.187165+00:00"
+}

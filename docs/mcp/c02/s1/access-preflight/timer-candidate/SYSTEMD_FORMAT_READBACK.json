@@ -1,0 +1,13 @@
+{
+  "status": "SYSTEMD_READONLY_FORMAT_CHECK",
+  "systemdVersion": "systemd 255 (255.4-1ubuntu8.18)",
+  "calendarAnalysis": "Normalized form: 2030-01-01 00:28:00 UTC\n    Next elapse: Tue 2030-01-01 00:28:00 UTC\n       From now: 3 years 1 month left",
+  "timerProperties": "Unit=apt-daily.service\nTimersCalendar={ OnCalendar=*-*-* 06,18:00:00 ; next_elapse=Tue 2026-11-03 06:00:00 UTC }\nNextElapseUSecRealtime=Tue 2026-11-03 09:25:14 UTC",
+  "actions": [
+    "version",
+    "calendar-analysis",
+    "showOSMaintenanceTimerOnly"
+  ],
+  "timerInstalls": 0,
+  "configWrites": 0
+}

@@ -1,8 +1,9 @@
+import { useIsFocused } from "expo-router";
 import {
   listCaptureTripPriors,
   readCaptureTripPrior,
 } from "@/features/capture/captureTripPrior";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text } from "react-native";
@@ -39,6 +40,7 @@ type RetainedDrafts = {
   current: {
     accountId: string;
     drafts: Map<string | null, ReturnType<typeof createCaptureStaging>>;
+    activityPositions: Record<string, number>;
   } | null;
 };
 const overlayRetained: RetainedDrafts = { current: null };
@@ -58,6 +60,18 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
   }>();
   const navigation = useNavigation<{
     isFocused(): boolean;
+    getState?(): {
+      index: number;
+      routes: { name: string; params?: { importJobId?: string } }[];
+    };
+    getParent():
+      | {
+          getState(): {
+            index: number;
+            routes: { name: string; params?: { importJobId?: string } }[];
+          };
+        }
+      | undefined;
     setParams(params: {
       tripId?: string;
       jobId?: string;
@@ -66,6 +80,7 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
     }): void;
   }>();
   useUiLocale();
+  const focused = useIsFocused();
   const styles = useThemedStyles(createStyles);
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
@@ -75,12 +90,16 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
   const retained = overlay ? overlayRetained : tabRetained;
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
+  const [draftWarning, setDraftWarning] = useState(false);
+  const activityPositionsRef = useRef<Record<string, number>>({});
   useFocusEffect(
     useCallback(() => {
       let active = true;
       let visibleStaging: ReturnType<typeof createCaptureStaging> | null = null;
+      let stopSaving: (() => void) | undefined;
       setAdmission(null);
       setChecked(null);
+      setDraftWarning(false);
       void withAccountApplyGate(readLocalSession)
         .then(async (session) => {
           if (!active || getAccountGeneration() !== generation) return;
@@ -105,15 +124,73 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             };
             if (retained.current?.accountId !== accountId) {
               retained.current?.drafts.forEach((draft) => draft.cancel());
-              retained.current = { accountId, drafts: new Map() };
+              retained.current = { accountId, drafts: new Map(), activityPositions: {} };
             }
+            activityPositionsRef.current = retained.current.activityPositions;
             let staging = retained.current.drafts.get(owner.tripPrior);
             if (staging) staging.resume(owner, lease);
             else {
-              staging = createCaptureStaging(pickCaptureMaterial, lease, owner);
+              const draftFiles =
+                process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true"
+                  ? await import("@/data/repositories/captureDraftRepository")
+                  : null;
+              if (!lease()) return;
+              staging = createCaptureStaging(
+                async (source, current) => {
+                  const selections = await pickCaptureMaterial(source, current);
+                  if (!draftFiles) return selections;
+                  const retainedSelections = [];
+                  try {
+                    for (const selection of selections) {
+                      if (!current?.()) break;
+                      retainedSelections.push(
+                        await draftFiles.retainCaptureDraftSelection(
+                          accountId,
+                          selection,
+                        ),
+                      );
+                    }
+                    return retainedSelections;
+                  } catch (error) {
+                    selections.forEach((selection) => selection.release?.());
+                    throw error;
+                  }
+                },
+                lease,
+                owner,
+              );
+              if (draftFiles) {
+                try {
+                  const saved = await draftFiles.readCaptureDraft(owner);
+                  if (!lease()) return;
+                  if (
+                    saved?.tripTarget &&
+                    !(await readCaptureTripPrior(saved.tripTarget.id, next))
+                  ) {
+                    setDraftWarning(true);
+                  } else if (saved) staging.restore(saved);
+                } catch {
+                  if (lease()) setDraftWarning(true);
+                }
+              }
+              if (!lease()) return;
               retained.current.drafts.set(owner.tripPrior, staging);
             }
             visibleStaging = staging;
+            if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true") {
+              const draftFiles =
+                await import("@/data/repositories/captureDraftRepository");
+              if (!lease()) return;
+              const currentStaging = staging;
+              stopSaving = staging.subscribe(() => {
+                if (!lease() || !currentStaging.isVisible()) return;
+                try {
+                  draftFiles.saveCaptureDraft(owner, currentStaging.getDraftSnapshot());
+                } catch {
+                  setDraftWarning(true);
+                }
+              });
+            }
             setAdmission({
               ...next,
               staging,
@@ -128,11 +205,19 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
           if (active) setChecked(generation);
         });
       return () => {
+        stopSaving?.();
         active = false;
-        visibleStaging?.hide();
-        setAdmission(null);
         // Dependency cleanup must not erase a newer focused invocation.
-        if (!overlay && !navigation.isFocused())
+        const parent = navigation.getParent()?.getState() ?? navigation.getState?.();
+        const destination = parent?.routes[parent.index];
+        const openingReview =
+          destination?.name === "import-review" ||
+          typeof destination?.params?.importJobId === "string";
+        if (!openingReview) {
+          visibleStaging?.hide();
+          setAdmission(null);
+        }
+        if (!overlay && !navigation.isFocused() && !openingReview)
           navigation.setParams({
             tripId: undefined,
             jobId: undefined,
@@ -156,6 +241,8 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
       return false;
     }
   };
+  // An unfocused transparent overlay must not leak stale admission copy behind its destination.
+  if (overlay && !focused) return <></>;
   return (
     <SafeAreaView
       edges={["bottom", "left", "right"]}
@@ -165,8 +252,29 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
         <CaptureContent
           key={`${generation}:${jobId ?? ""}${admission.tripPrior ? `:${admission.tripPrior}` : ""}`}
           jobId={typeof jobId === "string" ? jobId : undefined}
+          embeddedComposer={overlay}
+          activityPositionsRef={activityPositionsRef}
+          onOpenAcceptedItem={(target) => {
+            if (!isCurrent() || !target.family || !/^P[1-6]$/.test(target.family)) return;
+            router.push({
+              pathname: `/p${target.family.slice(1)}-detail`,
+              params: {
+                tripId: target.tripId,
+                itemId: target.itemId,
+                importJobId: target.jobId ?? jobId,
+              },
+            } as never);
+          }}
+          onReturnToTrip={(view, resultTripId, resultJobId) => {
+            if (isCurrent())
+              router.push({
+                pathname: "/trip-home",
+                params: { tripId: resultTripId, view, importJobId: resultJobId },
+              });
+          }}
           isCurrent={isCurrent}
           draftStaging={admission.staging}
+          draftPersistenceError={draftWarning}
           accountId={admission.accountId}
           tripName={admission.tripName}
           tripPrior={admission.tripPrior}
@@ -181,6 +289,11 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             return Boolean(await readCaptureTripPrior(id, admission)) && isCurrent();
           }}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
+          onOpenReview={(id) => {
+            if (!isCurrent()) return;
+            navigation.setParams({ jobId: id });
+            router.push({ pathname: "/import-review", params: { jobId: id } });
+          }}
           onCancel={() => {
             const target = captureOriginPath(
               origin,

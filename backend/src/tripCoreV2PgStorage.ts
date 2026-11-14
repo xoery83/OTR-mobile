@@ -25,7 +25,7 @@ import {
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import { coreLifecycleGraphHash } from "../../src/domain/trip/tripCoreV2Lifecycle";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
-import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
+import { validateCoreCommand, isNormalImportCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import type {
   CoreCommand,
@@ -388,30 +388,65 @@ export function withCorePgStorageTransaction<T>(
   });
 }
 
+// Internal only; these IDs are not an authorized private-channel message.
+export type CoreCommittedChange = Readonly<{
+  actorAccountId: string;
+  tripId: string;
+  operationId: string;
+}>;
 // The normal single-command port retains its public behavior and owns one transaction.
 export function createCorePgStorage(
   connection: CorePgConnection,
   hash: ImportHash,
   admission?: CorePgAdmission,
   gateMode?: CoreGateMode,
+  onCommitted?: (change: CoreCommittedChange) => void | Promise<void>,
 ): CoreCommandStorage {
   return {
     async withLockedCommand(scope, work) {
       coreUuid.parse(scope.actorAccountId);
       coreUuid.parse(scope.tripId);
       coreUuid.parse(scope.operationId);
-      return withCorePgStorageTransaction(
+      let applied = false;
+      const result = await withCorePgStorageTransaction(
         connection,
         hash,
         // Single-command rejection receipts keep their established catch/commit behavior.
         ({ lease }) =>
           createCorePgStorageOnLease(lease, hash, admission, gateMode).withLockedCommand(
             scope,
-            work,
+            onCommitted
+              ? (tx) =>
+                  work({
+                    ...tx,
+                    async commit(...args) {
+                      const id = await tx.commit(...args);
+                      if (args[1].outcome === "APPLIED") applied = true;
+                      return id;
+                    },
+                  })
+              : work,
           ),
         admission,
         gateMode,
       );
+      if (applied && onCommitted) {
+        // A hint must neither hold the single PG lease nor invalidate its durable receipt.
+        try {
+          void Promise.resolve(
+            onCommitted(
+              Object.freeze({
+                actorAccountId: scope.actorAccountId,
+                tripId: scope.tripId,
+                operationId: scope.operationId,
+              }),
+            ),
+          ).catch(() => undefined);
+        } catch {
+          // Existing lawful Pull recovers a lost hint.
+        }
+      }
+      return result;
     },
   };
 }
@@ -432,6 +467,8 @@ function createCorePgStorageOnLease(
         "SELECT set_config('otr.core.actor',$1,true),set_config('otr.core.trip',$2,true),set_config('otr.core.operation',$3,true)",
         [scope.actorAccountId, scope.tripId, scope.operationId],
       );
+      if (gateMode?.sustainedDev && scope.manualCompatibility)
+        await lease.query("SELECT set_config('otr.core.manual_compat',$1,true)", [scope.manualCompatibility]);
       const finiteScope = async () => {
         const allowed = (
           await lease.query(
@@ -488,7 +525,7 @@ function createCorePgStorageOnLease(
           );
         },
         async enabledCommands() {
-          if (gateMode?.sustainedDev && gateMode.reviewedP1) {
+          if (gateMode?.sustainedDev && gateMode.reviewedP1 && scope.manualCompatibility !== "MANUAL") {
             const reviewed = await readReviewedP1Gate(
               lease,
               actor.accountId,
@@ -553,6 +590,8 @@ function createCorePgStorageOnLease(
             : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
           const manual = normalManualCapabilities(activation);
           const normal = manual !== null;
+          const localMetadata = command.command === "CREATE_DOCUMENT_METADATA";
+          const documentLink = command.command === "RECONCILE_ITEM_DOCUMENTS";
           const finiteFamily =
             command.command === "CREATE_SPARSE_FLIGHT"
               ? "P2"
@@ -584,8 +623,8 @@ function createCorePgStorageOnLease(
                 !command.admission.sourceIntentId ||
                 command.admission.policyVersion !== null
               : normal
-                ? command.admission.mode !== "MANUAL" ||
-                  !manual!.families.includes(String(finiteFamily)) ||
+                ? (command.admission.mode !== "MANUAL" && !(manual!.importEnabled && isNormalImportCoreCommand(command))) ||
+                  (!localMetadata && !documentLink && !manual!.families.includes(String(finiteFamily))) ||
                   !(manual!.commands as readonly string[]).includes(command.command) ||
                   (command.command === "CREATE_ITEM" && finiteFamily === "P2") ||
                   (command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
@@ -595,6 +634,7 @@ function createCorePgStorageOnLease(
                       "CREATE_SPARSE_FLIGHT",
                       "SET_AUTHORED_FLIGHT_DETAILS",
                       "SET_ITEM_PARTICIPATION",
+                      "RECONCILE_ITEM_DOCUMENTS",
                     ].includes(command.command)) ||
                   (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3") ||
                   (command.command === "SET_RENTAL_DETAILS" && finiteFamily !== "P4") ||
@@ -608,6 +648,7 @@ function createCorePgStorageOnLease(
             throw new Error("CORE_CAPABILITY_CLOSED");
           if (
             normal &&
+            !localMetadata &&
             command.command !== "CREATE_ITEM" &&
             command.command !== "CREATE_SPARSE_FLIGHT" &&
             graph.itinerary_events.find((item) => item.id === command.target.id)
@@ -616,6 +657,7 @@ function createCorePgStorageOnLease(
             throw new Error("CORE_CREATOR_REQUIRED");
           if (
             normal &&
+            !documentLink &&
             finiteFamily === "P2" &&
             command.command !== "CREATE_SPARSE_FLIGHT"
           ) {
@@ -644,7 +686,7 @@ function createCorePgStorageOnLease(
               );
               if (
                 created.command !== "CREATE_SPARSE_FLIGHT" ||
-                created.admission.mode !== "MANUAL" ||
+                created.admission.mode !== (command.admission.mode === "IMPORT" ? "IMPORT" : "MANUAL") ||
                 created.target.id !== command.target.id ||
                 created.tripId !== actor.tripId
               )
@@ -732,7 +774,7 @@ function createCorePgStorageOnLease(
             !(gate.enabled_admission_modes as string[]).includes(
               command.admission.mode,
             ) ||
-            (family && !(gate.enabled_families as string[]).includes(family as string))
+            (family && !documentLink && !(gate.enabled_families as string[]).includes(family as string))
           )
             throw new Error("CORE_CAPABILITY_CLOSED");
           const requiresTemporalAuthority = (value: unknown): boolean => {
@@ -751,7 +793,7 @@ function createCorePgStorageOnLease(
           };
           if (
             requiresTemporalAuthority(command.payload) ||
-            command.admission.mode !== "MANUAL" ||
+            !["MANUAL", "IMPORT"].includes(command.admission.mode) ||
             command.baseVector.some((v) => v.kind === "SOURCE") ||
             [
               "CREATE_DOCUMENT",
@@ -832,6 +874,7 @@ function createCorePgStorageOnLease(
             if (!coreCanRead(graph, actor, v.kind as CoreKind, row)) return false;
             if (
               v.kind === "DOCUMENT" &&
+              row.custody !== "LOCAL_ONLY" &&
               (!admission || !(await admission.canReadOriginal(lease, actor, row)))
             )
               return false;
@@ -895,7 +938,7 @@ export async function readCorePgOperation(
 ) {
   for (const id of [actorAccountId, tripId, operationId]) coreUuid.parse(id);
   return storage.withLockedCommand(
-    { actorAccountId, tripId, operationId, baseVector: [] },
+    { actorAccountId, tripId, operationId, baseVector: [], manualCompatibility: "READ" },
     async (tx) => {
       const prior = await tx.readReceipt();
       if (!prior) return null;

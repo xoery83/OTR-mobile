@@ -53,6 +53,7 @@ export type SyncOperation = {
   ownerUserId: string;
   status: SyncOperationStatus;
   attemptCount: number;
+  failureCategory?: SyncFailureCategory | null;
   nextAttemptAt: string | null;
   dependencyOperationId?: string | null;
   claimOwner?: string | null;
@@ -178,6 +179,7 @@ export function createSyncOperationRepository(
           owner_user_id AS ownerUserId,
           status,
           attempt_count AS attemptCount,
+          failure_category AS failureCategory,
           next_attempt_at AS nextAttemptAt,
           dependency_operation_id AS dependencyOperationId,
           claim_owner AS claimOwner,
@@ -758,12 +760,18 @@ const syncDiagnosticSchema = z.object({
 export async function readSyncOperationDiagnostics(
   database: Pick<SyncQueueDatabase, "getAllAsync">,
   accountId: string,
+  operationIds?: readonly string[],
 ) {
+  if (operationIds?.length === 0) return [];
+  if (operationIds && operationIds.length > 96)
+    throw Error("SYNC_DIAGNOSTIC_SCOPE_LIMIT");
   const rows = await database.getAllAsync(
     `SELECT id,entity_type AS entityType,operation_type AS operationType,
       status,failure_category AS failureCategory,updated_at AS updatedAt
-     FROM sync_operations WHERE owner_user_id=? ORDER BY updated_at DESC,id LIMIT 51`,
+     FROM sync_operations WHERE owner_user_id=?${operationIds ? ` AND id IN (${operationIds.map(() => "?").join(",")})` : ""}
+     ORDER BY updated_at DESC,id${operationIds ? "" : " LIMIT 51"}`,
     accountId,
+    ...(operationIds ?? []),
   );
   return rows.map((row) => syncDiagnosticSchema.parse(row));
 }

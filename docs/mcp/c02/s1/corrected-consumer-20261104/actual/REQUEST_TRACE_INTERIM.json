@@ -1,0 +1,260 @@
+{
+  "receipt": {
+    "status": "SANITIZED_REQUEST_TRACE_PRESERVED",
+    "records": 37,
+    "sha256": "851c142bc12308cce9b67231220ade8efe669e2d68854043821190d78846435a"
+  },
+  "trace": {
+    "windowId": "e0d1c568cbae4b0ca3a0dec92e4ececf",
+    "candidateId": "0479ccceecc0efc5df2d2f5fcc99fae531c91cfb2f5a115fa5ac486d8668f672",
+    "since": "2026-11-03T18:58:54.419000+00:00",
+    "scope": "ACCEPTED_LOGGER_RECORDS_ONLY_NOT_ALL_HTTP",
+    "tailLimit": 200,
+    "tailMayBeTruncated": true,
+    "records": [
+      {
+        "timestamp": "2026-11-03T19:15:43.184812328Z",
+        "requestId": "68a1982c-7e41-40dd-85ad-8a2fdd5c37dd",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:15:45.062527628Z",
+        "requestId": "ea6671b2-e86e-463a-8b63-c77a6ca79f4c",
+        "status": 400,
+        "durationMs": 1877
+      },
+      {
+        "timestamp": "2026-11-03T19:15:46.761765669Z",
+        "requestId": "835d12a4-72a9-4408-81be-b9975976daa0",
+        "status": 200,
+        "durationMs": 1422
+      },
+      {
+        "timestamp": "2026-11-03T19:15:48.984274675Z",
+        "requestId": "c637b7c3-b807-4c35-98f6-2591e6e6268e",
+        "status": 200,
+        "durationMs": 1944
+      },
+      {
+        "timestamp": "2026-11-03T19:15:50.694131804Z",
+        "requestId": "08cd3158-520b-4446-a2c4-4e1b1ce46241",
+        "status": 202,
+        "durationMs": 1396
+      },
+      {
+        "timestamp": "2026-11-03T19:15:53.228942840Z",
+        "requestId": "415c0a67-3860-4e78-95c6-247ced4f1c53",
+        "status": 200,
+        "durationMs": 1641
+      },
+      {
+        "timestamp": "2026-11-03T19:18:33.314900492Z",
+        "requestId": "b20f7f4b-1303-4cbd-a0a9-2dc5877acb76",
+        "status": 401,
+        "durationMs": 3
+      },
+      {
+        "timestamp": "2026-11-03T19:18:33.442665440Z",
+        "requestId": "12dce09c-ecb0-4f5e-ade2-758de4b88618",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-03T19:18:33.517436737Z",
+        "requestId": "c152e0fd-475f-43cb-bf7a-199481ce0494",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-03T19:18:33.598334676Z",
+        "requestId": "c9653ca1-d6eb-4752-8e7a-469b8c27bd31",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:18:33.761463122Z",
+        "requestId": "d3a5c179-d7dc-4b6c-bbe2-762b77e8db06",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:18:33.801830798Z",
+        "requestId": "83cc4abe-0a1e-460a-b979-ff2867f0f073",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:18:33.880480246Z",
+        "requestId": "eda175d6-9fa1-4371-8326-ba8e7199eb92",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:18:34.081205411Z",
+        "requestId": "e866a910-c126-49d8-8a52-1d26ab34bc5e",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:18:34.088820766Z",
+        "requestId": "b60b8b89-7d5d-41ca-a4c2-2cdfd7f65e82",
+        "status": 401,
+        "durationMs": 3
+      },
+      {
+        "timestamp": "2026-11-03T19:18:37.391253704Z",
+        "requestId": "a454900d-be31-43d2-b7a5-d14be102fa90",
+        "status": 200,
+        "durationMs": 1454,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-03T19:18:38.668058544Z",
+        "requestId": "6ba8c2b5-8ca1-4495-8093-130180ce82b9",
+        "status": 200,
+        "durationMs": 1395,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-03T19:18:39.952862240Z",
+        "requestId": "b36b3ace-6cd5-4281-abd2-c261caf0df99",
+        "status": 200,
+        "durationMs": 1397,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-03T19:18:46.240004510Z",
+        "requestId": "69e2ea5a-be67-4307-8b3c-78f5af9c7633",
+        "status": 200,
+        "durationMs": 3703,
+        "tool": "list_trips"
+      },
+      {
+        "timestamp": "2026-11-03T19:18:52.773285152Z",
+        "requestId": "ba874226-542b-405a-a779-6de5698ca88a",
+        "status": 200,
+        "durationMs": 3063,
+        "tool": "get_trip"
+      },
+      {
+        "timestamp": "2026-11-03T19:19:01.517033009Z",
+        "requestId": "a6a4f9b6-1a2e-4476-b3b4-c3cddfe42811",
+        "status": 200,
+        "durationMs": 11479,
+        "tool": "list_trip_items"
+      },
+      {
+        "timestamp": "2026-11-03T19:19:24.161107529Z",
+        "requestId": "c63b8736-31fc-466c-b939-16c3b269012c",
+        "status": 200,
+        "durationMs": 16926,
+        "tool": "get_trip_item",
+        "errorCode": "BACKEND_UNAVAILABLE"
+      },
+      {
+        "timestamp": "2026-11-03T19:19:24.201166256Z",
+        "requestId": "f41c6c12-70ed-422b-8aeb-881b3773fe34",
+        "status": 200,
+        "durationMs": 16831,
+        "tool": "get_trip_item_edit_base",
+        "errorCode": "BACKEND_UNAVAILABLE"
+      },
+      {
+        "timestamp": "2026-11-03T19:19:24.377442210Z",
+        "requestId": "79c12d8f-3249-483a-8e9a-0cc5f4f29875",
+        "status": 200,
+        "durationMs": 17375,
+        "tool": "get_trip_item",
+        "errorCode": "BACKEND_UNAVAILABLE"
+      },
+      {
+        "timestamp": "2026-11-03T19:19:33.452580552Z",
+        "requestId": "5b6ebbc4-be27-40cb-9d36-1825a79d47e1",
+        "status": 200,
+        "durationMs": 26307,
+        "tool": "get_trip_item_edit_base"
+      },
+      {
+        "timestamp": "2026-11-03T19:19:40.342438831Z",
+        "requestId": "04817552-a2fb-4428-b499-76d83d3643e3",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:19:40.624879919Z",
+        "requestId": "07aa091c-40ae-48a5-a78b-8387d99fcc33",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-03T19:20:03.961063974Z",
+        "requestId": "57bd4c75-faa2-45da-b228-7dc6d4ad5d0c",
+        "status": 200,
+        "durationMs": 21522,
+        "tool": "get_trip_item"
+      },
+      {
+        "timestamp": "2026-11-03T19:20:33.978269323Z",
+        "requestId": "690834e8-2f86-4cb4-ad8c-e86b74a0d899",
+        "status": 200,
+        "durationMs": 28917,
+        "tool": "get_trip_item_edit_base"
+      },
+      {
+        "timestamp": "2026-11-03T19:20:57.261110021Z",
+        "requestId": "231ed1cc-aa3a-46d2-85f3-85661c07b316",
+        "status": 401,
+        "durationMs": 21816,
+        "tool": "get_trip_item",
+        "errorCode": "AUTH_REQUIRED"
+      },
+      {
+        "timestamp": "2026-11-03T19:20:57.598695985Z",
+        "requestId": "efdbcad6-0eba-4930-ba17-e0d51725d43f",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:21:15.776978047Z",
+        "requestId": "aaf8cf24-334d-42e4-9476-285bb7fd8945",
+        "status": 200,
+        "durationMs": 16454,
+        "tool": "get_trip_item"
+      },
+      {
+        "timestamp": "2026-11-03T19:21:46.723190855Z",
+        "requestId": "18cf8715-138b-46e0-81dc-40a57b0c76d2",
+        "status": 200,
+        "durationMs": 29823,
+        "tool": "get_trip_item_edit_base"
+      },
+      {
+        "timestamp": "2026-11-03T19:22:20.406413238Z",
+        "requestId": "04c93d2d-73bf-4e06-bd34-a17a2fc23fca",
+        "status": 401,
+        "durationMs": 2
+      },
+      {
+        "timestamp": "2026-11-03T19:22:20.690462002Z",
+        "requestId": "38b5c3ba-8fbd-49ee-b01b-7da3b98c55e7",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-03T19:22:34.072038547Z",
+        "requestId": "49ef629f-f27e-4711-ad02-9c7d796a04e5",
+        "status": 200,
+        "durationMs": 11308,
+        "tool": "review_travel_materials"
+      },
+      {
+        "timestamp": "2026-11-03T19:22:47.932050523Z",
+        "requestId": "31cb4c25-dc9f-4155-9870-48d93655f7f7",
+        "status": 200,
+        "durationMs": 1500,
+        "tool": "create_trip_item"
+      }
+    ]
+  }
+}

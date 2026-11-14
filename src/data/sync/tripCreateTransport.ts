@@ -3,7 +3,9 @@ import { ApiClientError, type ApiClientOptions } from "@/data/api/client";
 import {
   assertAccountRequestContext,
   type AccountScope,
+  type AccountRequestContext,
 } from "@/data/auth/accountRequestContext";
+import { coreUuid } from "@/domain/trip/tripCoreV2";
 import {
   tripCreateWireResultSchema as tripCreateResultSchema,
   type TripCreateWireRequest as TripCreateRequest,
@@ -11,6 +13,7 @@ import {
 } from "@/domain/trip/tripCreateWireContract";
 
 export type TripCreateTransport = {
+  parentReceipt?(scope: AccountRequestContext): Promise<TripCreateResult | null>;
   receipt(
     scope: AccountScope,
     operationId: string,
@@ -37,6 +40,40 @@ export function createTripCreateTransport(
   const client = (scope: AccountScope) =>
     createAuthenticatedApiClient(options, tokenProvider, scope);
   return {
+    async parentReceipt(context) {
+      const scope = Object.freeze({ ...context });
+      coreUuid.parse(scope.tripId);
+      await assertAccountRequestContext(scope, account);
+      dispatchGuard();
+      let result: TripCreateResult;
+      try {
+        result = await client(scope).get(
+          `/v2/trips/${scope.tripId}/create-receipt`,
+          tripCreateResultSchema,
+          { "OTR-Trip-Create-Version": "2" },
+        );
+      } catch (error) {
+        await assertAccountRequestContext(scope, account);
+        dispatchGuard();
+        if (
+          error instanceof ApiClientError &&
+          error.status === 404 &&
+          error.code === "TRIP_CREATE_RECEIPT_NOT_FOUND"
+        )
+          return null;
+        throw error;
+      }
+      await assertAccountRequestContext(scope, account);
+      dispatchGuard();
+      if (
+        result.actorAccountId !== scope.accountId ||
+        result.tripId !== scope.tripId ||
+        !("formatVersion" in result) ||
+        result.formatVersion !== 2
+      )
+        throw Error("TRIP_CREATE_RESULT_MISMATCH");
+      return result;
+    },
     async receipt(scope, operationId, version = 1) {
       await assertAccountRequestContext(scope, account);
       dispatchGuard();

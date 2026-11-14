@@ -26,7 +26,7 @@ export function dayHeaderPresentation({
   destination = unresolvedDayHeaderDestination,
 }: {
   date: string;
-  start: string;
+  start: string | null;
   today: string;
   style?: DayHeaderStyle;
   destination?: DayHeaderDestination;
@@ -44,6 +44,19 @@ export function dayHeaderPresentation({
   const label = destination.label?.trim() || null;
   const standardTitle = relative ?? weekday;
   const standardSubtitle = relative ? weekdayDate : shortDate;
+  // Undated and pre-start days have calendar dates, not a positive Trip-day ordinal.
+  if (!start || ordinal < 1)
+    return {
+      ordinal: null,
+      delta,
+      title: !start && (style === "C" || style === "D") && label ? label : standardTitle,
+      subtitle:
+        !start && (style === "C" || style === "D") && label
+          ? weekdayDate
+          : standardSubtitle,
+      badgeTop: formatUiDate(at, { month: "short", timeZone: "UTC" }),
+      badgeBottom: formatUiNumber(at.getUTCDate()).padStart(2, "0"),
+    };
   const title =
     style === "B"
       ? (relative ?? day)

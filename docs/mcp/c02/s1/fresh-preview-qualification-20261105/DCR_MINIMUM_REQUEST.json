@@ -1,0 +1,92 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "recordedAt": "2026-11-04T19:03:49.261256+00:00",
+  "status": "CURRENT_DCR_FALSE_EVIDENCE_PENDING_MINIMAL_EXISTING_UI_PATH_IDENTIFIED",
+  "actualExecutionChildId": "/root/fresh_preview_execution",
+  "Root2ActualChildId": "/root/mcp_fresh_p3_qualification_20261105",
+  "root2FixedReceipts": [
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/BASELINE_QUALIFICATION.json",
+      "sha256": "ee745efa49f0ef0471e887ffc7d62961bdc4e1ecd07e3c825efe07920f3f06ff"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/FRESH_READONLY_METADATA.json",
+      "sha256": "8a15bfd348b38d7f0b93505afccb95abfd4e5bb5d7dd86ab474c7e19658617c2"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/REQUEST_QUALIFICATION.json",
+      "sha256": "b35dd034a94b349d18658f828db27fc516c1589ee713654dc51f692e640eb8c0"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/FUTURE_GATE_MINIMUM.json",
+      "sha256": "6056f94a3665e33dd14be8c6fe6a60b01abaf3a98523b6de5b1cb54b54c39eaa"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/CONSOLE_UI_READBACK.json",
+      "sha256": "4acbf000e5c1fbd0234c47e1468ec45f1d1fe731c546165ce7ee9151643f013d"
+    }
+  ],
+  "qualificationResult": "NOT_READY_CURRENT_DCR_FALSE_CONSOLE_EVIDENCE",
+  "currentKnown": {
+    "software": "Current Root2 c826/cffee compatible, no new image/deployment prerequisite",
+    "runtime": "Same-image EMPTY selector CAS is necessary; preserve current other-lane default and fresh restore pointer",
+    "Issuer": "Existing finite body change/denyall restoration necessary; preserve identity/owner/ACL",
+    "Console": "Current OAuthOFF/HookOFF/SiteURLlocalhost observed; DCR latent while OFF not visible, not proved false",
+    "timing": "No Gate/window/clock/OTP/live waiter assigned or started",
+    "ImportDrift": "Any accepted Import/default change invalidates before-image; requalify actual new current default, never blindly restore6ff9"
+  },
+  "DCRAnalysis": {
+    "existingOfficialReadAPI": "No pinned existing read-only management API or SDK entry identified in scoped local owning artifacts. No endpoint/key/API exploration or new API is proposed.",
+    "visibleUIPath": "Existing DEV Console OAuth Server form, same official controls already observed Nov3; DCR shown only after unsaved OAuth-enable draft expansion. This is form visibility, not evidence that server must be persisted ON.",
+    "historicalEvidence": [
+      {
+        "path": "docs/mcp/c02/s1/access-preflight/dcr-visible/OBSERVATION.json",
+        "sha256": "e8f6878a544ab7dff712b0268b4d60a4081b5e2372eb71435f047536d1d63c2b"
+      },
+      {
+        "path": "docs/mcp/c02/s1/access-preflight/dcr-visible/EXPANDED_FORM.txt",
+        "sha256": "05b7b5c1d76ce602a31ce47dd4954983490b2857dca832fb2cf04cc870728900"
+      },
+      {
+        "path": "docs/mcp/c02/s1/access-preflight/dcr-visible/RESTORED_OFF.txt",
+        "sha256": "1793dbd0a8677e93819e5fd2a3668902ad3bec1855a5bf3380d0a9c1f2bde1f2"
+      }
+    ],
+    "historicalIsFreshProof": false,
+    "recommendedNextRequest": "Root2 may qualify the exact existing noncommitting form expansion below under current UI-operation authority. If authority/platform review treats unsaved toggle as protected, stop and request that narrow interaction explicitly; do not call it existing read permission or bypass review.",
+    "procedure": [
+      "Verify actual DEV project tuqigdxrvrerfewsxqgm, OAuthOFF, no unsaved changes, Save disabled in existing authorized Console.",
+      "Only if currently authorized, change the existing Enable OAuth Server FORM DRAFT once to expose fields; do not press Save or trigger any persisted enable action. If control autosaves or behavior is uncertain, do not perform it.",
+      "Read existing untouched Allow Dynamic OAuth Apps switch aria-checked and Authorization Path. Do not toggle DCR, edit values, read credentials/API/DevTools or infer latent false from absent controls.",
+      "Cancel immediately and reload; independently read OAuthOFF and Save disabled. If source form does not reliably represent loaded current latent values, record UNPROVED rather than false.",
+      "A single successful current false readback and clean cancel qualifies DCR only, not runtime/Issuer/OAuth activation/OTP. Unexpected persisted state follows existing authorized close contract; do not experiment."
+    ],
+    "fallbackExactGate": "If a reliable current latent read cannot be obtained through this established form, leave NOT_READY and include explicit DCR=false enforcement in the future single protected Console Gate: review exact before/after form containing OAuthON + DCRfalse before saving, with finite denyall/EMPTY and complete close/watchdog prerequisites already qualified. Independently reload/verify DCR=false before any normal OTP/consumer access; on mismatch close, no OTP. This is an alternative protected action requiring precise approval, not a readback or authorization now.",
+    "noLoweredRequirement": true
+  },
+  "futureGateKnownContents": [
+    "Only same-image EMPTY configuration CAS; command=null confirmations=[] throughout. No Save or Core mutation.",
+    "Existing Issuer finite body for exact original QA account/client/resource and current scope;60sec token cap, owner/ACL unchanged, exact denyall restore.",
+    "Necessary Console OAuth/hook/SiteURL/authpath and DCRfalse; exact original latent settings restore. All precise protected permissions before OTP.",
+    "New future Gate/window/source/close pins and current before/after hashes, not oldc7fe. No values generated here.",
+    "Live bounded file waiter before owning normal login; original launch<=120sec once, T+28min normal/T+30min hard; no reset/extension/borrowedSession.",
+    "Fresh ordinary Rimu task -> Guide/read/existingobjects/newP3Preview only; exact inputs fixed and no preassigned newCoreIDs."
+  ],
+  "remainingNow": {
+    "id": "CURRENT_DCR_FALSE_CONSOLE_EVIDENCE",
+    "owner": "Root2 Console qualification, MCP parent coordinates",
+    "unblock": "Current lawful latent DCRfalse evidence through existing noncommitting form, or an explicitly approved protected qualification/enforcement sequence before OTP",
+    "notNewBusinessScope": true
+  },
+  "operationsPerformed": {
+    "localFilesReadOnly": true,
+    "ConsoleInteraction": 0,
+    "externalAPI": 0,
+    "credentials": 0,
+    "newWindow": 0,
+    "OTP": 0,
+    "runtimeMutation": 0,
+    "businessWrites": 0
+  },
+  "unknowns": "a8c1/f107/9b remain frozen; no replay/query/clone"
+}

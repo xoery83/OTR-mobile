@@ -1,0 +1,46 @@
+{
+  "status": "NO_BLOCKER_LOCAL_INCREMENT_ONLY",
+  "reviewedAt": "2026-11-02T07:28:50.243328+00:00",
+  "reviewerAgent": "MCP Single DRI independently reviewing Root-owned increment",
+  "sdkCommit": "f522fc4c",
+  "sdkServerSHA256": "6fb5f608cbaa071937d29bf54d40be23fbe55f453e3b13f77c9cd559c195672f",
+  "candidateRoot": "/private/tmp/otr-mcp-response-proof-root-20261102",
+  "candidateSHA256": {
+    "mcpQaRuntime.ts": "637e92e4c1edba9ffc6719a9760c8fdbc43d6b295449a42b16c5b18b19ae0e20",
+    "safe_mcp_close_logs.py": "34d1bdb480b3dee26457aaac02fc5ee4ae3c15aa76cad7164c32354bec3efb06",
+    "test_loader_proof.mjs": "a90f51985551ede26e28e7032dd6c948b4c5632eb65666e4f9921f27a4909763",
+    "test_collector_proof.py": "cbdd50d3f8f283950cb4cb5ecaacb0b0448531797b1f36b49401681567710e1e",
+    "test_safe_mcp_close_logs.py": "a92d7b980e934c9c36889827a325473c1c7f718a44868701335281103c33fae5"
+  },
+  "diffSHA256": {
+    "mcpQaRuntime.ts.diff": "42803f9b066834161814548a34bb14619fa9c2c509f98f77befce1cb4947590a",
+    "safe_mcp_close_logs.py.diff": "2c0837a0442ddb7e8f81570c686053d3064d184ad7b813bf347addb538c3c92f"
+  },
+  "checks": {
+    "actualLoaderPreimageSHA256": "VERIFIED_bb687052",
+    "candidateFiveFileHashes": "PASS",
+    "sdkSourceHash": "PASS",
+    "actualSchemaAndCallbackASTExecuted": "PASS",
+    "collectorOldAndProofTests": 10,
+    "externalCalls": 0
+  },
+  "findings": [],
+  "verifiedBoundaries": [
+    "Only v4 callback can output proof; non-v4 cannot promote evidence.",
+    "HTTP200/no error/no authFailureSource and exact tool/kind binding.",
+    "Strict nested proof; version and 64hex hashes; EDIT_BASE rejects digest, PREVIEW requires digest.",
+    "Top-level private fields stripped; collector mirrors nested strictness.",
+    "No business, authorization, Capture or frozen prior execution artifacts changed by these two diffs."
+  ],
+  "notTested": [
+    "Full assembled runtime/Capture build",
+    "Hosted deployment/actual log collection",
+    "New execution package caller/hash pin; NOT_RUN because package not prepared",
+    "Actual consumer confirmation/Apply/APPLIED/readback"
+  ],
+  "integrationConditions": [
+    "New collector SHA must be pinned by a new execution package and caller test before activation.",
+    "Do not reuse expired8f4 package or historical collector hash.",
+    "Retain proof as handler-output evidence, never APPLIED/NoCommit/client-receipt evidence."
+  ]
+}

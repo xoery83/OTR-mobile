@@ -81,7 +81,45 @@ export function createReadTools(
       throw new ReadError("BACKEND_UNAVAILABLE");
     return result;
   }
+  async function collection(trip: string) {
+    const wire = z
+      .object({ manifest: z.unknown(), pages: z.array(z.unknown()).max(100) })
+      .parse(await json(`/v2/trips/${trip}/core/collection`));
+    return validateCoreReadCollection(
+      wire.manifest,
+      wire.pages,
+      accountId,
+      trip,
+      async (bytes) => digest(bytes),
+    );
+  }
   return {
+    async get_review_snapshot(raw: unknown) {
+      const q = tripInput.parse(raw),
+        current = await collection(q.trip_id);
+      const records = current.records.filter((r) => r.kind === "ITEM");
+      if (records.length > 100) throw new ReadError("READ_LIMIT");
+      const items: z.infer<typeof itemSchema>[] = [];
+      for (let start = 0; start < records.length; start += 5) {
+        const group = await Promise.all(
+          records.slice(start, start + 5).map(async (record) => {
+            const view = await item(q.trip_id, record.id),
+              row = record.body as Record<string, unknown>;
+            if (view.itemRevision !== record.revision)
+              throw new ReadError("STALE_CURSOR");
+            return itemSchema.parse({
+              ...view,
+              description: row.description,
+              ...(["P1", "P6"].includes(view.family) && row.activity_category !== null
+                ? { details: { ...view.details, category: row.activity_category } }
+                : {}),
+            });
+          }),
+        );
+        items.push(...group);
+      }
+      return { tripId: q.trip_id, complete: true, items };
+    },
     async list_trips(raw: unknown) {
       const q = listTripsInput.parse(raw),
         p = await trips(q.cursor, q.limit);

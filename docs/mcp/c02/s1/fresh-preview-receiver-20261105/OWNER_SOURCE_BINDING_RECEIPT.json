@@ -1,0 +1,50 @@
+{
+  "status": "ACTUAL_ADVANCE_SOURCE_MECHANICALLY_BOUND_FINAL_DELTA_REVIEW_PENDING",
+  "recordedAt": "2026-11-04T23:12:01.614474+00:00",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "executionChildId": "/root/fresh_preview_execution",
+  "priorReviewedCandidate": "e473f2d05c8d96055dddc37d4498d89bd4e5e1e1",
+  "priorUnboundPackageSHA256": "a7b8a6ba21a1b603734e18b5bcb978e7cf0e1cb5dc93f3665e666191f5b70c98",
+  "packageSHA256": "1067ea07cd79372ebb1fa5778ea042067a10843dce514b57f4ce73f585fd0bc4",
+  "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+  "scopeSHA256": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+  "windowId": "6d49f895-887d-437c-9294-d381bcd8005d",
+  "actualHumanSource": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turnId": "01a1a8aa-8932-7b41-90ff-55f09a6cb423",
+    "userMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+    "wireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+    "exactText": "我提前批准你的审批。一会儿不用问我了\n",
+    "contextSHA256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+    "contextReviewSHA256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220",
+    "humanContainsGateHash": false,
+    "questionReplyWrapper": false,
+    "sourceRelabeled": false,
+    "singleNextScopeOnly": true
+  },
+  "sourceReadback": "Original humanwire/context from directread_thread, independently reviewed97d2; exact plainadvance text kept, no syntheticquestion/answer/hash insertion.",
+  "derivedSourceDelta": {
+    "changed": [
+      "c02-normal-control.py",
+      "operators/config_cas.py",
+      "prepare-c02-access-window.py"
+    ],
+    "allOther14ByteIdentical": true,
+    "guardLogicUnchanged": true,
+    "onlyDeclaredReprSafeActualSourceLiterals": true
+  },
+  "localPureCases": 24,
+  "SaveApproved": false,
+  "platformRecognizedExecutionApproval": false,
+  "credentialReadAuthorizedToExecute": false,
+  "receiverSourceReadiness": "Still notread/notready; import notsourcequalification",
+  "clock": {
+    "T": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null
+  },
+  "actualLIVE": null,
+  "keyRead": 0,
+  "AuthOTPUIRuntimeBusiness": 0,
+  "next": "Same reviewer exact source-only delta then Root2 actualsource/platform/credentialsource and currentclose qualification; no Owner duplicatequestion or indirectsource bypass."
+}

@@ -1,0 +1,21 @@
+{
+  "status":"INDEPENDENT_SANITIZED_DEFAULT_SUPPLEMENT",
+  "cid":"00f7fcf61c2424caefeebf2d0f988cc8690cfcd6b64e21724cd9af38cf3c4667",
+  "image":"sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+  "health":"healthy",
+  "configSHA256":"fa94477edad39a58dde0f6684c428c1c1569be33e6cac6840c47cc154d460b63",
+  "hostConfigSHA256":"d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "environmentSHA256":"b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "mountsSHA256":"14ee2d11251165df925fe3e096b51ecb5fd08eaa759a253ec9c31140e21de696",
+  "bundles":{
+    "auth-consent/app.js":"6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/c02-host.mjs":"6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "mcp/runtime.mjs":"e6f305b646482576374231b2ba731fe6dfa87fc4f6ad35a82bd25590e8ee6908",
+    "server-capture.mjs":"2cb1c023f0e49a83b8204c04436821c106945bbaae2143e69b747d7f9e852436",
+    "server.mjs":"782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "qaKeysPresent":[],
+  "pdfRuntimeEnabled":false,
+  "planSHA256":"5a0a22cd9510b485e8a3439e31af3c12c9fd3c8caab641d13346f6e088e60bb9",
+  "releaseOutputSHA256":"8ecf15d323b4171b2645d2b9b8e9b8392e8bd8afa5063c39f5306c5f1d777023"
+}

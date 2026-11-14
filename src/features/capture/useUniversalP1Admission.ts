@@ -7,7 +7,7 @@ import type { UniversalItemSourceReview } from "@/domain/trip/universalP1SourceR
 export type P1AdmissionStatus =
   "SYNC_PENDING" | "SERVER_ACCEPTED" | "OWNING_ADMISSION_PENDING" | "UNAVAILABLE";
 export type OpenAcceptedImportItem = (
-  target: Readonly<{ tripId: string; itemId: string }>,
+  target: Readonly<{ tripId: string; itemId: string; family?: string; jobId?: string }>,
 ) => void;
 export type P1AdmissionActions = {
   enabled: boolean;
@@ -97,19 +97,10 @@ export function useUniversalP1Admission(
       });
     };
     const recover = async () => {
-      const [
-        { requireAdoptedUserId },
-        { tripCoreSha256Hex },
-        { createCoreV2Transport },
-        { readUniversalAcceptedItems },
-      ] = await Promise.all([
-        import("@/data/auth/authRepository"),
-        import("@/data/repositories/tripCoreSha256"),
-        import("@/data/api/tripCoreV2Transport"),
-        import("@/data/operations/universalP1AdmissionConsumer"),
-      ]);
+      const { readDefaultUniversalAcceptedItems } =
+        await import("@/data/operations/universalP1AdmissionConsumer");
       const apply = (
-        accepted: Awaited<ReturnType<typeof readUniversalAcceptedItems>>,
+        accepted: Awaited<ReturnType<typeof readDefaultUniversalAcceptedItems>>,
       ) => {
         if (!canceled && current()) {
           setAcceptedItems((previous) => ({
@@ -137,12 +128,8 @@ export function useUniversalP1Admission(
           }));
         }
       };
-      const accepted = await readUniversalAcceptedItems(model, result, {
-        getAccountId: requireAdoptedUserId,
+      const accepted = await readDefaultUniversalAcceptedItems(model, result, {
         isCurrent: () => !canceled && current(),
-        transport: createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
-          timeoutMs: 90000,
-        }),
         onAccepted: (token, item) => apply({ [token]: item }),
         onRecoveryState: recoveryState,
       });
@@ -228,46 +215,9 @@ export function useUniversalP1Admission(
       running.current = true;
       setBusyToken(token);
       try {
-        const [
-          { readInitializedDatabase },
-          { requireAdoptedUserId },
-          { createTripCoreV2Repository },
-          { tripCoreSha256Hex },
-          { createCoreV2Transport },
-          { createUniversalP1AdmissionConsumer },
-          { createReviewedSourceOperationSync },
-        ] = await Promise.all([
-          import("@/data/db/database"),
-          import("@/data/auth/authRepository"),
-          import("@/data/repositories/tripCoreV2Repository"),
-          import("@/data/repositories/tripCoreSha256"),
-          import("@/data/api/tripCoreV2Transport"),
-          import("@/data/operations/universalP1AdmissionConsumer"),
-          import("@/data/sync/tripCoreV2SyncWorker"),
-        ]);
-        const database = await readInitializedDatabase();
-        if (!current()) return;
-        const core = createTripCoreV2Repository(
-          database,
-          requireAdoptedUserId,
-          tripCoreSha256Hex,
-        );
-        const transport = createCoreV2Transport(requireAdoptedUserId, tripCoreSha256Hex, {
-          timeoutMs: 90000,
-        });
-        const consumer = createUniversalP1AdmissionConsumer({
-          getAccountId: requireAdoptedUserId,
-          isCurrent: current,
-          core,
-          transport,
-          sync: createReviewedSourceOperationSync(
-            database,
-            core,
-            transport,
-            requireAdoptedUserId,
-            tripCoreSha256Hex,
-          ),
-        });
+        const { openDefaultUniversalP1Admission } =
+          await import("@/data/operations/universalP1AdmissionConsumer");
+        const consumer = await openDefaultUniversalP1Admission(current);
         const outcome = await consumer.confirm(model, result, token, review);
         if (current()) {
           setStatuses((s) => ({ ...s, [token]: outcome.status }));

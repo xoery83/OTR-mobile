@@ -1,0 +1,37 @@
+{
+  "status": "NEW_UNUSED_TECHNICAL_REBIND_ONLY_NOT_STARTED",
+  "windowId": "679c81a463474879884992440106c9d1",
+  "runtimeWindowId": "679c81a4-6347-4879-8849-92440106c9d1",
+  "directory": "/private/tmp/otr-mcp-c02-s1-renewal-679c81a463474879884992440106c9d1",
+  "originalScopeGateSHA256": "c2315ce8580b7658bcf3f52c0df698981750cf5daa98cfe7b05dc307110fa157",
+  "ownerActivationWireSHA256": "59647c86816ef3592ad15f6c0c5c5e2007e848203a291e5bcb0112a50b73aee5",
+  "sourceDelta": "Only fixed technical WindowId/runtime UUID and generated CAS timer byte pin. No functional branch, permissions or saved operations changed.",
+  "files": {
+    "normal-control.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "c02-normal-control.py": "cc978b1cae2e071f0b94e418c3157d6f73b37d6d36364033f92c49d1a910bfe8",
+    "SCOPE.json": "5f1d3ff4534bb04c7d9647901cae97aa21650ee4d2e40eaec2986f94d25455f8",
+    "prepare-c02-access-window.py": "89272c89a651cbb6134c2d5dccff25c96f8ea1c863b48f87271973605271f646",
+    "c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "c02-timers.test.py": "a5481abc0282f7d2f58d240d1387e562b9d75292c224d8de42a05b843731fbb4",
+    "c02-timers.py": "441c328181c22a16d6a3ccd0ead74e61095bdddcaf3a901567d49193d4263782",
+    "c02-close.py": "cee418c733de0bdfcc7e48552992b6a0689d4cadb498af1e5d391c3db6e8a014",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/config_cas.py": "ffab7cb78942de463624682bd480cd82147273268bfb8680e521789e8c47dc71",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "hostInstallFileNames": [
+    "c02-timers.py",
+    "config_cas.py",
+    "prepare_cas.py",
+    "c02-close.py",
+    "deploy.py",
+    "restore.py",
+    "universal_runtime_close.py",
+    "c02-host.mjs"
+  ],
+  "T_D": null,
+  "Session": "NOT_STARTED",
+  "Apply": "UNAUTHORIZED"
+}

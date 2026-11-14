@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_TEST_AND_INDEPENDENT_REVIEW_PASS_NATIVE_COMPOSITION_PENDING",
+  "requestId": "AUTH-APPLE-ADOPTED-NATIVE-READBACK-20261114-01",
+  "writerHandoff": "Native explicitly confirmed no concurrent writer and authorized Auth to edit readServerParentPeopleContext only in this branch",
+  "change": "Existing ensureJourneyLedgerActor(tripId, openingScope) before unchanged ParentReceipt/Core/Owner checks, with Account recheck",
+  "positiveAuthorityAdded": false,
+  "queueOrPersonCreated": false,
+  "verification": {
+    "redFailures": 2,
+    "focusedTests": 63,
+    "scopedLint": "PASS"
+  },
+  "codeSHA256": "7f547bb4c1486298a48efc6d3f5767b8df504cdd14665d37e1dc064a813fdaf1",
+  "productCaller": "NATIVE_PROVIDED_EXACT_SCOPE_FIRST_PATCH_LOCALLY_APPLIED_REVIEW_PASS",
+  "nativeRequest": "Native accepted Shared UI ownership; actual scope-first caller patch requested",
+  "hostedReader": "NOT_PROBED_OR_ENABLED_BY_THIS_PATCH",
+  "nativeUiAcceptance": "PENDING_REAL_READ_ONLY_APP_QA",
+  "candidateCommit": "57bae5ffc86f2247e0b3a2a4ab7bc8d553202c90",
+  "independentReview": {
+    "status": "SCOPED_NO_BLOCKER_PEOPLE_HYDRATION",
+    "directTests": 3,
+    "stableTestsSkipped": 46,
+    "externalIo": false
+  }
+}

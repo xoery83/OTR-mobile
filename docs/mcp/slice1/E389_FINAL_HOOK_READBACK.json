@@ -1,0 +1,15 @@
+{
+  "status": "FINAL_DENYALL_ORIGINAL_ACL_VERIFIED",
+  "observedAt": "2026-11-02T05:22:36.802217+00:00",
+  "rows": [
+    {
+      "anon_denied": true,
+      "auth_admin_execute": true,
+      "authenticated_denied": true,
+      "body": "b0f7eae14599bd32cb9430a59832c837",
+      "exact_search_path": true,
+      "invoker": true,
+      "original_owner": true
+    }
+  ]
+}

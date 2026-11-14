@@ -1,0 +1,26 @@
+{
+  "candidate_commit": "67075936",
+  "checked_at": "2026-11-02T17:46:59.385919+00:00",
+  "focused_regression": {
+    "status": "PASS",
+    "files": 5,
+    "tests": 72,
+    "log": "/private/tmp/otr-mcp-c02-ready-tests.log"
+  },
+  "mcp_typecheck": "PASS",
+  "affected_eslint": "PASS",
+  "mcp_build": "PASS",
+  "independent_review": "NO_BLOCKER",
+  "initial_sandbox_attempt": "5 loopback tests listen EPERM; 58 passed. Authorized local-loopback rerun passed. No DEV request.",
+  "build_artifacts": {
+    "dist/mcp/index.mjs": "158f4627827a9b33f757436b4315d3f80984433bfab18f09961d63afb947f18c",
+    "dist/mcp/internal.mjs": "cb3f92513e43d20c85bc243fe528197d8524e5d4606fb0ee9153b1b283e9e939"
+  },
+  "hosted_consumer_native": "NOT_RUN",
+  "final_model_qualification": {
+    "status": "PASS",
+    "tests": 2,
+    "basis": "Actual archived local SDK transcript only"
+  },
+  "guide_tail_review": "NO_BLOCKER"
+}

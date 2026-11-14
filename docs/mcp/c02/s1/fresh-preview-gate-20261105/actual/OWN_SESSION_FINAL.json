@@ -1,0 +1,43 @@
+{
+  "status": "OWN_SESSION_CLEANUP_VERIFIED_GRANT_HTTP_UNCONFIRMED",
+  "recordedAt": "2026-11-04T21:06:37.041703+00:00",
+  "executionChildId": "/root/fresh_preview_execution",
+  "windowId": "c843ff1c-d8b7-471d-b1ee-77aef1bdad1e",
+  "gateSHA256": "e7b8bf27ec836eb55c1343576f4422a74e9291dd49196bbfbf5d1d2ea0af339f",
+  "execSession": 70851,
+  "execExitCode": 1,
+  "execSafeMessage": "CONTROL_FAILED_OR_UNKNOWN_NO_RETRY",
+  "FINISHRequestedAt": "2026-11-04T21:05:40.223449+00:00",
+  "FINISHOnce": true,
+  "journal": {
+    "path": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-B7jORJ/run.json",
+    "sha256": "dfd4cf93f01f9cf595dc7701f775eff854344f0e6722558d9e7b589a4ea19944",
+    "runId": "43c33013-f415-4955-80b0-05eb8659cd1e",
+    "requestedAt": "2026-11-04T21:03:21.430Z",
+    "owningStatus": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "actionOutcome": "UNCONFIRMED_QUERY_OWNING_RECEIPT"
+  },
+  "activeLockPresent": false,
+  "controlStatuses": [
+    {
+      "phase": "CONTROL_READY",
+      "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "at": "2026-11-04T21:03:36.768Z",
+      "secretsRecorded": false
+    }
+  ],
+  "grantHTTPResult": "UNCONFIRMED_NO_HTTP_STATUS_CAPTURED_NO_RETRY",
+  "GRANT_ABSENT_VERIFIEDObserved": false,
+  "selectedGrantConsentAuthorizationCount": null,
+  "independentRoot2Readback": "PENDING_NOT_INFERRED_FROM_LOCAL_SESSION_CLEANUP",
+  "OAuthEnabledForCleanup": false,
+  "browserAuthentication": 0,
+  "consumerTaskSubmitted": false,
+  "businessWrites": 0,
+  "UNKNOWNQueryReplay": 0,
+  "agentCreatedBlankTab": "CLOSED_1962067612",
+  "userQATabUnchanged": true,
+  "safeBoundary": "Root2 retains independent watchdog/default/Issuer/Console/timer cleanup ownership; this receipt proves only own Session cleanup, not overall shared resource closure."
+}

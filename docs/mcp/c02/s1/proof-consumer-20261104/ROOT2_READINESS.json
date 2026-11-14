@@ -1,0 +1,10 @@
+{
+  "status": "READ_ONLY_QUALIFIED_STAGE_CANDIDATE_NOT_ACTIVATED",
+  "gateSHA256": "3526947da5adcece8d7dfde7139e239cf8291a401b3520e068984dc5b3b15ac5",
+  "actualHostConflictObserved": false,
+  "sameWriterFutureScheduling": "Auth fresh invitation now reports Owner approval; it is not yet active. Serial runtime/CAS only; recheck no overlap at any MCP activation.",
+  "pngWorker": "original50min timeout at2026-11-03T19:54:41Z; unrelated to no-Provider MCP Preview; not restarted",
+  "noClockSessionAuthorityOrBusiness": true,
+  "next": "MCP Owner access approval; fresh preflight and exact binding before execution; no Save authority",
+  "stageCandidatePath": "/private/tmp/otr-root2-mcpb08a-preparation/stage-candidate.py"
+}

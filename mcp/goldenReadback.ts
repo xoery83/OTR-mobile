@@ -9,8 +9,8 @@ import {
   type CoreBoundary,
 } from "../src/domain/trip/tripCoreV2Temporal";
 import {
-  coreSparseStayPayloadSchema,
   corePayloadSchemas,
+  coreSparseStayPayloadSchema,
 } from "../src/domain/trip/tripCoreV2Commands";
 import { sha, contentDigest, type PreparedMutation } from "./mutation";
 function expectedFields(
@@ -105,14 +105,12 @@ export async function verifyGoldenReadback(
       "INDEPENDENT_NO_CHANGE_REVISION_MISMATCH",
     );
   const historical = Number(row.semantic_revision) > committed;
-  const audit = z
-    .record(z.string(), z.unknown())
-    .parse(
-      noChange
-        ? row
-        : receipt.audit.after.find((v) => v.kind === "ITEM" && v.id === p.target.id)
-            ?.facts,
-    );
+  const audit = z.record(z.string(), z.unknown()).parse(
+    // NO_CHANGE has no mutation audit; current fields and the original base revision are checked.
+    noChange
+      ? row
+      : receipt.audit.after.find((v) => v.kind === "ITEM" && v.id === p.target.id)?.facts,
+  );
   assert.equal(audit.id, p.target.id);
   assert.equal(audit.owner_account_id, accountId);
   assert.equal(audit.trip_id, p.tripId);
@@ -132,6 +130,22 @@ export async function verifyGoldenReadback(
     if (!historical) {
       if (payload.family === "P3" && payload.details)
         expectedFields(evidence.stay, payload.details);
+      if (payload.family === "P3" && payload.rooms !== undefined) {
+        assert.equal(
+          evidence.stayRooms?.length,
+          payload.rooms.length,
+          "INDEPENDENT_STAY_ROOMS_REQUIRED",
+        );
+        assert.equal(
+          new Set(evidence.stayRooms?.map((r) => r.room_id)).size,
+          payload.rooms.length,
+          "INDEPENDENT_DUPLICATE_ROOM",
+        );
+        for (const room of payload.rooms) {
+          const actual = evidence.stayRooms?.find((r) => r.room_id === room.room_id);
+          expectedFields(actual, { ...room, event_id: p.target.id, trip_id: p.tripId });
+        }
+      }
       if (payload.family === "P4") {
         if (payload.details) expectedFields(evidence.rental, payload.details);
         for (const [key, role] of [
@@ -224,6 +238,33 @@ export async function verifyGoldenReadback(
         }
       }
     }
+  } else if (p.command === "SET_RENTAL_DETAILS") {
+    const payload = corePayloadSchemas.SET_RENTAL_DETAILS.parse(p.payload);
+    if (!historical) {
+      expectedFields(evidence.rental, {
+        event_id: p.target.id,
+        trip_id: p.tripId,
+        ...payload.details,
+      });
+      for (const [key, role] of [
+        ["pickup", "PICKUP"],
+        ["return", "RETURN"],
+      ] as const) {
+        if (!Object.hasOwn(payload.places, key)) continue;
+        assert(payload.places[key], "INDEPENDENT_RENTAL_WHOLE_ROLE_CLEAR_UNSUPPORTED");
+        const matches = evidence.rentalPlaces?.filter((r) => r.role === role);
+        assert.equal(matches?.length, 1, "INDEPENDENT_RENTAL_PLACE_IDENTITY_REQUIRED");
+        expectedFields(matches![0], {
+          event_id: p.target.id,
+          trip_id: p.tripId,
+          role,
+          ...payload.places[key],
+        });
+      }
+    }
+  } else if (p.command === "SET_ITEM_PLACE") {
+    const payload = corePayloadSchemas.SET_ITEM_PLACE.parse(p.payload);
+    expectedFields(audit, payload.place);
   } else if (p.command === "SET_ITEM_TEXT") {
     const payload = corePayloadSchemas.SET_ITEM_TEXT.parse(p.payload);
     if (payload.title !== undefined) assert.equal(audit.title, payload.title);

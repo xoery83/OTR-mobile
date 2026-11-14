@@ -1,0 +1,18 @@
+{
+  "status": "FRESH_CASE_CURRENT_ROOT_UNCHANGED_NEW_RECEIPTS_ZERO",
+  "observedAt": "2026-11-01T20:07:01.841828+00:00",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "revision": 1,
+  "notes": "Synthetic QA only. No Booking/Ticket.",
+  "entireRootEqualOriginalBaseline": true,
+  "newOperationIds": [
+    "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+    "2777810c-24d9-4ecf-998c-9fc5dd00de34"
+  ],
+  "newReceiptCount": 0,
+  "consumerPass": false,
+  "readbackBusinessWrites": 0,
+  "consumerApplyAttempts": 0
+}

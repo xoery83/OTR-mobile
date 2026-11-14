@@ -1,46 +1,63 @@
-import { afterEach, expect, it, vi } from "vitest";
-import { getUiLocale, setUiLocale } from "@/ui/locale";
-import { chooseUiLocale, hydrateUiLocale } from "./uiLocalePreference";
+import { beforeEach, expect, it, vi } from "vitest";
 const storage = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn() }));
 vi.mock("expo-secure-store", () => ({
   getItemAsync: storage.get,
   setItemAsync: storage.set,
 }));
-afterEach(() => {
-  vi.clearAllMocks();
-  setUiLocale("en");
+beforeEach(() => {
+  vi.resetModules();
+  vi.resetAllMocks();
+  storage.set.mockResolvedValue(undefined);
 });
-it("hydrates offline without requiring auth and does not overwrite a newer selection", async () => {
-  setUiLocale("en");
-  let finish!: (s: string) => void;
+const load = async () => ({
+  ...(await import("./uiLocalePreference")),
+  ...(await import("@/ui/locale")),
+});
+it("hydrates offline and does not overwrite a newer selection", async () => {
+  const p = await load();
+  let finish!: (value: string) => void;
   storage.get.mockImplementation(
     () =>
-      new Promise<string>((resolve) => {
+      new Promise((resolve) => {
         finish = resolve;
       }),
   );
-  storage.set.mockResolvedValue(undefined);
-  const hydration = hydrateUiLocale();
-  await chooseUiLocale("zh-Hans");
+  const hydration = p.hydrateUiLocale();
+  await p.chooseUiLocale("zh-Hans");
   finish("en");
   await hydration;
-  expect(getUiLocale()).toBe("zh-Hans");
+  expect(p.getUiLocale()).toBe("zh-Hans");
   expect(storage.set).toHaveBeenCalledWith("otr-ui-locale-v1", "zh-Hans");
-  storage.get.mockResolvedValue("zh-Hans");
-  setUiLocale("en");
-  await hydrateUiLocale();
-  expect(getUiLocale()).toBe("zh-Hans");
-  storage.get.mockResolvedValue("bad");
-  await hydrateUiLocale();
-  expect(getUiLocale()).toBe("zh-Hans");
 });
-it("serializes preference writes and preserves the locale after failed selection", async () => {
-  setUiLocale("en");
-  storage.set.mockRejectedValueOnce(new Error("storage failed"));
-  await expect(chooseUiLocale("zh-Hans")).rejects.toThrow("storage failed");
-  expect(getUiLocale()).toBe("en");
-  storage.set.mockResolvedValue(undefined);
-  await Promise.all([chooseUiLocale("zh-Hans"), chooseUiLocale("en")]);
-  expect(storage.set.mock.calls.slice(-2).map((c) => c[1])).toEqual(["zh-Hans", "en"]);
-  expect(getUiLocale()).toBe("en");
+it("restores a saved locale at cold initialization and ignores unknown values", async () => {
+  let p = await load();
+  storage.get.mockResolvedValue("zh-Hans");
+  await p.hydrateUiLocale();
+  expect(p.getUiLocale()).toBe("zh-Hans");
+  vi.resetModules();
+  p = await load();
+  storage.get.mockResolvedValue("bad");
+  await p.hydrateUiLocale();
+  expect(p.getUiLocale()).toBe("en");
+});
+it("keeps the last successful choice when the next rapid write fails", async () => {
+  const p = await load();
+  storage.set
+    .mockResolvedValueOnce(undefined)
+    .mockRejectedValueOnce(Error("STORAGE_FAILED"));
+  const a = p.chooseUiLocale("zh-Hans");
+  const b = p.chooseUiLocale("en");
+  await a;
+  await expect(b).rejects.toThrow();
+  expect(p.getUiLocale()).toBe("zh-Hans");
+  await p.chooseUiLocale("en");
+  expect(p.getUiLocale()).toBe("en");
+});
+it("does not hydrate after an explicit choice has already started", async () => {
+  const p = await load();
+  const write = p.chooseUiLocale("zh-Hans");
+  await p.hydrateUiLocale();
+  await write;
+  expect(storage.get).not.toHaveBeenCalled();
+  expect(p.getUiLocale()).toBe("zh-Hans");
 });

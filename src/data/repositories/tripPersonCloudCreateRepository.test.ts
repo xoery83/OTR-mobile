@@ -1,3 +1,7 @@
+import {
+  createTripMetadataRepository,
+  saveServerParentTripMetadata,
+} from "./tripMetadataRepository";
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID, createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -17,6 +21,8 @@ import { createTripPersonRepository } from "./tripPersonRepository";
 import {
   createTripPersonCloudCreateRepository,
   saveAuthoredTripTraveler,
+  saveServerParentTripTraveler,
+  readServerParentPeopleContext,
 } from "./tripPersonCloudCreateRepository";
 import { requireAdoptedUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
@@ -27,11 +33,21 @@ import {
 import { createPersonCloudSyncWorker } from "../sync/tripPersonCloudCreateSync";
 import { createSyncOperationRepository } from "../sync/syncOperationRepository";
 import { createSyncEngine } from "../sync/syncEngine";
+import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
+import { emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
 import {
   personCloudCreateKind,
   type PersonCloudCreate,
   type PersonCloudCreateReceipt,
 } from "@/domain/trip/tripPersonCloudCreate";
+const parentRead = vi.hoisted(() => vi.fn());
+const ensureActor = vi.hoisted(() => vi.fn(async () => undefined));
+vi.mock("../sync/ledgerReportingCoordinator", () => ({
+  ensureJourneyLedgerActor: ensureActor,
+}));
+vi.mock("../sync/tripCreateTransport", () => ({
+  createTripCreateTransport: () => ({ parentReceipt: parentRead }),
+}));
 vi.mock("expo-crypto", () => ({
   CryptoDigestAlgorithm: { SHA256: "SHA256" },
   digestStringAsync: async (_a: string, v: string) =>
@@ -44,6 +60,8 @@ const folders: string[] = [];
 afterEach(() => {
   vi.mocked(requireAdoptedUserId).mockReset();
   vi.mocked(readInitializedDatabase).mockReset();
+  parentRead.mockReset();
+  ensureActor.mockReset().mockResolvedValue(undefined);
   handles.splice(0).forEach((db) => db.close());
   folders.splice(0).forEach((p) => rmSync(p, { recursive: true }));
 });
@@ -173,6 +191,334 @@ async function fixture(
     },
   };
 }
+
+async function serverParentFixture() {
+  const f = await fixture();
+  const owner = f.sql
+    .prepare(
+      "SELECT member_id FROM ledger_actor_context WHERE user_id=? AND journey_id=?",
+    )
+    .get(f.account, f.trip)!.member_id as string;
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const parent = {
+    operationId: f.create,
+    tripId: f.trip,
+    actorAccountId: f.account,
+    ownerPersonId: owner,
+    coreEpoch: randomUUID(),
+    coreRevision: 1,
+    coreAccessRevision: 1,
+    name: "New authored Trip",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    formatVersion: 2 as const,
+    destinations: [],
+    metadataRevision: 0 as const,
+  };
+  const actor = {
+    accountId: f.account,
+    tripId: f.trip,
+    personId: owner,
+    personIds: [owner],
+    active: true,
+    canManageShared: false,
+  };
+  const bundle = await buildCoreActorCollection(
+    emptyCoreGraph(),
+    actor,
+    {
+      epoch: parent.coreEpoch,
+      revision: 1,
+      accessRevision: 1,
+      generatedAt: "2026-10-31T00:00:00Z",
+    },
+    [
+      {
+        person_id: owner,
+        account_id: f.account,
+        active: true,
+        participating: true,
+        revision: 1,
+      },
+    ],
+    hash,
+  );
+  const core = createTripCoreV2Repository(f.db, f.readAccount, hash);
+  const scope = await captureAccountRequestContext(f.trip, f.readAccount);
+  const refresh = await core.beginRefresh(scope, 1);
+  await core.install(refresh, bundle.manifest, bundle.pages);
+  // Synthetic remote-origin fixture only: no local Trip or CREATE_TRIP lineage remains.
+  f.sql
+    .prepare("DELETE FROM local_trip_ledger_bindings WHERE account_id=? AND trip_id=?")
+    .run(f.account, f.trip);
+  f.sql
+    .prepare("DELETE FROM local_trip_containers WHERE account_id=? AND id=?")
+    .run(f.account, f.trip);
+  f.sql.prepare("DELETE FROM sync_operations WHERE id=?").run(f.create);
+  f.sql.prepare("UPDATE ledger_members SET status='linked' WHERE id=?").run(owner);
+  return Object.assign(f, { parent, scope });
+}
+
+it("queues an explicit Person against a real parent read without inventing local Trip lineage", async () => {
+  const f = await serverParentFixture(),
+    input = f.authored("同行人 林");
+  const request = await f.repo.createAuthoredFromParentReceipt(input, f.parent);
+  expect(request.tripCreateOperationId).toBe(f.parent.operationId);
+  expect(await f.repo.createAuthoredFromParentReceipt(input, f.parent)).toEqual(request);
+  expect(
+    f.sql
+      .prepare("SELECT status,dependency_operation_id FROM sync_operations WHERE id=?")
+      .get(request.operationId),
+  ).toEqual({ status: "PENDING", dependency_operation_id: null });
+  expect(
+    f.sql
+      .prepare(
+        "SELECT count(*) n FROM sync_operations WHERE operation_type='CREATE_TRIP'",
+      )
+      .get()?.n,
+  ).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
+  expect(
+    f.sql.prepare("SELECT status FROM ledger_members WHERE id=?").get(request.personId)
+      ?.status,
+  ).toBe("local");
+});
+
+it("uses the existing parent transport inside the scoped save facade and returns the real local roster", async () => {
+  const f = await serverParentFixture(),
+    input = f.authored("正式同行人");
+  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+  parentRead.mockResolvedValue(f.parent);
+  const result = await saveServerParentTripTraveler(f.scope, input);
+  expect(parentRead).toHaveBeenCalledWith(f.scope);
+  expect(result.request.tripCreateOperationId).toBe(f.parent.operationId);
+  expect(result.people.find((p) => p.personId === input.personId)).toMatchObject({
+    displayName: input.displayName,
+    localState: "LOCAL_PENDING",
+  });
+});
+
+it("qualifies only the original Owner through an owning parent read without creating a Person or queue", async () => {
+  const f = await serverParentFixture();
+  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+  parentRead.mockResolvedValue(f.parent);
+  expect(await readServerParentPeopleContext(f.scope)).toEqual({
+    context: f.scope,
+    ownerPersonId: f.parent.ownerPersonId,
+  });
+  expect(ensureActor).toHaveBeenCalledWith(f.scope.tripId, f.scope);
+  expect(ensureActor.mock.invocationCallOrder[0]).toBeLessThan(
+    parentRead.mock.invocationCallOrder[0],
+  );
+  expect(parentRead).toHaveBeenCalledWith(f.scope);
+  expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM local_trip_containers").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+});
+
+it.each(["failed", "account-switch"])(
+  "stops parent qualification when roster hydration is %s",
+  async (kind) => {
+    const f = await serverParentFixture();
+    vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+    vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+    parentRead.mockResolvedValue(f.parent);
+    ensureActor.mockImplementation(async () => {
+      if (kind === "failed") throw Error("ROSTER_UNAVAILABLE");
+      f.switchAccount();
+    });
+    await expect(readServerParentPeopleContext(f.scope)).rejects.toThrow();
+    expect(ensureActor).toHaveBeenCalledWith(f.scope.tripId, f.scope);
+    expect(parentRead).not.toHaveBeenCalled();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  },
+);
+
+it.each(["missing", "closed", "generation"] as const)(
+  "does not qualify an unavailable or stale parent reader: %s",
+  async (kind) => {
+    const f = await serverParentFixture();
+    vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+    vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+    parentRead.mockImplementation(async () => {
+      if (kind === "closed") throw Error("TRIP_CREATE_CLOSED");
+      if (kind === "generation") f.switchAccount();
+      return kind === "missing" ? null : f.parent;
+    });
+    await expect(readServerParentPeopleContext(f.scope)).rejects.toThrow();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  },
+);
+
+it.each(["actor", "owner", "revoked", "organizer", "epoch"] as const)(
+  "refuses local authoring qualification without exact parent and Owner continuity: %s",
+  async (kind) => {
+    const f = await serverParentFixture(),
+      parent = { ...f.parent };
+    if (kind === "actor") parent.actorAccountId = randomUUID();
+    if (kind === "owner") parent.ownerPersonId = randomUUID();
+    if (kind === "epoch") parent.coreEpoch = randomUUID();
+    if (kind === "revoked") f.sql.exec("UPDATE trip_core_scopes SET revoked=1");
+    if (kind === "organizer")
+      f.sql.exec("UPDATE ledger_actor_context SET role='organizer'");
+    await expect(f.repo.readServerParentCreator(f.trip, parent)).rejects.toThrow();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  },
+);
+
+it.each(["missing", "closed", "generation"] as const)(
+  "keeps the existing dataset unchanged after an unqualified parent read: %s",
+  async (kind) => {
+    const f = await serverParentFixture();
+    vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+    vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+    parentRead.mockImplementation(async () => {
+      if (kind === "closed") throw Error("TRIP_CREATE_CLOSED");
+      if (kind === "generation") advanceAccountGeneration();
+      return kind === "missing" ? null : f.parent;
+    });
+    await expect(saveServerParentTripTraveler(f.scope, f.authored())).rejects.toThrow();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+    expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+  },
+);
+
+it.each(["account", "trip", "owner", "epoch", "collection", "ledger-owner"] as const)(
+  "rejects a mismatched server-parent or receiving context before retaining a Person: %s",
+  async (kind) => {
+    const f = await serverParentFixture(),
+      parent = { ...f.parent };
+    if (kind === "account") parent.actorAccountId = randomUUID();
+    if (kind === "trip") parent.tripId = randomUUID();
+    if (kind === "owner") parent.ownerPersonId = randomUUID();
+    if (kind === "epoch") parent.coreEpoch = randomUUID();
+    if (kind === "collection") f.sql.exec("DELETE FROM trip_core_read_certificates");
+    if (kind === "ledger-owner")
+      f.sql
+        .prepare("UPDATE ledger_members SET role='group_member' WHERE id=?")
+        .run(parent.ownerPersonId);
+    await expect(
+      f.repo.createAuthoredFromParentReceipt(f.authored(), parent),
+    ).rejects.toThrow();
+    expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+    expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+  },
+);
+
+it("rolls back both Person and queue if Account generation changes during the parent-based save", async () => {
+  const f = await serverParentFixture();
+  f.failNextMemberWrite();
+  await expect(
+    f.repo.createAuthoredFromParentReceipt(f.authored(), f.parent),
+  ).rejects.toThrow();
+  expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+});
+
+it("fences a changed receiving cache between accepted snapshot read and Person transaction", async () => {
+  const f = await serverParentFixture();
+  const transaction = f.db.withTransactionAsync.bind(f.db);
+  let calls = 0;
+  const spy = vi.spyOn(f.db, "withTransactionAsync").mockImplementation(async (work) => {
+    if (++calls === 2)
+      f.sql
+        .prepare(
+          "UPDATE trip_core_scopes SET access_revision=access_revision+1 WHERE account_id=? AND trip_id=?",
+        )
+        .run(f.account, f.trip);
+    await transaction(work);
+  });
+  await expect(
+    f.repo.createAuthoredFromParentReceipt(f.authored(), f.parent),
+  ).rejects.toThrow("PERSON_PARENT_CONTEXT_CHANGED");
+  spy.mockRestore();
+  expect(f.sql.prepare("SELECT count(*) n FROM sync_operations").get()?.n).toBe(0);
+  expect(f.sql.prepare("SELECT count(*) n FROM ledger_members").get()?.n).toBe(1);
+});
+
+it("cold-reconciles an UNKNOWN Person on the existing worker without replaying Trip or Person Create", async () => {
+  const f = await serverParentFixture();
+  const request = await f.repo.createAuthoredFromParentReceipt(f.authored(), f.parent);
+  const receipt = f.accept(request);
+  const transport = {
+    receipt: vi.fn().mockResolvedValueOnce(null).mockResolvedValue(receipt),
+    create: vi.fn().mockRejectedValue(Error("UNKNOWN")),
+  };
+  const engine = () =>
+    createSyncEngine(
+      createSyncOperationRepository(f.db, f.readAccount, undefined, {
+        accountId: f.account,
+        tripId: f.trip,
+        operationId: request.operationId,
+      }),
+      createPersonCloudSyncWorker(f.repo, transport, f.readAccount),
+      () => new Date(0).toISOString(),
+      (op) => op.operationType === personCloudCreateKind,
+    );
+  await engine().run("AUTHENTICATED_ONLINE");
+  f.reopen();
+  await f.repo.resume(f.scope, request.operationId);
+  await engine().run("AUTHENTICATED_ONLINE");
+  expect(transport.create).toHaveBeenCalledOnce();
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(request.operationId)?.status,
+  ).toBe("COMPLETED");
+  expect(
+    f.sql.prepare("SELECT count(*) n FROM trip_person_cloud_create_receipts").get()?.n,
+  ).toBe(1);
+});
+
+it("restores an editor attempt after a lost local reply and reuses exactly one adopted Person queue row", async () => {
+  const f = await serverParentFixture();
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: async (key: string) => values.get(key) ?? null,
+    setItem: async (key: string, value: string) => {
+      values.set(key, value);
+    },
+    deleteItem: async (key: string) => {
+      values.delete(key);
+    },
+  };
+  const reopen = () =>
+    createTripPersonCloudCreateRepository(f.db, f.readAccount, undefined, storage);
+  let repo = reopen();
+  const input = f.authored("Same Unicode 林 e\u0301");
+  const attempt = {
+    operationId: input.operationId,
+    personId: input.personId,
+    displayName: input.displayName,
+  };
+  await repo.drafts!.saveName(f.scope, input.displayName);
+  await repo.drafts!.retainAttempt(f.scope, attempt);
+  await repo.createAuthoredFromParentReceipt(input, f.parent);
+  // The queue commit happened, but its UI reply was lost before draft cleanup.
+  f.reopen();
+  repo = reopen();
+  const recovered = await repo.drafts!.read(f.scope);
+  expect(recovered?.attempt).toEqual(attempt);
+  await repo.createAuthoredFromParentReceipt(
+    { ...input, ...recovered!.attempt },
+    f.parent,
+  );
+  expect(
+    f.sql
+      .prepare("SELECT count(*) n FROM sync_operations WHERE id=?")
+      .get(input.operationId)?.n,
+  ).toBe(1);
+  expect(
+    f.sql.prepare("SELECT count(*) n FROM ledger_members WHERE id=?").get(input.personId)
+      ?.n,
+  ).toBe(1);
+  await repo.drafts!.complete(f.scope, input.operationId);
+  expect(await repo.drafts!.read(f.scope)).toBeNull();
+});
 it("the UI adapter binds one authoring operation to its opening Account and existing Trip lineage", async () => {
   const f = await fixture();
   const scope = await captureAccountRequestContext(f.trip, f.readAccount);
@@ -674,4 +1020,202 @@ it("snapshots explicit confirmation before awaiting the Account apply gate", asy
       )
       .get(b.personId, personCloudCreateKind),
   ).toMatchObject({ n: 0 });
+});
+
+// Reuse the real server-parent/Core/SQLite fixture; no second provenance fixture.
+
+it("retains server-parent Metadata, queues the original CAS and recovers its receipt after reopen", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const metadata = {
+    name: f.parent.name,
+    destination: null,
+    destinations: [],
+    startDate: null,
+    endDate: null,
+  };
+  await repo.retainMetadataSnapshot(
+    {
+      formatVersion: 3,
+      actorAccountId: f.account,
+      tripId: f.trip,
+      metadataRevision: 0,
+      metadata,
+    },
+    randomUUID(),
+    f.parent,
+  );
+  const request = {
+    formatVersion: 3 as const,
+    operationId: randomUUID(),
+    tripId: f.trip,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Adopted edited" },
+  };
+  await repo.updateMetadata(request, undefined, undefined, f.parent);
+  await repo.updateMetadata(request, undefined, undefined, f.parent);
+  expect(
+    f.sql
+      .prepare("SELECT COUNT(*) AS n FROM sync_operations WHERE id=?")
+      .get(request.operationId)!.n,
+  ).toBe(1);
+  expect(f.sql.prepare("SELECT COUNT(*) AS n FROM local_trip_containers").get()!.n).toBe(
+    0,
+  );
+  f.reopen();
+  await repo.acceptMetadataUpdate({
+    ...request,
+    actorAccountId: f.account,
+    resultMetadataRevision: 1,
+  });
+  expect((await repo.readMetadataEditBase(f.trip)).confirmed?.metadata.name).toBe(
+    "Adopted edited",
+  );
+  expect(
+    f.sql
+      .prepare("SELECT status FROM sync_operations WHERE id=?")
+      .get(request.operationId)!.status,
+  ).toBe("COMPLETED");
+});
+
+it("does not accept a server-parent snapshot from another Account or revoked Core scope", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const snapshot = {
+    formatVersion: 3 as const,
+    actorAccountId: f.account,
+    tripId: f.trip,
+    metadataRevision: 0,
+    metadata: {
+      name: f.parent.name,
+      destination: null,
+      destinations: [],
+      startDate: null,
+      endDate: null,
+    },
+  };
+  await expect(
+    repo.retainMetadataSnapshot(snapshot, randomUUID(), {
+      ...f.parent,
+      actorAccountId: randomUUID(),
+    }),
+  ).rejects.toThrow();
+  f.sql
+    .prepare("UPDATE trip_core_scopes SET revoked=1 WHERE account_id=? AND trip_id=?")
+    .run(f.account, f.trip);
+  await expect(
+    repo.retainMetadataSnapshot(snapshot, randomUUID(), f.parent),
+  ).rejects.toThrow();
+  expect(
+    f.sql.prepare("SELECT COUNT(*) AS n FROM local_trip_metadata_confirmations").get()!.n,
+  ).toBe(0);
+});
+
+it("rejects unconfirmed server-parent CAS and changed Account without creating local lineage", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const metadata = {
+    name: f.parent.name,
+    destination: null,
+    destinations: [],
+    startDate: null,
+    endDate: null,
+  };
+  const request = {
+    formatVersion: 3 as const,
+    operationId: randomUUID(),
+    tripId: f.trip,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Must not save" },
+  };
+  await expect(
+    repo.updateMetadata(request, undefined, undefined, f.parent),
+  ).rejects.toThrow("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+  f.switchAccount();
+  await expect(
+    repo.updateMetadata(request, undefined, undefined, f.parent),
+  ).rejects.toThrow();
+  expect(
+    f.sql
+      .prepare("SELECT COUNT(*) AS n FROM sync_operations WHERE id=?")
+      .get(request.operationId)!.n,
+  ).toBe(0);
+});
+
+it("freezes the original server-parent Metadata operation before asynchronous Parent reads", async () => {
+  const f = await serverParentFixture();
+  const repo = createTripMetadataRepository(
+    f.db,
+    f.readAccount,
+    () => "2026-11-14T00:00:00Z",
+  );
+  const metadata = {
+    name: f.parent.name,
+    destination: null,
+    destinations: [],
+    startDate: null,
+    endDate: null,
+  };
+  await repo.retainMetadataSnapshot(
+    {
+      formatVersion: 3,
+      actorAccountId: f.account,
+      tripId: f.trip,
+      metadataRevision: 0,
+      metadata,
+    },
+    randomUUID(),
+    f.parent,
+  );
+  vi.mocked(requireAdoptedUserId).mockImplementation(f.readAccount);
+  vi.mocked(readInitializedDatabase).mockResolvedValue(f.db as never);
+  let release!: (value: typeof f.parent) => void, started!: () => void;
+  const requested = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  parentRead.mockImplementation(() => {
+    started();
+    return new Promise((resolve) => {
+      release = resolve;
+    });
+  });
+  const operationId = randomUUID();
+  const request = {
+    formatVersion: 3 as const,
+    operationId,
+    tripId: f.trip,
+    expectedMetadataRevision: 0,
+    before: metadata,
+    after: { ...metadata, name: "Original submitted edit" },
+  };
+  const task = saveServerParentTripMetadata(f.scope, request);
+  await requested;
+  request.operationId = randomUUID();
+  request.after.name = "Mutated during wait";
+  release(f.parent);
+  await task;
+  const stored = f.sql
+    .prepare(
+      "SELECT id,payload_json FROM sync_operations WHERE operation_type='UPDATE_TRIP_METADATA'",
+    )
+    .all();
+  expect(stored).toHaveLength(1);
+  expect(stored[0].id).toBe(operationId);
+  expect(JSON.parse(stored[0].payload_json as string).after.name).toBe(
+    "Original submitted edit",
+  );
 });

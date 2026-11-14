@@ -14,7 +14,20 @@
     "preview": {
       "distribution": "internal"
     },
+    "apple-device-qa": {
+      "extends": "preview",
+      "env": {
+        "OTR_IOS_VARIANT": "production",
+        "EXPO_PUBLIC_OTR_SYNC_TRANSPORT": "dev",
+        "EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED": "true",
+        "EXPO_PUBLIC_OTR_API_BASE_URL": "https://api-dev.xoery.art",
+        "EXPO_PUBLIC_OTR_DEV_SUPABASE_URL": "https://tuqigdxrvrerfewsxqgm.supabase.co"
+      }
+    },
     "production": {
+      "env": {
+        "OTR_IOS_VARIANT": "production"
+      },
       "autoIncrement": true
     }
   }

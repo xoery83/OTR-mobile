@@ -1,0 +1,28 @@
+{
+  "status": "FRESH_READONLY_OAUTH_METADATA_VERIFIED",
+  "observation": {
+    "active_selected_consents": 0,
+    "client835": {
+      "client_name": "OTR DEV QA Read",
+      "client_type": "public",
+      "deleted_at": null,
+      "id": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+      "redirect_uris": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW,http://127.0.0.1:18764/callback",
+      "registration_type": "manual",
+      "token_endpoint_auth_method": "none"
+    },
+    "hook": {
+      "acl": "{postgres=X/postgres,supabase_auth_admin=X/postgres}",
+      "bodyMD5": "b0f7eae14599bd32cb9430a59832c837",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false
+    },
+    "observed_at": "2026-11-03 03:01:20.5586+00",
+    "unexpired_selected_authorizations": 0
+  },
+  "credentialOrBusinessRowsSelected": false,
+  "sqlMutations": 0
+}

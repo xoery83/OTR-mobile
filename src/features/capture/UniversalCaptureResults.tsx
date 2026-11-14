@@ -5,7 +5,7 @@ import {
   type P1AdmissionActions,
   type OpenAcceptedImportItem,
 } from "./useUniversalP1Admission";
-import { StyleSheet, View } from "react-native";
+import { AppState, StyleSheet, View } from "react-native";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import type {
   UniversalTaskActivity,
@@ -18,7 +18,28 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { useUniversalCapture } from "./useUniversalCapture";
+import { useEffect, useRef, useState } from "react";
+import {
+  readImportSubmission,
+  updateImportSubmission,
+  type ImportSubmission,
+} from "@/data/repositories/importSubmissionRepository";
+import type { V3AdmissionRow } from "@/data/operations/universalV3Review";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
+import {
+  openUniversalV3Review,
+  applyUniversalV3Batch,
+} from "@/data/operations/universalV3Review";
+import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
+import {
+  projectUniversalV3Activity,
+  readV3UnknownCandidates,
+  type V3SaveObservation,
+  projectUniversalV3Results,
+  type V3SavedResult,
+  type V3ResultOperation,
+} from "@/data/operations/universalV3Activity";
+import { UniversalV3ResultPresentation } from "./UniversalV3ResultPresentation";
 import { AppIcon } from "@/components/AppIcon";
 
 export function UniversalCaptureResults({
@@ -27,15 +48,131 @@ export function UniversalCaptureResults({
   readTripTargets,
   onOpenAcceptedItem,
   originalsListedElsewhere = false,
+  onLegacyPhotoReview,
+  onOpenReview,
+  onOpenDocument,
+  onReturnToTrip,
+  processingDetails = false,
+  onResultsReady,
+  onDone,
+  onHistoryChange,
 }: {
   model: CaptureJobReadModel;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   originalsListedElsewhere?: boolean;
+  onLegacyPhotoReview?(enabled: boolean): void;
+  onOpenReview?(jobId: string): void;
+  onOpenDocument?(itemId: string, documentId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  processingDetails?: boolean;
+  onResultsReady?(ready: boolean): void;
+  onDone?(): void;
+  onHistoryChange?(open: boolean): void;
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
+  const { localFirstSelected, busy, canStart, unavailable, localFirst, start } = state;
+  const submittedStart = useRef(false);
+  const ready = state.localFirst?.state === "REVIEW_READY";
+  useEffect(() => {
+    onResultsReady?.(ready);
+  }, [ready, onResultsReady]);
+  useEffect(() => {
+    if (
+      submittedStart.current ||
+      localFirstSelected !== true ||
+      busy ||
+      !canStart ||
+      unavailable ||
+      (localFirst && localFirst.state !== "WAITING_INPUT") ||
+      !model.allInputsAccepted
+    )
+      return;
+    let active = true;
+    void readImportSubmission(model)
+      .then((intent) => {
+        if (!active || !isCurrent() || !intent || submittedStart.current) return;
+        submittedStart.current = true;
+        start();
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [
+    model,
+    isCurrent,
+    localFirstSelected,
+    localFirst,
+    busy,
+    canStart,
+    unavailable,
+    start,
+  ]);
+
+  useEffect(() => {
+    onLegacyPhotoReview?.(state.localFirstSelected === false);
+  }, [onLegacyPhotoReview, state.localFirstSelected]);
   const admission = useUniversalP1Admission(model, isCurrent, state.result);
+  if (state.localFirstSelected === null) {
+    return (
+      <UiSection title={t("capture.activityStatus.activity")}>
+        <UiText accessibilityLiveRegion="polite">
+          {t(state.unavailable ? "capture.activityStatus.waiting" : "capture.jobLoading")}
+        </UiText>
+        {state.unavailable ? <UiText>{t("capture.activityHint.waiting")}</UiText> : null}
+        {processingDetails && state.unavailable ? (
+          <UiButton
+            label={t("capture.ai.check")}
+            variant="secondary"
+            disabled={state.busy}
+            onPress={state.recover}
+          />
+        ) : null}
+      </UiSection>
+    );
+  }
+  if (state.localFirstSelected) {
+    const processing = state.localFirst?.state === "PROCESSING";
+    const unknown = state.localFirst?.state === "OUTCOME_UNKNOWN";
+    const result = state.localFirst?.state === "REVIEW_READY" ? state.localFirst : null;
+    return (
+      <>
+        <UniversalV3Activity
+          key={model.batch.batchId}
+          model={model}
+          execution={state.localFirst}
+          onDone={onDone}
+          onHistoryChange={onHistoryChange}
+          onOpenReview={onOpenReview}
+          onOpenAcceptedItem={onOpenAcceptedItem}
+          onOpenDocument={onOpenDocument}
+          onReturnToTrip={onReturnToTrip}
+          unavailable={state.unavailable}
+          formatUnavailable={state.formatUnavailable}
+          isCurrent={isCurrent}
+        />
+        {processingDetails ? (
+          <UiSection title={t("capture.activityStatus.analysis")}>
+            {!result && !processing && !unknown ? (
+              <UiButton
+                label={t("capture.ai.process")}
+                disabled={state.busy || !state.canStart}
+                onPress={state.start}
+              />
+            ) : null}
+            <UiButton
+              label={t("capture.ai.check")}
+              variant="secondary"
+              disabled={state.busy}
+              onPress={state.recover}
+            />
+          </UiSection>
+        ) : null}
+      </>
+    );
+  }
   return (
     <UniversalResultView
       model={model}
@@ -48,6 +185,226 @@ export function UniversalCaptureResults({
     />
   );
 }
+// Only a retained Submit intent permits admission; historical Activity remains read-only.
+export function UniversalV3Activity({
+  model,
+  execution,
+  unavailable,
+  formatUnavailable,
+  isCurrent,
+  onOpenReview,
+  onOpenDocument,
+  onReturnToTrip,
+  onOpenAcceptedItem,
+  onDone,
+  onHistoryChange,
+}: {
+  onDone?(): void;
+  onHistoryChange?(open: boolean): void;
+  model: CaptureJobReadModel;
+  execution: UniversalV3ExecutionStatus | null;
+  onOpenAcceptedItem?: OpenAcceptedImportItem;
+  unavailable: boolean;
+  formatUnavailable: boolean;
+  isCurrent(): boolean;
+  onOpenReview?(jobId: string): void;
+  onOpenDocument?(itemId: string, documentId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  processingDetails?: boolean;
+}) {
+  const navigating = useRef(false);
+  const [intent, setIntent] = useState<ImportSubmission | null>(null);
+  const [rows, setRows] = useState<V3AdmissionRow[]>([]);
+  const [confirming, setConfirming] = useState(false);
+  const [savedResults, setSavedResults] = useState<V3SavedResult[]>([]);
+  const [resultOperations, setResultOperations] = useState<V3ResultOperation[]>([]);
+  const result = execution?.state === "REVIEW_READY" ? execution : null;
+  const [review, setReview] =
+    useState<Awaited<ReturnType<typeof openUniversalV3Review>>>();
+  const [observations, setObservations] = useState<Record<string, V3SaveObservation>>({});
+  const [readUnavailable, setReadUnavailable] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const latest = useRef(isCurrent);
+  useEffect(() => {
+    latest.current = isCurrent;
+  }, [isCurrent]);
+  useEffect(() => {
+    if (!result?.candidates.length) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let running = false;
+    const current = () => active && latest.current();
+    const read = async () => {
+      if (
+        !current() ||
+        running ||
+        AppState.currentState === "background" ||
+        AppState.currentState === "inactive"
+      )
+        return;
+      running = true;
+      try {
+        const unknown = await readV3UnknownCandidates(
+          model,
+          result.candidates.map((c) => c.candidateId),
+        );
+        if (!current()) return;
+        const submitted = await readImportSubmission(model);
+        if (!current()) return;
+        setIntent(submitted);
+        const owner = await openUniversalV3Review(model, submitted ? "IMPORT" : "MANUAL");
+        if (!current()) return;
+        setReview(owner);
+        const plan = owner.batch(result.candidates);
+        if (!current()) return;
+        setRows(plan);
+        const next = await applyUniversalV3Batch(model, owner, plan, submitted, unknown);
+        if (!current()) return;
+        setReview(owner);
+        const facts = await owner.resultOperations(
+          plan.map(
+            (row) =>
+              submitted?.resolutions[row.candidate.candidateId]?.candidate ??
+              row.candidate,
+          ),
+        );
+        if (!current()) return;
+        setSavedResults(
+          projectUniversalV3Results(facts.snapshot, facts.operations, next),
+        );
+        setResultOperations(facts.operations);
+        setObservations(next);
+        setReadUnavailable(false);
+        if (
+          Object.values(next).some(
+            (s) =>
+              s === "PENDING" ||
+              s === "ITEM_VERIFIED_RELATION_PENDING" ||
+              s === "OUTCOME_UNKNOWN",
+          )
+        )
+          timer = setTimeout(() => void read(), 5000);
+      } catch {
+        if (current()) {
+          setReadUnavailable(true);
+          timer = setTimeout(() => void read(), 5000);
+        }
+      } finally {
+        running = false;
+      }
+    };
+    void read();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        clearTimeout(timer);
+        void read();
+      }
+    });
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      subscription.remove();
+    };
+    // Batch identity is fenced by the owning sheet key. Reopening reads original IDs only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result?.taskId, revision]);
+  const displayRows = rows.filter((row) => row.disposition !== "ABSTAIN");
+  const progress = projectUniversalV3Activity(
+    result && rows.length
+      ? { ...result, candidates: displayRows.map((row) => row.candidate) }
+      : execution,
+    observations,
+    unavailable || readUnavailable,
+    formatUnavailable,
+  );
+  const progressState =
+    progress.state === "confirmation" &&
+    (intent?.confirmed ||
+      displayRows.every(
+        (row) =>
+          row.disposition === "REVIEW" && !intent?.resolutions[row.candidate.candidateId],
+      ))
+      ? "attention"
+      : progress.state;
+  const reviewCount = rows.filter(
+    (row) =>
+      (row.disposition === "REVIEW" &&
+        observations[row.candidate.candidateId] !== "VERIFIED") ||
+      observations[row.candidate.candidateId] === "REVIEW_REQUIRED" ||
+      observations[row.candidate.candidateId] === "ITEM_VERIFIED_RELATION_REVIEW",
+  ).length;
+  return (
+    <UniversalV3ResultPresentation
+      model={model}
+      resultReady={!!result}
+      state={progressState}
+      results={savedResults}
+      operations={resultOperations}
+      reviewCount={reviewCount}
+      abstainCount={rows.filter((row) => row.disposition === "ABSTAIN").length}
+      onOpenItem={onOpenAcceptedItem}
+      onOpenDocument={onOpenDocument}
+      onDone={onDone}
+      onHistoryChange={onHistoryChange}
+      isCurrent={isCurrent}
+      onReconcile={() => setRevision((n) => n + 1)}
+      onReview={
+        onOpenReview
+          ? () => {
+              if (!navigating.current && isCurrent()) {
+                navigating.current = true;
+                onOpenReview(model.batch.jobId);
+              }
+            }
+          : undefined
+      }
+      onDay={
+        onReturnToTrip
+          ? () => {
+              if (isCurrent())
+                onReturnToTrip(
+                  "day",
+                  model.batch.context.tripPrior?.id ?? model.assignedTripId!,
+                  model.batch.jobId,
+                );
+            }
+          : undefined
+      }
+    >
+      {intent &&
+      !intent.confirmed &&
+      rows.some(
+        (row) => row.decision || intent.resolutions[row.candidate.candidateId],
+      ) ? (
+        <UiButton
+          label={t("capture.admission.confirmBatch")}
+          disabled={confirming || !review}
+          onPress={() => {
+            if (confirming || !isCurrent()) return;
+            setConfirming(true);
+            void updateImportSubmission(model, (record) => ({
+              ...record,
+              confirmed: true,
+            }))
+              .then((record) => {
+                if (isCurrent()) {
+                  setIntent(record);
+                  setRevision((n) => n + 1);
+                }
+              })
+              .catch(() => {
+                if (isCurrent()) setReadUnavailable(true);
+              })
+              .finally(() => {
+                if (isCurrent()) setConfirming(false);
+              });
+          }}
+        />
+      ) : null}
+    </UniversalV3ResultPresentation>
+  );
+}
+
 export function UniversalResultView({
   model,
   readTripTargets,
@@ -219,6 +576,7 @@ export function UniversalResultView({
                       onOpenAcceptedItem({
                         tripId: result.tripId,
                         itemId: accepted.itemId,
+                        family: candidate.kind,
                       });
                   }}
                 />

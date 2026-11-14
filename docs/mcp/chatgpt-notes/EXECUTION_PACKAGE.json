@@ -1,0 +1,80 @@
+{
+  "status": "CHATGPT_EXECUTION_PACKAGE_READY_FOR_EXACT_SCOPE_REVIEW_NOT_APPROVED",
+  "windowId": "8f485ea2a6b34606a82861569aa2126f",
+  "profile": "ChatGPT",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "redirectUri": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "expectedRevision": 2,
+  "previewDigest": "fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "actualDefault": {
+    "containerId": "a58c00ca3082f01c0d506a159e7fedf1e9e73e743e4421dc6b617ace7f255931",
+    "configSHA256": "9bbafdee89b3f2a9dd5459fcc015aa9c720fe5d24225350822e62e3aaf981ba8",
+    "image": "sha256:4fcd7b590d955ce996323f78f6391b02cbd797806b40358a10175ac0626d0784"
+  },
+  "actualClose": {
+    "verifiedAt": "2026-11-02T06:08:53.890843+00:00",
+    "planSHA256": "da61aeafbfba3a6b05b02bf925d3b45f3fbd8d0a69512bac4669bdf81bccf78d",
+    "rootPath": "/opt/otr/dev-backend/build/auth-consumer-write-qa-8f485ea2a6b34606a82861569aa2126f",
+    "entryPath": "/private/tmp/otr-mcp-chatgpt-8f485ea2a6b34606a82861569aa2126f-20261102/close-once.py",
+    "entrySHA256": "3eff8446cbb4bd5d53a0f722508f895e3ac07cf75c9d373b5e97c94ae04f9780"
+  },
+  "executionGuardSHA256": "2776777e4fe399d14a806f9b71708dcf9db772f96a51cabdf70567c91387dce2",
+  "operators": {
+    "deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "close_current.py": "c9e086da959432b434d949e6a136d0daf1b9643add73f2e0365b629c15500cb0",
+    "prepare_cas.py": "aac0c9940409a9eff40fe5f3e8d554ec984152f3cb74ad3511fc33249ed03a98",
+    "config_cas.py": "2776777e4fe399d14a806f9b71708dcf9db772f96a51cabdf70567c91387dce2",
+    "slice1-qa-cases.json": "6d5d4e07b14c5a5e9c692e3db24040a7dd076edddbcf8f743bbb86007169d6da",
+    "restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "entries": {
+    "prepare-empty-round.py": "83639ebb0b80b675524902f433d1e3332e2d9809826bc6cb7f7bfc319cac0d07",
+    "confirm-once.py": "82acf371feafa882666c83e5be67cd35d4e5b3fb43956e5ce025a6e3ddaaeadc",
+    "launch-own-control.py": "0cfe538dbfa001b960a41c98501775bbc9690666000540bc3264c99c296e11fc",
+    "preflight-actual-owner-wire.py": "836766ee1d02a4d81dd2a8c92a6708c3fdc23d06fb22dfe7cd0158ef9eac1ada",
+    "prepare-fixed-window.py": "4c481f3a624861a429459b7272de7119867e3dc06c557e50154bc9264730011c",
+    "activate-issuer.py": "c6f274e6498fa979f42560aee6820a824b672b6c3de41f5c2d6f28e902250fc7"
+  },
+  "normalControl": {
+    "entry": "/private/tmp/otr-auth-consumer-b3-control-20261101.mts",
+    "entrySHA256": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "librarySHA256": "c57737e680e611307aeaa4e5514caa0796be4e32aeb02b11ff4e605a22da17b3",
+    "directory": "/private/tmp/otr-auth-consumer-control-chatgpt-8f485ea2-root-owned",
+    "cleanupMaxMinutes": 35,
+    "borrowedSessionAllowed": false
+  },
+  "timing": {
+    "notStarted": true,
+    "windowMaxMinutes": 30,
+    "hardDeadlineNoLaterThanControlLaunchPlusMinutes": 30,
+    "normalCloseBeforeDeadlineSeconds": 120,
+    "tokenMaxSeconds": 60,
+    "extensionAllowed": false
+  },
+  "localChecks": {
+    "wrapperTests": 9,
+    "sourceCaseChecks": 11,
+    "heldRequestToExistingPurePlanner": "RED_WITH_STALE_FIELDS_GREEN_CURRENT_FIELDS",
+    "externalCalls": 0
+  },
+  "executionGateSHA256": null,
+  "realHumanApprovalPresent": false,
+  "lastGateIsConsumedNotReusable": true,
+  "noNewSchemaRlsGrantRoleSecretProviderBudget": true,
+  "requiredBeforeActivation": [
+    "MCP independent scope/binding review",
+    "MCP freezes one exact scope gate",
+    "Root mechanical final gate hash binding and actual approval-byte preflight before clock",
+    "fresh own normal control and actual Consumer UI READY",
+    "same latest EditBase and Preview; confirmations empty until exact matching",
+    "one Apply only; UNKNOWN reads same receipt; preserve existing accepted records"
+  ],
+  "businessAuthorityActionsStarted": false,
+  "softwareDeploymentCompleted": true
+}

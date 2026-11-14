@@ -1,3 +1,4 @@
+import type { V3ActivityProgress } from "@/data/operations/universalActivityReader";
 import type { UniversalTaskActivity } from "@/data/api/universalImportContracts";
 import { CaptureCustodyDevAction } from "./CaptureCustodyDevAction";
 import { useEffect, useRef, useState } from "react";
@@ -58,6 +59,9 @@ export function CaptureActivity({
   const [taskActivities, setTaskActivities] = useState<
     Record<string, UniversalTaskActivity>
   >({});
+  const [v3Activities, setV3Activities] = useState<Record<string, V3ActivityProgress>>(
+    {},
+  );
   const [jobs, setJobs] = useState<CaptureJobReadModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -98,6 +102,7 @@ export function CaptureActivity({
       inventory.current = next;
       setJobs(next);
       setTaskActivities({});
+      setV3Activities({});
       void import("@/data/operations/universalActivityReader")
         .then(async (reader) => {
           if (!current()) return;
@@ -107,6 +112,11 @@ export function CaptureActivity({
             (batchId, activity) => {
               if (current())
                 setTaskActivities((previous) => ({ ...previous, [batchId]: activity }));
+            },
+            undefined,
+            (batchId, progress) => {
+              if (current())
+                setV3Activities((previous) => ({ ...previous, [batchId]: progress }));
             },
           );
           if (current()) setTaskActivities(observations);
@@ -155,6 +165,7 @@ export function CaptureActivity({
     <CaptureActivityList
       isCurrent={() => active.current && isCurrent()}
       expectedAccountId={expectedAccountId}
+      v3Activities={v3Activities}
       taskActivities={taskActivities}
       jobs={jobs}
       loading={loading}
@@ -173,6 +184,7 @@ export function CaptureActivity({
 
 export function CaptureActivityList({
   taskActivities = {},
+  v3Activities = {},
   jobs,
   loading,
   error,
@@ -187,6 +199,7 @@ export function CaptureActivityList({
 }: {
   isCurrent?: () => boolean;
   taskActivities?: Readonly<Record<string, UniversalTaskActivity>>;
+  v3Activities?: Readonly<Record<string, V3ActivityProgress>>;
   jobs: readonly CaptureJobReadModel[];
   loading: boolean;
   error: boolean;
@@ -282,17 +295,25 @@ export function CaptureActivityList({
               {t(`capture.ai.task.${taskActivities[job.batch.batchId].state}`)}
             </Text>
           ) : null}
-          {captureProcessingSummary(job) ? (
+          {isCurrent() && v3Activities[job.batch.batchId] ? (
+            <Text style={styles.secondary} accessibilityLiveRegion="polite">
+              {t(`capture.activityStatus.${v3Activities[job.batch.batchId].state}`)}
+            </Text>
+          ) : null}
+          {process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED !== "true" &&
+          captureProcessingSummary(job) ? (
             <Text style={styles.secondary}>
               {t(`capture.processing.${captureProcessingSummary(job)!}`)}
             </Text>
           ) : null}
-          {captureLocalInterpretationSummary(job) ? (
+          {process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED !== "true" &&
+          captureLocalInterpretationSummary(job) ? (
             <Text style={styles.secondary}>
               {t(`capture.processing.${captureLocalInterpretationSummary(job)!}`)}
             </Text>
           ) : null}
-          {job.allInputsAccepted &&
+          {process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED !== "true" &&
+          job.allInputsAccepted &&
           job.inputs?.every((item) =>
             job.processingEvents?.some(
               (event) => event.inputId === item.id && event.state === "INPUT_VALIDATED",

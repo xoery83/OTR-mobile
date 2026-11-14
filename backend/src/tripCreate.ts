@@ -14,6 +14,10 @@ import {
 export type TripCreatePort = {
   create(actorAccountId: string, request: TripCreateRequest): Promise<TripCreateResult>;
   receipt(actorAccountId: string, operationId: string): Promise<TripCreateResult | null>;
+  parentReceipt?(
+    actorAccountId: string,
+    tripId: string,
+  ): Promise<TripCreateResult | null>;
 };
 export class TripCreateError extends Error {
   constructor(
@@ -44,6 +48,29 @@ export async function tripCreateBoundary(
   if (url.search) return failure(400, "TRIP_CREATE_INVALID");
   if (!port) return failure(503, "TRIP_CREATE_CLOSED");
   try {
+    const parent = /^\/v2\/trips\/([^/]+)\/create-receipt$/.exec(url.pathname);
+    if (parent && request.method === "GET") {
+      const trip = coreUuid.safeParse(parent[1]);
+      if (
+        !trip.success ||
+        !coreUuid.safeParse(actorAccountId).success ||
+        request.body !== null ||
+        request.headers.get("OTR-Trip-Create-Version") !== "2"
+      )
+        return failure(400, "TRIP_CREATE_INVALID");
+      if (!port.parentReceipt) return failure(503, "TRIP_CREATE_CLOSED");
+      const raw = await port.parentReceipt(actorAccountId, trip.data);
+      if (raw === null) return failure(404, "TRIP_CREATE_RECEIPT_NOT_FOUND");
+      const result = tripCreateResultSchema.parse(raw);
+      if (
+        result.actorAccountId !== actorAccountId ||
+        result.tripId !== trip.data ||
+        !("formatVersion" in result) ||
+        result.formatVersion !== 2
+      )
+        throw new TripCreateError(503, "TRIP_CREATE_RESULT_MISMATCH");
+      return reply(200, result);
+    }
     if (url.pathname === "/v2/trips" && request.method === "POST") {
       const boundary = createRequestBoundary(15000, request.signal);
       let body: unknown;

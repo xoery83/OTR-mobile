@@ -187,6 +187,39 @@ export async function readUniversalContinuousConfig(
     env.OTR_DEV_SUPABASE_URL !== "https://tuqigdxrvrerfewsxqgm.supabase.co"
   )
     throw Error("UNIVERSAL_CONTINUOUS_CONFIG_CLOSED");
+  const mounted = await readPinnedUniversalRuntime(env);
+  if (!mounted) return undefined;
+  const { stat, sha256, value } = mounted;
+  try {
+    const config = universalContinuousConfigSchema.parse(value);
+    if (
+      (config.mixedBInitialAcquisition || config.finiteNative?.mixedBForwardRecovery) &&
+      pinForwardConfig
+    ) {
+      const assertCurrent = () => assertPinnedMount(env, stat, sha256);
+      assertCurrent();
+      pinForwardConfig(assertCurrent);
+    }
+    return config;
+  } catch {
+    throw Error("UNIVERSAL_CONTINUOUS_CONFIG_CLOSED");
+  }
+}
+
+export async function readUniversalV3StoreConfig(
+  env: Record<string, string | undefined>,
+) {
+  const mounted = await readPinnedUniversalRuntime(env);
+  return z
+    .object({
+      directory: universalFiniteConfigSchema.shape.directory,
+      identity: universalFiniteConfigSchema.shape.identity,
+      taskDatabase: universalFiniteConfigSchema.shape.taskDatabase,
+    })
+    .parse(mounted?.value);
+}
+
+async function readPinnedUniversalRuntime(env: Record<string, string | undefined>) {
   let file;
   try {
     file = await open(universalRuntimePath, configFlags);
@@ -204,16 +237,7 @@ export async function readUniversalContinuousConfig(
       sha256 !== env.OTR_DEV_UNIVERSAL_RUNTIME_SHA256
     )
       throw 0;
-    const config = universalContinuousConfigSchema.parse(JSON.parse(body));
-    if (
-      (config.mixedBInitialAcquisition || config.finiteNative?.mixedBForwardRecovery) &&
-      pinForwardConfig
-    ) {
-      const assertCurrent = () => assertPinnedMount(env, stat, sha256);
-      assertCurrent();
-      pinForwardConfig(assertCurrent);
-    }
-    return config;
+    return { stat, sha256, value: JSON.parse(body) as unknown };
   } catch {
     throw Error("UNIVERSAL_CONTINUOUS_CONFIG_CLOSED");
   } finally {

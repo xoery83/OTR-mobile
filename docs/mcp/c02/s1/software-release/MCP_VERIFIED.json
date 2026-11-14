@@ -1,0 +1,24 @@
+{
+  "status": "SOFTWARE_DEFAULT_CLOSED_DEPLOY_AND_CLOSE_PASS",
+  "verification": "MCP independent local cross-check of Root raw release/readback/probe/controller receipts; no additional Host/network probe by MCP",
+  "verified_at": "2026-11-02T22:32:34.139930+00:00",
+  "container_id": "a96a753734df10721754fec5c46a61bbd53349e8a7f1992a9b9d56cf069010b7",
+  "config_sha256": "f3d93739d616d752788b5532bd24eae1824a03785156bfaa6e0e6787128d8826",
+  "image": "sha256:0b46836523c57968e8e2270a5e7ce62c4a007a2fe1a280f09063b2541b5de59a",
+  "capture_sha256": "17d4812319262931dd27061a8d8f5a254dd80cd881dffdaf5acc0fafc2a92584",
+  "host_sha256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+  "source_receipts_sha256": {
+    "IMAGE_READY.json": "0fdcd236ad91baf3edf9c9f6368b46a8ff4bae1ef72e3761b4b5454ddedf774a",
+    "INDEPENDENT_READBACK.json": "846d4054f8cd0c99f325d49c46eea53aecc9ff70f0b38e7c5f5f67b43e7db2f1",
+    "CLOSE_PROBE.json": "5ab1a8fa64e2e3bdbb9bb0e9ba393247ececf12a6ff8be371ae4c90f9569c087",
+    "INDEPENDENT_CONTROLLER_REVIEW.json": "21f077fd1afad95fc1feaff47372ccbf41120c4467c33cd24c64dfb43e6244cf"
+  },
+  "locks": {
+    "deploy_seconds": 7.22517,
+    "close_probe_seconds": 0.148809
+  },
+  "scope": "software only, all three QA keys absent; no issuer/window/Consumer/Apply",
+  "future_restore_rule": "Use this new default with fresh CAS; old920f retained for software rollback only, not a future business-window default",
+  "consumer": "NOT_RUN",
+  "new_business_applied_receipts": []
+}

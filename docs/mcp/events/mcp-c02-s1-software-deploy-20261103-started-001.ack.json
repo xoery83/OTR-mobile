@@ -1,0 +1,27 @@
+{
+  "event_id": "mcp-c02-s1-software-deploy-20261103-started-001",
+  "package_id": "MCP-C02",
+  "agent_id": "MCP",
+  "lane": "B",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "received_at": "2026-11-02T22:30:12.260Z",
+  "last_reported_at": "2026-11-02T22:27:12.279105+00:00",
+  "acceptance_status": "UNCHANGED",
+  "reported_acceptance": null,
+  "acceptance_scope": null,
+  "source": {
+    "kind": "REGISTERED_THREAD",
+    "thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turn_id": "01a19e5f-2192-72d2-aaee-2acd066771c1",
+    "message_id": "exec-7bb3faf3-7b61-4f0c-be4c-e3f13bff9d78",
+    "path": "docs/v32/sources/mcp-c02-s1-software-deploy-20261103-started-001.json",
+    "sha256": "64eeb6533c19b838c0128e48b7e9f5f205aa81f5bf552b44a8c925988cb93af8"
+  },
+  "dispatch_performed": false,
+  "ack_status": "AGENT_REPORTED",
+  "publication_status": "PUBLISHED",
+  "snapshot_binding": "CONTAINING_PUBLISHED_SNAPSHOT",
+  "snapshot_version": "b489eb9562313b79",
+  "build": "cc1b849f00236dc4",
+  "publication_version": 28
+}

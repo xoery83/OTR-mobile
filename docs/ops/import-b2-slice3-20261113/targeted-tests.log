@@ -1,0 +1,18 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/import-v3-local-first
+
+···········································································································stdout | backend/src/tripCoreV2Http.test.ts > Core2 authenticated HTTP boundary, default CLOSED > rejects duplicate keys, oversized body, scope forgery and caller authority flags
+{"event":"core_validation_failed","resource":"commands","method":"POST","cause":"INVALID_RESPONSE","issues":[]}
+
+stdout | backend/src/tripCoreV2Http.test.ts > Core2 authenticated HTTP boundary, default CLOSED > rejects duplicate keys, oversized body, scope forgery and caller authority flags
+{"event":"core_validation_failed","resource":"commands","method":"POST","cause":"BODY_LIMIT","issues":[]}
+
+stdout | backend/src/tripCoreV2Http.test.ts > Core2 authenticated HTTP boundary, default CLOSED > rejects duplicate keys, oversized body, scope forgery and caller authority flags
+{"event":"core_validation_failed","resource":"commands","method":"POST","cause":"SCHEMA","issues":[{"code":"unrecognized_keys","path":[]}]}
+
+··································································································································································
+
+ Test Files  6 passed (6)
+      Tests  269 passed (269)
+   Start at  00:13:25
+   Duration  15.54s (transform 1.94s, setup 0ms, import 2.90s, tests 19.87s, environment 0ms)

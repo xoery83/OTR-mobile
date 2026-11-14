@@ -1,3 +1,11 @@
+import { z } from "zod";
+import {
+  universalV3Manifest,
+  universalV3IntakeStatus,
+  universalV3Capability,
+  universalV3ExecutionStatus,
+  type UniversalV3Manifest,
+} from "./universalV3Contracts";
 import { fetch as expoFetch } from "expo/fetch";
 import { sha256 } from "@noble/hashes/sha256";
 import { ApiClientError, createApiClient } from "./client";
@@ -154,7 +162,53 @@ export function createUniversalImportTransport(
       throw Error("UNIVERSAL_CONTEXT_MISMATCH");
   }
   const path = (batchId: string) => `/v2/import-batches/${batchId}/interpretations`;
+  function intakePath(context: AccountRequestContext, rawAnalysisId: string, file?: string) {
+    const id = z.uuid().parse(rawAnalysisId);
+    return `${path(id)}/intake${file ? `/files/${z.uuid().parse(file)}` : ""}?tripId=${encodeURIComponent(context.tripId)}`;
+  }
   return {
+    async localFirstCapability(context: AccountRequestContext, analysisId: string) {
+      return scoped(context, async (api) => {
+        const id = z.uuid().parse(analysisId);
+        return api.get(`${path(id)}/intake/capability?tripId=${encodeURIComponent(context.tripId)}`,
+          universalV3Capability);
+      });
+    },
+    async readLocalFirstExecution(context: AccountRequestContext, analysisId: string) {
+      return scoped(context, async (api) => {
+        try {
+          return await api.get(`${intakePath(context, analysisId)}&execution=1`, universalV3ExecutionStatus);
+        } catch (error) {
+          if (error instanceof ApiClientError && error.status === 404 &&
+              error.code === "UNIVERSAL_V3_INTAKE_UNAVAILABLE") return null;
+          throw error;
+        }
+      });
+    },
+    async startLocalFirst(context: AccountRequestContext, analysisId: string, input: UniversalV3Manifest) {
+      const manifest = universalV3Manifest.parse(input);
+      if (manifest.tripId !== context.tripId) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+      return scoped(context, async (api) => {
+        const result = await api.post(intakePath(context, analysisId), manifest,
+          universalV3IntakeStatus, { "Idempotency-Key": analysisId });
+        if (result.analysisId !== analysisId) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+        return result;
+      });
+    },
+    async readLocalFirst(context: AccountRequestContext, analysisId: string) {
+      return scoped(context, async (api) => {
+        const result = await api.get(intakePath(context, analysisId), universalV3IntakeStatus);
+        if (result.analysisId !== analysisId) throw Error("UNIVERSAL_CONTEXT_MISMATCH");
+        return result;
+      });
+    },
+    async uploadLocalFirst(context: AccountRequestContext, analysisId: string, fileId: string,
+      bytes: Uint8Array<ArrayBuffer>) {
+      await scoped(context, (api) => api.put(
+        intakePath(context, analysisId, fileId), bytes, z.void(),
+        { "Content-Type": "application/octet-stream" },
+      ));
+    },
     async prepare(
       context: AccountRequestContext,
       raw: UniversalBatchPrepare | import("./universalImportContracts").UniversalRetainedOriginalPrepare,

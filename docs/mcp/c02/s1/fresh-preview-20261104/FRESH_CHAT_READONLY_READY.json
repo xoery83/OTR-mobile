@@ -1,0 +1,23 @@
+{
+  "status": "PASS_FRESH_CHAT_SURFACE_ONLY",
+  "browserId": "1",
+  "tabId": "1962067530",
+  "url": "https://chatgpt.com/",
+  "observedHeading": "今天想聊点什么？",
+  "observedTextbox": "询问 ChatGPT",
+  "sendButton": "disabled",
+  "userTaskSubmitted": false,
+  "syntheticMaterialsSubmitted": false,
+  "McpOAuthOrToolCallPerformed": false,
+  "source": "Actual CUA DOM observation of new browser tab",
+  "handoffMarked": true,
+  "newBackendAuthority": false,
+  "notEvidenceOf": [
+    "OAuth",
+    "Tool Discovery",
+    "Guide",
+    "Trip Read",
+    "Preview"
+  ],
+  "existingHostNeedsNoDeploy": true
+}

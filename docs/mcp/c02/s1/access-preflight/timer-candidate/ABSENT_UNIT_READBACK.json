@@ -1,0 +1,9 @@
+{
+  "status": "READ_ONLY_ABSENT_UNIT_FORMAT",
+  "observedAt": "2026-11-03T03:42:47.129357+00:00",
+  "returnCode": 0,
+  "activeState": "inactive",
+  "stderrPresent": false,
+  "installs": 0,
+  "changes": 0
+}

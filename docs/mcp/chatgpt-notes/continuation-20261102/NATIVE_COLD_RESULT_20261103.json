@@ -1,0 +1,13 @@
+{
+  "status": "IPAD_MCP_DETAILS_PROCESS_COLD_RECOVERY_UI_PASS",
+  "at": "2026-11-02T19:14:47.044493+00:00",
+  "build": 143,
+  "source": "533b749a",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "revisionProof": "Exact same accepted Item revision3 independently targeted read-only on FormsQA; physical UI does not expose revision",
+  "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.\nSlice1 Fresh ChatGPT Notes QA verified.",
+  "dates": "2026-12-10/2026-12-13",
+  "method": "Own app close then normal open; same lawful Account; ordinary Trip\u2192Day\u2192Focus\u2192Details. No Apply/Edit/manual refresh",
+  "limit": "Same-account Consumer handoff, not two-account C02 or fresh server mutation"
+}

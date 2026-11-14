@@ -99,7 +99,8 @@ public class ReceiptOcrModule: Module {
         } else if let image = CGImageSourceCreateWithData(data as CFData, nil),
           let type = CGImageSourceGetType(image) as String?,
           let ext = [UTType.jpeg.identifier: "jpg", UTType.png.identifier: "png",
-            UTType.heic.identifier: "heic", UTType.heif.identifier: "heif"][type] {
+            UTType.heic.identifier: "heic", UTType.heif.identifier: "heif",
+            UTType.webP.identifier: "webp", UTType.gif.identifier: "gif"][type] {
           suffix = ext
         } else { promise.reject("IMPORT_PREVIEW_UNSUPPORTED", "Unsupported original"); return }
         let file = FileManager.default.temporaryDirectory
@@ -113,7 +114,7 @@ public class ReceiptOcrModule: Module {
           else { promise.resolve(nil) }
         }
         self.importPreview = (token, preview)
-        presenter.present(preview, animated: true) { preview.didPresent() }
+        presenter.present(UINavigationController(rootViewController: preview), animated: true) { preview.didPresent() }
         // Cold Quick Look can still be presenting at 5s; readiness remains UIKit-owned.
         preview.awaitPresentation(presenter: presenter)
       }
@@ -355,7 +356,7 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
     viewIfLoaded?.isHidden = true
     if let file = item.previewItemURL { try? FileManager.default.removeItem(at: file) }
     guard presented else { return }
-    dismiss(animated: false) { self.complete() }
+    (navigationController ?? self).dismiss(animated: false) { self.complete() }
   }
   private func complete(_ failed: Bool = false) {
     let cleanup = finish
@@ -363,8 +364,11 @@ private final class ImportOriginalPreviewController: QLPreviewController, QLPrev
     cleanup?(failed)
   }
   @objc private func hidePrivateOriginal() { closePrivateOriginal() }
+  @objc private func closePreview() { closePrivateOriginal() }
   override func viewDidLoad() {
     super.viewDidLoad()
+    navigationItem.leftBarButtonItem = UIBarButtonItem(
+      barButtonSystemItem: .done, target: self, action: #selector(closePreview))
     if closeRequested { view.isHidden = true }
   }
   override func viewDidDisappear(_ animated: Bool) {

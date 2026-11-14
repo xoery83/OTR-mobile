@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "237e4c66",
+  "bundleIdentifier": "art.xoery.otr",
+  "team": "3K49Z2Q5X7",
+  "strictSignature": "PASS",
+  "actualBundlePreparedRecovery": "PRESENT",
+  "actualBundleAdoptionGuard": "TRUE",
+  "hermesInputSHA256": "dab6cb08a2e2e3325e324942ac305b8ea11b4310f21d4b70a08b152396a003bc",
+  "appExecutableSHA256": "964ad439a929d564b6b88f831b7200281620befc7b200962499b5af595caf92d",
+  "install": "PASS_IN_PLACE_SAME_BUNDLE_NO_UNINSTALL",
+  "nativeRecovery": "PASS_AGENT_DEVICE_RUNNER_NORMAL_ACCOUNT_PAGE",
+  "sameTargetAccountId": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+  "sameOriginalAttemptId": "7da7240f-4019-4a60-b3d7-350525ecddef",
+  "checkpointUnchanged": true,
+  "preparedFileSHA256": "b40e657a067bdaa0232c45266d040e5ac8e580745403747bd7fa224df281d609",
+  "inventorySha256": "33dcae3e768ddae6ce37c19dc026b67dbdfaf02199516c3bfbafd99e9c5a513c",
+  "appleAuthorizationInvoked": false,
+  "adoptionSubmitted": false,
+  "visibleActions": [
+    "Check status and continue",
+    "Cancel sign-in"
+  ],
+  "hostedActivation": false
+}

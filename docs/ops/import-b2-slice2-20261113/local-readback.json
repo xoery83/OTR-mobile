@@ -1,0 +1,70 @@
+{
+  "captureBatches": 4,
+  "captureInputs": 10,
+  "batches": [
+    [
+      "3d2789c7-f234-49f5-9b8d-c5479c496209",
+      "2026-11-13T01:43:20.672Z"
+    ],
+    [
+      "48181fe2-1355-4d79-b34f-39d95999f8d4",
+      "2026-11-13T01:59:05.649Z"
+    ],
+    [
+      "dd7de7ff-d151-486f-a311-d3296f18811a",
+      "2026-11-13T07:50:23.999Z"
+    ],
+    [
+      "9583b5ad-225a-46de-81f7-039d85b4a888",
+      "2026-11-13T08:08:30.631Z"
+    ]
+  ],
+  "originalB1IdentitiesRetained": true,
+  "corePendingIntents": 19,
+  "coreReceipts": 19,
+  "sameCoreCountsAsBaseline": true,
+  "coreQueueByStatus": [
+    [
+      "COMPLETED",
+      19
+    ]
+  ],
+  "acceptedReadbackCounts": {
+    "trip_core_itinerary_events": 7,
+    "trip_core_trip_item_document_links": 9
+  },
+  "retainedOriginals": [
+    {
+      "hash": "ea83d3f8b5662bac52e652587ceda133b654fd8da50808c1e7c5ec89b2b199e7",
+      "matches": true,
+      "bytes": 218
+    },
+    {
+      "hash": "f803f82974f7053717b49b69a2abc297210b2e1c45ba70c45bc24a49ed7fc4df",
+      "matches": true,
+      "bytes": 17226
+    },
+    {
+      "hash": "9e873eb9af30bb432146319db4e96e66d83ee8ce825926050949ad6e50d51e60",
+      "matches": true,
+      "bytes": 21480
+    },
+    {
+      "hash": "79febdf86a8c15bc898c0306ff909392887f3cabfd0ea0dd4be29a333452f860",
+      "matches": true,
+      "bytes": 50064
+    },
+    {
+      "hash": "1a82c5c61cbd583d24b3475584f75be03435cbb30ed238e42943863982a0c698",
+      "matches": true,
+      "bytes": 35051
+    },
+    {
+      "hash": "badf69a3f4607d9a7bb25da9847e38f57d76cd4a9fa98865190d8ce0d3c8e6da",
+      "matches": true,
+      "bytes": 950
+    }
+  ],
+  "allOriginalHashesMatch": true,
+  "newAnalyzeOrSaveInitiated": 0
+}

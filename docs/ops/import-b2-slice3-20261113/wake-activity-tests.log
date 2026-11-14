@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/import-v3-local-first
+
+·····················
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  00:21:18
+   Duration  473ms (transform 434ms, setup 0ms, import 700ms, tests 16ms, environment 0ms)

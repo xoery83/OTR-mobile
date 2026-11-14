@@ -1,3 +1,11 @@
+import { join } from "node:path";
+import { createUniversalV3Intake } from "./universalV3Intake";
+import { createUniversalV3Execution } from "./universalV3Execution";
+import {
+  extractUniversalV3Pdf,
+  normalizeUniversalV3Image,
+  universalV3DecodersPresent,
+} from "./universalV3Decoders";
 import { createUniversalMaterialIntake } from "./universalMaterialIntake";
 import { measureSourcePdfPhase, runSourcePdfTimings } from "./sourcePdfTiming";
 import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
@@ -204,24 +212,8 @@ export async function loadDevUniversalContinuousRuntime(
     } catch {
       console.info("UNIVERSAL_PNG_RUNTIME_CLOSED");
     }
-    async function host(
-      actor: string,
-      trip: string,
-      assertCurrentAuth: () => Promise<void>,
-      sourceReadRequestId?: string,
-      publishedSource?: Parameters<
-        typeof createUniversalContinuousHost
-      >[0]["publishedSource"],
-      mixedBPristineSource?: Parameters<
-        typeof createUniversalContinuousHost
-      >[0]["mixedBPristineSource"],
-    ) {
-      z.uuid().parse(actor);
-      z.uuid().parse(trip);
-      guard();
-      await assertCurrentAuth();
-      const context = await captureAccountRequestContext(trip, async () => actor);
-      const persistence = createClosedPersistenceGateway({
+    function persistenceFor(actor: string, assertCurrentAuth: () => Promise<void>) {
+      return createClosedPersistenceGateway({
         gatewayIdentity: "otr_external_integration_call_gateway",
         now: () => new Date().toISOString(),
         async verify(request) {
@@ -265,6 +257,25 @@ export async function loadDevUniversalContinuousRuntime(
           );
         },
       });
+    }
+    async function host(
+      actor: string,
+      trip: string,
+      assertCurrentAuth: () => Promise<void>,
+      sourceReadRequestId?: string,
+      publishedSource?: Parameters<
+        typeof createUniversalContinuousHost
+      >[0]["publishedSource"],
+      mixedBPristineSource?: Parameters<
+        typeof createUniversalContinuousHost
+      >[0]["mixedBPristineSource"],
+    ) {
+      z.uuid().parse(actor);
+      z.uuid().parse(trip);
+      guard();
+      await assertCurrentAuth();
+      const context = await captureAccountRequestContext(trip, async () => actor);
+      const persistence = persistenceFor(actor, assertCurrentAuth);
       return createUniversalContinuousHost({
         enabled: true,
         finiteBatch,
@@ -737,12 +748,62 @@ export async function loadDevUniversalContinuousRuntime(
         },
       };
     }
+    const v3Directory = join(config.directory, "universal-v3-spool");
+    const v3Intake = !finite && !acquisition && !executionFence
+      && env.OTR_DEV_UNIVERSAL_REMOTE_TRANSPORT === "enabled"
+      && await universalV3DecodersPresent()
+      ? createUniversalV3Intake(db, v3Directory) : undefined;
+    const v3Execution = v3Intake && createUniversalV3Execution({
+      intake: v3Intake,
+      db,
+      stores: stores!,
+      validateImage: normalizeUniversalV3Image,
+      extractPdf: extractUniversalV3Pdf,
+      async provision(scope, request) {
+        const token = /^Bearer ([^\s]+)$/i.exec(request.headers.get("Authorization") ?? "")?.[1];
+        if (!token) throw Error("UNIVERSAL_AUTH_REQUIRED");
+        const assertCurrent = async () => {
+          guard();
+          const user = await gateway.validateAccessToken(token);
+          if (!user || user.id !== scope.accountId || !isNormalAccount(user) ||
+              !(await gateway.canReadTrip(scope.accountId, scope.tripId)))
+            throw Error("UNIVERSAL_AUTH_REJECTED");
+          guard();
+        };
+        return {
+          assertCurrent,
+          async selectProvider() {
+            await assertCurrent();
+            const raw = await universalProviderPgTransaction(
+              taskConnection,
+              costGuardEnabled,
+              async (lease) => (await lease.query(
+                "SELECT public.universal_import_select_v3($1::uuid,$2::uuid,$3) AS selection",
+                [scope.accountId, scope.tripId, config.integrationId],
+              )).rows[0]?.selection,
+            );
+            const result = universalContinuousSelectionSchema.strip().parse(raw);
+            if (costGuardEnabled !== (result.priceScheduleId !== null))
+              throw Error("UNIVERSAL_COST_GUARD_SCOPE_MISMATCH");
+            return result;
+          },
+          persistence: {
+            connection: taskConnection,
+            gateway: persistenceFor(scope.accountId, assertCurrent),
+            costGuardEnabled,
+            environment: (key) => env[key],
+          },
+        };
+      },
+    });
     const coreSources = new WeakMap<
       CorePgLease,
       ReturnType<typeof createCoreUniversalSourceRead>
     >();
     return {
       catalogConnection,
+      universalV3Intake: v3Intake,
+      universalV3Execution: v3Execution,
       retainedPng,
       sourcePdfV4PreparationForRequest: pdf?.sourcePdfV4PreparationForRequest,
       sourcePngPreparationForRequest: png?.sourcePngPreparationForRequest,

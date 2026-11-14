@@ -1,0 +1,26 @@
+{
+  "status": "LOCAL_PUBLICATION_RACE_FIXED_20_CASES_PASS_INDEPENDENT_RECHECK_PENDING",
+  "recordedAt": "2026-11-04T23:55:31.311825+00:00",
+  "originalReviewSHA256": "8a3ecfcd4595dd94b7c2c528605d9204b9d570519123b3e687a114f58fce149c",
+  "fix": "publicationComplete observes only nlink1 before request consume or ACK read. Transient/permanent multi-links remain pending and content is not read; pending owner polls do not consume an attempt. Strict readPrivate nlink1 checks, no-replace publication and owning one-attempt rules unchanged.",
+  "regression": [
+    "Deterministic request target nlink2 observed before publisher unlink; zero owning calls/no ACK then nlink1 accepted once",
+    "Deterministic ACK target nlink2; separate publisher unlinks while synchronous callback waits; only complete ACK accepted",
+    "Permanent multi-link request repeatedly pending with zero port calls/no ACK",
+    "Permanent multi-link ACK times out, cannot authorize UI send"
+  ],
+  "validation": {
+    "directedCases": 20,
+    "result": "PASS includes prior16",
+    "scopedTypecheck": "PASS",
+    "actualAuthOrCredentialOrUIOrHosted": false
+  },
+  "sourceHashes": {
+    "scripts/mcp/c02-browser-reservation.mts": "e1bde394db0e59de02d50fc6713271818ac9b414f9cfeb29613e71a70b68a38b",
+    "scripts/mcp/c02-browser-reservation.test.mts": "2a987058ce3e862e5e13ca0eff631867fe1dd9cac51768cd2df2af2313c5fe11"
+  },
+  "defaultOff": true,
+  "fixed6d49GatePackageChanged": false,
+  "newT": null,
+  "furtherScope": "None; SDK Consent source revision will be separate, not implemented by this repair"
+}

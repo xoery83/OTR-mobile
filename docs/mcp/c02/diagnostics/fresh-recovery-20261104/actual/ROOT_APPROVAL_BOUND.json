@@ -1,0 +1,11 @@
+{
+  "status": "DIRECT_OWNER_AUTHORIZED_FIXED_REVIEW_VERIFIED_NORMAL_CONTROL_LAUNCH_READY_NO_CLOCK",
+  "directOwnerApprovalVerified": true,
+  "gateSHA256": "413ea28dcd503cb7643039524a5a54df428fbfe4b5e838b62ce2bbcc6688a182",
+  "packageSHA256": "b7e8aba7dbdb1a8eea14d2ce5a6a977a40ddc35428292384dd970c177c9dee39",
+  "ownerMessageId": "01a1a4d2-866f-7391-82b3-24d63fe83347",
+  "normalControlStarted": false,
+  "clockStarted": false,
+  "reviewSHA256": "08cfac3f2f883f62ff92034e8a5eaabe2bd82ed456154e1cc5e0b6a3d99a07b9",
+  "sourceCommit": "0305aaf112c7032e3fcef0d123e0df3242fc4a37"
+}

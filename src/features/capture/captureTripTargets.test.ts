@@ -29,3 +29,12 @@ it("rejects a late list after an account ABA transition", async () => {
   });
   await expect(listCaptureTripPriors(scope)).rejects.toThrow();
 });
+
+vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
+  readLocalTripDiscoveryRepository: async () => ({
+    readMerged: async () => ({ trips: [] }),
+  }),
+  refreshTripDiscoveryCache: vi.fn(async () => {
+    throw Error("TEST_UNEXPECTED_NETWORK_REFRESH");
+  }),
+}));

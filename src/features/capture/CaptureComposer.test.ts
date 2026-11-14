@@ -242,6 +242,43 @@ it("outside dismissal preserves rather than clears the unsent draft", () => {
   expect(props.onClose).toHaveBeenCalledOnce();
   expect(props.onClear).not.toHaveBeenCalled();
 });
+it("Inline Add stages text without submitting; Clear All requires confirmation", () => {
+  const { props } = render({ ...empty, editorText: "Keep this note" }, 1);
+  button("capture.composer.add").onPress();
+  expect(props.onAddText).toHaveBeenCalledOnce();
+  expect(props.onSubmit).not.toHaveBeenCalled();
+  button("capture.composer.clear").onPress();
+  expect(props.onClear).not.toHaveBeenCalled();
+  const actions = state.confirm.mock.calls.at(-1)![2];
+  expect(actions[0].style).toBe("cancel");
+  actions[1].onPress();
+  expect(props.onClear).toHaveBeenCalledOnce();
+  expect(props.onClose).not.toHaveBeenCalled();
+});
+it("blocks an over-limit or unavailable V3 roster without discarding selections", () => {
+  const items = Array.from({ length: 6 }, (_, i) => ({
+    source: "files" as const,
+    stagingId: i + 1,
+    name: `plan-${i}.pdf`,
+    temporaryUri: "file:///retained",
+    typeHint: "application/pdf",
+    availability: "unverified" as const,
+  }));
+  let rendered = render({ ...empty, items }, 6, { maxAttachments: 5 });
+  expect(button("capture.composer.submit").disabled).toBe(true);
+  expect(rendered.html).toContain(t("capture.composer.limit", { count: 5 }));
+  expect(rendered.props.onRemove).not.toHaveBeenCalled();
+  rendered = render(
+    {
+      ...empty,
+      items: [{ ...items[0], temporaryUri: null, availability: "unavailable" }],
+    },
+    1,
+    { maxAttachments: 5 },
+  );
+  expect(button("capture.composer.submit").disabled).toBe(true);
+  expect(rendered.html).toContain(t("capture.unavailable"));
+});
 it("native paste retains text exactly; explicit submit supports mixed batch intake", () => {
   const { props, html } = render({ ...empty, editorText: "Original note" }, 1);
   const input = state.nodes.find((n) => n.multiline);
@@ -254,7 +291,10 @@ it("native paste retains text exactly; explicit submit supports mixed batch inta
   expect(props.onSubmit).toHaveBeenCalledOnce();
   expect(html).not.toContain(t("capture.composer.textSubmitUnavailable"));
   expect(input.style[1].maxHeight).toBeLessThan(400);
-  expect(input.style[1].height).toBeUndefined();
+  expect(input.style[1].height).toBe(44);
+  input.onContentSizeChange({ nativeEvent: { contentSize: { height: 130 } } });
+  render({ ...empty, editorText: pasted }, 1);
+  expect(state.nodes.find((n) => n.multiline).style[1].height).toBe(130);
 });
 it("all attachments remain in one horizontal tray and removal only targets the selected item", () => {
   const items = Array.from({ length: 9 }, (_, i) => ({

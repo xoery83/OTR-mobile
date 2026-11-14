@@ -29,6 +29,7 @@ import {
 } from "../../domain/trip/tripCoreV2";
 import {
   validateCoreCommand,
+  isNormalImportCoreCommand,
   isReviewedSourceCreate,
 } from "../../domain/trip/tripCoreV2Commands";
 import {
@@ -136,6 +137,10 @@ export type CoreAcceptedCertificate = {
   roster_hash: string;
   manifest_sha256: string;
   ordinary_order_version: number;
+};
+export type CoreAcceptedPeopleConnections = {
+  certificate: CoreAcceptedCertificate;
+  people: { personId: string; connected: boolean; isCurrentActor: boolean }[];
 };
 export type CoreAcceptedSnapshot = {
   graph: CoreGraph;
@@ -434,6 +439,37 @@ export function createTripCoreV2Repository(
       return result;
     });
   }
+  // Public reader owns the non-reentrant Account gate and SQLite transaction.
+  async function readAcceptedPeopleConnections(
+    ctx: AccountRequestContext,
+  ): Promise<CoreAcceptedPeopleConnections | null> {
+    return withAccountApplyGate(async () => {
+      let result: CoreAcceptedPeopleConnections | null = null;
+      await database.withTransactionAsync(async () => {
+        const accepted = await acceptedWithinTransaction(ctx);
+        if (!accepted) return;
+        const bindings = await database.getAllAsync<{
+          person_id: string;
+          linked_account_id: string | null;
+        }>(
+          "SELECT person_id,linked_account_id FROM trip_core_person_bindings WHERE account_id=? AND trip_id=? AND active=1 ORDER BY person_id",
+          ctx.accountId,
+          ctx.tripId,
+        );
+        result = {
+          certificate: accepted.certificate,
+          people: bindings.map((binding) => ({
+            personId: binding.person_id,
+            connected: binding.linked_account_id !== null,
+            isCurrentActor: binding.linked_account_id === ctx.accountId,
+          })),
+        };
+        await assertContext(ctx);
+      });
+      await assertContext(ctx);
+      return result;
+    });
+  }
   // Caller owns the Account gate and serialized SQLite transaction. Never reacquire either.
   async function ttrWithinTransaction(
     ctx: AccountRequestContext,
@@ -691,6 +727,57 @@ export function createTripCoreV2Repository(
     await assertContext(ctx);
     announceLedgerQueueWorkAvailable();
     return result!;
+  }
+  async function enqueueConfirmedItemDocuments(
+    ctx: AccountRequestContext,
+    inputs: readonly unknown[],
+  ) {
+    const commands = inputs.map(validateCoreCommand);
+    const link = commands.at(-1);
+    const flightDetails =
+      commands[0]?.command === "CREATE_SPARSE_FLIGHT" &&
+      commands[1]?.command === "SET_AUTHORED_FLIGHT_DETAILS";
+    if (
+      commands.length < 1 ||
+      commands.length > (flightDetails ? 8 : 7) ||
+      new Set(commands.map((command) => command.operationId)).size !== commands.length ||
+      link?.command !== "RECONCILE_ITEM_DOCUMENTS" ||
+      commands.some(
+        (command) =>
+          command.tripId !== ctx.tripId ||
+          (command.admission.mode !== "MANUAL" && !isNormalImportCoreCommand(command)),
+      ) ||
+      commands
+        .slice(0, -1)
+        .some(
+          (command, index) =>
+            command.command !== "CREATE_DOCUMENT_METADATA" &&
+            !(
+              flightDetails &&
+              index === 1 &&
+              command.target.id === link.target.id &&
+              command.baseVector.length === 1 &&
+              command.baseVector[0].kind === "ITEM" &&
+              command.baseVector[0].id === link.target.id &&
+              command.baseVector[0].revision === 1
+            ) &&
+            (index !== 0 ||
+              command.target.id !== link.target.id ||
+              !["CREATE_ITEM", "CREATE_SPARSE_FLIGHT", "SET_ITEM_TEXT"].includes(
+                command.command,
+              )),
+        )
+    )
+      throw Error("CORE_REVIEWED_DOCUMENT_COMMANDS");
+    await withAccountApplyGate(async () => {
+      await assertContext(ctx);
+      await database.withTransactionAsync(async () => {
+        for (const command of commands) await enqueueWithinTransaction(ctx, command);
+      });
+    });
+    await assertContext(ctx);
+    announceLedgerQueueWorkAvailable();
+    return commands.map(({ operationId }) => operationId);
   }
   async function manualInstructionOriginWithinTransaction(
     ctx: AccountRequestContext,
@@ -1735,6 +1822,34 @@ export function createTripCoreV2Repository(
       return result;
     });
   }
+  async function retainedReceipt(ctx: AccountRequestContext, input: unknown) {
+    const operation = validateCoreCommand(input);
+    await assertContext(ctx);
+    await scope(ctx);
+    if (operation.tripId !== ctx.tripId) throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+    const row = await database.getFirstAsync<{
+      body_json: string;
+      receipt_sha256: string;
+    }>(
+      "SELECT body_json,receipt_sha256 FROM trip_core_trip_core_command_receipts WHERE account_id=? AND trip_id=? AND operation_id=?",
+      ctx.accountId,
+      ctx.tripId,
+      operation.operationId,
+    );
+    await assertContext(ctx);
+    if (!row) return null;
+    const receipt = await validateCoreReceipt(JSON.parse(row.body_json), hash);
+    if (
+      receipt.actorAccountId !== ctx.accountId ||
+      receipt.tripId !== ctx.tripId ||
+      receipt.operationId !== operation.operationId ||
+      receipt.receiptSha256 !== row.receipt_sha256 ||
+      receipt.intentSha256 !==
+        (await coreHashValue("otr-trip-core-intent-v2", operation, hash))
+    )
+      throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
+    return receipt;
+  }
   async function pending(ctx: AccountRequestContext, retainedOperationId?: string) {
     if (retainedOperationId !== undefined) coreUuid.parse(retainedOperationId);
     await assertContext(ctx);
@@ -2158,7 +2273,8 @@ export function createTripCoreV2Repository(
         (committed && !committed.has(intent.command.operationId)) ||
         intent.state === "CONFLICT" ||
         intent.state === "REVIEW" ||
-        intent.command.admission.mode !== "MANUAL"
+        (intent.command.admission.mode !== "MANUAL" &&
+          !isNormalImportCoreCommand(intent.command))
       )
         continue;
       try {
@@ -2167,7 +2283,7 @@ export function createTripCoreV2Repository(
           intent.command,
           actor,
           intent.created_at,
-          false,
+          intent.command.admission.mode === "IMPORT",
           undefined,
           true,
         );
@@ -2433,6 +2549,7 @@ export function createTripCoreV2Repository(
     readGraph,
     manualReadSnapshot,
     acceptedSnapshot,
+    readAcceptedPeopleConnections,
     combinedSnapshot,
     readLocalCombinedWithinTransaction,
     commitLocal: localCommits.commit,
@@ -2448,12 +2565,14 @@ export function createTripCoreV2Repository(
     refresh,
     resume,
     enqueue,
+    enqueueConfirmedItemDocuments,
     commitManualBatch,
     manualInstructionEligibility,
     manualInstructionCorrectionPreclaimEligibility,
     claimQueuedManualInstructionCorrection,
     consumeAndSubmitManualInstructionCorrection,
     pending,
+    retainedReceipt,
     beginRefresh,
     install,
     applyReceipt,

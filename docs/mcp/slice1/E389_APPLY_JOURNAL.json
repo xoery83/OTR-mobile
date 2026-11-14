@@ -1,0 +1,20 @@
+{
+  "status": "CLAUDE_CONSUMER_EDIT_E2E_PASS_CLOSED",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "expectedRevision": 1,
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "consumerMessage": 16,
+  "applyCount": 1,
+  "observedAt": "2026-11-02T05:17:34.460650+00:00",
+  "nextAction": "await formal receipt; UNKNOWN only original-ID reads; never second APPLY",
+  "receiptFile": "E389_ACTUAL_APPLIED.json",
+  "currentRevision": 2,
+  "consumerReadback": "E389_ACTUAL_CONSUMER_READBACK.json",
+  "independentReadback": "FRESH_CLAUDE_READBACK.json",
+  "receiptCount": 1,
+  "cleanup": "ALL_FINITE_RESOURCES_CLOSED",
+  "cleanupEvidence": "E389_ROOT_FINAL_OUTCOME.json",
+  "finalIssuerReadback": "E389_FINAL_HOOK_READBACK.json",
+  "sharedResourcesReleased": true
+}

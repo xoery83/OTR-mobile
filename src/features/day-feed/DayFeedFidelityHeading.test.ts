@@ -133,3 +133,42 @@ it("keeps a past empty day quiet and a future empty day actionable", () => {
   );
   expect(future).toContain("Add itinerary");
 });
+
+it("retains the native gradient and calendar badge without a fabricated ordinal for an undated Trip", () => {
+  const html = renderToStaticMarkup(
+    createElement(DayFeedFidelityHeading, { ...props, start: null }),
+  );
+  expect(html).toContain("Today");
+  expect(html).toContain("Jan");
+  expect(html).toContain("16");
+  expect(html).not.toContain("NaN");
+  expect(html).not.toContain("Day 1");
+  expect(
+    state.nodes.some(
+      (node) =>
+        Array.isArray(node.style) &&
+        node.style.some((style: any) => style?.experimental_backgroundImage),
+    ),
+  ).toBe(true);
+});
+
+it.each(["B", "C", "D"] as const)(
+  "retains ordinary calendar colors and gradient before start even on Today (%s)",
+  (styleMode) => {
+    const html = renderToStaticMarkup(
+      createElement(DayFeedFidelityHeading, { ...props, start: "2027-01-17", styleMode }),
+    );
+    expect(html).toContain("Today");
+    expect(html).toContain("Jan");
+    expect(html).not.toContain("Day 0");
+    const badge = state.nodes.find((n) => n.accessible === true);
+    expect(Object.assign({}, ...badge.style.filter(Boolean)).backgroundColor).not.toBe(
+      lightPalette.accent,
+    );
+    expect(
+      state.nodes.some((n) =>
+        n.style?.some?.((s: any) => s?.experimental_backgroundImage),
+      ),
+    ).toBe(true);
+  },
+);

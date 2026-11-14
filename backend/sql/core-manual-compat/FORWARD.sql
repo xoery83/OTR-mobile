@@ -1,0 +1,133 @@
+BEGIN;
+SET LOCAL search_path=pg_catalog;
+SET LOCAL lock_timeout='5s';
+SET LOCAL statement_timeout='20s';
+DO $cas$ BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65713 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_finite_read_state_guard' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='69018163d06c73eac84b161e09f3dc10a29346dc9d49057051bde0e80e8edf84')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65712 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_finite_scope_allowed' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres,otr_trip_create_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65263 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_guard_write' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='3e1f13d31a35c346710d877e1d47414e6b75f19c2d9952081bdac99b7a59e77f')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65465 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_lock_actor_scope' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=66181 AND p.pronamespace='public'::regnamespace AND p.proname='trip_sustained_core_capabilities' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='15f5fb12e76642dbf49bafd851f0c73962999e297186e3b6dd6a733d8186666c')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=67421 AND p.pronamespace='public'::regnamespace AND p.proname='trip_sustained_core_read_scope_allowed' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='57b69a090337cb6b61d4565e65de730264f4912d5225798501b8c8c42adfe3a5')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=66180 AND p.pronamespace='public'::regnamespace AND p.proname='trip_sustained_dev_scope_allowed' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='cd75a080e2c2d011b41ce88bef4f50de20197fcc894b077a86e582a1a1cb8618')
+ THEN RAISE EXCEPTION 'CORE_MANUAL_COMPAT_CATALOG_DRIFT'; END IF;
+END $cas$;
+CREATE OR REPLACE FUNCTION public.trip_sustained_dev_scope_allowed(actor uuid, trip uuid, operation uuid, kind text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE principal record;policy record;r record;owner_id oid;
+BEGIN
+ IF otr_auth_guest_composite.has_scope() THEN RETURN otr_auth_guest_composite.scope_allowed(actor,trip,operation,kind);END IF;
+ IF current_user<>'postgres' OR actor IS NULL OR kind IS NULL OR kind NOT IN ('CREATE','METADATA','CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS','PERSON') THEN RETURN false;END IF;
+ IF session_user<>(CASE kind WHEN 'CREATE' THEN 'otr_trip_create_gateway' WHEN 'METADATA' THEN 'otr_trip_metadata_gateway' WHEN 'PERSON' THEN 'otr_trip_person_command_gateway' ELSE 'otr_trip_core_v2_gateway' END) THEN RETURN false;END IF;
+ SELECT oid INTO owner_id FROM pg_roles WHERE rolname='postgres';
+ SELECT * INTO principal FROM pg_roles WHERE rolname=session_user;
+ IF NOT principal.rolcanlogin OR principal.rolconnlimit<>1 OR principal.rolvaliduntil IS NOT NULL AND principal.rolvaliduntil<>'infinity'::timestamptz
+ OR principal.rolsuper OR principal.rolcreatedb OR principal.rolcreaterole OR principal.rolinherit OR principal.rolbypassrls OR principal.rolreplication
+ OR EXISTS(SELECT 1 FROM pg_shdepend WHERE refclassid='pg_authid'::regclass AND refobjid=principal.oid AND deptype='o')
+ OR EXISTS(SELECT 1 FROM pg_auth_members m WHERE (m.roleid=principal.oid OR m.member=principal.oid) AND NOT (
+ (m.member=owner_id AND m.roleid=principal.oid AND m.admin_option AND NOT m.inherit_option)
+ OR(kind='PERSON' AND m.member=owner_id AND m.roleid=principal.oid AND m.grantor=owner_id AND NOT m.admin_option AND NOT m.inherit_option AND NOT m.set_option
+ AND EXISTS(SELECT 1 FROM pg_auth_members paired WHERE paired.roleid=m.roleid AND paired.member=m.member AND paired.grantor='supabase_admin'::regrole AND paired.admin_option AND NOT paired.inherit_option AND NOT paired.set_option))
+ OR(kind IN ('CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS') AND m.member=principal.oid AND m.roleid='otr_trip_core_v2_writer'::regrole AND NOT m.admin_option AND NOT m.inherit_option AND m.set_option)))
+ THEN RETURN false;END IF;
+ SELECT * INTO policy FROM public.trip_sustained_dev_policy WHERE actor_account_id=actor FOR SHARE;
+ IF FOUND AND (NOT policy.enabled OR policy.revoked_at IS NOT NULL) THEN RETURN false;END IF;
+ IF NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND is_anonymous IS FALSE) THEN RETURN false;END IF;
+ IF kind IN ('CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS') AND EXISTS(SELECT 1 FROM pg_roles WHERE rolname='otr_trip_core_v2_writer' AND (rolcanlogin OR rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolbypassrls OR rolreplication)) THEN RETURN false;END IF;
+ IF trip IS NULL THEN
+  IF operation IS NULL OR kind IN ('CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS','PERSON') THEN RETURN false;END IF;
+  IF kind='CREATE' THEN SELECT actor_account_id,trip_id INTO r FROM public.trip_create_receipts WHERE operation_id=operation;
+  ELSE SELECT actor_account_id,trip_id INTO r FROM public.trip_metadata_update_receipts WHERE operation_id=operation;END IF;
+  IF NOT FOUND THEN RETURN true;END IF;
+  IF r.actor_account_id<>actor THEN RETURN false;END IF;trip:=r.trip_id;
+ END IF;
+ IF kind='CREATE' AND NOT EXISTS(SELECT 1 FROM public.trips WHERE id=trip) THEN
+  RETURN NOT EXISTS(SELECT 1 FROM public.trip_create_receipts WHERE operation_id=operation);
+ END IF;
+ -- Core's authenticated MANUAL and read transactions use the ordinary Trip edit predicate.
+ RETURN ((EXISTS(SELECT 1 FROM public.trip_create_receipts receipt JOIN public.trips t ON t.id=receipt.trip_id AND t.created_by=receipt.actor_account_id
+  WHERE receipt.actor_account_id=actor AND receipt.trip_id=trip AND receipt.request_payload->'formatVersion'='2'::jsonb)
+ AND EXISTS(SELECT 1 FROM public.journey_members WHERE trip_id=trip AND user_id=actor AND status='linked' AND role='owner'))
+ OR (kind IN ('CORE','CORE_P3','CORE_P4','CORE_P5','CORE_P6','CORE_P2','CORE_P2_DETAILS')
+  AND coalesce(current_setting('otr.core.manual_compat',true) IN ('MANUAL','READ'),false)
+  AND actor IS NOT DISTINCT FROM nullif(current_setting('otr.core.actor',true),'')::uuid
+  AND trip IS NOT DISTINCT FROM nullif(current_setting('otr.core.trip',true),'')::uuid
+  AND EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=clock_timestamp()))
+  AND NOT EXISTS(SELECT 1 FROM public.journey_removed_users WHERE trip_id=trip AND user_id=actor)
+  AND (EXISTS(SELECT 1 FROM public.trips WHERE id=trip AND created_by=actor)
+    OR EXISTS(SELECT 1 FROM public.trip_members WHERE trip_id=trip AND user_id=actor)
+    OR EXISTS(SELECT 1 FROM public.journey_members WHERE trip_id=trip AND user_id=actor AND status='linked' AND role IN ('owner','group_member')))))
+ AND (kind<>'CORE_P2_DETAILS' OR (
+ EXISTS(SELECT 1 FROM public.itinerary_events event JOIN public.trip_flight_intents flight ON flight.event_id=event.id AND flight.trip_id=event.trip_id
+ WHERE event.id=nullif(current_setting('otr.core.target_item',true),'')::uuid AND event.trip_id=trip AND event.owner_account_id=actor AND event.experience_family='P2' AND flight.qualification='SPARSE' AND NOT EXISTS(SELECT 1 FROM public.trip_booking_item_links link WHERE link.trip_id=trip AND link.item_id=event.id AND link.active) AND NOT EXISTS(SELECT 1 FROM public.itinerary_transport_services service WHERE service.trip_id=trip AND service.event_id=event.id))
+ AND EXISTS(SELECT 1 FROM public.trip_core_command_receipts rr
+ WHERE rr.actor_account_id=actor AND rr.trip_id=trip AND rr.outcome IN ('APPLIED','NO_CHANGE')
+ AND rr.command_version=2 AND rr.intent_version=2 AND rr.receipt_version=2
+ AND rr.canonical_intent_text::jsonb->>'command'='CREATE_SPARSE_FLIGHT'
+ AND rr.canonical_intent_text::jsonb->>'contractVersion'='2' AND rr.canonical_intent_text::jsonb->>'intentVersion'='2'
+ AND rr.canonical_intent_text::jsonb->>'tripId'=trip::text AND rr.canonical_intent_text::jsonb->>'operationId'=rr.operation_id::text
+ AND rr.canonical_intent_text::jsonb#>>'{target,kind}'='ITEM'
+ AND rr.canonical_intent_text::jsonb#>>'{target,id}'=current_setting('otr.core.target_item',true)
+ AND rr.canonical_intent_text::jsonb#>>'{admission,mode}'='MANUAL'
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(rr.canonical_intent_text::jsonb->'baseVector') v WHERE v->>'kind'='ITEM' AND v->>'id'=current_setting('otr.core.target_item',true) AND v->'revision' IS NOT DISTINCT FROM 'null'::jsonb)
+ AND rr.canonical_intent_text::jsonb#>'{admission,sourceIntentId}' IS NOT DISTINCT FROM 'null'::jsonb
+ AND rr.canonical_intent_text::jsonb#>'{admission,policyVersion}' IS NOT DISTINCT FROM 'null'::jsonb
+ AND rr.intent_sha256=encode(sha256(convert_to('otr-trip-core-intent-v2'||E'\n'||rr.canonical_intent_text,'UTF8')),'hex')
+ AND rr.body->>'actorAccountId'=actor::text AND rr.body->>'tripId'=trip::text AND rr.body->>'operationId'=rr.operation_id::text
+ AND rr.body->>'command'='CREATE_SPARSE_FLIGHT' AND rr.body->>'intentSha256'=rr.intent_sha256 AND rr.body->>'receiptSha256'=rr.receipt_sha256 AND rr.body->>'outcome'=rr.outcome
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(rr.body#>'{result,created}') v WHERE v->>'kind'='ITEM' AND v->>'id'=current_setting('otr.core.target_item',true))
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(rr.body->'targetVector') v WHERE v->>'kind'='ITEM' AND v->>'id'=current_setting('otr.core.target_item',true) AND v->>'committedRevision'='1')
+ )));
+END $function$;
+
+CREATE OR REPLACE FUNCTION public.trip_sustained_core_read_scope_allowed(actor uuid, trip uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE principal record; policy record; owner_id oid;
+BEGIN
+ IF current_user<>'postgres' OR session_user<>'otr_trip_core_v2_gateway' OR actor IS NULL OR trip IS NULL
+ OR actor IS DISTINCT FROM nullif(current_setting('otr.core.actor',true),'')::uuid
+ OR trip IS DISTINCT FROM nullif(current_setting('otr.core.trip',true),'')::uuid
+ OR otr_auth_guest_composite.has_scope() THEN RETURN false; END IF;
+ -- Same existing normal Gateway constraints, without the caller's Owner/write predicate.
+ SELECT oid INTO owner_id FROM pg_roles WHERE rolname='postgres';
+ SELECT * INTO principal FROM pg_roles WHERE rolname=session_user;
+ IF NOT FOUND OR NOT principal.rolcanlogin OR principal.rolconnlimit<>1
+ OR principal.rolvaliduntil IS NOT NULL AND principal.rolvaliduntil<>'infinity'::timestamptz
+ OR principal.rolsuper OR principal.rolcreatedb OR principal.rolcreaterole OR principal.rolinherit OR principal.rolbypassrls OR principal.rolreplication
+ OR EXISTS(SELECT 1 FROM pg_shdepend WHERE refclassid='pg_authid'::regclass AND refobjid=principal.oid AND deptype='o')
+ OR EXISTS(SELECT 1 FROM pg_auth_members m WHERE (m.roleid=principal.oid OR m.member=principal.oid) AND NOT (
+  (m.member=owner_id AND m.roleid=principal.oid AND m.admin_option AND NOT m.inherit_option)
+  OR (m.member=principal.oid AND m.roleid='otr_trip_core_v2_writer'::regrole AND NOT m.admin_option AND NOT m.inherit_option AND m.set_option)))
+ OR EXISTS(SELECT 1 FROM pg_roles WHERE rolname='otr_trip_core_v2_writer' AND (rolcanlogin OR rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolbypassrls OR rolreplication))
+ THEN RETURN false; END IF;
+ SELECT * INTO policy FROM public.trip_sustained_dev_policy WHERE actor_account_id=actor FOR SHARE;
+ IF FOUND AND (NOT policy.enabled OR policy.revoked_at IS NOT NULL) THEN RETURN false; END IF;
+ IF NOT EXISTS(SELECT 1 FROM auth.users WHERE id=actor AND is_anonymous IS FALSE AND deleted_at IS NULL
+  AND (banned_until IS NULL OR banned_until<=clock_timestamp()))
+ OR EXISTS(SELECT 1 FROM public.journey_removed_users WHERE trip_id=trip AND user_id=actor) THEN RETURN false; END IF;
+ -- Create Receipt identifies an already rolled-out Trip, never the reader's Owner authority.
+ IF current_setting('otr.core.manual_compat',true) IS DISTINCT FROM 'READ'
+ AND NOT EXISTS(SELECT 1 FROM public.trip_create_receipts receipt JOIN public.trips t
+  ON t.id=receipt.trip_id AND t.created_by=receipt.actor_account_id
+  WHERE receipt.trip_id=trip AND receipt.request_payload->'formatVersion'='2'::jsonb) THEN RETURN false; END IF;
+ RETURN (SELECT count(*)=1 FROM public.journey_members WHERE trip_id=trip AND user_id=actor AND status='linked');
+END $function$;
+DO $cas$ BEGIN
+ IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65713 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_finite_read_state_guard' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='69018163d06c73eac84b161e09f3dc10a29346dc9d49057051bde0e80e8edf84')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65712 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_finite_scope_allowed' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres,otr_trip_core_v2_writer=X/postgres,otr_trip_create_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='0e07499e1e9505c3932a4c5ee14d51936df171a74ed3775f580109afa6e1675a')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65263 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_guard_write' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='3e1f13d31a35c346710d877e1d47414e6b75f19c2d9952081bdac99b7a59e77f')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=65465 AND p.pronamespace='public'::regnamespace AND p.proname='trip_core_lock_actor_scope' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=66181 AND p.pronamespace='public'::regnamespace AND p.proname='trip_sustained_core_capabilities' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='15f5fb12e76642dbf49bafd851f0c73962999e297186e3b6dd6a733d8186666c')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=67421 AND p.pronamespace='public'::regnamespace AND p.proname='trip_sustained_core_read_scope_allowed' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='7c072259fd4e486d8e2ce84a61157871447111ad37c267abb204590cfd50ba99')
+ OR NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=66180 AND p.pronamespace='public'::regnamespace AND p.proname='trip_sustained_dev_scope_allowed' AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}' AND encode(sha256(convert_to(pg_get_functiondef(p.oid),'UTF8')),'hex')='fed3debfde2a8dbd24eebfa3ff14fe1884c4451623d8473cbf22021998e5cf9d')
+ THEN RAISE EXCEPTION 'CORE_MANUAL_COMPAT_CATALOG_DRIFT'; END IF;
+END $cas$;
+COMMIT;

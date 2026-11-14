@@ -1,0 +1,29 @@
+{
+  "status": "EXISTING_BROWSER_REPOSITORY_OWNS_SESSION_NO_TRUSTED_TERMINAL_RECEIPT_PORT",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "method": "Code and retained BrowserAuth receipt only; no browser evaluation/cookie/storage/credential access",
+  "sourceFiles": {
+    "backend/src/mcpConsentPage.ts": "3aa45a14d38ca18c5beceed7c3d04b5d3467599ec41818ec57c40304419c7ad8",
+    "browser/auth-consent/main.tsx": "85929e255b0c829e575ba665f16750fe653901fbe7229d778684d042a7ae38ea",
+    "src/data/auth/mcpOAuthConsentRepository.ts": "be9a9c847c2c8c7b2c84f5b13cae1af42b52b82f945e6484c0e62828b3ccf6f9",
+    "src/features/auth/McpOAuthConsent.tsx": "d1a6aafb7524945ebeda1fc31b929b8ccbebdc58462a8e362bd14c2ee956bc98"
+  },
+  "normalEntry": "backend createMcpConsentPage serves /oauth/consent + app.js; browser/auth-consent/main.tsx constructs repository using bounded config and authorization_id",
+  "sessionOwner": "createMcpOAuthConsentRepository owns Supabase SDK in closure, persistSessionfalse/autoRefreshfalse/detectSessionfalse; rawSession never returned to UI",
+  "existingFenceAndCleanup": "close sets closed=true before awaiting activeTask, run checks current before work and afterward; awaits sent verify responses so SDK can install Session then auth.signOut(scope:local), finally abort. Component finish awaits close before navigate; unmount close errors swallowed.",
+  "missing": "No sameSession refresh rejection proof, opaque reservation/session-bound terminal receipt or trusted Host consumption channel. UI close/unmount/navigation cannot prove terminal cleanup. No qualified browser terminal port exists in these exact sources.",
+  "minimalOwningExtensionBoundary": "Existing repository is concrete sender/session lifecycle owner. Auth can specify confined machine-observed no-send or sameSession logout+refresh rejection plus drained sender receipt here, tied to reservation and consumed by owning helper. MCP must not manufacture accepted terminal JSON.",
+  "authGapReceipt": {
+    "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-c04-sync-c02-native-consume-20261105/support/MCP_C02_BROWSER_TERMINATION_GAP.json",
+    "sha256": "bec37f89821c0aba0ba694d7fb797ee84eeb7294bc1f15a819f4c4bdf8024b71"
+  },
+  "noPortInvented": true,
+  "execution": {
+    "browserLogin": 0,
+    "pageJS": 0,
+    "cookieTokenStorageReads": 0,
+    "API": 0,
+    "OTP": 0,
+    "T": null
+  }
+}

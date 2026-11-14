@@ -1,0 +1,38 @@
+{
+  "status": "MECHANICAL_FINAL_GATE_BINDING_NOT_AUTHORITY",
+  "gateSHA256": "58638943af2139e76c31777065ed5663625eec35f66e85d57967dbc7073c0e1b",
+  "gateCommit": "9ae57b1f",
+  "changedLiteralGateFiles": [
+    "prepare-empty-round.py",
+    "confirm-once.py"
+  ],
+  "prepareSHA256DependencyUpdatedInConfirm": {
+    "before": "b50a40934f6e3b6ad81a35f67389a2a0d14b464559952598fbb810da0bc6dfa8",
+    "after": "88232dfe36e937af90682ec4682f2a101de5d8c9104ad355b2ca02ca0a840625"
+  },
+  "entriesBefore": {
+    "prepare-empty-round.py": "b50a40934f6e3b6ad81a35f67389a2a0d14b464559952598fbb810da0bc6dfa8",
+    "confirm-once.py": "266f5fc343f5afd844e93bcb00745e1f39983a49ca9f03921b085dde2595a108",
+    "launch-own-control.py": "67b9296c2ca7ccfccfe701b4a56b803f05cbeec4ed1506c3efd054862d6adac9",
+    "preflight-actual-owner-wire.py": "431ef41b5232d9be78370a90f3d49077f2f8ceec2f418a4a5f2c84a9479f49ef",
+    "prepare-fixed-window.py": "c8ef383fd561a6547814fc8479a27af600dc9cff034c79870e14a1f6562ab1df",
+    "activate-issuer.py": "079b2479a0000d9aa27c9e0419d7ce057a5726bd85559b5c0253998c08d983c0",
+    "collect-preview-proof.py": "3eb307944121a19d184e8e95b47eb37f150c2734174e9c072094c8f85ce1ed5e",
+    "stage-closed-restore.py": "a403bb2c95d89bd807f33d286a1e65c4c2ddfc3ba47881b4f9874f37501dac68"
+  },
+  "entriesAfter": {
+    "prepare-empty-round.py": "88232dfe36e937af90682ec4682f2a101de5d8c9104ad355b2ca02ca0a840625",
+    "confirm-once.py": "ca2fc970117b7d458a8a49ed0aa680ba522ab43be789c9230379f697da36bf66",
+    "launch-own-control.py": "67b9296c2ca7ccfccfe701b4a56b803f05cbeec4ed1506c3efd054862d6adac9",
+    "preflight-actual-owner-wire.py": "431ef41b5232d9be78370a90f3d49077f2f8ceec2f418a4a5f2c84a9479f49ef",
+    "prepare-fixed-window.py": "c8ef383fd561a6547814fc8479a27af600dc9cff034c79870e14a1f6562ab1df",
+    "activate-issuer.py": "079b2479a0000d9aa27c9e0419d7ce057a5726bd85559b5c0253998c08d983c0",
+    "collect-preview-proof.py": "3eb307944121a19d184e8e95b47eb37f150c2734174e9c072094c8f85ce1ed5e",
+    "stage-closed-restore.py": "a403bb2c95d89bd807f33d286a1e65c4c2ddfc3ba47881b4f9874f37501dac68"
+  },
+  "scopeUnchanged": true,
+  "nonceAndDefaultUnchanged": true,
+  "closeEntrySHA256": "7172066253a490708594ac948906f39b3636307f5197b86a585736cb8c8b803b",
+  "collectorSHA256": "34d1bdb480b3dee26457aaac02fc5ee4ae3c15aa76cad7164c32354bec3efb06",
+  "noApprovalIntentClockSession": true
+}

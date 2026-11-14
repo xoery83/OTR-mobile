@@ -1,0 +1,32 @@
+{
+  "status": "PREBUILT_PREPARED_NOT_AUTHORIZED_FOR_DEPLOY_OR_REPLAY",
+  "hostSourceCommit": "7be57c8611f9310d17bc6a4d519ff67ba77a75a3",
+  "parentImage": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "candidateImage": "sha256:5a33c03597da26d655a417e5a36b2277f99d2b3132db1dd15ebcbdd0dd59c058",
+  "hostSHA256": "68a54bb4eacbc0a74b7832e04751cc1ca5fcbcb82858141d143797175bcbe973",
+  "inputPinsVerified": 382,
+  "inputManifestSHA256": "a55dc994feec8ca713018fafd7ffc2c4ac17ea0f7605cb97f6c015fec7bed85a",
+  "independentLocalRebuildExactMatch": true,
+  "sourceReviewSHA256": "6de4af9d918f8be597805d3ac2fac247126cb4c004ae6fa9f98a35459c8df274",
+  "buildReceiptSHA256": "3229f847859b6726b956f54a01874d3bcecf4b9e94e1ccf46aef03dd3e083466",
+  "currentDefault": "6ff/c826/db384",
+  "currentServiceUnchanged": true,
+  "qualification": [
+    "4 isolated HTTP checks PASS",
+    "UID10001 Host read0644 PASS",
+    "defaultClosed handler null PASS",
+    "image Config exact parent and one new COPY layer",
+    "server9bff/capture6a229/Consent6040 unchanged",
+    "18 config+5 mounted files unchanged",
+    "all mount properties equal after canonical order normalization",
+    "no active protected Timers; shared lock available"
+  ],
+  "fixedBusinessGateReady": false,
+  "ownerSaveOrReplayAuthorized": false,
+  "deployed": false,
+  "runtimeActivated": false,
+  "businessWrites": 0,
+  "providerCalls": 0,
+  "knownRejectedImage": "bcf1dda6 Host file600 EACCES, unqualified; never deploy",
+  "privateBuildDirectory": "/private/tmp/otr-root2-mcp-owner-provenance-7be57c86"
+}

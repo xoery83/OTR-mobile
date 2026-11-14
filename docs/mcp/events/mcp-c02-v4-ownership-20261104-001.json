@@ -1,0 +1,51 @@
+{
+  "event_id": "mcp-c02-v4-ownership-20261104-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "Lane B / MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:LOCAL_PREP",
+  "scope_kind": "OWNERSHIP_METADATA_ONLY",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "HANDOFF",
+  "reported_at": "2026-11-03T17:08:46.943431+00:00",
+  "current_status": "V4_ADOPTED_PRIMARY_MCP_C02_UNCHANGED_NO_EXECUTION_AUTHORITY",
+  "commit": "9300b059",
+  "primary_assignment_changed": false,
+  "beta_packages_preserved": 54,
+  "business_dri": "Lane B / MCP",
+  "core_contract_owner": "Root1/Core",
+  "source_integrator": "Root1",
+  "hosted_ops_owner": "Root2",
+  "hosted_owner_thread_id": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "vision_acceptance_owner": "Vision",
+  "actual_resource_lock": "NONE",
+  "evidence_paths": [
+    "docs/mcp/ownership-v4/OWNERSHIP.json",
+    "docs/mcp/ownership-v4/RESUME_CURSOR.json",
+    "docs/mcp/ownership-v4/CORE_SPARSE_REQUEST.json"
+  ],
+  "completed": [
+    "Verified Root2 handoff1624e321 and exact MCb4915bad ACK5dd46063; no doubleHostedWriter",
+    "Lane B owns browser/debug/domain code/E2E; Root2 notified without a resource action",
+    "Bounded fresh readonly browser inventory succeeded; getTab observation timed out30s/kernelreset, no OAuth or protected changes",
+    "Exact S2 request sent only Root1/Core; MC ReadyQueue queried without inventing a capability/claim"
+  ],
+  "unfinished": [
+    "Current browser observation readiness unqualified",
+    "MC current legal ReadyQueue reply and a2f event ACK pending",
+    "Formal Core sparse-room interface not delivered to MCP"
+  ],
+  "cross_lane_requests": [
+    "MCP-C02-S2-CORE-SPARSE-20261104-001",
+    "MCP-C02-V4-READY-20261104-001"
+  ],
+  "return_trigger": [
+    "MCP browser readiness verified",
+    "MC existing legal local READY returned",
+    "Root1 fixed S2 port delivered",
+    "Complete future protected packet/new validGate accepted by Root2 with freshCAS"
+  ],
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED"
+}

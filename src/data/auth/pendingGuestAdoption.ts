@@ -8,8 +8,9 @@ import { openGuestAdoptionRecovery } from "./guestAdoptionRecovery";
 import { createGuestAdoptionTransport } from "./guestAdoptionTransport";
 import { hasActiveGuestInventory } from "./guestLocalWorkspace";
 import { refreshSupabaseDevSession, revokeSupabaseDevSession, SupabaseDevAuthError } from "./devSupabaseAuth";
+import { prepareGuestTripP1Adoption } from "./guestTripP1Adoption";
 
-// Recover the existing durable request after process restart; never issue a new grant.
+// Restore the original attempt without automatically requesting adoption.
 export async function readPendingGuestAdoption(signal: AbortSignal) {
   const generation = getAccountGeneration();
   const principal = await readCommittedLocalPrincipal();
@@ -21,7 +22,9 @@ export async function readPendingGuestAdoption(signal: AbortSignal) {
   };
   current();
   const recovery = await openGuestAdoptionRecovery(scope);
-  const attempts = await recovery.inspectPublicationRequests();
+  const publications = await recovery.inspectPublicationRequests();
+  const preparations = await recovery.inspectPreparedAttempts();
+  const attempts = [...publications, ...preparations];
   current();
   if (!attempts.length) return null;
   if (attempts.length !== 1 || hasActiveGuestInventory(scope.localId))
@@ -66,6 +69,21 @@ export async function readPendingGuestAdoption(signal: AbortSignal) {
   current();
   if (verified.status !== "SESSION" || verified.session.identity?.userId !== binding.targetAccountId)
     throw Error("GUEST_ADOPTION_VERIFICATION_REQUIRED");
+  async function cancelOriginal() {
+    current();
+    const receipt = await transport.cancel(expected);
+    current();
+    await recovery.recordServerCancellation(binding.adoptionId, binding.targetAccountId, receipt);
+    await finishCancellation();
+  }
+  if (prior.nextAction === "RESUME_PREFLIGHT") {
+    const attempt = await prepareGuestTripP1Adoption(
+      verified.session, binding.targetAccountId, generation, signal,
+      { adoptionId: binding.adoptionId, cancel: cancelOriginal },
+    );
+    current();
+    return { session: verified.session, generation, signal, attempt };
+  }
   let published = false;
   const attempt = {
     targetAccountId: binding.targetAccountId,
@@ -84,10 +102,7 @@ export async function readPendingGuestAdoption(signal: AbortSignal) {
       current();
       if (published) throw Error("GUEST_ADOPTION_AUTHORITATIVE_STATUS_REQUIRED");
       // The existing server lock refuses cancellation if publication committed or is unresolved.
-      const receipt = await transport.cancel(expected);
-      current();
-      await recovery.recordServerCancellation(binding.adoptionId, binding.targetAccountId, receipt);
-      await finishCancellation();
+      await cancelOriginal();
     },
   };
   return { session: verified.session, generation, signal, attempt };

@@ -1,0 +1,73 @@
+{
+  "event_id": "mcp-c02-s1-sdk-console-platform-blocked-20261105-001",
+  "request_id": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "related_event_id": "mcp-c02-s1-fresh-preview-qualify-20261105-blocked-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "execution_child_id": "/root/fresh_preview_execution",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "owner_slice_id": "C02-S1_FRESH_PREVIEW",
+  "event_type": "BLOCKED",
+  "created_at": "2026-11-05T01:48:25.473909+00:00",
+  "observed_at": "2026-11-05T01:48:25.473909+00:00",
+  "source_failure_occurred_at": null,
+  "source_time_limit": "Root2 fixed receipt omits occurrence timestamp; do not infer exact failure time from filemtime. observed_at is this handoff observation.",
+  "current_status": "WAITING_PLATFORM_SUPABASE_CONSOLE_OBSERVATION",
+  "commit": "c640f29b",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/own-session-sdk-20261105/actual/ROOT2_SDK_CONSOLE_READONLY_PLATFORM_TIMEOUT.json",
+    "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/SDK_VERIFIED_BYTES_REPAIR_INDEPENDENT_REVIEW.json",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/ACTIVATION_SOURCE_REVIEW.json",
+    "docs/mcp/c02/s1/own-session-sdk-20261105/PACKAGE.json"
+  ],
+  "evidence_receipts": [
+    {
+      "path": "docs/mcp/c02/s1/own-session-sdk-20261105/actual/ROOT2_SDK_CONSOLE_READONLY_PLATFORM_TIMEOUT.json",
+      "sha256": "e8ae9a088e3e0d2824887edfee20e05f2ac48a79fd9ddd353f28cf6f03ae7ba4",
+      "originalPath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/SDK_CONSOLE_READONLY_PLATFORM_TIMEOUT.json",
+      "originalSHA256": "e8ae9a088e3e0d2824887edfee20e05f2ac48a79fd9ddd353f28cf6f03ae7ba4"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/SDK_VERIFIED_BYTES_REPAIR_INDEPENDENT_REVIEW.json",
+      "sha256": "114bbb898cbbee8a30559237a3d6dda1a7b67c334ecddc2e41744f5686f14078",
+      "verdict": "NO_BLOCKER_LOCAL_VERIFIED_BYTES_REPAIR_ONLY",
+      "localContractAndImplementationAccepted": true,
+      "actualProducerAccepted": false,
+      "actualProducerExecuted": false,
+      "actualReleaseOrRelayWritten": false
+    }
+  ],
+  "completed": [
+    "MCP source activation and exact advance-source mapping independently reviewed locally",
+    "Root2 verified-byte import/relay producer implementation accepted in independent local review",
+    "Actual Console platform timeout fixed as immutable byte copy; no retry or bypass"
+  ],
+  "not_completed": [
+    "Root2 actual currentConsole/close/platform qualification",
+    "ActualliveWAITING/preloginBinding/normalcontrol/T",
+    "ActualSDKConsent/consumerCallback/GuideRead/Preview"
+  ],
+  "blocked_by": [
+    "CURRENT_CONSOLE_OBSERVATION_UNAVAILABLE_PLATFORM_TIMEOUT"
+  ],
+  "dependency_owner": "Root2",
+  "next_action": "Root2 owning execution child obtains legitimate current Supabase Console observation; fresh current/close/platform qualification, then actual live WAITING and original private prelogin binding. No child UI retry/newcode/Ownerprompt/CLI bypass or QA start.",
+  "OwnerAdvanceRecognized": true,
+  "newOwnerApprovalMissing": false,
+  "held_resources": [],
+  "source_readiness": "LOCAL_REVIEW_READY",
+  "hosted": "NOT_RUN_CURRENT_REQUEST",
+  "consumer": "NOT_RUN",
+  "Preview": "NOT_RUN",
+  "clock_started": false,
+  "business_applies": 0,
+  "SaveApproved": false,
+  "original_unknown_replay": "FROZEN_UNTOUCHED",
+  "ack_status": "LOCAL_PREPARED_NOT_SUBMITTED_NO_ACK",
+  "dashboard_updated": false,
+  "scope_note": "New logical external-platform blocker under same Request/Capability/Package. Prior stable event file remains unchanged; no duplicate Capability or businessPASS; parent owns MC submission.",
+  "commit_role": "Fixed SDK source candidate, independently reviewed at e67b678d; this event handoff commit reported separately to parent to avoid self-reference",
+  "source_review_commit": "e67b678d4a813242774686e11619cf8be1112d62"
+}

@@ -1,4 +1,4 @@
-import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import { segmentedControlTokens } from "@/ui/segmented";
 import { categoryLabel, domainLabel } from "@/ui/domainLabels";
 import { t, getFormatLocale } from "@/ui/locale";

@@ -10,10 +10,14 @@ export const pickCaptureMaterial: CapturePicker = async (
 ) => {
   if (!isCurrent()) return [];
   if (source === "files") {
-    if (hasCaptureFileLease()) return (await pickLeasedCaptureFiles(isCurrent)) ?? [];
+    const localFirst =
+      process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true";
+    if (!localFirst && hasCaptureFileLease())
+      return (await pickLeasedCaptureFiles(isCurrent)) ?? [];
     const result = await DocumentPicker.getDocumentAsync({
       multiple: true,
-      copyToCacheDirectory: false,
+      // V3 retains its own original; avoid provider bookmarks surviving selection.
+      copyToCacheDirectory: localFirst,
       base64: false,
     });
     return result.canceled

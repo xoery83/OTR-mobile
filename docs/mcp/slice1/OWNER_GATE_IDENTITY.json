@@ -1,0 +1,11 @@
+{
+  "status": "OWNER_APPROVED_CODE_AND_FINITE_QA_NOT_NOTES_APPLY",
+  "gateSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "candidate": "4908085d",
+  "path": "docs/mcp/slice1/OWNER_GATE.md",
+  "activation": false,
+  "notesConfirmation": false,
+  "ownerReply": "批准该精确 Gate 并同步 Auth/Root",
+  "questionCallId": "call_386cf7ea880146f0b9fb3aeed20155bd",
+  "recordedAt": "2026-11-01T08:40:02.470985+00:00"
+}

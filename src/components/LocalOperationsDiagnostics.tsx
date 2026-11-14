@@ -5,7 +5,7 @@ import { UiSection, UiButton } from "@/ui/controls";
 import { visual } from "@/ui/visual";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
-import { getSyncTransportMode } from "@/data/sync/transportSelection";
+import { getSyncTransportMode } from "@/data/operations/transportMode";
 import { useLocalOperations } from "@/hooks/useLocalOperations";
 import type { LocalOperationsSnapshot } from "@/data/operations/localOperations";
 

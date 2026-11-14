@@ -317,13 +317,17 @@ export const corePayloadSchemas = {
     documents: changeIds,
   }),
   CREATE_DOCUMENT: z.strictObject({
-    fields: f.trip_operational_documentsSchema.omit({
-      ...common,
-      storage_object_key: true,
-      custody_receipt_id: true,
-    }),
+    fields: z.strictObject(f.trip_operational_documentsSchema.shape)
+      .omit({ ...common, storage_object_key: true, custody_receipt_id: true })
+      .extend({ custody: z.enum(["PRIVATE_SOURCE_REFERENCE", "AUTHORIZED_COPY"]) }),
     acl: f.coreAclSchema,
     custodyProofId: f.coreUuid,
+  }),
+  CREATE_DOCUMENT_METADATA: z.strictObject({
+    title: f.trip_operational_documentsSchema.shape.title,
+    media_type: f.trip_operational_documentsSchema.shape.media_type,
+    byte_size: f.trip_operational_documentsSchema.shape.byte_size,
+    sha256: f.trip_operational_documentsSchema.shape.sha256,
   }),
   RECONCILE_ITEM_DOCUMENTS: changeIds,
   APPEND_INSTRUCTION: z.strictObject({
@@ -402,7 +406,7 @@ export const coreCommandSchema = z.strictObject({
   target: typedId,
   baseVector: z.array(coreVectorEntrySchema).min(1).max(32),
   admission: z.strictObject({
-    mode: z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE"]),
+    mode: z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE", "IMPORT"]),
     sourceIntentId: f.coreUuid.nullable(),
     policyVersion: z.literal("otr.trip.auto-admit/1").nullable(),
   }),
@@ -419,7 +423,7 @@ export function validateCoreCommand(input: unknown): CoreCommand {
         ? "BOOKING"
         : q.command.includes("ENTITLEMENT")
           ? "ENTITLEMENT"
-          : q.command === "CREATE_DOCUMENT"
+          : q.command === "CREATE_DOCUMENT" || q.command === "CREATE_DOCUMENT_METADATA"
             ? "DOCUMENT"
             : q.command === "APPEND_INSTRUCTION" || q.command === "CORRECT_INSTRUCTION"
               ? "INSTRUCTION"
@@ -451,15 +455,19 @@ export function validateCoreCommand(input: unknown): CoreCommand {
   )
     throw new Error("INVALID_BASE_VECTOR");
   const a = q.admission;
-  if (q.command === "SET_AUTHORED_FLIGHT_DETAILS" && a.mode !== "MANUAL")
+  if (
+    (q.command === "SET_AUTHORED_FLIGHT_DETAILS" || q.command === "CREATE_DOCUMENT_METADATA") &&
+    a.mode !== "MANUAL" && a.mode !== "IMPORT"
+  )
     throw new Error("INVALID_PROVENANCE");
   if (
-    a.mode === "MANUAL"
+    (a.mode === "MANUAL" || a.mode === "IMPORT")
       ? a.sourceIntentId !== null || a.policyVersion !== null
       : a.sourceIntentId === null ||
         (a.mode === "AUTO_SOURCE" ? a.policyVersion === null : a.policyVersion !== null)
   )
     throw new Error("INVALID_ADMISSION_BINDING");
+  if (a.mode === "IMPORT" && !isNormalImportCoreCommand({ ...q, payload })) throw new Error("SCOPE_NOT_AUTHORIZED");
   if (
     ["QUALIFY_FLIGHT", "REPLACE_FLIGHT_SERVICE", "UPDATE_FLIGHT_FACTS"].includes(
       q.command,
@@ -498,7 +506,7 @@ export const coreCapabilitiesSchema = z
     enabledCommands: z.array(z.enum(commands)).max(commands.length),
     enabledFamilies: z.array(z.enum(["P1", "P2", "P3", "P4", "P5", "P6"])).max(6),
     enabledAdmissionModes: z
-      .array(z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE"]))
+      .array(z.enum(["MANUAL", "REVIEWED_SOURCE", "AUTO_SOURCE", "IMPORT"]))
       .max(3),
     maximumRequestBytes: z.literal(32768),
     maximumAffectedRoots: z.literal(32),
@@ -548,4 +556,59 @@ export function isReviewedSourceCreate(command: CoreCommand): boolean {
           String((command.payload as { family: string }).family),
         )))
   );
+}
+
+// Queue selection only. Core still checks live capabilities, ACL and revisions.
+export function isNormalManualCreate(command: CoreCommand) {
+  return (
+    command.admission.mode === "MANUAL" &&
+    (command.command === "CREATE_ITEM" || command.command === "CREATE_SPARSE_FLIGHT")
+  );
+}
+export function isNormalManualCoreCommand(command: CoreCommand, family?: string) {
+  if (command.admission.mode !== "MANUAL") return false;
+  if (isNormalManualCreate(command) || command.command === "CREATE_DOCUMENT_METADATA")
+    return true;
+  if (command.command === "RECONCILE_ITEM_DOCUMENTS") {
+    const payload = command.payload as { add: string[]; remove: string[] };
+    return (
+      payload.add.length > 0 &&
+      payload.add.length <= 5 &&
+      !payload.remove.length &&
+      payload.add.every((id) =>
+        command.baseVector.some((base) => base.kind === "DOCUMENT" && base.id === id),
+      )
+    );
+  }
+  if (command.target.kind !== "ITEM") return false;
+  if (command.command === "SET_ITEM_PARTICIPATION") return true;
+  if (family === "P2") return command.command === "SET_AUTHORED_FLIGHT_DETAILS";
+  if (command.command === "SET_AUTHORED_FLIGHT_DETAILS") return family === undefined;
+  if (command.command === "SET_ITEM_TEXT") return true;
+  if (command.command === "SET_ITEM_SCHEDULE") return family !== "P5";
+  if (command.command === "SET_ITEM_PLACE") return family !== "P4" && family !== "P5";
+  const owner = {
+    SET_STAY_DETAILS: "P3",
+    SET_RENTAL_DETAILS: "P4",
+    SET_TRANSPORT_DETAILS: "P5",
+    SET_ACTIVITY_DETAILS: "P6",
+  } as const;
+  return (
+    command.command in owner &&
+    (family === undefined || owner[command.command as keyof typeof owner] === family)
+  );
+}
+
+// Same ordinary ACL and queue. Import may create or add links, never edit an existing Item.
+export function isNormalImportCoreCommand(command: CoreCommand) {
+  if (command.admission.mode !== "IMPORT") return false;
+  if (["CREATE_ITEM", "CREATE_SPARSE_FLIGHT", "CREATE_DOCUMENT_METADATA"].includes(command.command))
+    return command.baseVector.length === 1 && command.baseVector[0].revision === null;
+  if (command.command === "SET_AUTHORED_FLIGHT_DETAILS")
+    return command.target.kind === "ITEM" && command.baseVector.length === 1 && command.baseVector[0].revision === 1;
+  if (command.command !== "RECONCILE_ITEM_DOCUMENTS") return false;
+  const payload = command.payload as { add: string[]; remove: string[] };
+  return payload.add.length > 0 && payload.add.length <= 5 && payload.remove.length === 0 &&
+    command.baseVector.every(b => b.kind === "ITEM" || b.kind === "DOCUMENT") &&
+    payload.add.every(id => command.baseVector.some(b => b.kind === "DOCUMENT" && b.id === id));
 }

@@ -1,0 +1,12 @@
+{
+  "reserved_at": "2026-10-31T09:13:47.627085+00:00",
+  "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+  "source": "1da303ba",
+  "authority": "OWNER_AUTHORIZED_SYNTHETIC_DATE_EDIT_DEVICE_BLOCK_EXCEPTION",
+  "max_posts_this_run": 1,
+  "native_acceptance": "BLOCKED_DEVICE_AUTOMATION",
+  "reservation_is_not_dispatch_evidence": true,
+  "automatic_rerun": false
+}

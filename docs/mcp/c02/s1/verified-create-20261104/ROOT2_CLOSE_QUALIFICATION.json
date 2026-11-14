@@ -1,0 +1,11 @@
+{
+  "status": "QUALIFIED_OPERATOR_UI_FIRST_WITH_AUTOMATIC_RUNTIME_ISSUER_FENCES",
+  "oauthOff": "Root2 uses authenticated DEV Console switch -> Disable OAuth Server -> Save changes; observed successful b08a closure. This is an operator UI action, not a repaired CLI pair-field call.",
+  "oauthCloseTabId": "1962067372",
+  "consoleObservedClosed": true,
+  "siteHookRestore": "Use separate site-close and hook-close configs. Do not push server-close OAuth settings through CLI because changed-only payload omits path. Independent final full server-close/hook-close diff must be zero.",
+  "automaticProtection": "Existing fixed dual Host timers; immutable finite Issuer expiry and close watcher; exact retained default restore. Operator must complete UI OAuth OFF and final reconciliation on failure/end/deadline.",
+  "sourceEvidence": "/private/tmp/otr-root2-mcpb08a-preparation/FINAL_RECEIPT.json",
+  "noChangeProbe": "/private/tmp/otr-root2-mcp-proof-7946800b/POST_DEPLOY_CLOSE_PROBE.json",
+  "notClaimed": "Unattended Console OAuth toggle via existing CLI is not fixed."
+}

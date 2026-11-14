@@ -1,0 +1,17 @@
+{
+  "status": "READ_ONLY_AFTER_FAILED_SETUP_SAME_ITEM_UNCHANGED_NO_NEW_RECEIPT",
+  "observedAt": "2026-11-01T10:22:10.011057+00:00",
+  "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "revision": 2,
+  "notes": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+  "entireRootEqualOriginalBaseline": true,
+  "newOperationIds": [
+    "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+    "27bf1d80-3cf7-4fd7-bf9a-c88aeb70846d"
+  ],
+  "newReceiptCount": 0,
+  "businessWrites": 0,
+  "consumerPass": false
+}

@@ -1,0 +1,18 @@
+{
+  "at": "2026-11-13T07:28:04.290967+00:00",
+  "sourceFiles": {
+    "app/(tabs)/capture.tsx": "e9467ee30a560bc5feee6536fbe6ac2a054b8ae9c264eea8c36fc1a39783e184",
+    "src/features/capture/CaptureComposer.tsx": "6ae7e862560ad7f57285a13c534b3021366e5fc21715a6e4de1122ddefc11bed",
+    "src/features/capture/CaptureContent.tsx": "ca896b29337f092b194ee1a4b06edcb0ffe8d0e864584afbaf883968aa93ddff",
+    "src/features/capture/captureStaging.ts": "3701a752782f700f08dc5785812a117c207637ffa54ab538e7fc10e9e71c68a7",
+    "src/data/repositories/captureDraftRepository.ts": "1e50a2bf504394b70e91d0258e5f0944a1fe0e21032d43ffb8edb6158661ccce",
+    "src/data/files/importOriginalFileStore.ts": "141ef4fbc849bc986e7264bc12a2b3eb4bd48e6412366a925091e7de4e101647",
+    "src/ui/catalogs.ts": "faebdd46890f7281ece27964a0f9893a74e73658d85216648fb08d14ce68644b"
+  },
+  "buildInputsMatch": true,
+  "bundleSha256": "dfe2831593b15b5d7318adecc43f815e7b6b65ac0707a2bd66f862d454bb10fc",
+  "fullAppEntry": "Existing ExpoRoot and normal app routes, not a standalone Capture Harness",
+  "bundleId": "com.xoery.otrmobile.b1full20261113",
+  "appDataPreserved": true,
+  "lastDelta": "Metadata-size ceiling only; unchanged UI acceptance reused; five-text boundary regression passed"
+}

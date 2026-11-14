@@ -1,0 +1,21 @@
+{
+  "status": "HANDOFF_VERIFIED_DEFAULT_CLOSED",
+  "checkedAt": "2026-11-01T23:44:03.977772+00:00",
+  "containerId": "ddd7ac46ab3d1575bc9d9864b128ab50f0bc530c6b9f32c66cbdac813c8cd32f",
+  "imageId": "sha256:57bce7bb398f0508bf6dad99aaf53cac044be8f07112ca45e57c584757ffcb4d",
+  "configSHA256": "db86894730f9a7e3f675d7bc805ea00a5057c05c5d5047d0b8c292746e0ef512",
+  "environmentSHA256": "b12fdecb5b865bf3dab085587af7ea13d5e421ac320aeeeef01ed69f40ee6a75",
+  "hostConfigSHA256": "d50118467f4c6d4548e84b898f06116f03850202b81629f40abdbc032d89bd4c",
+  "qaKeysAbsent": true,
+  "all23FilesMatch": true,
+  "fourBundlesExact": true,
+  "health200Protected401": true,
+  "retainedA1RollbackExact": true,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/runtime.mjs": "416c7a22c564f0bb5891908a137a2b75ddeedbe25ceca70a14750a0262713c94",
+    "server-capture.mjs": "7046ccf1a31f21156c4ee7410c2c04d9baa583f1fc80124bc3dbeeb09328d72c",
+    "server.mjs": "782692ba70432174e54207a116f891534e54854c96484167e0470aa4eb5f9542"
+  },
+  "authorityActivated": false
+}

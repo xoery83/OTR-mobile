@@ -1,3 +1,5 @@
+import { Readable } from "node:stream";
+import { universalV3IntakePath } from "./universalV3Intake";
 import { UNIVERSAL_PREPARE_MAX_BODY_BYTES } from "../../src/data/api/universalImportContracts";
 import { mcpIngressBodyLimit } from "./mcpIngress";
 import { loadMcpQaRuntime } from "./mcpQaRuntime";
@@ -62,6 +64,8 @@ export function startDevBackend(
     | "captureMaterialCustody"
     | "captureRemoteProcessing"
     | "universalImportPort"
+    | "universalV3Intake"
+    | "universalV3Execution"
     | "universalRuntimeForRequest"
     | "sourcePdfV4PreparationForRequest"
     | "sourcePngPreparationForRequest"
@@ -135,6 +139,8 @@ export function startDevBackend(
     guestAdoptionRuntime: startOptions.guestAdoptionRuntime,
     documentOriginalReader: startOptions.documentOriginalReader,
     universalImportPort: startOptions.universalImportPort,
+    universalV3Intake: startOptions.universalV3Intake,
+    universalV3Execution: startOptions.universalV3Execution,
     universalRuntimeForRequest: startOptions.universalRuntimeForRequest,
     sourcePdfV4PreparationForRequest: startOptions.sourcePdfV4PreparationForRequest,
     sourcePngPreparationForRequest: startOptions.sourcePngPreparationForRequest,
@@ -155,6 +161,9 @@ export function startDevBackend(
     };
     outgoing.on("close", onClose);
     try {
+      const incomingUrl = new URL(incoming.url ?? "/", "http://127.0.0.1");
+      const v3 = universalV3IntakePath.exec(incomingUrl.pathname);
+      const v3File = incoming.method === "PUT" && !!v3?.[2];
       const chunks: Buffer[] = [];
       const textSourceRoute =
         /^\/v2\/trips\/[^/]+\/(?:sources\/(?:acquire|runs\/publish)|universal-source-originals\/(?:acquire|result))(?:\?|$)/.test(
@@ -190,8 +199,14 @@ export function startDevBackend(
       const universalPrepare = incoming.method === "POST" &&
         /^\/v2\/import-batches\/[^/]+\/interpretations\/prepare$/.test(retainedUrl.pathname);
       let byteCount = 0;
-      for await (const chunk of incoming) {
+      for await (const chunk of v3File ? [] : incoming) {
         byteCount += chunk.length;
+        if (v3 && byteCount > 65536) {
+          outgoing.statusCode = 413;
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.end();
+          return;
+        }
         if (universalPrepare && byteCount > UNIVERSAL_PREPARE_MAX_BODY_BYTES) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Content-Type", "application/json");
@@ -276,7 +291,10 @@ export function startDevBackend(
         {
           method: incoming.method,
           headers: incoming.headers as HeadersInit,
-          body: body.length ? body : undefined,
+          body: v3File
+            ? (Readable.toWeb(incoming) as unknown as ReadableStream<Uint8Array>)
+            : body.length ? body : undefined,
+          ...(v3File ? { duplex: "half" } as const : {}),
           signal: controller.signal,
         },
       );
@@ -291,7 +309,16 @@ export function startDevBackend(
     }
   });
 
+  const cleanupSpool = () => {
+    void startOptions.universalV3Intake?.cleanup().catch(() => {
+      console.info("UNIVERSAL_V3_SPOOL_CLEANUP_FAILED");
+    });
+  };
+  const spoolCleanup = startOptions.universalV3Intake
+    ? setInterval(cleanupSpool, 60_000).unref()
+    : undefined;
   server.on("close", () => {
+    clearInterval(spoolCleanup);
     scanner?.stop();
     void publicationCatalogConnection?.close();
   });
@@ -308,6 +335,7 @@ export function startDevBackend(
         }),
       );
       scanner?.start();
+      cleanupSpool();
     },
   );
 

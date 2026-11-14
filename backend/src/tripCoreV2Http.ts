@@ -19,6 +19,7 @@ import {
 } from "../../src/domain/trip/tripCoreV2Commands";
 import { parseCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
+import { authorizedTripVersionSchema } from "../../src/domain/trip/tripAuthorizedVersion";
 import {
   createRequestBoundary,
   readBoundedJson,
@@ -98,7 +99,9 @@ export type CoreHttpConnection = {
     input: unknown,
   ): Promise<CoreCandidatePublicationResult>;
   read?: Pick<ReturnType<typeof createCorePgReader>, "collection" | "item"> &
-    Partial<Pick<ReturnType<typeof createCorePgReader>, "capabilities">>;
+    Partial<
+      Pick<ReturnType<typeof createCorePgReader>, "capabilities" | "authorizedVersion">
+    >;
   commands: CoreCommandStorage;
   source?: CoreSourcePlanStorageV2;
   hash: ImportHash;
@@ -252,13 +255,16 @@ export async function coreHttpBoundary(
       // Older v2 clients reject unknown command enums; this only narrows the DTO.
       const response = reply(200, {
         ...capabilities,
+        enabledAdmissionModes: capabilities.enabledAdmissionModes.filter(mode => mode !== "IMPORT" || request.headers.get("X-OTR-Core-Import") === "1"),
         enabledCommands: capabilities.enabledCommands.filter(
           (command) =>
-            command !== "SET_AUTHORED_FLIGHT_DETAILS" ||
-            request.headers.get("X-OTR-Core-Authored-Flight") === "1",
+            (command !== "SET_AUTHORED_FLIGHT_DETAILS" ||
+              request.headers.get("X-OTR-Core-Authored-Flight") === "1") &&
+            (command !== "CREATE_DOCUMENT_METADATA" ||
+              request.headers.get("X-OTR-Core-Local-Document") === "1"),
         ),
       });
-      response.headers.set("Vary", "Authorization, X-OTR-Core-Authored-Flight");
+      response.headers.set("Vary", "Authorization, X-OTR-Core-Authored-Flight, X-OTR-Core-Local-Document, X-OTR-Core-Import");
       return response;
     }
     if (path === "commands" && request.method === "POST") {
@@ -433,6 +439,28 @@ export async function coreHttpBoundary(
             ),
       );
     }
+    if (path === "authorized-version" && request.method === "GET") {
+      if (!connection?.read?.authorizedVersion)
+        return failure(503, "CORE_READ_UNAVAILABLE");
+      const orderVersion = request.headers.get("X-OTR-Ordinary-Order-Version");
+      if (orderVersion !== null && orderVersion !== "1")
+        return failure(426, "UNSUPPORTED_CLIENT");
+      const result = authorizedTripVersionSchema.safeParse(
+        await connection.read.authorizedVersion(
+          actor,
+          trip,
+          orderVersion === "1" ? 1 : undefined,
+          request.headers.get("X-OTR-Core-Local-Document") === "1",
+        ),
+      );
+      if (
+        !result.success ||
+        result.data.actorAccountId !== actor ||
+        result.data.tripId !== trip
+      )
+        return failure(503, "CORE_READ_UNAVAILABLE");
+      return reply(200, result.data);
+    }
     if (path === "collection" && request.method === "GET") {
       if (!connection?.read) return failure(503, "CORE_READ_UNAVAILABLE");
       const orderVersion = request.headers.get("X-OTR-Ordinary-Order-Version");
@@ -442,6 +470,7 @@ export async function coreHttpBoundary(
         actor,
         trip,
         orderVersion === "1" ? 1 : undefined,
+        request.headers.get("X-OTR-Core-Local-Document") === "1",
       );
       await validateCoreReadCollection(
         result.manifest,

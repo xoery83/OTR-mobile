@@ -1,0 +1,16 @@
+{
+  "status": "LOCAL_STAGE_PREPARATION_ONLY_NO_CLOCK_OR_REMOTE_STAGE",
+  "windowId": "b08a466d29f348a896176c563646f417",
+  "gateSHA256": "3526947da5adcece8d7dfde7139e239cf8291a401b3520e068984dc5b3b15ac5",
+  "packageSHA256": "734d5a114e51d9d45656ac624717a9e4acb167a03f41bd6e4a163e904d3f8d04",
+  "packageFilesVerified": 13,
+  "timerCasTests": 9,
+  "stageScriptSHA256": "21f346677a4d389f627cd0cffd126252aa0177e41af095ad9e86e565c6c28bec",
+  "hostTemplateSHA256": "46ffd4720d0aa91c67872de1655c57b118ddf5e8d275bb33af0334d3733064b2",
+  "baselineObservationSHA256": "05b88e51f3f660935a7ea773c83bf4c337b7e6e6e77a51f4d00c3b69c063a697",
+  "approvalBoundFilePresent": false,
+  "stageExecuted": false,
+  "clockStarted": false,
+  "mutations": 0,
+  "closeEvidence": "Existing exact new-default post-deploy close proof08:53:55 plus current same config/image/full fingerprints; actual execution must requalify fresh close readiness."
+}

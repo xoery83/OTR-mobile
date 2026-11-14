@@ -1,0 +1,22 @@
+{
+  "transportExit": 255,
+  "transportError": "SSH_OPERATION_TIMED_OUT",
+  "remote": {
+    "observedAt": "2026-11-04T02:15:28.208192+00:00",
+    "casProcesses": [],
+    "candidateIds": [],
+    "closePointer": {
+      "currentContainerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "deadlineMs": 1793759547395,
+      "defaultConfigSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+      "defaultContainerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "gateSHA256": "be1ea4aec28e5d416215ac93819c7ecf22e8dc347f34f80a7dd0739be879f0ee",
+      "planSHA256": "18c5ad3dc0e4e79224dd73f0a63428ee2e5289cc80472a2b68ac6d05a1786198",
+      "windowId": "623a2797978a4e05ac85c7ec5a83e15b"
+    },
+    "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+    "healthy": "healthy",
+    "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+    "lockAvailable": true
+  }
+}

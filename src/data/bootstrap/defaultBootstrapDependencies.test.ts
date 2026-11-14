@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../auth/guestLocalWorkspace", () => ({
+  openGuestLocalWorkspace: vi.fn(() => { throw Error("UNEXPECTED_GUEST_IN_ACCOUNT_BOOTSTRAP"); }),
+}));
+
 const mocks = vi.hoisted(() => ({
   readLocalSession: vi.fn(),
   refreshSession: vi.fn(),

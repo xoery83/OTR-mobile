@@ -1,0 +1,43 @@
+{
+  "status": "SOFTWARE_DEFAULT_CLOSE_PROBE_PASS",
+  "requestedAt": "2026-11-03T02:58:39.788625+00:00",
+  "completedAt": "2026-11-03T02:58:40.087869+00:00",
+  "exitCode": 0,
+  "defaultUnchanged": true,
+  "containerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+  "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+  "configSHA256": "b00829fc8f260bac9ab6f31b8e78899d287cd1685e1dfd8f7db1c9fead40480b",
+  "probeDirectory": "/opt/otr/dev-backend/build/auth-consumer-write-qa-3ae04cc607184ba3acb1224207711666",
+  "planSHA256": "8281fbed382cddfc9c8c05fbf878802a2c9bab2b7c95982a8058140ac85ed7be",
+  "scriptSHA256": "cee418c733de0bdfcc7e48552992b6a0689d4cadb498af1e5d391c3db6e8a014",
+  "closeReceipts": [
+    {
+      "result": {
+        "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+        "containerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+        "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+        "finiteConfigAbsent": true,
+        "health": "healthy"
+      },
+      "deliveryTrace": {
+        "requestedAt": "2026-11-03T02:58:39.897992+00:00",
+        "readyAt": "2026-11-03T02:58:39.910901+00:00",
+        "acquiredAt": "2026-11-03T02:58:39.910950+00:00",
+        "mutationFinishedAt": "2026-11-03T02:58:40.018654+00:00",
+        "releasedAt": "2026-11-03T02:58:40.018692+00:00"
+      }
+    },
+    {
+      "status": "C02_RUNTIME_CLOSED_RETAINED_DEFAULT_VERIFIED",
+      "windowId": "3ae04cc607184ba3acb1224207711666",
+      "containerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+      "issuerCleanup": "SEPARATE_MANDATORY_AUTH_CLOSE_RECEIPT"
+    }
+  ],
+  "issuerCleanup": "NOT_STARTED_NOT_REQUIRED_SOFTWARE_ONLY",
+  "authorityActivated": false,
+  "timerStarted": false,
+  "sqlCalls": 0,
+  "paidCalls": 0,
+  "stderrPresent": false
+}

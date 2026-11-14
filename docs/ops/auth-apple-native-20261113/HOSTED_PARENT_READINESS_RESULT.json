@@ -1,0 +1,68 @@
+{
+  "artifactSHA256": "33c9b031cd434dd5a42a807e730cd148bbd6c9b9943d8f09a5639c241291281e",
+  "exitCode": 0,
+  "result": {
+    "status": "FIXED_PARENT_PG_READINESS_ONLY",
+    "actor": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+    "trip": "faa0ea2b-9729-49b6-8ab7-db924df05e4d",
+    "operation": "a29a833f-2c50-401a-ae38-da9214a66b2a",
+    "businessReadOnly": true,
+    "postgresReadOnly": false,
+    "functions": [
+      {
+        "signature": "public.trip_create_parent_result(uuid,uuid)",
+        "present": true,
+        "owner": "postgres",
+        "security_definer": true,
+        "settings": [
+          "search_path=pg_catalog"
+        ],
+        "return_type": "jsonb",
+        "source_md5": "a46e6e13183b4e228640d8774dbd00ab",
+        "definition_md5": "9065ee93c4628582ddf277a9072f0dd9",
+        "executable": true,
+        "anon_executable": false,
+        "authenticated_executable": false,
+        "service_role_executable": false
+      },
+      {
+        "signature": "public.trip_create_result(uuid,uuid)",
+        "present": true,
+        "owner": "postgres",
+        "security_definer": true,
+        "settings": [
+          "search_path=pg_catalog"
+        ],
+        "return_type": "jsonb",
+        "source_md5": "39c01432332de00d9f9073db701c3c0f",
+        "definition_md5": "f850804dd98ebd5f33633498000e9e8a",
+        "executable": true,
+        "anon_executable": false,
+        "authenticated_executable": false,
+        "service_role_executable": false
+      },
+      {
+        "signature": "public.trip_create_finite_scope_allowed(uuid,uuid,uuid)",
+        "present": true,
+        "owner": "postgres",
+        "security_definer": true,
+        "settings": [
+          "search_path=pg_catalog"
+        ],
+        "return_type": "boolean",
+        "source_md5": "7a06036ff9d7d17633e1a6e6d31478cb",
+        "definition_md5": "2fc18c1345ab1ae7231a33893745fb52",
+        "executable": true,
+        "anon_executable": false,
+        "authenticated_executable": false,
+        "service_role_executable": false
+      }
+    ],
+    "storedPresent": true,
+    "storedBinding": true,
+    "parentPresent": true,
+    "parentBinding": true,
+    "finiteScopeAllowed": true,
+    "ready": true
+  }
+}

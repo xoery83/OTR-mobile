@@ -1,0 +1,37 @@
+{
+  "sourceCorrection": "fdd102dd",
+  "recordedAt": "2026-11-04T07:11:18.785808+00:00",
+  "coordinationIdentity": "MC-IDLE-DEPENDENCY-AUDIT-20261104-01-ROOT2-RETURN",
+  "status": "EXISTING_SOFTWARE_SUFFICIENT_DISTINCT_FRESH_GATE_PENDING",
+  "owningScope": {
+    "path": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/controlled-replay-20261104/REQUEST_SCOPE_REVISION.json",
+    "sha256": "40a00cb70bc3aca0259e581e109861ed83782e36d17a679663377fbfa5331252"
+  },
+  "owningFreeze": {
+    "path": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/controlled-replay-20261104/EXECUTION_FREEZE.json",
+    "sha256": "6011943b090b6c795ffa70944dd8fdba34a9602b1547779af1c25cffe4f670e2"
+  },
+  "softwareDeploymentNecessary": false,
+  "softwareScope": "Current c826 image / cffee Host already supports EMPTY normal OAuth, Guide, currentTrip reads and independent fresh Preview. Prepared 5a33/68a image is unnecessary for this narrowed scope and is not deployed.",
+  "latestClosedHostEvidence": {
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/MC-POWER-RECOVERY-20261104-01-Root2/RECOVERY_RECEIPT.json",
+    "sha256": "bebe619810931208683e109f3e4c09c86b078f225c595958922c4f43052c67bb"
+  },
+  "minimumMissing": [
+    "MCP fixes a genuinely independent fresh user intent and distinct exact read/Preview package; command=null, confirmations=[], no Save/Apply. Original UNKNOWN intent must not be renamed or cloned.",
+    "Distinct Gate/window bound to the fixed package, original QA actor/Trip/client and normal login/Consent scope, cleanup/close rules and fixed deadline. No reuse of 054c/c2d7 or consumed b0b7.",
+    "At lawful readiness Root2/Auth-consumer coordination obtains fresh actual default/Console/Issuer CAS, exclusive Writer and independent close/timer eligibility before any runtime activation; no timer starts from this return."
+  ],
+  "originalUnknownReplay": "FROZEN_WITHDRAWN_DO_NOT_REQUEST_OR_EXECUTE",
+  "missingSoftwareGap": null,
+  "ownerApprovalForReadOnlyQualificationNeeded": false,
+  "authorityForNewWindow": "No distinct executable Gate currently supplied; existing task approval preference does not activate a missing package or extend a consumed clock.",
+  "newActions": {
+    "SQL": 0,
+    "deployment": 0,
+    "OAuth": 0,
+    "provider": 0,
+    "window": 0,
+    "businessWrites": 0
+  }
+}

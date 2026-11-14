@@ -1,0 +1,36 @@
+{
+  "status": "MINIMAL_HOST_PLAN_CORRECTION_VERIFIED_NOT_EXECUTABLE",
+  "problem": "Root2 incorrectly supplied /v1/trips expected401; actual404 caused post-start assertion and rollback.",
+  "change": {
+    "field": "template.protectedRoutes",
+    "before": [
+      [
+        "/v1/trips",
+        401
+      ]
+    ],
+    "after": [
+      [
+        "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items"
+      ]
+    ]
+  },
+  "verification": {
+    "sourcePlan": "/opt/otr/dev-backend/build/auth-consumer-write-qa-a2f8c128ba794de4bcf3c98d324ffc63/empty-cas.json",
+    "protectedRoutes": [
+      [
+        "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items"
+      ]
+    ],
+    "readback": [
+      {
+        "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+        "expected": 401,
+        "actual": 401
+      }
+    ],
+    "pass": true
+  },
+  "unchanged": "13 approved MCP package source files, scope, Client, callback, Preview-only semantics and current3f02 default.",
+  "execution": "2377 closed; this is a non-executable correction for owning MCP to bind into its next exact packet. No new window generated or approval requested by Root2."
+}

@@ -1,0 +1,52 @@
+{
+  "principal": "Independent fresh Guest, not copied from Account/iPad",
+  "trip": [
+    {
+      "id": "414b7d65-5a37-4a77-af4a-659f884ed00a",
+      "name": "Functional Recovery Guest Edited",
+      "selected_cover_asset_id": "gen-b1-019"
+    }
+  ],
+  "cover": [
+    {
+      "trip_id": "414b7d65-5a37-4a77-af4a-659f884ed00a",
+      "selected_cover_asset_id": "gen-b1-019",
+      "selection_revision": 2
+    }
+  ],
+  "currency": [
+    {
+      "journey_id": "414b7d65-5a37-4a77-af4a-659f884ed00a",
+      "settlement_currency": "USD"
+    }
+  ],
+  "queue": [
+    {
+      "id": "ee5a9b50-c672-49ce-9fd5-8ca158238dbb",
+      "operation_type": "CREATE_TRIP",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "2119a555-255a-4f87-b582-65fcc96d83f1",
+      "operation_type": "TRIP_METADATA_DEFERRED",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "97ea4f5d-9658-4ce1-a34e-c983253792ed",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    },
+    {
+      "id": "a9d99358-056f-4084-b56f-fd4aa9c46b89",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0
+    }
+  ],
+  "coreReceipts": 0,
+  "p1": "Recovery Guest Plan Edited: actual Details and cold Home visible; retained local pending intent, not cloud APPLIED",
+  "ledgerEntry": "BLOCKED: Journey context unavailable; current reporting requires Account. Do not weaken account getter to impersonate Guest."
+}

@@ -1,0 +1,181 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "package": "MCP-C02",
+  "slice": "C02-S1_FRESH_PREVIEW",
+  "status": "PREPARING_OWNER_RESTART_NOT_ACTIVE",
+  "recordedAt": "2026-11-04T18:40:59.907869+00:00",
+  "businessDRI": "Lane B / MCP",
+  "executionChildId": "/root/fresh_preview_execution",
+  "recipient": "Root2 / Hosted Operations",
+  "recipientThreadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+  "ownerRestart": {
+    "id": "MC-OWNER-RESTART-20261105",
+    "path": "/Users/xoery/.codex/visualizations/2026/11/02/01a19a2c-de35-72d2-96b7-e66333286e13/otr-mission-control/docs/ops/mc-flow/OWNER_RESTART_20261105.json",
+    "scope": "Preparation and parent-to-parent qualification only; no new protected authority"
+  },
+  "source": {
+    "handoffCommit": "caedcc0bbd9a4959a934a6d98d55125671a85660",
+    "reviewedCandidate": "4d7d6b286e22449a3216f61278e953d1136de4f4",
+    "package": "docs/mcp/c02/s1/fresh-preview-handoff-20261104/PACKAGE.json",
+    "packageSHA256": "84cf26dff2673418849498395987a839636ac35f45174ea1a0edacc94c6ee96b",
+    "review": "docs/mcp/c02/s1/fresh-preview-handoff-20261104/REVIEW.json",
+    "reviewSHA256": "263a481047c4bd5c4e5c5f52477123c0273bb3c576ca16bc8f12ad72f547e33d",
+    "priorPackageExecutable": false,
+    "newSourceRebindPerformed": false,
+    "note": "Existing17 derived files match prior pins; retain as reviewed templates only. New Gate/window/scope pins must be bound and checked after current Root2 qualification; no old executable window may run."
+  },
+  "identity": {
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "tripName": "MCP Synthetic Nelson QA 20261031",
+    "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    "callback": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+    "resource": "https://api-dev.xoery.art/mcp",
+    "scope": "Existing Read/Write OAuth scope only if separately and currently qualified; server business submission remains disabled"
+  },
+  "intent": {
+    "name": "Rimu Cove QA Guesthouse",
+    "consumerInputs": {
+      "FRESH_CHAT_TASK.txt": {
+        "path": "docs/mcp/c02/s1/fresh-preview-20261104/FRESH_CHAT_TASK.txt",
+        "sha256": "17db04bb474fdc99ed04031f5fdd8be958e1b5c5625779c6245e94e3dfbe9cce"
+      },
+      "MATERIAL_1.txt": {
+        "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_1.txt",
+        "sha256": "9e7850badbf63ed4b1219966eb0175704f0bda6166416fe54043440383d28f03"
+      },
+      "MATERIAL_2.txt": {
+        "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_2.txt",
+        "sha256": "363c991e08a5db1b1d5c63e94fdb87dcde545052c2f41855a934936691d543dc"
+      },
+      "INDEPENDENT_INTENT.json": {
+        "path": "docs/mcp/c02/s1/fresh-preview-20261104/INDEPENDENT_INTENT.json",
+        "sha256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6"
+      }
+    },
+    "taskEvidenceSHA256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6",
+    "preassignedOperationId": null,
+    "preassignedItemId": null,
+    "preassignedRoomIds": [],
+    "consumerSubmitted": false,
+    "independentFromFrozenUnknown": true,
+    "goal": "Fresh Chat autonomously discovers Guide, reads accessible QA Trip/existing Items, produces one new Rimu P3 Preview; no Save/Edit/Apply"
+  },
+  "execution": {
+    "windowId": null,
+    "gateSHA256": null,
+    "startsAt": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null,
+    "clockStarted": false,
+    "authorityActivated": false,
+    "command": null,
+    "confirmations": [],
+    "saveApproved": false,
+    "replayAuthorized": false,
+    "maximumWindowSeconds": 1800,
+    "normalCloseLeadSeconds": 120,
+    "tokenMaxSeconds": 60,
+    "normalControlMaximumSeconds": 2100,
+    "normalControlCleanupReserveSeconds": 120,
+    "launchToBinderMaximumSeconds": 120,
+    "protectedExecutionRequestedNow": false
+  },
+  "lastIndependentClosure": {
+    "path": "docs/mcp/c02/s1/fresh-preview-handoff-20261104/actual/FINAL_EARLY_CLOSE_RECEIPT.json",
+    "sha256": "12bd6d523e9027cdcbc9117d9d6e602a3d415d310d214f5c4885800f6cab76df",
+    "status": "EARLY_CLOSED_INDEPENDENTLY_VERIFIED_NO_RUNTIME_ACTIVATION",
+    "CASExecuted": false,
+    "OAuthActivated": false,
+    "issuerActivated": false,
+    "containerChanged": false,
+    "businessOperations": 0,
+    "default": {
+      "observedAt": "2026-11-04T09:33:27.470237+00:00",
+      "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+      "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+      "health": "healthy",
+      "activeProtectedTimers": [],
+      "executableCASPathAbsent": true,
+      "archivedCASPresent": true,
+      "remoteClosedBindingValidJSON": true,
+      "qaSelectorNames": [],
+      "mutations": 0
+    },
+    "fourBundles": {
+      "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb",
+      "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+      "mcp/c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+      "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+    },
+    "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+    "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa",
+    "freshCurrentStateProof": false,
+    "selectedGrantConsentAuthorization": "ZERO_AT_PRIOR_INDEPENDENT_CLOSE_ONLY",
+    "oldApproval": "WITHDRAWN_NON_EXECUTABLE"
+  },
+  "requestedQualification": [
+    {
+      "owner": "Root2",
+      "capability": "Current software/runtime compatibility",
+      "minimum": "Read current service tuple and existing metadata only; compare c826/cffee with prior closure and retained Import/Core deltas. If existing software remains sufficient, explicitly NO_DEPLOYMENT; do not require5a33/68a."
+    },
+    {
+      "owner": "Root2",
+      "capability": "Exact EMPTY CAS and resource qualification",
+      "minimum": "Determine whether current service actually requires container/config replacement for Preview. If so fix exact current preimage/plan/pins, conflict/lock and rollback. Obtain current direct precise protected approval BEFORE OTP; old c7fe approval question is withdrawn. If unnecessary, omit with evidence."
+    },
+    {
+      "owner": "Root2",
+      "capability": "Issuer/Console/OAuth and DCR qualification",
+      "minimum": "State current actual OAuth/Issuer/Console/DCR=false evidence; identify each necessary temporary mutation and precise human authority/source. Do not treat restart/delegated read/software approval as protected activation or scope consent. No new role/client/scope/schema/RLS/GRANT."
+    },
+    {
+      "owner": "Root2",
+      "capability": "Closure/timers/watchdog/current restore",
+      "minimum": "Fix current default restore pointer and narrow existing close machinery, immutable T+28min normal/T+30min hard,60sec token bound, own QA cleanup and independent selected835 grant/consent/authz verification. No extension or OAuth activation solely to obtain cleanup HTTP ACK."
+    },
+    {
+      "owner": "Root2 + MCP",
+      "capability": "Live readiness-file handoff before normal login",
+      "minimum": "After all actual approvals/source/close/preimage checks are ready, Root2 prepositions one bounded waiter for future fixed Gate/window CONTROL_LAUNCH.json/status-1.json. Return live identity/start/deadline/exact paths. MCP verifies actually live and sufficient deadline BEFORE own normal login. Root2 binder consumes original launch<=120sec once via file event; no chat trigger/reset/relogin/borrowed Session."
+    }
+  ],
+  "returnRequirements": {
+    "status": "READY_FOR_NEW_FIXED_GATE or NOT_READY with single exact missing condition/owner",
+    "fixedEvidence": "Return current tuple, compatibility/deploy-needed verdict, necessary mutations only, precise approval request/actual source, close eligibility and retained non-sensitive metadata path/hash",
+    "timing": "No business clock or absolute execution deadline is assigned by this qualification request. Actual future immutableT follows current approved ready-file protocol only.",
+    "consumerHandoff": "Parent MCP coordinates new exact packet and consumer readiness; child does not message cross-Lane."
+  },
+  "frozen": {
+    "unknownOperations": [
+      "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+      "f10713fc-d86c-456f-a4c9-929a1cced3e8",
+      "historical9b exact identity remains in original evidence"
+    ],
+    "originalTargetItemId": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+    "noReplayOrClone": true,
+    "closedWindowReuse": false,
+    "missingRowsProveNoCommit": false
+  },
+  "excluded": [
+    "Save/Apply/Edit",
+    "OriginalUNKNOWN recovery query/replay",
+    "RealNelson/Production",
+    "Financial/Booking/Ticket writes",
+    "Schema/RLS/GRANT/client/role/scope expansion",
+    "Source/Provider/device work",
+    "main integration or deployment by MCP"
+  ],
+  "verification": {
+    "type": "Local static identity/hash verification only",
+    "consumerInputsMatching": 4,
+    "priorDerivedStaticFilesMatching": 17,
+    "historicalBehaviorTestsRerun": false,
+    "newCode": false,
+    "Hosted": "NOT_RUN",
+    "Consumer": "NOT_RUN",
+    "Native": "NOT_RUN",
+    "OwnerUX": "NOT_RUN"
+  }
+}

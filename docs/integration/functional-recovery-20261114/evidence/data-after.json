@@ -1,0 +1,35 @@
+{
+  "tablesUnchanged": {
+    "schema_migrations": true,
+    "trip_source_review_drafts": true,
+    "trip_core_trip_booking_document_links": true,
+    "trip_core_trip_entitlement_document_links": true,
+    "trip_core_trip_item_document_links": true,
+    "trip_core_trip_document_visibility_people": true,
+    "trip_core_device_document_state": true,
+    "trip_core_trip_operational_documents": true
+  },
+  "tableCounts": {
+    "schema_migrations": 79,
+    "trip_source_review_drafts": 0,
+    "trip_core_trip_booking_document_links": 0,
+    "trip_core_trip_entitlement_document_links": 0,
+    "trip_core_trip_item_document_links": 14,
+    "trip_core_trip_document_visibility_people": 0,
+    "trip_core_device_document_state": 0,
+    "trip_core_trip_operational_documents": 9
+  },
+  "originalPrivateFileChecks": {
+    "Documents/ux-c1-verified-receipts.json": true,
+    "Documents/ux-c2-isolated-core.json": true,
+    "Documents/ux-c1-read-diagnostic.json": true,
+    "Documents/import-originals/00000000-0000-4000-8000-000000000001/1f91119f205cf8d6ae4d6e9c3fcec02af245d67d039afdefe34e71532d49efba": true,
+    "Documents/import-originals/00000000-0000-4000-8000-000000000001/ba78921b7ce50bc6154cc68aa17f81cc98a1abe682314cd563e293050c321ccc": true,
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/bdc65c02-2526-4990-9331-9c5359c73ec9.json": true,
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/a6155477-182d-4f35-a5d3-10f3d85c1b36.json": true,
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/a6155477-182d-4f35-a5d3-10f3d85c1b36.previous": true,
+    "Documents/import-drafts/00000000-0000-4000-8000-000000000001/bdc65c02-2526-4990-9331-9c5359c73ec9.previous": true
+  },
+  "allUnchanged": true,
+  "method": "Same installed App, read-only SQLite and SHA256; no private data copied"
+}

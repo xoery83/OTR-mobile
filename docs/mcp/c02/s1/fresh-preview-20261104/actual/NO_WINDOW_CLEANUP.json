@@ -1,0 +1,22 @@
+{
+  "status": "WINDOW_NOT_STARTED_CONTROL_ACTION_UNCONFIRMED_OWN_SESSION_CLEANED",
+  "windowId": "3586c569-3f51-4ce9-8699-5e98b3760c80",
+  "gateSHA256": "422e73564ed4d81c7070c9ef8d196d45e519f1bcfc72eb6b21afd319cdc7e41a",
+  "normalControlStartedAt": "2026-11-04T08:04:03.197063Z",
+  "normalControlReadyAt": "2026-11-04T08:04:12.090Z",
+  "freshnessExpiredAt": "2026-11-04T08:06:03.197063Z",
+  "root2Outcome": "Did not bind clock/enable OAuth or Issuer/change container because120sec handshake missed",
+  "controlExitCode": 1,
+  "ownSessionRunId": "a0c3c182-70f4-4fbb-80c3-13feaad83551",
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "ownSessionActiveLockExists": false,
+  "selectedGrantCleanup": "UNCONFIRMED_BY_CONTROL; no GRANT_ABSENT_VERIFIED status emitted",
+  "grantFailureHttpStatus": "NOT_CAPTURED_DO_NOT_INFER",
+  "requiredRoot2ClosureRead": "Verify selected835 QA grant/consent/authorization counts0 independently; no blanket cleanup PASS until verified",
+  "noMcpBusinessOperationCreated": true,
+  "unknownOriginalStillFrozen": true,
+  "taskSubmitted": false,
+  "normalAuthSessionNotReusable": true,
+  "timingRootCause": "Chat-driven return/control-to-privileged-stage handoff exceeded strict120sec launch-to-binder; not Consumer/OAuth/Core failure",
+  "nextStep": "Finish independent closure then preposition Root2 bounded readiness-file waiter/bind step before another normal login, reusing existing scoped runner; do not repeat failed chat-timed handshake or reset old times"
+}

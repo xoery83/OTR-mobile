@@ -1,0 +1,19 @@
+{
+  "status": "DIRECT_OWNER_APPROVED_NOT_ACTIVATED",
+  "recordedAt": "2026-11-03T18:56:45.474541+00:00",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "questionItemId": "[\"request_user_input_async\",\"call_9261e9abc36b44c999527db729656a33\",0]",
+  "answer": "批准修正后的连接、原Scope Consent和Preview，不含保存",
+  "packetCommit": "d0f953b73e140ba3e37fb7045d5783bbe6c9bdb4",
+  "gateSHA256": "b2dfa4046fa4beda20d7aa581238294e50010d01df542c54f5cdcaa89182b7c5",
+  "windowId": "e0d1c568-cbae-4b0c-a3a0-dec92e4ececf",
+  "businessSaveAuthorized": false,
+  "command": null,
+  "confirmations": [],
+  "clockStarted": false,
+  "protectedRoutes": [
+    [
+      "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items"
+    ]
+  ]
+}

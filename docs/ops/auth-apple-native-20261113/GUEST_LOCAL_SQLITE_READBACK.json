@@ -1,0 +1,23 @@
+{
+  "status": "READ_ONLY_SQLITE_GUEST_LOCAL_PASS",
+  "sourceBundle": "art.xoery.otr",
+  "device": "Owner-qualified iPad Air5",
+  "sourceAppCommit": "58bedc01",
+  "sourceDatabase": "own newly created Guest QA database only",
+  "integrity": "ok",
+  "localTrip": {
+    "id": "faa0ea2b-9729-49b6-8ab7-db924df05e4d",
+    "name": "Apple Guest QA 20261113",
+    "account_id": "fc2fc618-d4b0-4dc1-8ed4-586226fd3528",
+    "accepted_at": null
+  },
+  "pendingIntent": {
+    "operation_id": "8334b964-5289-4dcb-b301-ec5ffd753208",
+    "state": "BLOCKED",
+    "reconciled_revision": null
+  },
+  "expectedP1TitlePresent": true,
+  "sqliteSHA256": "84e962e36359be9553778926882c046fc0b6651d8fd7ecc8dc8e5b84a722868b",
+  "cloudAcceptance": "NOT_CLAIMED",
+  "databaseCopiedIntoAnotherApp": false
+}

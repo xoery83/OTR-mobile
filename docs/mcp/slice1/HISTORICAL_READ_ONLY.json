@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-11-01T08:19:04.211863+00:00",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "historicalClaudeEdit": {
+    "operationId": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+    "receiptCount": 1,
+    "outcome": "APPLIED",
+    "committedAt": "2026-11-01T03:59:06.713618+00:00",
+    "currentItemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+    "currentRevision": 2,
+    "authorization": "OLD_WINDOW_CLOSED_EXPIRED_CURRENT_HOST_QA_CONFIG_ABSENT",
+    "retries": 0
+  },
+  "historicalDateEdit": {
+    "operationId": "9b077556-e0c3-46a9-8d97-2090504fa856",
+    "receiptCount": 0,
+    "currentItemId": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+    "currentRevision": 1,
+    "outcome": "UNKNOWN_NOT_NO_COMMIT",
+    "retries": 0
+  },
+  "inspectionMethod": "EXACT_DEV_SUPABASE_BEGIN_READ_ONLY_NO_SERVICE_ROLE_ACTOR_IMPERSONATION",
+  "businessWrites": 0
+}

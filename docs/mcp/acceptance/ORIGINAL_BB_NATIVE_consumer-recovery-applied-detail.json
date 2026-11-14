@@ -1,0 +1,543 @@
+{
+  "success": true,
+  "data": {
+    "nodes": [
+      {
+        "label": "OTR iPad QA",
+        "rect": {
+          "y": 0,
+          "x": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": false,
+        "index": 0,
+        "depth": 0,
+        "type": "Application",
+        "ref": "e1",
+        "kind": "application"
+      },
+      {
+        "label": "工具栏",
+        "parentIndex": 0,
+        "rect": {
+          "y": 0,
+          "x": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 1,
+        "depth": 1,
+        "type": "Other",
+        "ref": "e2",
+        "kind": "other"
+      },
+      {
+        "label": "返回",
+        "parentIndex": 1,
+        "rect": {
+          "y": 0,
+          "x": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 2,
+        "depth": 2,
+        "type": "Other",
+        "ref": "e3",
+        "kind": "other"
+      },
+      {
+        "label": "返回",
+        "parentIndex": 2,
+        "rect": {
+          "y": 32,
+          "x": 0,
+          "width": 1180,
+          "height": 54
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 3,
+        "depth": 3,
+        "identifier": "RNSScreen",
+        "type": "NavigationBar",
+        "ref": "e4",
+        "kind": "navigation-bar"
+      },
+      {
+        "label": "返回",
+        "parentIndex": 3,
+        "rect": {
+          "y": 32,
+          "x": 10,
+          "width": 44,
+          "height": 44
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 4,
+        "depth": 4,
+        "identifier": "BackButton",
+        "type": "Button",
+        "ref": "e5",
+        "kind": "button"
+      },
+      {
+        "label": "Edit stay",
+        "parentIndex": 3,
+        "rect": {
+          "y": 36,
+          "x": 1130,
+          "width": 36,
+          "height": 36
+        },
+        "enabled": false,
+        "hittable": false,
+        "index": 5,
+        "depth": 4,
+        "type": "Button",
+        "ref": "e6",
+        "kind": "button"
+      },
+      {
+        "label": "垂直滚动条, 1页",
+        "parentIndex": 2,
+        "rect": {
+          "y": 0,
+          "x": 0,
+          "width": 1180,
+          "height": 820
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 6,
+        "depth": 3,
+        "type": "Other",
+        "ref": "e7",
+        "kind": "other"
+      },
+      {
+        "label": "垂直滚动条, 1页",
+        "parentIndex": 6,
+        "rect": {
+          "y": 86,
+          "x": 0,
+          "width": 1180,
+          "height": 734
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 7,
+        "depth": 4,
+        "type": "Other",
+        "ref": "e8",
+        "kind": "other"
+      },
+      {
+        "label": "Stay · Check-in",
+        "parentIndex": 7,
+        "rect": {
+          "y": 86,
+          "x": 0,
+          "width": 1180,
+          "height": 734
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 8,
+        "depth": 5,
+        "type": "Other",
+        "ref": "e9",
+        "kind": "other"
+      },
+      {
+        "label": "Stay · Check-in",
+        "parentIndex": 8,
+        "rect": {
+          "y": 86,
+          "x": 0,
+          "width": 1180,
+          "height": 734
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 9,
+        "depth": 6,
+        "type": "ScrollView",
+        "ref": "e10",
+        "kind": "scroll-area"
+      },
+      {
+        "label": "Stay · Check-in",
+        "parentIndex": 9,
+        "rect": {
+          "y": 86,
+          "x": 0,
+          "width": 1180,
+          "height": 549
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 10,
+        "depth": 7,
+        "type": "Other",
+        "ref": "e11",
+        "kind": "other"
+      },
+      {
+        "label": "Stay · Check-in",
+        "parentIndex": 10,
+        "rect": {
+          "y": 106,
+          "x": 21,
+          "width": 1138,
+          "height": 18
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 11,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e12",
+        "kind": "text"
+      },
+      {
+        "label": "Consumer MCP QA Lodge",
+        "parentIndex": 10,
+        "rect": {
+          "y": 132,
+          "x": 21,
+          "width": 1138,
+          "height": 34
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 12,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e13",
+        "kind": "text"
+      },
+      {
+        "label": "Dec 11–13, 2026 · 2 nights",
+        "parentIndex": 10,
+        "rect": {
+          "y": 174,
+          "x": 21,
+          "width": 1138,
+          "height": 18
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 13,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e14",
+        "kind": "text"
+      },
+      {
+        "label": "Check-in",
+        "parentIndex": 10,
+        "rect": {
+          "y": 229.5,
+          "x": 39.5,
+          "width": 544.5,
+          "height": 18
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 14,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e15",
+        "kind": "text"
+      },
+      {
+        "label": "Check-out",
+        "parentIndex": 10,
+        "rect": {
+          "y": 229.5,
+          "x": 596,
+          "width": 544.5,
+          "height": 18
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 15,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e16",
+        "kind": "text"
+      },
+      {
+        "label": "Dec 11, 2026",
+        "parentIndex": 10,
+        "rect": {
+          "y": 252.5,
+          "x": 39.5,
+          "width": 544.5,
+          "height": 20
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 16,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e17",
+        "kind": "text"
+      },
+      {
+        "label": "Dec 13, 2026",
+        "parentIndex": 10,
+        "rect": {
+          "y": 252.5,
+          "x": 596,
+          "width": 544.5,
+          "height": 20
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 17,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e18",
+        "kind": "text"
+      },
+      {
+        "label": "Participants",
+        "parentIndex": 10,
+        "rect": {
+          "y": 318.5,
+          "height": 14.5,
+          "x": 39.5,
+          "width": 1101
+        },
+        "enabled": true,
+        "hittable": true,
+        "index": 18,
+        "depth": 8,
+        "type": "StaticText",
+        "ref": "e19",
+        "kind": "text"
+      },
+      {
+        "type": "StaticText",
+        "rect": {
+          "y": 343,
+          "height": 22.5,
+          "x": 39.5,
+          "width": 63
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 19,
+        "parentIndex": 10,
+        "label": "Only me",
+        "enabled": true,
+        "ref": "e20",
+        "kind": "text"
+      },
+      {
+        "type": "StaticText",
+        "rect": {
+          "y": 411.5,
+          "height": 14.5,
+          "x": 39.5,
+          "width": 1101
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 20,
+        "parentIndex": 10,
+        "label": "Note",
+        "enabled": true,
+        "ref": "e21",
+        "kind": "text"
+      },
+      {
+        "type": "StaticText",
+        "rect": {
+          "y": 436,
+          "height": 22.5,
+          "x": 39.5,
+          "width": 1101
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 21,
+        "parentIndex": 10,
+        "label": "Synthetic consumer Create/Edit QA only; no Booking, Ticket or payment.",
+        "enabled": true,
+        "ref": "e22",
+        "kind": "text"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 487,
+          "height": 58,
+          "x": 21,
+          "width": 565
+        },
+        "hittable": false,
+        "depth": 8,
+        "index": 22,
+        "parentIndex": 10,
+        "label": "Add photo",
+        "enabled": false,
+        "ref": "e23",
+        "kind": "button"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 487,
+          "height": 58,
+          "x": 594,
+          "width": 565
+        },
+        "hittable": false,
+        "depth": 8,
+        "index": 23,
+        "parentIndex": 10,
+        "label": "Add attachment",
+        "enabled": false,
+        "ref": "e24",
+        "kind": "button"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 553,
+          "height": 58,
+          "x": 21,
+          "width": 565
+        },
+        "hittable": true,
+        "depth": 8,
+        "index": 24,
+        "parentIndex": 10,
+        "label": "Add expense",
+        "enabled": true,
+        "ref": "e25",
+        "kind": "button"
+      },
+      {
+        "type": "Button",
+        "rect": {
+          "y": 553,
+          "height": 58,
+          "x": 594,
+          "width": 565
+        },
+        "hittable": false,
+        "depth": 8,
+        "index": 25,
+        "parentIndex": 10,
+        "label": "Link existing expense",
+        "enabled": false,
+        "ref": "e26",
+        "kind": "button"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 86,
+          "height": 716,
+          "x": 1147,
+          "width": 30
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 26,
+        "value": "[REDACTED_INPUT]",
+        "parentIndex": 9,
+        "label": "垂直滚动条, 1页",
+        "enabled": true,
+        "ref": "e27",
+        "kind": "other"
+      },
+      {
+        "type": "Other",
+        "rect": {
+          "y": 787,
+          "height": 30,
+          "x": 18,
+          "width": 1144
+        },
+        "hittable": true,
+        "depth": 7,
+        "index": 27,
+        "value": "[REDACTED_INPUT]",
+        "parentIndex": 9,
+        "label": "水平滚动条, 1页",
+        "enabled": true,
+        "ref": "e28",
+        "kind": "other"
+      },
+      {
+        "type": "Toolbar",
+        "rect": {
+          "y": 0,
+          "height": 820,
+          "x": 0,
+          "width": 1180
+        },
+        "identifier": "Toolbar",
+        "hittable": true,
+        "depth": 3,
+        "index": 28,
+        "parentIndex": 2,
+        "label": "工具栏",
+        "enabled": true,
+        "ref": "e29",
+        "kind": "toolbar"
+      }
+    ],
+    "truncated": false,
+    "appName": "otripadqa://p3-detail?tripId=cc44a705-6f43-41e0-a2f9-16f334b2a6b2&itemId=11fdaec9-3305-4db0-a146-be78823fcf74&date=2026-12-11",
+    "appBundleId": "com.xoery.otrmobile.ipadqa",
+    "visibility": {
+      "partial": false,
+      "visibleNodeCount": 29,
+      "totalNodeCount": 29,
+      "reasons": []
+    },
+    "keyboard": {
+      "kind": "absent"
+    },
+    "viewport": {
+      "width": 1180,
+      "height": 820
+    },
+    "presentedSurface": "unknown",
+    "snapshotQuality": {
+      "state": "healthy",
+      "backend": "tree",
+      "timing": {
+        "acquisitionMs": 250.11396408081055,
+        "presentationMs": 0.5159378051757812
+      }
+    },
+    "snapshotDiagnostics": {
+      "stats": {
+        "count": 86,
+        "p50Ms": 540,
+        "p95Ms": 655,
+        "maxMs": 663,
+        "slowThresholdMs": 1500,
+        "platform": "ios",
+        "backends": {
+          "xctest": 86
+        }
+      }
+    },
+    "refsGeneration": 752729
+  }
+}

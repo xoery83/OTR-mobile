@@ -151,6 +151,134 @@ async function collection(
   );
 }
 describe("Core SQLite54 account partition and durable offline foundation", () => {
+  it("rejects stale generations, invalid certificates and duplicate accepted actor bindings for connections", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      bundle = await collection();
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const otherTrip = await f.repo.captureContext(randomUUID());
+    expect(await f.repo.readAcceptedPeopleConnections(otherTrip)).toBeNull();
+    const read = f.database.getFirstAsync.bind(f.database);
+    const versionFault = vi
+      .spyOn(f.database, "getFirstAsync")
+      .mockImplementation(async (query, ...args) => {
+        const row = await read<Record<string, unknown>>(query, ...args);
+        return row && query.includes("business_version")
+          ? { ...row, business_version: 1 }
+          : row;
+      });
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_READ_VERSION_MISMATCH",
+    );
+    versionFault.mockRestore();
+    f.sql
+      .prepare(
+        "INSERT INTO trip_core_person_bindings(account_id,trip_id,person_id,linked_account_id,active,participating) VALUES(?,?,?,?,1,0)",
+      )
+      .run(account, trip, randomUUID(), account);
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_PERSON_BINDING_MISMATCH",
+    );
+    const lease = await beginAccountTransition();
+    endAccountTransition(lease);
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "Account changed",
+    );
+  });
+  it("projects only active accepted connections without exposing account IDs or confusing participation", async () => {
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip);
+    expect(await f.repo.readAcceptedPeopleConnections(ctx)).toBeNull();
+    const bundle = await collection(false);
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const foreign = randomUUID(),
+      unlinked = randomUUID(),
+      inactive = randomUUID();
+    const insert = f.sql.prepare(
+      "INSERT INTO trip_core_person_bindings(account_id,trip_id,person_id,linked_account_id,active,participating) VALUES(?,?,?,?,?,?)",
+    );
+    insert.run(account, trip, foreign, randomUUID(), 1, 0);
+    insert.run(account, trip, unlinked, null, 1, 1);
+    insert.run(account, trip, inactive, randomUUID(), 0, 1);
+    const result = await f.repo.readAcceptedPeopleConnections(ctx);
+    expect(result?.certificate).toEqual(
+      (await f.repo.acceptedSnapshot(ctx))?.certificate,
+    );
+    expect(result?.people).toEqual(
+      [
+        { personId: person, connected: true, isCurrentActor: true },
+        { personId: foreign, connected: true, isCurrentActor: false },
+        { personId: unlinked, connected: false, isCurrentActor: false },
+      ].sort((a, b) => a.personId.localeCompare(b.personId)),
+    );
+    expect(await f.repo.pending(ctx)).toEqual([]);
+    f.sql.prepare("UPDATE trip_core_scopes SET access_revision=access_revision+1").run();
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_READ_ACCESS_MISMATCH",
+    );
+    f.sql.prepare("UPDATE trip_core_scopes SET revoked=1").run();
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "CORE_ACCESS_REVOKED",
+    );
+    f.switchTo(randomUUID());
+    await expect(f.repo.readAcceptedPeopleConnections(ctx)).rejects.toThrow(
+      "Account changed",
+    );
+  });
+  it("versioned downstream derives its token from the exact applied collection", async () => {
+    const f = fixture();
+    const context = await f.repo.captureContext(trip);
+    const bundle = await collection();
+    const { refreshCoreDownstreamVersioned } =
+      await import("../sync/tripDownstreamCoordinator");
+    const { authorizedTripVersionFromCollection } =
+      await import("../../domain/trip/tripAuthorizedVersion");
+    const transport = { collection: vi.fn(async () => bundle) };
+    const expected = await authorizedTripVersionFromCollection(
+      bundle,
+      account,
+      trip,
+      hash,
+    );
+    const first = await refreshCoreDownstreamVersioned(f.repo, context, transport, hash);
+    expect(first).toEqual({ changed: true, version: expected.token });
+    expect((await f.repo.acceptedSnapshot(context))?.graph.itinerary_events[0].id).toBe(
+      item,
+    );
+    const again = await refreshCoreDownstreamVersioned(f.repo, context, transport, hash);
+    expect(again).toEqual({ changed: false, version: expected.token });
+    expect(transport.collection).toHaveBeenCalledTimes(2);
+  });
+  it("versioned downstream never returns a token for a rejected collection apply", async () => {
+    const f = fixture();
+    const context = await f.repo.captureContext(trip);
+    const bundle = await collection();
+    const { refreshCoreDownstreamVersioned } =
+      await import("../sync/tripDownstreamCoordinator");
+    const core = {
+      acceptedSnapshot: f.repo.acceptedSnapshot,
+      refresh: vi.fn(async () => {
+        throw Error("APPLY_FAILED");
+      }),
+    };
+    await expect(
+      refreshCoreDownstreamVersioned(
+        core,
+        context,
+        { collection: async () => bundle },
+        hash,
+      ),
+    ).rejects.toThrow("APPLY_FAILED");
+    expect(await f.repo.acceptedSnapshot(context)).toBeNull();
+  });
   it("pulls another client's P3 Create/Edit/Skip, survives SQLite reopen and preserves a competing local intent", async () => {
     const folder = mkdtempSync(join(tmpdir(), "otr-downstream-p3-"));
     folders.push(folder);
@@ -2938,4 +3066,148 @@ it("claim-bound CORRECT actual minted postimage drift rolls the whole claim back
   ).rejects.toThrow("CORE_CORRECTION_CLAIM_POSTIMAGE_CHANGED");
   spy.mockRestore();
   expect(correctionDurableState(f)).toEqual(before);
+});
+
+it("retains the explicitly confirmed Item, Document and link operations across restart without creating another Item", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-core-v3-review-"));
+  folders.push(folder);
+  const path = join(folder, "core.db");
+  const initial = fixture(path);
+  const context = await initial.repo.captureContext(trip);
+  const created = sparse();
+  const document = randomUUID();
+  const metadata = {
+    ...created,
+    operationId: randomUUID(),
+    command: "CREATE_DOCUMENT_METADATA",
+    target: { kind: "DOCUMENT", id: document },
+    baseVector: [{ kind: "DOCUMENT", id: document, revision: null }],
+    payload: {
+      title: "original.pdf",
+      media_type: "application/pdf",
+      sha256: "a".repeat(64),
+      byte_size: 16,
+    },
+  };
+  const link = {
+    ...created,
+    operationId: randomUUID(),
+    command: "RECONCILE_ITEM_DOCUMENTS",
+    baseVector: [
+      { kind: "DOCUMENT", id: document, revision: 1 },
+      { kind: "ITEM", id: item, revision: 1 },
+    ],
+    payload: { add: [document], remove: [] },
+  };
+  const commands = [created, metadata, link];
+  const fixed = commands.map(({ operationId }) => operationId);
+  expect(await initial.repo.enqueueConfirmedItemDocuments(context, commands)).toEqual(
+    fixed,
+  );
+  initial.sql.close();
+  const cold = fixture(path, false);
+  const recovered = await cold.repo.captureContext(trip);
+  expect(
+    (await cold.repo.pending(recovered)).map(({ command }) => command.operationId),
+  ).toEqual(fixed);
+  expect(await cold.repo.enqueueConfirmedItemDocuments(recovered, commands)).toEqual(
+    fixed,
+  );
+  expect(
+    cold.sql.prepare("SELECT count(*) AS count FROM sync_operations").get()?.count,
+  ).toBe(3);
+  const changed = { ...link, payload: { add: [randomUUID()], remove: [] } };
+  await expect(
+    cold.repo.enqueueConfirmedItemDocuments(recovered, [created, metadata, changed]),
+  ).rejects.toThrow();
+  expect(
+    (await cold.repo.pending(recovered)).map(({ command }) => command.operationId),
+  ).toEqual(fixed);
+});
+
+it("atomically retains authored Flight facts before its Documents without opening other command packets", async () => {
+  const f = fixture();
+  const context = await f.repo.captureContext(trip);
+  const created = sparse();
+  const unknown = { ...coreDateBoundary("2026-12-14"), local_date: null };
+  const details = {
+    ...created,
+    operationId: randomUUID(),
+    command: "SET_AUTHORED_FLIGHT_DETAILS",
+    baseVector: [{ kind: "ITEM", id: item, revision: 1 }],
+    payload: {
+      flightNumberLiteral: "NZ5069",
+      origin: {
+        airportCode: "AKL",
+        name: "Auckland",
+        terminal: null,
+        time: coreDateBoundary("2026-12-14"),
+      },
+      destination: { airportCode: null, name: null, terminal: null, time: unknown },
+    },
+  };
+  const document = randomUUID();
+  const metadata = {
+    ...created,
+    operationId: randomUUID(),
+    command: "CREATE_DOCUMENT_METADATA",
+    target: { kind: "DOCUMENT", id: document },
+    baseVector: [{ kind: "DOCUMENT", id: document, revision: null }],
+    payload: {
+      title: "flight.pdf",
+      media_type: "application/pdf",
+      sha256: "a".repeat(64),
+      byte_size: 16,
+    },
+  };
+  const link = {
+    ...created,
+    operationId: randomUUID(),
+    command: "RECONCILE_ITEM_DOCUMENTS",
+    baseVector: [
+      { kind: "DOCUMENT", id: document, revision: 1 },
+      { kind: "ITEM", id: item, revision: 2 },
+    ],
+    payload: { add: [document], remove: [] },
+  };
+  const commands = [created, details, metadata, link];
+  expect(await f.repo.enqueueConfirmedItemDocuments(context, commands)).toEqual(
+    commands.map((c) => c.operationId),
+  );
+  expect(await f.repo.enqueueConfirmedItemDocuments(context, commands)).toHaveLength(4);
+  expect(await f.repo.pending(context)).toHaveLength(4);
+  await expect(
+    f.repo.enqueueConfirmedItemDocuments(context, [
+      created,
+      { ...details, target: { kind: "ITEM", id: randomUUID() } },
+      metadata,
+      link,
+    ]),
+  ).rejects.toThrow();
+  expect(await f.repo.pending(context)).toHaveLength(4);
+});
+
+it("reads an existing immutable receipt locally only for the same original intent and scope", async () => {
+  const f = await lostP1RecoveryFixture(false);
+  expect(await f.repo.retainedReceipt(f.ctx, f.command)).toBeNull();
+  if (f.receipt.projection !== "FULL") throw Error("FULL_REQUIRED");
+  await f.repo.applyReceipt(f.ctx, f.receipt.receipt);
+  expect(await f.repo.retainedReceipt(f.ctx, f.command)).toEqual(f.receipt.receipt);
+  await expect(
+    f.repo.retainedReceipt(f.ctx, {
+      ...f.command,
+      payload: {
+        ...(f.command.payload as Record<string, unknown>),
+        core: { title: "Different intent" },
+      },
+    } as never),
+  ).rejects.toThrow("SCOPE_MISMATCH");
+  expect(() =>
+    f.sql
+      .prepare(
+        "UPDATE trip_core_trip_core_command_receipts SET receipt_sha256=? WHERE operation_id=?",
+      )
+      .run("a".repeat(64), f.command.operationId),
+  ).toThrow("CORE_RECEIPT_IMMUTABLE");
+  expect(await f.repo.retainedReceipt(f.ctx, f.command)).toEqual(f.receipt.receipt);
 });

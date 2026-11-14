@@ -1,0 +1,33 @@
+[
+  {
+    "scope": "bdc65c02-2526-4990-9331-9c5359c73ec9",
+    "staged": 4,
+    "editorChars": 23,
+    "files": [
+      {
+        "name": "Boardwalk.gif",
+        "exists": true,
+        "hashMatches": true,
+        "lengthMatches": true
+      },
+      {
+        "name": "Boardwalk.jpeg",
+        "exists": true,
+        "hashMatches": true,
+        "lengthMatches": true
+      },
+      {
+        "name": "Harbour Hotel.png",
+        "exists": true,
+        "hashMatches": true,
+        "lengthMatches": true
+      }
+    ]
+  },
+  {
+    "scope": "unassigned",
+    "staged": 0,
+    "editorChars": 0,
+    "files": []
+  }
+]

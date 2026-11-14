@@ -1,0 +1,59 @@
+{
+  "requestId": "AUTH-APPLE-ADOPTION-DIAG-20261113-01",
+  "observedBy": "ROOT2",
+  "diagnostic": {
+    "status": "READ_ONLY_PG_DIAGNOSTIC_PASS",
+    "adapterRepair": "ROOT uses Path(__file__).absolute().parents[4] instead of resolve before parent selection; fixed PORT and binding digests preserved",
+    "approvedSQLSHA256": "506cf196ce74efcb18dac898943a9411d582cf4b10141f1e34efcf5c26dd1b0f",
+    "result": {
+      "database_name": "postgres",
+      "exact_grants": 0,
+      "exact_stages": 0,
+      "original_terminal_receipts": 0,
+      "policy": {
+        "enabled": false,
+        "policy_version": "otr.auth.fileless-p1.unpriced/1",
+        "policy_xmin": "33417"
+      },
+      "transaction_read_only": "on"
+    },
+    "sqlResultHandling": "Fixed SQL first executed successfully. Existing CLI exposes last SELECT only. Equivalent SELECTs then combined into single JSON result with same predicates.",
+    "hostClosure": {
+      "service": "otr-universal-pdf-close.service",
+      "timer": "otr-universal-pdf-close.timer",
+      "state": "inactive/dead",
+      "delay": "1h",
+      "helper": "/opt/otr/universal-pdf-worker/pdf_runtime_close.py",
+      "sha256": "308301594fa84df478f6e258ac41e83bf49e7a9dff7df49c5efdcdf2eca10efe",
+      "adoptionSupport": "NOT_PROVED; existing helper PDF-specific, no Guest Adoption reference"
+    },
+    "writes": 0,
+    "runtimePolicyActivated": false
+  },
+  "closeBinding": {
+    "status": "EXISTING_CLOSE_METADATA_READ_ONLY_PASS",
+    "closeHelper": {
+      "definitionMD5": "a4230045eab12b97d3cdfd31477ea770",
+      "function": "otr_auth_guest_composite.close_qa_policy(boolean)",
+      "gatewayExecute": true,
+      "owner": "postgres",
+      "proconfig": [
+        "search_path=pg_catalog"
+      ],
+      "readOnly": true,
+      "securityDefiner": true,
+      "writerExecute": false
+    },
+    "runtime": {
+      "version": 3,
+      "configSHA256": "e77f733716594264988d6705fcd4dc80100af2eba3a5bbb830ebac96a0d007d5",
+      "environmentNetworkModeHost": true,
+      "dockerNetworkModeHost": true,
+      "cid": "69f805359a15ee37052cd0427824f9a98e40bd330202ae37c0c0a76185475be2"
+    },
+    "oldScriptPinMatchesCurrentFile": true,
+    "functionInvoked": false,
+    "mutations": 0,
+    "scopeLimit": "Metadata only; does not prove disconnected close execution or candidate timer binding."
+  }
+}

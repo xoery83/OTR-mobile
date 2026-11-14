@@ -1,0 +1,53 @@
+{
+  "contract": "OTR_EXECUTION_OWNERSHIP_V4",
+  "client_date": "2026-11-04",
+  "primary_package": "MCP-C02",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "beta_package_count_preserved": 54,
+  "business_dri": {
+    "lane": "Lane B / MCP",
+    "thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "owns": [
+      "MCP domain frontend/backend code, DTO/Adapter/Controller",
+      "Consumer browser, OAuth client and catalog",
+      "Bounded diagnosis, local tests/review, Fresh Chat E2E",
+      "Evidence/Commit/MC progress"
+    ]
+  },
+  "core_contract_owner": "Root1 / Core for Canonical ports/schema/ACL/Revision/Receipt changes",
+  "source_integrator": {
+    "owner": "Root1",
+    "thread_id": "01a1753a-2837-7d20-89c8-d8c1476b0ed8"
+  },
+  "hosted_ops_owner": {
+    "owner": "Root2",
+    "thread_id": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232",
+    "resource": "DEV/otr-dev-backend",
+    "handoff_status": "ROOT2_HOSTED_OWNERSHIP_HANDOFF_COMPLETE",
+    "handoff_commit": "1624e3219f2a9136cc70bae38e02756aec135fc9",
+    "handoff_receipt_sha256": "c73142837da7f5546e11e6cb1c97867aa8743aee1969e042ad3dedd0ac9a6fe1",
+    "fixed_mc_commit": "b4915bad7bf8c44f3bb53a85b2ddbe488b4c4c34",
+    "fixed_mc_ack_sha256": "5dd460634e325af2854a6f55a93a1066b8dc2dfe1106377e829d03665d5d1a72",
+    "root1_hosted_writer_released": true,
+    "task_specific_authority_required": true
+  },
+  "vision_acceptance_owner": "Vision",
+  "actual_resource_lock": "NONE_HELD_OR_REQUESTED_BY_MCP",
+  "cross_lane_requests": [
+    "MCP-C02-S2-CORE-SPARSE-20261104-001",
+    "MCP-C02-V4-READY-20261104-001"
+  ],
+  "browser_diagnosis_owner": "Lane B / MCP; never delegated to Root2",
+  "current_authority": "All prior MCP windows closed; no new OAuth/issuer/Apply/Provider authority from V4",
+  "mc_ready_queue": "REQUESTED_NOT_YET_RECEIVED",
+  "return_triggers": [
+    "MCP read-only browser observation becomes verifiably available",
+    "Root1 delivers formal sparse Stay/room contract for S2",
+    "MC returns an existing authorized local READY item",
+    "For future protected execution only: complete Lane packet + new valid Owner Gate + Root2 fresh CAS/close qualification"
+  ],
+  "no_replay": [
+    "a2f8/679c/e325 closed windows and clocks",
+    "historical f107/9b UNKNOWN operations"
+  ]
+}

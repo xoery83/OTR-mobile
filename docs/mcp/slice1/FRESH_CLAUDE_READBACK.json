@@ -1,0 +1,19 @@
+{
+  "status": "INDEPENDENT_SUPABASE_NOTES_AND_PRESERVATION_PASS_NOT_CONSUMER_PROOF",
+  "client": "Claude",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "outcome": "APPLIED",
+  "revision": 2,
+  "notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.",
+  "otherRootFieldsAndFieldStateUnchanged": true,
+  "allItemChildrenUnchanged": true,
+  "receiptCount": 1,
+  "observedAt": "2026-11-02T05:18:37.614327+00:00",
+  "beforeRootSHA256": "59428faece06ffd448e50c5e923319823e94ea77e58dfeed2bbc38caeafd8ca0",
+  "afterRootSHA256": "364ff49b465a43e455fe0cfa97dc137ee36bb8a7e6fd6dfab8a03a6118755b61",
+  "receiptSHA256": "9f023c8f3f740cb893d7c887bf57e19adbcf018626a06342424a6d1adee67ec1",
+  "businessPosts": 0
+}

@@ -1,0 +1,19 @@
+{
+  "status": "CONSUMER_CREATE_PREVIEW_SERVER_VERIFIED_APPLY_NOT_AUTHORIZED",
+  "windowId": "b08a466d29f348a896176c563646f417",
+  "consumer": "ChatGPT",
+  "consumerChat": "https://chatgpt.com/c/6aea3362-3100-83ec-99a8-adaf738f4a26",
+  "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "itemId": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+  "preview": "PASS_ACTUAL_CONSUMER_AND_SERVER_THREE_HASH_MATCH",
+  "save": "NOT_AUTHORIZED_NOT_SUBMITTED",
+  "edit": "NOT_RUN",
+  "native": "NOT_RUN",
+  "independentReadback": "Core receipt0/legacy receipt0/target0 before Preview",
+  "intermediateFailure": "list_trip_items401 AUTH_REQUIRED followed by successful read and Preview; preserve diagnostic BACKEND_401, do not infer token expiry",
+  "executionMistake": "MCP triggered close from interim failure before recovering completed consumer reply. Grant already revoked when final Preview displayed; did not undo close or restart consumed window.",
+  "browser": "First reconnect approval timeout, permitted single retry succeeded; response required Reload response to display; no tool resubmission on reload",
+  "ownSessionClose": "PASS;Grant revoke204;FINISH exit0",
+  "environmentClose": "CLOSED_VERIFIED_21:26:23Z; final target/receipt0_21:26:44Z",
+  "overallPackage": "MCP-C02_IN_PROGRESS"
+}

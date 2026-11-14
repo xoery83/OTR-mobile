@@ -1,0 +1,40 @@
+{
+  "status": "CLOSED_RUNTIME_AND_OWN_SESSION_GRANT_API_UNCONFIRMED_CONSUMER_NOT_RUN",
+  "recorded_at": "2026-11-03T04:34:07.585300+00:00",
+  "window": "e32551d418f54fcdb02d9783eb4c2f9c",
+  "issuerActiveSQLSHA256": "5ed8fcc997b0a402309b533fdcd012a4ddcece2aaf7ffadc9212d388a3df072a",
+  "review_rejection_reason": "Root execution context lacked trusted Owner evidence authorizing this exact OAuth Issuer Hook activation. Command did not start; issuer remains deny-all. No alternative write attempted.",
+  "consumer": {
+    "prompt_sent": false,
+    "oauth_or_consent_attempted": false,
+    "preview": false,
+    "business_apply": 0
+  },
+  "own_session": {
+    "runId": "bbc0efab-0b2b-4a5e-bbcc-2789f6e8bcd1",
+    "requestedAt": "2026-11-03T04:19:54.525Z",
+    "otpRequestAttempts": 1,
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "actionCompleted": false,
+    "actionOutcome": "UNCONFIRMED_QUERY_OWNING_RECEIPT",
+    "status": "FAILED_OR_UNKNOWN_NO_AUTOMATIC_RETRY"
+  },
+  "own_qa_lock_released": true,
+  "grant_api_cleanup": "UNCONFIRMED_ROUTE_NOT_AVAILABLE_WITH_OAUTH_OFF",
+  "independent_selected_grant_absence": {
+    "status": "ROOT_READ_ONLY_SELECTED_TABLES_ZERO",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    "auth.oauth_authorizations": 0,
+    "auth.oauth_consents_unrevoked": 0,
+    "limit": "Only these two actual tables; not global Grant absence. Grant API route cleanup remains UNCONFIRMED."
+  },
+  "runtime_restore": "ROOT_REPORTED_PASS_DEFAULT3def_IMAGEfbc245_HEALTHY_FINITE_CONFIG_ABSENT",
+  "timer_disarm": "Root stop helper exit5 because transient service absent; independent two timers LoadState=not-found/ActiveState=inactive",
+  "immutable_deadline": "2026-11-03T04:50:13.655Z",
+  "next_action": "Record exact close/readback; preserve original scope and no reset. Supply trusted authorization proof for a future separately qualified finite run, never bypass automatic review.",
+  "issuer_close": "Root watcher independently verified deny-all2026-11-03T04:33:21Z",
+  "source_fixes": "Same-CID byte-pinned Node precheck and disarm exit5 with mandatory four-unit inactive readback;9pure tests/narrowcontrol/independentReviewPASS; not deployed",
+  "new_window": "Owner separately approved next exact issuer activation in Root chat; originale325 remains permanently closed, new technical679c\u2026 candidate no Session/T_D yet.",
+  "root_receipt_sha256": "c8fc32c002c9b2adc39b59bee551370dac69cd7f66bb18a94efc0c8be80f9e18"
+}

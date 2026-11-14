@@ -4,7 +4,11 @@ import { createAccountProfileRepository } from "../auth/accountProfileRepository
 import { coreCanManage } from "@/domain/trip/tripCoreV2Mutation";
 import type { AccountRequestContext } from "../auth/accountRequestContext";
 import { hasAcceptedManualCreate } from "../repositories/acceptedManualCreate";
-import { isReviewedSourceCreate } from "@/domain/trip/tripCoreV2Commands";
+import {
+  isReviewedSourceCreate,
+  isNormalManualCreate,
+  isNormalImportCoreCommand,
+} from "@/domain/trip/tripCoreV2Commands";
 import { createTripPersonCloudCreateRepository } from "../repositories/tripPersonCloudCreateRepository";
 import {
   createPersonCloudSyncWorker,
@@ -16,11 +20,14 @@ import { createUuid } from "@/domain/localId";
 import { createTripNormalReadbackRepository } from "../repositories/tripNormalReadbackRepository";
 import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { createTripMetadataTransport } from "./tripMetadataTransport";
-import { createTripMetadataRepository } from "../repositories/tripMetadataRepository";
+import { createTripMetadataRepository, readServerParentMetadataEditBase } from "../repositories/tripMetadataRepository";
 import {
+  normalTripReadbackTrigger,
   createNormalTripSyncWake,
   isManualAcceptedEditCommand,
   isManualInstructionEditCommand,
+  isManualLocalDocumentCommand,
+  cloudManualCreatePerson,
   acceptedEditFamilies,
   type NormalTripSyncScope,
 } from "./tripNormalSync";
@@ -129,13 +136,9 @@ export function createNativeNormalTripSyncRunner(
     const recoverReadback = async (tripId: string, createOperationId: string) => {
       const local = await repository.getTrip(tripId);
       await assertAccountRequestContext(account, requireActiveUserId);
-      if (local?.serverId !== tripId) return;
-      const trigger = await database.getAllAsync<{
-        id: string;
-        status: string;
-        attempt_count: number;
-      }>(
-        "SELECT id,status,attempt_count FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND ((status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND')) OR (entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND' AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND attempt_count>0 AND failure_category IS NOT 'AUTH')) ORDER BY id",
+      if (local && local.serverId !== tripId) return;
+      const triggerVersion = await normalTripReadbackTrigger(
+        database,
         account.accountId,
         tripId,
       );
@@ -145,6 +148,11 @@ export function createNativeNormalTripSyncRunner(
         { ...account, tripId },
         createOperationId,
         async () => {
+          if (!local) {
+            await readServerParentMetadataEditBase({ ...account, tripId });
+            await assertAccountRequestContext(account, requireActiveUserId);
+            return;
+          }
           const snapshot = await createTripMetadataTransport(
             requireActiveUserId,
             {},
@@ -176,7 +184,7 @@ export function createNativeNormalTripSyncRunner(
               }),
             );
         },
-        JSON.stringify(trigger.map((row) => [row.id, row.status, row.attempt_count])),
+        triggerVersion,
         !coldReadbackSeen.has(coldKey),
       );
       coldReadbackSeen.add(coldKey);
@@ -273,6 +281,7 @@ export function createNativeNormalTripSyncRunner(
                 context.tripId,
               );
               await assertAccountRequestContext(account, requireActiveUserId);
+              const createPerson = cloudManualCreatePerson(command);
               if (isManualInstructionEditCommand(command)) {
                 const parent = await instructionParent(context.tripId, command);
                 if (
@@ -282,9 +291,21 @@ export function createNativeNormalTripSyncRunner(
                   throw Error("CORE_INSTRUCTION_SCOPE_UNRESOLVED");
                 if (!instructionSubmissionEnabled())
                   throw Error("CORE_INSTRUCTION_SYNC_CLOSED");
+              } else if (!local?.create_operation_id && isNormalManualCreate(command)) {
+                const snapshot = await core.acceptedSnapshot(context);
+                await assertAccountRequestContext(context, requireActiveUserId);
+                if (
+                  !snapshot?.certificate ||
+                  !snapshot.actor.active ||
+                  snapshot.actor.accountId !== context.accountId ||
+                  snapshot.actor.tripId !== context.tripId ||
+                  (createPerson !== null && snapshot.actor.personId !== createPerson)
+                )
+                  throw Error("CORE_FRESH_ACCEPTED_CREATE_UNAVAILABLE");
               } else if (
                 !local?.create_operation_id &&
-                !isReviewedSourceCreate(command)
+                !isReviewedSourceCreate(command) &&
+                !isManualLocalDocumentCommand(command)
               ) {
                 let item = null;
                 for (const family of acceptedEditFamilies) {
@@ -382,7 +403,9 @@ export function createNativeNormalTripSyncRunner(
               if (
                 !isReviewedSourceCreate(command) &&
                 !isManualAcceptedEditCommand(command) &&
-                !isManualInstructionEditCommand(command)
+                !isManualInstructionEditCommand(command) &&
+                !isManualLocalDocumentCommand(command) &&
+                !isNormalManualCreate(command) && !isNormalImportCoreCommand(command)
               )
                 throw Error("TRIP_CREATE_LOCAL_MISSING");
               // Owning Core readback installs the cloud Trip's accepted graph; no local Create is invented.
@@ -409,7 +432,7 @@ export function createNativeNormalTripSyncRunner(
             )
           )
             return true;
-          if (family === "P3" || family === "P4" || family === "P6")
+          if (family !== "P2")
             return !!(await acceptedEditableItem(context, itemId, family));
           const graph = await core.readGraph(context);
           const item = graph.itinerary_events.find(
@@ -460,6 +483,8 @@ export function createNativeNormalTripSyncRunner(
               )
           )
             return false;
+          // The private SELF create is bound to the accepted Person at submit.
+          if (cloudManualCreatePerson(command)) return true;
           return p1SharedParticipantsReady(
             command,
             await persons.listTripPersons(tripId),

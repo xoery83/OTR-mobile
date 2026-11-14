@@ -1,0 +1,159 @@
+{
+  "project": "tuqigdxrvrerfewsxqgm",
+  "readOnly": true,
+  "tripId": "a6155477-182d-4f35-a5d3-10f3d85c1b36",
+  "items": [
+    {
+      "experience_family": "P1",
+      "id": "40900c42-5b39-887c-a6ed-85ece418fdbd",
+      "semantic_revision": 2,
+      "title": "Slice 3 Harbour walk"
+    },
+    {
+      "experience_family": "P3",
+      "id": "577cec58-bf3a-8e07-9c6e-746ea66a4971",
+      "semantic_revision": 2,
+      "title": "Slice 3 Hotel"
+    },
+    {
+      "experience_family": "P2",
+      "id": "6f0027f2-9a12-8806-a650-e5008535b433",
+      "semantic_revision": 4,
+      "title": "AA1302"
+    },
+    {
+      "experience_family": "P6",
+      "id": "a845b83a-d37e-83de-a561-937579d52698",
+      "semantic_revision": 2,
+      "title": "Slice 3 Gallery visit"
+    }
+  ],
+  "documents": [
+    {
+      "id": "0f745d34-1eeb-8b9b-b49d-22da03e0f40a",
+      "custody": "LOCAL_ONLY",
+      "media_type": "text/plain",
+      "sha256": "a9208975a0afa0e59448aee94f547579193a653fc005c448dafb5ce8fdb6e0db"
+    },
+    {
+      "id": "c5ad6b00-65e3-8fbe-ba07-3ee3173b1d98",
+      "custody": "LOCAL_ONLY",
+      "media_type": "text/plain",
+      "sha256": "16847dbcee5a193b6e6f3f1470f2ede231ef6a29290b05f317136323dfc6e937"
+    }
+  ],
+  "links": [
+    {
+      "item_id": "6f0027f2-9a12-8806-a650-e5008535b433",
+      "document_id": "c5ad6b00-65e3-8fbe-ba07-3ee3173b1d98",
+      "active": true
+    },
+    {
+      "item_id": "40900c42-5b39-887c-a6ed-85ece418fdbd",
+      "document_id": "c5ad6b00-65e3-8fbe-ba07-3ee3173b1d98",
+      "active": true
+    },
+    {
+      "item_id": "577cec58-bf3a-8e07-9c6e-746ea66a4971",
+      "document_id": "c5ad6b00-65e3-8fbe-ba07-3ee3173b1d98",
+      "active": true
+    },
+    {
+      "item_id": "6f0027f2-9a12-8806-a650-e5008535b433",
+      "document_id": "0f745d34-1eeb-8b9b-b49d-22da03e0f40a",
+      "active": true
+    },
+    {
+      "item_id": "a845b83a-d37e-83de-a561-937579d52698",
+      "document_id": "0f745d34-1eeb-8b9b-b49d-22da03e0f40a",
+      "active": true
+    }
+  ],
+  "receipts": [
+    {
+      "operationId": "b9cfcb6e-f7f2-86a5-82f2-1879492e8c0f",
+      "outcome": "APPLIED",
+      "receiptSHA256": "aa774de195995f89f671befacdd790e1356e62a0885823e68fd348422adb45c2",
+      "command": "CREATE_SPARSE_FLIGHT",
+      "committedAt": "2026-11-13T10:15:30.404979Z"
+    },
+    {
+      "operationId": "15240278-8258-8f79-a062-be728f2d4d55",
+      "outcome": "APPLIED",
+      "receiptSHA256": "04892c130f8292d3680f78525340586c9be157667a51f6c6cd4aa805956a71c3",
+      "command": "SET_AUTHORED_FLIGHT_DETAILS",
+      "committedAt": "2026-11-13T10:16:36.901177Z"
+    },
+    {
+      "operationId": "162ab614-1a13-8a5f-b0df-7019d5c258bc",
+      "outcome": "APPLIED",
+      "receiptSHA256": "bf4fc8e513b7c465ce14ad6fc8a5d35b073a7067aa8e3c26ac7a1a81386e0386",
+      "command": "CREATE_DOCUMENT_METADATA",
+      "committedAt": "2026-11-13T10:17:46.090562Z"
+    },
+    {
+      "operationId": "05103fdf-49ab-8508-970b-26541afa35c6",
+      "outcome": "APPLIED",
+      "receiptSHA256": "f32e03ee9cd150843ba2fc3a6c9e0129eda7a39ecae06ab2a504be2d0637b224",
+      "command": "RECONCILE_ITEM_DOCUMENTS",
+      "committedAt": "2026-11-13T10:18:52.427959Z"
+    },
+    {
+      "operationId": "acf99b07-4524-8ceb-8755-f37f27c785ed",
+      "outcome": "APPLIED",
+      "receiptSHA256": "446ec009290175e1379b048f02d06be9443273240334fc464f5871688fa02677",
+      "command": "CREATE_ITEM",
+      "committedAt": "2026-11-13T10:20:04.129802Z"
+    },
+    {
+      "operationId": "98a1460a-17f4-8fb5-902f-e24400d2b040",
+      "outcome": "APPLIED",
+      "receiptSHA256": "c6c86fe1ec5416b724c5dc487a9e79ef73e741f4bf316ee8bd0e95aed0904d84",
+      "command": "RECONCILE_ITEM_DOCUMENTS",
+      "committedAt": "2026-11-13T10:20:51.273939Z"
+    },
+    {
+      "operationId": "28d1ad0e-def8-89c2-8666-8b1c786ac776",
+      "outcome": "APPLIED",
+      "receiptSHA256": "2ab6c9244ec030f4f881dd7bedf0ce789eb802f3c84d7910e01edfa3594af92a",
+      "command": "CREATE_ITEM",
+      "committedAt": "2026-11-13T11:05:54.424091Z"
+    },
+    {
+      "operationId": "cf51373a-9300-801f-930d-b6371a36dda8",
+      "outcome": "APPLIED",
+      "receiptSHA256": "6d29cabb2d0f39755364e4a0919a51171a94d7d427ead49c2ba9cb4c7f778ca9",
+      "command": "RECONCILE_ITEM_DOCUMENTS",
+      "committedAt": "2026-11-13T11:06:37.131877Z"
+    },
+    {
+      "operationId": "7b44d309-4d38-8925-a842-85c59193fbe1",
+      "outcome": "APPLIED",
+      "receiptSHA256": "e50c99817dc04488f720094a8f66ba53169ad23f990e749b81058b7109b52fef",
+      "command": "CREATE_DOCUMENT_METADATA",
+      "committedAt": "2026-11-13T11:23:26.490715Z"
+    },
+    {
+      "operationId": "4a311549-99e6-837f-92a6-59b1aff72645",
+      "outcome": "APPLIED",
+      "receiptSHA256": "29b91b1eda8754618d567135ced336de845d2aaf21a1448cae60ab2b746fbbf3",
+      "command": "RECONCILE_ITEM_DOCUMENTS",
+      "committedAt": "2026-11-13T11:24:25.964017Z"
+    },
+    {
+      "operationId": "b7ed282d-c7ab-8252-9ecb-e6d97589107a",
+      "outcome": "APPLIED",
+      "receiptSHA256": "7841b3149a84a8392ea74f43e7137384c79fbc1e9e27324f1fd73b671e2404e7",
+      "command": "CREATE_ITEM",
+      "committedAt": "2026-11-13T11:25:12.799951Z"
+    },
+    {
+      "operationId": "fa11d6fe-2e3c-87af-ab7f-c896f684488c",
+      "outcome": "APPLIED",
+      "receiptSHA256": "6a4a5325d1ecfd87dbcfdde1b533b5f7087147c4b33e46e23d69acfdedd6f308",
+      "command": "RECONCILE_ITEM_DOCUMENTS",
+      "committedAt": "2026-11-13T11:25:59.889847Z"
+    }
+  ],
+  "sameReceiptHashesAsSlice3": true
+}

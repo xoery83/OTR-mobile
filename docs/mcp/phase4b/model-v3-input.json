@@ -1,0 +1,35 @@
+{
+  "candidate": "32aa279ab8bb1950e3cb77f20d082a2a54ed39ef",
+  "agent": "/root/blank_context_traveler_v3",
+  "fork_turns": "none",
+  "user_task": "请帮我把附件里的旅行资料整理进 Nelson QA Trip。先核对旅程里已有的内容，给我一份可以确认的新增或修改预览。资料不全或相互矛盾的地方请告诉我，别猜；暂时不要保存，等我确认。",
+  "attachment": {
+    "path": "mcp/fixtures/nelson-assistant-materials.md",
+    "sha256": "3d41540e1740d51ecd6d299fc4bfb31490ea9600398efbff5408f9760a260742",
+    "copy": "/private/tmp/otr-mcp-phase4b-blank-model-v3/materials.md",
+    "same_fixed_synthetic_materials_as_run2": true,
+    "identity_note": "Current frozen 32aa279a bytes are hashed; prior run2 did not record an attachment byte hash. No material content was added for run3."
+  },
+  "connection": {
+    "entry": "mcp/freshChatQa.ts",
+    "sha256": "a4923738e7abc3e562e9dca235383a070afbcc97e51e448231e339ca54a55b32",
+    "commands": [
+      "node --import tsx mcp/freshChatQa.ts tools /private/tmp/otr-mcp-phase4b-blank-model-v3",
+      "node --import tsx mcp/freshChatQa.ts describe /private/tmp/otr-mcp-phase4b-blank-model-v3 <discovered-name>",
+      "node --import tsx mcp/freshChatQa.ts call /private/tmp/otr-mcp-phase4b-blank-model-v3 <discovered-name> <JSON>"
+    ]
+  },
+  "guide": {
+    "version": "otr.ai.guide/2",
+    "source_sha256": "dab149c3b5ad96d85d0cb2c3aac4a788c71d7e874b1e0284eb36bf2ff3af9d1e",
+    "provided_to_agent": false
+  },
+  "constraints": [
+    "Read only the attachment and MCP responses; no repository code, AGENTS, developer docs, history, other agents or internet",
+    "Do not inspect connection script; use CLI only",
+    "No prior expected steps, field mappings, OTR tool names or previous answers supplied",
+    "No real accounts or other services; synthetic connection only"
+  ],
+  "tool_sequence": "MODEL_SELECTED_NOT_SCRIPTED",
+  "hosted_oauth_consumer": false
+}

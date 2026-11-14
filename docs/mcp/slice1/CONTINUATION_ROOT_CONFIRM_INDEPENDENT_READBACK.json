@@ -1,0 +1,9 @@
+{
+  "status": "SINGLETON_INDEPENDENT_SERVER_VERIFIED",
+  "checkedAt": "2026-11-02T02:25:36.550525+00:00",
+  "containerId": "43b988f8c2d8598501310e6ba6126f36745ee0b88b0aecccb8ac5ab3c1c86fb4",
+  "configSHA256": "eec5b45d45077bd957ea86ff0892553955a7807fc55f7b60d5540a60bb68fda9",
+  "onlyOriginalOperationAndDigest": true,
+  "originalDeadlineAndTimer": true,
+  "closePointerExact": true
+}

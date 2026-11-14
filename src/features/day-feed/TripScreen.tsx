@@ -2,7 +2,7 @@ import { createP3SourceScanPort } from "@/native/p3FormScan";
 import { localInsertionTime } from "./localInsertionTime";
 import { readCommittedLocalSession } from "@/data/auth/authRepository";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
-import { dayFeedAppearanceDate, dayFeedPhaseColor } from "./dayFeedAppearance";
+import { dayFeedAppearanceDate, dayFeedPhaseColor, dayFeedPreviousColor } from "./dayFeedAppearance";
 import { useMinuteClock } from "./useMinuteClock";
 import { useP1CivilMove } from "./useP1CivilMove";
 import { P1MeasuredMoveRegion } from "./useP1Move";
@@ -15,7 +15,7 @@ import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import { TripDayHeading } from "./TripDayHeading";
 import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
-import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import {
   DayFeedIntroduction,
   DayFeedShellTitle,
@@ -114,7 +114,7 @@ import type { TodayEntry } from "./MyTripsList";
 import {
   observeForegroundTrip,
   refreshTripFromCloud,
-} from "@/data/sync/tripDownstreamCoordinator";
+} from "@/data/operations/tripReadActivity";
 import {
   resolvedWorkspaceKind,
   type WorkspaceKind,
@@ -234,6 +234,7 @@ function TripContent({
     viewMode?: string;
     view?: string;
     homeQaScenario?: string;
+    importJobId?: string;
   }>();
   const [guest, setGuest] = useState(false);
   const [dayTripFacts, setDayTripFacts] = useState<{
@@ -1529,7 +1530,7 @@ function TripContent({
       // Native Stack falls back to the route name when a custom title renders null.
       title: moveActive ? "" : headerTitle,
       headerTransparent: true,
-      headerShown: !dayActive || (!readingOnly && !moveActive),
+      headerShown: !!params.importJobId || !dayActive || (!readingOnly && !moveActive),
       fullScreenGestureEnabled: immersiveHome,
       headerStyle: {
         backgroundColor:
@@ -1588,6 +1589,7 @@ function TripContent({
     });
   }, [
     navigation,
+    params.importJobId,
     today,
     headerTitle,
     styles.navTitle,
@@ -1672,6 +1674,7 @@ function TripContent({
       ) : null}
       {!today ? (
         <LocalTripWorkspace
+          serverParentPeopleEnabled={!guest}
           refreshKey={revision}
           onHomeHeroHeight={onHomeHeroHeight}
           tripId={requested || null}
@@ -1801,36 +1804,28 @@ function TripContent({
                   : colors.background,
               },
               showTimeUnspecified: false,
-              renderDayHeading: dayFacts?.startDate
-                ? (date, empty) => (
-                    <P1MeasuredMoveRegion
-                      regionKey={`day:${date}`}
-                      date={date}
-                      register={move.register}
-                      unregister={move.unregister}
-                    >
-                      <TripDayHeading
-                        tripId={requested}
-                        destinationRead={headerDestinationRead}
-                        date={date}
-                        start={dayFacts.startDate!}
-                        today={appearanceToday ?? ""}
-                        empty={empty}
-                        dayColor={phase(date)}
-                        previousColor={
-                          date === dayFacts.startDate
-                            ? colors.tripIntroduction
-                            : phase(
-                                new Date(Date.parse(date + "T12:00:00Z") - 86400000)
-                                  .toISOString()
-                                  .slice(0, 10),
-                              )
-                        }
-                        onAdd={() => setInsertion({ date, startTime: null })}
-                      />
-                    </P1MeasuredMoveRegion>
-                  )
-                : undefined,
+              renderDayHeading: (date, empty) => (
+                <P1MeasuredMoveRegion
+                  regionKey={`day:${date}`}
+                  date={date}
+                  register={move.register}
+                  unregister={move.unregister}
+                >
+                  <TripDayHeading
+                    tripId={requested}
+                    destinationRead={headerDestinationRead}
+                    date={date}
+                    start={dayFacts?.startDate ?? null}
+                    today={appearanceToday ?? ""}
+                    empty={empty}
+                    dayColor={phase(date)}
+                    previousColor={
+                      dayFeedPreviousColor(date, calendarDates ?? [], appearanceToday, colors)
+                    }
+                    onAdd={() => setInsertion({ date, startTime: null })}
+                  />
+                </P1MeasuredMoveRegion>
+              ),
               wrapDayRow: (date, content) => (
                 <View
                   style={{

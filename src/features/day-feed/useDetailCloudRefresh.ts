@@ -2,7 +2,7 @@ import { useCallback, useRef, type Dispatch, type SetStateAction } from "react";
 import { useFocusEffect } from "expo-router";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { readCommittedLocalSession } from "@/data/auth/authRepository";
-import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 
 // Refresh accepted reads while focused; never replace an open editor's draft.
 export function useDetailCloudRefresh(

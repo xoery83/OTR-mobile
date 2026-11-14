@@ -1,0 +1,14 @@
+{
+  "status": "LOCAL_PRELAUNCH_BYTE_PINS_PASS_NOT_AUTHORITY",
+  "normalHelperPins": {
+    "normal-control.mts": true,
+    "registered-qa-host-session.ts": true,
+    "resend-inbound-otp-e2e.ts": true,
+    "mcp-oauth-qa-checks.ts": true
+  },
+  "issuerSourcePins": "5MATCH",
+  "privatePackageManifest": "13MATCH",
+  "T_D": null,
+  "Session": "NOT_STARTED",
+  "pending": "Root default-closed software deployment + private close/current-version qualification; fresh ConsumerUI/DCR observation before control launch."
+}

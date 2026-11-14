@@ -1,0 +1,56 @@
+{
+  "source": "ROOT2_INDEPENDENT_HOSTED_PG",
+  "canonicalHashVerified": true,
+  "receipt": {
+    "adoptionId": "7da7240f-4019-4a60-b3d7-350525ecddef",
+    "contractVersion": 1,
+    "executionSha256": "bf085b5c809926e5cd5ea085554bc977f698312dec62f75cdd4eade7b204111e",
+    "grantId": "b1a908e2-a9aa-4c33-b71f-3a8971db2d5d",
+    "inventorySha256": "33dcae3e768ddae6ce37c19dc026b67dbdfaf02199516c3bfbafd99e9c5a513c",
+    "outcome": "PUBLISHED",
+    "planSha256": "7f87f83a790dea286a69b411822891a178dcbb33ae594c280778ce29532bfae4",
+    "policyVersion": "otr.auth.fileless-p1.unpriced/1",
+    "preparationSha256": "b40e657a067bdaa0232c45266d040e5ac8e580745403747bd7fa224df281d609",
+    "receiptId": "dd5c71a6-8faa-49ad-be3b-d7120acc2d96",
+    "receiptSha256": "908b0584ece9f02ab042b066b6ed788248815d1cc35e547805e6755dd5bba6c1",
+    "recordedAt": "2026-11-13T17:54:09.669991Z",
+    "schemaId": "otr.auth.guest-adoption-receipt/1",
+    "sourceGuestLocalId": "fc2fc618-d4b0-4dc1-8ed4-586226fd3528",
+    "targetAccountId": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+    "trips": [
+      {
+        "createOperationId": "a29a833f-2c50-401a-ae38-da9214a66b2a",
+        "ledgerSnapshotSha256": "443c7b87e5f2e2551f8dfe347f9e5165e70ba907f51c728a96df41b29f25e81d",
+        "operations": [
+          {
+            "domainReceiptId": null,
+            "kind": "TRIP_CREATE",
+            "mappedIntentSha256": null,
+            "operationId": "a29a833f-2c50-401a-ae38-da9214a66b2a",
+            "owningReceiptSha256": "cc2b0988aad5085c6156ffc6c7f2ceb71e12b9379fba021b467cea2fe6a6fb95",
+            "queueId": "a29a833f-2c50-401a-ae38-da9214a66b2a",
+            "sourceIntentSha256": null
+          },
+          {
+            "domainReceiptId": "8922abfb-8d4b-407e-a7dc-fa8c621383cd",
+            "kind": "CORE",
+            "mappedIntentSha256": "44684c3fa22fdc7d0a457b40e63102fdd8b5b1c775d98b3e3b4ad418ca7bb605",
+            "operationId": "8334b964-5289-4dcb-b301-ec5ffd753208",
+            "owningReceiptSha256": "f4b849cd5ae2e63ca35959120f96f7b539d6924776fbe89a90061f15b0ba2e4d",
+            "queueId": "8334b964-5289-4dcb-b301-ec5ffd753208",
+            "sourceIntentSha256": "44684c3fa22fdc7d0a457b40e63102fdd8b5b1c775d98b3e3b4ad418ca7bb605"
+          }
+        ],
+        "ownerPersonId": "fd5cf89b-be7a-47be-8ac9-82c3bec49123",
+        "personMappings": [
+          {
+            "sourcePersonId": "50231fd6-9d99-451e-bb4c-d7af012073f7",
+            "targetPersonId": "fd5cf89b-be7a-47be-8ac9-82c3bec49123"
+          }
+        ],
+        "sourceCreatorPersonId": "50231fd6-9d99-451e-bb4c-d7af012073f7",
+        "tripId": "faa0ea2b-9729-49b6-8ab7-db924df05e4d"
+      }
+    ]
+  }
+}

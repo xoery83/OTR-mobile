@@ -19,6 +19,19 @@ export function isPhotoImportMaterial(input: {
   );
 }
 
+export function isV3PhotoImportMaterial(input: {
+  kind: string;
+  declaredContentType?: string | null;
+}) {
+  return (
+    (input.kind === "IMAGE" || input.kind === "FILE") &&
+    (input.declaredContentType === "image/jpeg" ||
+      input.declaredContentType === "image/png" ||
+      input.declaredContentType === "image/webp" ||
+      input.declaredContentType === "image/gif")
+  );
+}
+
 export const photoImportPinSchema = z.strictObject({
   accountId: captureIdSchema,
   batchId: z.uuid(),
@@ -29,7 +42,7 @@ export const photoImportPinSchema = z.strictObject({
   payloadId: captureIdSchema,
   sha256: sha256Schema,
   byteCount: z.number().int().positive().max(CAPTURE_LIMITS.binaryBytes),
-  mediaType: z.enum(["image/jpeg", "image/png"]),
+  mediaType: z.enum(["image/jpeg", "image/png", "image/webp", "image/gif"]),
 });
 export type PhotoImportPin = z.infer<typeof photoImportPinSchema>;
 const relevanceSchema = z.discriminatedUnion("status", [

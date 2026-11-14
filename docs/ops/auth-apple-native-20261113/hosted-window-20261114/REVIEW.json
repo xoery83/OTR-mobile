@@ -1,0 +1,17 @@
+{
+  "status": "SCOPED_NO_BLOCKER_FINAL_WINDOW_TEMPLATE",
+  "manifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749",
+  "finding": "Runtime expiry placeholder admitted 1800s instead of reserveStart/max1560s",
+  "fixed": true,
+  "externalExecution": false,
+  "requirementsBeforeActivation": [
+    "Owner exact approval",
+    "Native signed prepared recovery confirmed",
+    "Actual sole Writer and fresh CAS",
+    "Standalone negative close context and disconnect drill",
+    "Independent job frozen and armed before positive activation"
+  ],
+  "root2Alignment": "READ_ONLY_STATIC_ALIGNMENT_PASS; four SQL settings must be SET LOCAL in activation BEGIN; whole adoptionId 0-state; aggregated readback for CLI last-SELECT behavior",
+  "nativeQualification": "PASS_PREPARED_COLD_DEVICE_READBACK_JSON",
+  "finalTemplateVerification": "Four SET LOCAL same BEGIN; one timestamp placeholder; single JSON whole-adoption readback. Independent reviewer and Root2 both verified all 5 file pins."
+}

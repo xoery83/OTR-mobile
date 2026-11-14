@@ -1,0 +1,18 @@
+{
+  "status": "SCOPED_NO_BLOCKER_SOURCE_ONLY",
+  "reviewer": "Auth owning thread01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "observed_at": "2026-11-02T21:27:34.918846+00:00",
+  "closed_findings": [
+    "async read/Host normalClose boundary and token expiry clamp",
+    "formal parent receipt current-window timestamp and owner/private/self/P3/rev1"
+  ],
+  "additional_scope": "Trip discovery cc44 only",
+  "source_sha256": {
+    "mcp/c02Execution.ts": "713637385e01c1894d7281a0bbdbc669f8df467cd68ee2a9137f0bdfca730fee",
+    "mcp/c02Host.ts": "429d269662366b44d79ae61c2f4412c33b9b0215810925d6b1055feadb230e69"
+  },
+  "bundle_sha256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+  "independent_tests_rerun": false,
+  "protected_qualification": false,
+  "authority_granted": false
+}

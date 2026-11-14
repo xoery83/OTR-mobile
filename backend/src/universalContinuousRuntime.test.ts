@@ -139,7 +139,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   f.runtimeMount = undefined;
   f.runtimeInodes.clear();
-  f.config.mockResolvedValue({ taskDatabase: "/unused-test.db" });
+  f.config.mockResolvedValue({ directory: "/unused-test-runtime", taskDatabase: "/unused-test.db" });
   f.stat.mockResolvedValue({
     isFile: () => true,
     isSymbolicLink: () => false,
@@ -506,6 +506,7 @@ it.each(["matching", "other-account", "other-trip"])(
       prepare = vi.fn();
     f.auth.mockResolvedValue({ id: actor });
     f.config.mockResolvedValue({
+      directory: "/unused-test-runtime",
       taskDatabase: "/unused-test.db",
       qaExecutionFence: {
         version: 1,
@@ -791,6 +792,7 @@ it.each(["active", "before", "expired"])(
     const selection = { priceScheduleId: randomUUID() };
     f.auth.mockResolvedValue({ id: actor });
     f.config.mockResolvedValue({
+      directory: "/unused-test-runtime",
       taskDatabase: "/unused-test.db",
       finiteNative: {
         version: 1,

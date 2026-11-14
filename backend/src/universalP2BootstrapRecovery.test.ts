@@ -16,7 +16,7 @@ it("bootstraps the retained P2 snapshots in a standalone Node bundle without Exp
       target: "node24",
       format: "esm",
       alias: { "@": "./src", "expo-crypto": "./backend/src/headlessExpoCrypto.ts" },
-      external: ["react-native", "expo-*"],
+      external: ["./src/data/auth/guestLocalWorkspace.ts", "react-native", "expo-*"],
       outfile: output,
       metafile: true,
       banner: {

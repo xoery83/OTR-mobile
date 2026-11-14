@@ -1,0 +1,34 @@
+{
+  "status": "NARROWING_PROPOSAL_NOT_APPLIED_TO_FIXED_GATE_OR_PACKAGE",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "mode": "MANUAL_OWNER_OTP",
+  "sourceOfDirection": "Parent reports direct Owner ability/choice to supply one normal code from existing QA mailbox; raw human-source binding belongs parent, not fabricated here",
+  "unchanged": [
+    "Same6d49 unused runtime/QA Account/Trip/client/email/resource",
+    "Normal originalScope Consent",
+    "Preview-only business/read scope, noSave/Edit/UNKNOWN",
+    "Finite access clock/EMPTY/CAS/Issuer/Console/timers/close and fresh qualifications",
+    "Real owner durable reservation before single browser UI send; no retry/refund"
+  ],
+  "requiredNarrowing": {
+    "SCOPE.json.browserReceiverCredentialProposal": "Disable/remove unused browser Keychain read and Receiving API capabilities, replacing with manual same-recipient code entry; requires fixed-byte consequences reviewed, do not silently change scope hash.",
+    "OWNER_GATE.md.sections147to225": "Receiver credential permission and source/provider readiness are no longer required browser steps; explicitly prohibit further browser Keychain/APIreceiver reads and preserve prior failure as historical NOT_READY.",
+    "PACKAGE.json.credentialBoundary_and_receiverSourceReadiness": "Mark browserreceiver inactive/notused/manualmode, not PASS; retire only unused browser source/provider availability precondition. Bind source/schema/pins after parent+Root2 narrowing review.",
+    "browserCallback": "Use exact owner request/ACK once with existing fixed email/currentrequestedAt, wait actual RESERVED_LOCK_RETAINED before UI single send. Parent asks Owner for actual code only after actual send; child enters only current normal form, no resend.",
+    "normalControl": "Existing separate host Session helper credential/receiver lifecycle is unchanged; browser manual choice does not prove host credentials available or authorize borrowing its Session. Preserve its qualified source/normal own cleanup checks."
+  },
+  "remainingBlockers": [
+    "Auth terminal sender/session observer and trusted sameSession cleanup receipt consumer",
+    "MCP caller independent Review and Source Integration as required",
+    "Root2 actual current resource release/closure and precise narrowing qualification",
+    "Actual direct Owner manualmode message/source consumption by parent"
+  ],
+  "notPerformed": {
+    "fixedGatePackageOrScopeChanges": 0,
+    "browserCredentialReads": 0,
+    "receiverAPI": 0,
+    "browserSend": 0,
+    "T": null,
+    "OTP": 0
+  }
+}

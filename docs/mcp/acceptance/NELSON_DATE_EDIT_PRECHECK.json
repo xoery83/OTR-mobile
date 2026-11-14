@@ -1,0 +1,18 @@
+{
+  "stage": "READ_ONLY_INDEPENDENT_CLOUD_PRECHECK",
+  "observed_at": "2026-10-31T09:01:17.459652Z",
+  "account_id": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+  "operation_id": "9b077556-e0c3-46a9-8d97-2090504fa856",
+  "exact_receipt_count": 0,
+  "current_revision": 1,
+  "current_start_local_date": "2026-12-11",
+  "current_end_local_date": null,
+  "sql_sha256": "6e0189a3526d46110764075648b7f5e33550674ee5c67d7ce182e1902edd557c",
+  "query_mode": "BEGIN READ ONLY; ROLLBACK",
+  "business_posts": 0,
+  "normal_qa_session_started": false,
+  "native_checkpoint": "PENDING",
+  "interpretation": "Independent current row baseline only; absence of receipt alone is not NoCommit. Original attempt is retained as NOT_SENT/zero POST; no new submit authorized by this read."
+}

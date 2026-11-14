@@ -1,0 +1,35 @@
+{
+  "requestId": "MCP-C02-S1-CONTROLLED-REPLAY-20261104-001",
+  "scopeRevision": "FRESH_USER_PREVIEW_ONLY_NO_UNKNOWN_REPLAY",
+  "coordinationId": "MC-DELIVERY-ACCELERATION-20261104-01",
+  "primary": "MCP-C02 / C02-S1",
+  "status": "ROOT2_READONLY_QUALIFICATION_REQUESTED_NO_ACTIVE_GATE",
+  "supersedesExecutionRequest": "Old controlled-replay execution scope is withdrawn and frozen, evidence unchanged",
+  "allowedPreparation": [
+    "Reuse existing source/build/review evidence without re-running stable tests",
+    "Root2 checks actual Hosted/default compatibility and lawful fresh read/Preview eligibility",
+    "Prepare a distinct exact fresh window/Gate after actual qualification, no old-window reuse"
+  ],
+  "proposedConsumerScope": [
+    "Normal fresh QA OAuth/Consent with existing synthetic identity/client/scope",
+    "Guide and existing synthetic Trip read",
+    "A genuinely independent new user task and real Preview, not original intent with replacement IDs"
+  ],
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "command": null,
+  "confirmations": [],
+  "newWindowId": null,
+  "newGateSHA256": null,
+  "ownerApproved": false,
+  "saveAuthorized": false,
+  "prohibited": [
+    "Original UNKNOWN replay or request to approve it this round",
+    "Replacement ID for the same original intent",
+    "Any Apply/Save under read/Preview qualification",
+    "Reusing frozen054c/c2d7 or closedb0b7 window",
+    "Automatic permission or Hosted execution from this routing correction"
+  ],
+  "nextAction": "Root2 returns only actual minimum fresh-only qualification/software gaps; then MCP fixes the distinct source/window package and obtains exact authority without re-running old gates. Real new-intent Preview must precede Owner save confirmation."
+}

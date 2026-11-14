@@ -1,0 +1,46 @@
+{
+  "status": "SOFTWARE_DEFAULT_CLOSE_PROBE_PASS",
+  "requestedAt": "2026-11-03T19:53:55.172184+00:00",
+  "completedAt": "2026-11-03T19:53:55.606634+00:00",
+  "exitCode": 0,
+  "defaultUnchanged": true,
+  "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+  "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+  "configSHA256": "12ca750ded949aa58bf74e664b0e98c6b0ae15db8a3c0d03e929f645899ae4ba",
+  "probeDirectory": "/opt/otr/dev-backend/build/auth-consumer-write-qa-86b4bcaa1f5549da9992e83701038637",
+  "planSHA256": "6d3746327b9e8044bf7d648dc4d9423e1ebe7d35970e9f940c1a6a45a534753b",
+  "scriptSHA256": "ec14819fe76ffe92dd4ba5fe0e9f808e7fde3f545ad4edc923d8147547eb33a6",
+  "closeReceipts": [
+    {
+      "result": {
+        "status": "AUTH_QA_RUNTIME_REMOVED_RETAINED_DEFAULT_RESTORED",
+        "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+        "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+        "finiteConfigAbsent": true,
+        "health": "healthy"
+      },
+      "deliveryTrace": {
+        "requestedAt": "2026-11-03T19:53:55.315121+00:00",
+        "readyAt": "2026-11-03T19:53:55.331058+00:00",
+        "acquiredAt": "2026-11-03T19:53:55.331159+00:00",
+        "mutationFinishedAt": "2026-11-03T19:53:55.490019+00:00",
+        "releasedAt": "2026-11-03T19:53:55.490058+00:00"
+      }
+    },
+    {
+      "status": "C02_RUNTIME_CLOSED_RETAINED_DEFAULT_VERIFIED",
+      "windowId": "86b4bcaa1f5549da9992e83701038637",
+      "containerId": "8805008f5b707b39688a1e4b87d4522448fb63b8906cfa5864861540b84a499d",
+      "issuerCleanup": "SEPARATE_MANDATORY_AUTH_CLOSE_RECEIPT",
+      "requestTrace": {
+        "status": "SKIPPED_DEFAULT_CONTAINER"
+      }
+    }
+  ],
+  "issuerCleanup": "NOT_STARTED_NOT_REQUIRED_SOFTWARE_ONLY",
+  "authorityActivated": false,
+  "timerStarted": false,
+  "sqlCalls": 0,
+  "paidCalls": 0,
+  "stderrPresent": false
+}

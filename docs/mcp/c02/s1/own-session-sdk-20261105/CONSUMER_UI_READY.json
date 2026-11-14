@@ -1,0 +1,59 @@
+{
+  "status": "FRESH_CONSUMER_UI_PREPARED_READONLY_NO_AUTH_OR_CALLBACK",
+  "observedAt": "2026-11-05T01:14:35.505Z",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "executionChildId": "/root/fresh_preview_execution",
+  "sourceMode": "SDK_OAUTH_CONSENT_SAME_OWNER_SESSION",
+  "windowId": "6d49f895-887d-437c-9294-d381bcd8005d",
+  "gateSHA256": "0a4fdc188d708fd42be384081f8b8ca9c02e0a601673696829799804aaa4ef0f",
+  "scopeSHA256": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+  "packageSHA256": "91bbfc8c5fe565c3656d3991c1a0fa2a39aff154950ef022a1dbd794b473e014",
+  "browser": {
+    "id": "1",
+    "name": "Chrome",
+    "tabId": "1962067640",
+    "createdThisPreparation": true,
+    "url": "https://chatgpt.com/",
+    "notHistoricalUnknownConversation": true
+  },
+  "actualUiObservations": {
+    "method": "Current CUA browser inventory; newtab; freshAX and DOM snapshot; role counts/textContent",
+    "messageArticleCount": 0,
+    "composerCount": 1,
+    "composerTextEmpty": true,
+    "greetingVisible": true,
+    "taskSubmitted": false
+  },
+  "existingOtrSettings": {
+    "readable": true,
+    "url": "https://chatgpt.com/settings/plugins-settings/plugin_asdk_app_6ae59a2086a481918a9d9bef984507ef",
+    "name": "OTR DEV QA",
+    "resourceDisplayed": "https://api-dev.xoery.art/mcp",
+    "authMethodDisplayed": "OAuth",
+    "existingPrimaryAccountWidgetVisible": true,
+    "currentGrantOrTokenValidityProved": false,
+    "reconnectConsentRefreshOrSettingsWrite": false,
+    "returnedToNewBlankChat": true
+  },
+  "callbackModule": {
+    "path": "dist/mcp-c02-own-session-sdk-6d49/static/own-callback-pipe.mjs",
+    "sha256": "0f31f4f43b5de2936687f4dac4ef8582a4e250849649775bc96aca98c23da803",
+    "method": "Successful CUA module import; typeof receiveOwnCallback === function",
+    "functionPresent": true,
+    "called": false,
+    "FIFOOpenedOrRead": false,
+    "callbackPass": false,
+    "restrictionOrRetry": false
+  },
+  "normalControlStarted": false,
+  "extraBrowserSession": false,
+  "SDKAuthRequests": 0,
+  "OTP": 0,
+  "credentialReads": 0,
+  "T": null,
+  "scopeConsent": false,
+  "toolRefresh": false,
+  "toolInvocation": false,
+  "SaveApproved": false,
+  "freshnessLimit": "Observed live in current execution turn. Blank tabs are ephemeral and not marked under browser policy; recheck inventory/state before future control or callback. This is not persistent session/connection/consumer E2E readiness."
+}

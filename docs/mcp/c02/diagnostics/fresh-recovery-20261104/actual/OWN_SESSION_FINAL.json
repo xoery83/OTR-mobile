@@ -1,0 +1,17 @@
+{
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "secretsRecorded": false,
+  "phase": "NORMAL_CONTROL_SESSION_CLEANUP_PASS",
+  "observedAt": "2026-11-04T04:57:10.368Z",
+  "status": 204,
+  "disposition": "ACKNOWLEDGED",
+  "result": {
+    "status": "PASS",
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "runId": "30f07dd9-b4cd-4885-a081-e517da2a1774",
+    "journal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-dP8cn9/run.json"
+  }
+}

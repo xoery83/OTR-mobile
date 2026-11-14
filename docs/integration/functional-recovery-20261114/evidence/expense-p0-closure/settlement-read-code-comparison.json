@@ -1,0 +1,20 @@
+[
+  {
+    "name": "buildPersonalSettlementStatement",
+    "same": true,
+    "oldSHA256": "61c0d5f94632dec79ef5fe2edf7a4d0afa26bd4819233ad2cc8a45befc73733e",
+    "newSHA256": "61c0d5f94632dec79ef5fe2edf7a4d0afa26bd4819233ad2cc8a45befc73733e"
+  },
+  {
+    "name": "calculateSettlementPreview",
+    "same": true,
+    "oldSHA256": "90c5204fba8a2409fa74b1570a5ae94cd066f393b2ae963121b7d23c9458b92c",
+    "newSHA256": "90c5204fba8a2409fa74b1570a5ae94cd066f393b2ae963121b7d23c9458b92c"
+  },
+  {
+    "name": "calculatePersonalSettlementReview",
+    "same": true,
+    "oldSHA256": "b509014282c268e8763724aeef5a333b6cffc21a94a6f4cd87806bdb022be8a3",
+    "newSHA256": "b509014282c268e8763724aeef5a333b6cffc21a94a6f4cd87806bdb022be8a3"
+  }
+]

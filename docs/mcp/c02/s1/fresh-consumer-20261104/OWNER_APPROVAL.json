@@ -1,0 +1,17 @@
+{
+  "recordedAt": "2026-11-03T18:39:05.343004+00:00",
+  "status": "DIRECT_OWNER_APPROVED_NOT_ACTIVATED",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "questionItemId": "[\"request_user_input_async\",\"call_ad908020084c422e9d03c1aeb10da423\",0]",
+  "answer": "批准本轮连接、原Scope Consent和Preview，不包含保存",
+  "packetCommit": "3846c002089f44e7d79caf0cb4b0c5d7a374348f",
+  "gateSHA256": "334ed428fbb010e310701518357661910ea7fbe2a055bcee10574c4fccb03c02",
+  "windowId": "2377fd0a-8cb2-45de-8bc5-a289458a2d6c",
+  "scope": "Original synthetic account/trip/client; normal OTP and original Read/Write Consent; discovery and Fresh Chat single P3 Create Preview only",
+  "businessSaveAuthorized": false,
+  "command": null,
+  "confirmations": [],
+  "clockStarted": false,
+  "rootIndependentSourceReadback": "PENDING",
+  "required": "Fresh current d5ed/3f02 qualification, DCRfalse, exact restore, dual close and receiving readiness before clock/OTP"
+}

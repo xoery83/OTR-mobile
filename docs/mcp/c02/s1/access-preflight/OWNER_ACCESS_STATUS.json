@@ -1,0 +1,29 @@
+{
+  "status": "OWNER_ACCESS_APPROVED_PREACTIVATION_BROWSER_BLOCKED",
+  "recorded_at": "2026-11-03T00:41:27.487019+00:00",
+  "gate_sha256": "c2315ce8580b7658bcf3f52c0df698981750cf5daa98cfe7b05dc307110fa157",
+  "source_thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "actual_owner_reply": "同意授权",
+  "scope": "Finite ChatGPT QA connection and Create Preview only; zero save/Apply authority",
+  "root_independent_source_binding": "REQUESTED_NOT_YET_RECEIVED",
+  "freshConsumerUIReady": false,
+  "browser_failures": [
+    "Prior consumer DOM request timed out after30sec and kernel reset",
+    "Old browser2 now resolves MCP Apps; inventory identifies current Chrome1",
+    "Current Chrome session/tab-list request timed out30sec",
+    "Documented createBrowserTab Chrome/ChatGPT request timed out30sec"
+  ],
+  "root_notified_no_activation": true,
+  "clock_started": false,
+  "otp_started": false,
+  "session_started": false,
+  "issuer_activated": false,
+  "business_applies": 0,
+  "remaining_preconditions": [
+    "Fresh consumer UI",
+    "DCR proven false",
+    "Current protected preimage and watchdog/close qualification",
+    "Root actual human source readback binding"
+  ],
+  "next_action": "Restore Chrome browser-control connection, verify actual fresh chat, then use this same unactivated approval scope; no blind repeated UI calls or new save authority."
+}

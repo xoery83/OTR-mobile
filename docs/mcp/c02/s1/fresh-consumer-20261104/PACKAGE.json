@@ -1,0 +1,26 @@
+{
+  "windowId": "2377fd0a8cb245de8bc5a289458a2d6c",
+  "runtimeWindowId": "2377fd0a-8cb2-45de-8bc5-a289458a2d6c",
+  "gateSHA256": "334ed428fbb010e310701518357661910ea7fbe2a055bcee10574c4fccb03c02",
+  "directory": "/private/tmp/otr-mcp-c02-consumer-2377fd0a8cb245de8bc5a289458a2d6c",
+  "oldDirectory": "/private/tmp/otr-mcp-c02-diagnostic-a2f8c128ba794de4bcf3c98d324ffc63",
+  "files": {
+    "normal-control.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "c02-normal-control.py": "7aa0a4ba945db05fd3cf817fbd4f0fcf481a4d907e8bdb89030436c6e25d9102",
+    "SCOPE.json": "dddc6c7fb82cb39ab4f08d125d33d2d90e1e8a2abb696c64855185f6c7b1a760",
+    "prepare-c02-access-window.py": "89272c89a651cbb6134c2d5dccff25c96f8ea1c863b48f87271973605271f646",
+    "c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "c02-timers.test.py": "217b0d2c559331b8b094792d97ffb9351c3439da568b6176528c9249e5d57be8",
+    "c02-timers.py": "d39ec1fc107aa93fad0af9deaf3c913f61d36c3aae71272e1793475d5b18faf6",
+    "c02-close.py": "e2f45d0492a455d60edfcc87283049a4f096033a6d149dfcf777ed1debb52c81",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/config_cas.py": "0a393f9e8b8295f96acb6b8fd4c264e28fce24eadc911d296063e2138b738db2",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "clockStarted": false,
+  "authorityActivated": false,
+  "businessSaveAuthorized": false,
+  "root2Qualification": "ROOT2_READ_ONLY_QUALIFICATION.json"
+}

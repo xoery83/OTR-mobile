@@ -1,0 +1,15 @@
+{
+  "status": "OFFLINE_ACTUAL_WIRE_INTEROP_PASS",
+  "checks": [
+    "V1_MISSING_CLIENT_REJECTED",
+    "WRONG_CLIENT_REJECTED",
+    "V2_ACTUAL_WIRE_PLAN_CONSTRUCTION_PASS",
+    "EXPIRED_WINDOW_STILL_REJECTED"
+  ],
+  "fixtures": "actual V1/V2 approval and QA config; synthetic Docker snapshots, no Env credentials",
+  "testNow": "positive only simulates original within-window instant; does not reset real clock",
+  "hostCalls": 0,
+  "casCalls": 0,
+  "databaseCalls": 0,
+  "realAuthorityReactivated": false
+}

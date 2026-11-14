@@ -76,7 +76,7 @@ vi.mock("react", async (original) => ({
       deps.length !== previous.length ||
       deps.some((value, index) => !Object.is(value, previous[index]))
     )
-      callback();
+      state.effects.push(callback);
     state.layouts[i] = deps;
   },
   useState: (initial: unknown) => {
@@ -112,7 +112,8 @@ vi.mock("react-native", async () => {
   const primitive = (props: Record<string, any>) => {
     state.nodes.push(props);
     if (props.onPress) state.presses.push(props);
-    if (props.ref) props.ref.current = { scrollTo: state.scrollTo };
+    if (typeof props.ref === "function") props.ref({ measureInWindow: (callback: (...v: number[]) => void) => callback(0, 0, 375, 100) });
+    else if (props.ref) props.ref.current = { scrollTo: state.scrollTo };
     return createElement(
       "div",
       { "data-testid": props.testID, "aria-label": props.accessibilityLabel },
@@ -129,6 +130,11 @@ vi.mock("react-native", async () => {
     View: primitive,
     Text: primitive,
     ScrollView: primitive,
+    FlatList: (props: Record<string, any>) => {
+      state.nodes.push(props);
+      if (props.ref) props.ref.current = { scrollToOffset: ({ offset }: { offset: number }) => state.scrollTo({ y: offset, animated: false }), scrollToIndex: vi.fn(), getNativeScrollRef: () => ({ measureInWindow: (callback: (...values: number[]) => void) => callback(0, 0, 375, 812) }) };
+      return createElement("div", {}, props.ListHeaderComponent, ...props.data.map((item: any, index: number) => createElement(props.CellRendererComponent, { key: item.key, item, index }, props.renderItem({ item, index }))));
+    },
     Pressable: primitive,
     Image: primitive,
     Linking: { openURL: vi.fn() },

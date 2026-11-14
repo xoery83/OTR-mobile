@@ -8,6 +8,7 @@ import {
   persistenceDigest,
 } from "./externalIntegrationPersistence";
 import type { UniversalResult } from "./universalImport";
+import { bindUniversalV3ModelTask, universalV3Profile } from "./universalV3Profile";
 import {
   registeredUniversalModelProfile,
   bindUniversalModelTask,
@@ -36,11 +37,20 @@ const receipt = z.object({
 export function createUniversalTaskReceiptChecks(connection: CorePgConnection) {
   async function read(a: Readonly<Attempt>, t: Readonly<Task>) {
     if (!a.usage_correlation_id) throw new Error("UNIVERSAL_TASK_RECEIPT_UNAVAILABLE");
+    const localFirst =
+      t.consumer_id === "import" &&
+      t.consumer_version === 3 &&
+      t.schema_id === universalV3Profile.execution_scope &&
+      t.run_id === null;
+    const bind = localFirst ? bindUniversalV3ModelTask : bindUniversalModelTask;
+    const profile = localFirst ? universalV3Profile : registeredUniversalModelProfile;
     const raw = await universalPgTransaction(
       connection,
       async (lease) => {
         const result = await lease.query(
-          "SELECT public.model_task_read_universal_receipt($1::uuid,$2::uuid,$3::uuid,$4::uuid) AS receipt",
+          localFirst
+            ? "SELECT public.model_task_read_universal_v3_receipt($1::uuid,$2::uuid,$3::uuid,$4::uuid) AS receipt"
+            : "SELECT public.model_task_read_universal_receipt($1::uuid,$2::uuid,$3::uuid,$4::uuid) AS receipt",
           [a.account_id, a.task_id, a.attempt_id, a.usage_correlation_id],
         );
         return result.rows[0]?.receipt;
@@ -59,7 +69,7 @@ export function createUniversalTaskReceiptChecks(connection: CorePgConnection) {
         ),
       ),
     );
-    const binding = bindUniversalModelTask(
+    const binding = bind(
       r.admission.request_snapshot as Parameters<typeof bindUniversalModelTask>[0],
     );
     if (
@@ -68,9 +78,9 @@ export function createUniversalTaskReceiptChecks(connection: CorePgConnection) {
       r.call.import_id !== t.import_id ||
       r.call.publication_fence !== t.publication_fence ||
       r.call.input_sha256 !== t.input_sha256 ||
-      r.call.schema_sha256 !== registeredUniversalModelProfile.output_schema_sha256 ||
+      r.call.schema_sha256 !== profile.output_schema_sha256 ||
       r.admission.request_sha256 !== binding.request_sha256 ||
-      r.admission.profile_sha256 !== persistenceDigest(registeredUniversalModelProfile) ||
+      r.admission.profile_sha256 !== persistenceDigest(profile) ||
       persistenceDigest(r.admission.profile_snapshot) !== binding.profile_sha256 ||
       binding.request.task_id !== t.task_id ||
       binding.request.logical_request_id !== t.logical_request_id ||
@@ -93,7 +103,7 @@ export function createUniversalTaskReceiptChecks(connection: CorePgConnection) {
         throw new Error("UNIVERSAL_DURABLE_START_UNAVAILABLE");
     },
     async assertCompletion(
-      result: Readonly<UniversalResult>,
+      result: Readonly<Pick<UniversalResult, "providerOutcome" | "providerReceipt">>,
       a: Readonly<Attempt>,
       t: Readonly<Task>,
     ) {

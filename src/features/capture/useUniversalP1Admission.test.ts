@@ -11,6 +11,7 @@ const hooks = vi.hoisted(() => ({
   effects: [] as (() => void)[],
   transport: vi.fn(),
   accepted: vi.fn(),
+  open: vi.fn(),
 }));
 vi.mock("react", () => ({
   useRef(initial: unknown) {
@@ -21,15 +22,23 @@ vi.mock("react", () => ({
   useState(initial: unknown) {
     const i = hooks.stateCursor++;
     if (!(i in hooks.states)) hooks.states[i] = initial;
-    return [hooks.states[i], (value: unknown) => {
-      hooks.states[i] = typeof value === "function" ? value(hooks.states[i]) : value;
-    }];
+    return [
+      hooks.states[i],
+      (value: unknown) => {
+        hooks.states[i] = typeof value === "function" ? value(hooks.states[i]) : value;
+      },
+    ];
   },
   useEffect: (effect: () => void) => hooks.effects.push(effect),
   useLayoutEffect: (effect: () => void) => hooks.layout.push(effect),
 }));
 vi.mock("@/data/auth/accountGeneration", () => ({ getAccountGeneration: () => 1 }));
-function Harness(batchId: string, current = () => true, result?: UniversalImportResult, assignedTripId?: string) {
+function Harness(
+  batchId: string,
+  current = () => true,
+  result?: UniversalImportResult,
+  assignedTripId?: string,
+) {
   hooks.cursor = 0;
   hooks.stateCursor = 0;
   hooks.layout = [];
@@ -47,6 +56,7 @@ beforeEach(() => {
   hooks.effects = [];
   hooks.transport.mockReset();
   hooks.accepted.mockReset();
+  hooks.open.mockReset();
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P6_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P4_ADMISSION_ENABLED", "false");
   vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_P5_ADMISSION_ENABLED", "false");
@@ -120,13 +130,24 @@ it("keeps P6 closed until its own opt-in", () => {
   expect(Harness("batch-a").enabledFamilies).toEqual(["P6"]);
 });
 
-vi.mock("@/data/auth/authRepository", () => ({ requireAdoptedUserId: async () => "qa" }));
+vi.mock("@/data/auth/authRepository", () => ({
+  requireAdoptedUserId: async () => "qa",
+  clearLocalSession: vi.fn(),
+  readLocalSession: async () => null,
+  writeLocalSession: vi.fn(),
+}));
 vi.mock("@/data/repositories/tripCoreSha256", () => ({ tripCoreSha256Hex: vi.fn() }));
 vi.mock("@/data/api/tripCoreV2Transport", () => ({
   createCoreV2Transport: hooks.transport,
 }));
+vi.mock("expo/fetch", () => ({
+  fetch: () => {
+    throw Error("Unexpected Native HTTP in hook unit test");
+  },
+}));
 vi.mock("@/data/operations/universalP1AdmissionConsumer", () => ({
-  readUniversalAcceptedItems: hooks.accepted,
+  readDefaultUniversalAcceptedItems: hooks.accepted,
+  openDefaultUniversalP1Admission: hooks.open,
 }));
 it("receipt-only cold recovery keeps the same Core request budget as explicit confirmation", async () => {
   const transport = { receipt: vi.fn() };
@@ -135,18 +156,31 @@ it("receipt-only cold recovery keeps the same Core request budget as explicit co
   Harness("batch-a", () => true, {} as UniversalImportResult);
   hooks.effects.forEach((effect) => effect());
   await vi.waitFor(() => expect(hooks.accepted).toHaveBeenCalledOnce());
+  expect(hooks.accepted).toHaveBeenCalledWith(
+    expect.any(Object),
+    expect.any(Object),
+    expect.objectContaining({
+      isCurrent: expect.any(Function),
+      onRecoveryState: expect.any(Function),
+    }),
+  );
+  // The request budget belongs to the moved owning factory, not the hook mock.
+  const owning = await vi.importActual<
+    typeof import("@/data/operations/universalP1AdmissionConsumer")
+  >("@/data/operations/universalP1AdmissionConsumer");
+  await expect(
+    owning.readDefaultUniversalAcceptedItems(
+      {} as CaptureJobReadModel,
+      {} as UniversalImportResult,
+      { isCurrent: () => false },
+    ),
+  ).rejects.toThrow();
   expect(hooks.transport).toHaveBeenCalledWith(
     expect.any(Function),
     expect.any(Function),
     { timeoutMs: 90000 },
   );
-  expect(hooks.accepted).toHaveBeenCalledWith(
-    expect.any(Object),
-    expect.any(Object),
-    expect.objectContaining({ transport }),
-  );
 });
-
 
 it("retains receipt-bound Item identity and never downgrades accepted recovery to unknown", async () => {
   const result = {
@@ -191,7 +225,8 @@ it("blocks confirmation while receipt recovery is unknown", async () => {
     "i1",
     {} as Parameters<typeof unavailable.confirm>[2],
   );
-  expect(hooks.transport).toHaveBeenCalledOnce();
+  expect(hooks.accepted).toHaveBeenCalledOnce();
+  expect(hooks.open).not.toHaveBeenCalled();
 });
 
 it("rejects retained Review when attribution changes within the same Batch", async () => {

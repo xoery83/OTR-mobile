@@ -1,0 +1,55 @@
+{
+  "status": "CONSUMER_FULL_P3_READ_AND_LIFETIME_CONTINUATION_PASS_CLOSED",
+  "candidate": "0c4651f6",
+  "gateSHA256": "bba48f2cc6cef5771a272cf601ea7808398da5123b7a6ce1cd17dcb79c6fbfa6",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "chatUrl": "https://claude.ai/chat/673efd4a-0559-4135-974d-c550f8b1c236",
+  "hardDeadline": "2026-10-31T17:45:07.181Z",
+  "plannedClose": "2026-10-31T17:43:07.181Z",
+  "bindingMd5": "7800c2e478bf84dc7b384f6f373cb6b9",
+  "bindingTenChecks": "INDEPENDENT_PASS",
+  "browserOtpSends": 1,
+  "browserOtpRequestedAt": "2026-10-31T17:35:51.496Z",
+  "explicitReadConsentAt": "2026-10-31T17:36:56.321Z",
+  "p3FirstRead": {
+    "status": "PASS_SERVER_CONFIRMED",
+    "fullTypedBackendCompare": "MATCH",
+    "itemSha256": "c2f9627883fc5a266bae2444ac230f8dbf99f8044afc119c39dfa5a536ce807b",
+    "response": "CLAUDE_P3_C_RESPONSE.json"
+  },
+  "lifetimeRead": {
+    "status": "PASS_SERVER_CONFIRMED",
+    "approvedAt": "2026-10-31T17:39:16.951Z",
+    "firstReadCompletedAt": "2026-10-31T17:38:06.852Z",
+    "fullTypedBackendCompare": "MATCH",
+    "noReconnectionOrNewConsent": true,
+    "refreshWireMechanism": "NOT_OBSERVED",
+    "response": "CLAUDE_P3_C_LIFETIME_RESPONSE.json"
+  },
+  "foreign": {
+    "status": "PASS_NOT_VISIBLE",
+    "itemReturned": false,
+    "visibleToolError": "CLAUDE_FOREIGN_C_VISIBLE.txt"
+  },
+  "revoke": {
+    "normalDeleteHttp": 204,
+    "ackAt": "2026-10-31T17:40:53.712Z",
+    "freshAbsence": "AUTH_NORMAL_CONTROL_ACK",
+    "singleLiveProbeApprovedAt": "2026-10-31T17:41:35.514Z",
+    "clientResult": "AUTHENTICATION_REQUIRED_NO_ITEM_RESPONSE",
+    "reconnect": false,
+    "liveServer401": "PASS_TWO_OBSERVED_AFTER_REVOKE_WHILE_ROUTE_LIVE",
+    "logFile": "CLAUDE_C_AUTH_PROJECTED_EVENTS.json",
+    "causality": "NOT_ISOLATED_FROM_TOKEN_EXPIRY",
+    "noFreshItemReturned": true
+  },
+  "businessWrites": 0,
+  "ownerNelsonAccess": false,
+  "tripListReplay": false,
+  "historicalBFailureCause": "UNPROVEN_NOT_REPRODUCED_IN_C",
+  "fullClosure": "C_COMPLETE_CLOSED_INDEPENDENTLY_VERIFIED",
+  "closureEvidence": "CLAUDE_C_AUTH_CLOSED.json",
+  "closedObservedAt": "2026-10-31T17:44:46.206290+00:00",
+  "independentReview": "FINAL_NO_BLOCKER_RAW_RESPONSES_PRIVACY_PROJECTED_LOGS_AND_FULL_CLOSURE"
+}

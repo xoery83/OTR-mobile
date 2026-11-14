@@ -1,0 +1,13 @@
+{
+  "status": "QUALIFIED_UI_FIRST_WITH_AUTOMATIC_RUNTIME_ISSUER_FENCES",
+  "uiCloseOwner": "Root2",
+  "uiCloseTabId": "1962067372",
+  "consoleClosedFreshReadback": "2026-11-04T01:54:01.861244+00:00",
+  "DCR": false,
+  "issuerClosedMD5": "b0f7eae14599bd32cb9430a59832c837",
+  "noChangeCloseProbe": "/private/tmp/otr-root2-mcp-diagnostic-7c1301c6/POST_DEPLOY_CLOSE_PROBE.json",
+  "collectorSHA256": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+  "timerSHA256": "2f7f875a66a902d991c590f8b8ea20f7b190cc85b01402d2e109671c30cd1199",
+  "casSHA256": "fa44d6f4d6d5de004f0d8727d4786bd846cd5ff8077f7626de1c088dbc08fb0c",
+  "scopeOfAutomaticClosure": "Dual absolute Host timers, finite Issuer expiry+watcher, site/hook close watcher; Root2 completes OAuth OFF via retained authenticated Console. CLI OAuth OFF pair-field problem remains; no unattended OAuth toggle claimed."
+}

@@ -1,0 +1,973 @@
+{
+  "columns": [
+    {
+      "name": "id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "trip_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "title",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "description",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "event_type",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "location_name",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "planned_start",
+      "table": "itinerary_events",
+      "type": "timestamp with time zone"
+    },
+    {
+      "name": "planned_end",
+      "table": "itinerary_events",
+      "type": "timestamp with time zone"
+    },
+    {
+      "name": "booking_reference",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "url",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "order_index",
+      "table": "itinerary_events",
+      "type": "integer"
+    },
+    {
+      "name": "created_by",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "created_at",
+      "table": "itinerary_events",
+      "type": "timestamp with time zone"
+    },
+    {
+      "name": "updated_at",
+      "table": "itinerary_events",
+      "type": "timestamp with time zone"
+    },
+    {
+      "name": "source_text",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "confidence",
+      "table": "itinerary_events",
+      "type": "numeric"
+    },
+    {
+      "name": "needs_review",
+      "table": "itinerary_events",
+      "type": "boolean"
+    },
+    {
+      "name": "trip_day_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "reservation_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "is_estimated_time",
+      "table": "itinerary_events",
+      "type": "boolean"
+    },
+    {
+      "name": "date_confidence",
+      "table": "itinerary_events",
+      "type": "numeric"
+    },
+    {
+      "name": "time_confidence",
+      "table": "itinerary_events",
+      "type": "numeric"
+    },
+    {
+      "name": "participants_confidence",
+      "table": "itinerary_events",
+      "type": "numeric"
+    },
+    {
+      "name": "location_confidence",
+      "table": "itinerary_events",
+      "type": "numeric"
+    },
+    {
+      "name": "status",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "location_text",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "location_lat",
+      "table": "itinerary_events",
+      "type": "double precision"
+    },
+    {
+      "name": "location_lng",
+      "table": "itinerary_events",
+      "type": "double precision"
+    },
+    {
+      "name": "location_status",
+      "table": "itinerary_events",
+      "type": "location_resolution_status"
+    },
+    {
+      "name": "place_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "location_provider",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "location_provider_place_id",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "geocoded_at",
+      "table": "itinerary_events",
+      "type": "timestamp with time zone"
+    },
+    {
+      "name": "geocode_error",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "geocode_attempts",
+      "table": "itinerary_events",
+      "type": "integer"
+    },
+    {
+      "name": "manual_location",
+      "table": "itinerary_events",
+      "type": "boolean"
+    },
+    {
+      "name": "temporal_contract_version",
+      "table": "itinerary_events",
+      "type": "smallint"
+    },
+    {
+      "name": "temporal_shape",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "semantic_revision",
+      "table": "itinerary_events",
+      "type": "bigint"
+    },
+    {
+      "name": "timing_label",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "timing_provenance_ref",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "participant_scope",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "legacy_planned_start",
+      "table": "itinerary_events",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "legacy_planned_end",
+      "table": "itinerary_events",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "legacy_is_estimated_time",
+      "table": "itinerary_events",
+      "type": "boolean"
+    },
+    {
+      "name": "legacy_snapshot_at",
+      "table": "itinerary_events",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "start_local_date",
+      "table": "itinerary_events",
+      "type": "date"
+    },
+    {
+      "name": "start_local_time",
+      "table": "itinerary_events",
+      "type": "time(6) without time zone"
+    },
+    {
+      "name": "start_clock_precision",
+      "table": "itinerary_events",
+      "type": "smallint"
+    },
+    {
+      "name": "start_quality",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "start_basis",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "start_zone_id",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "start_supplied_offset_seconds",
+      "table": "itinerary_events",
+      "type": "integer"
+    },
+    {
+      "name": "start_source_instant",
+      "table": "itinerary_events",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "start_source_instant_precision",
+      "table": "itinerary_events",
+      "type": "smallint"
+    },
+    {
+      "name": "start_civil_resolution",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "start_resolution_offset_seconds",
+      "table": "itinerary_events",
+      "type": "integer"
+    },
+    {
+      "name": "start_interpretation_key",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "start_interpretation_input_sha256",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "start_provenance_refs",
+      "table": "itinerary_events",
+      "type": "jsonb"
+    },
+    {
+      "name": "end_local_date",
+      "table": "itinerary_events",
+      "type": "date"
+    },
+    {
+      "name": "end_local_time",
+      "table": "itinerary_events",
+      "type": "time(6) without time zone"
+    },
+    {
+      "name": "end_clock_precision",
+      "table": "itinerary_events",
+      "type": "smallint"
+    },
+    {
+      "name": "end_quality",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "end_basis",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "end_zone_id",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "end_supplied_offset_seconds",
+      "table": "itinerary_events",
+      "type": "integer"
+    },
+    {
+      "name": "end_source_instant",
+      "table": "itinerary_events",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "end_source_instant_precision",
+      "table": "itinerary_events",
+      "type": "smallint"
+    },
+    {
+      "name": "end_civil_resolution",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "end_resolution_offset_seconds",
+      "table": "itinerary_events",
+      "type": "integer"
+    },
+    {
+      "name": "end_interpretation_key",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "end_interpretation_input_sha256",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "end_provenance_refs",
+      "table": "itinerary_events",
+      "type": "jsonb"
+    },
+    {
+      "name": "authored_label",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_text",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_address",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_latitude",
+      "table": "itinerary_events",
+      "type": "double precision"
+    },
+    {
+      "name": "accepted_longitude",
+      "table": "itinerary_events",
+      "type": "double precision"
+    },
+    {
+      "name": "accepted_place_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "spatial_provenance_refs",
+      "table": "itinerary_events",
+      "type": "jsonb"
+    },
+    {
+      "name": "location_input_revision",
+      "table": "itinerary_events",
+      "type": "bigint"
+    },
+    {
+      "name": "candidate_input_revision",
+      "table": "itinerary_events",
+      "type": "bigint"
+    },
+    {
+      "name": "candidate_provider",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "candidate_provider_place_id",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "candidate_place_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "candidate_label",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "candidate_address",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "candidate_latitude",
+      "table": "itinerary_events",
+      "type": "double precision"
+    },
+    {
+      "name": "candidate_longitude",
+      "table": "itinerary_events",
+      "type": "double precision"
+    },
+    {
+      "name": "candidate_confidence",
+      "table": "itinerary_events",
+      "type": "numeric"
+    },
+    {
+      "name": "candidate_state",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "candidate_observed_at",
+      "table": "itinerary_events",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "candidate_error_code",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_line1",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_line2",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_locality",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_region",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_postal_code",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_country",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_line1",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_line2",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_locality",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_region",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_postal_code",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_country",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "owner_account_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "visibility",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "hidden_at",
+      "table": "itinerary_events",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "field_state",
+      "table": "itinerary_events",
+      "type": "jsonb"
+    },
+    {
+      "name": "business_contract_version",
+      "table": "itinerary_events",
+      "type": "smallint"
+    },
+    {
+      "name": "experience_family",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "participation_mode",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "self_person_id",
+      "table": "itinerary_events",
+      "type": "uuid"
+    },
+    {
+      "name": "activity_category",
+      "table": "itinerary_events",
+      "type": "text"
+    },
+    {
+      "name": "event_id",
+      "table": "itinerary_transport_endpoints",
+      "type": "uuid"
+    },
+    {
+      "name": "role",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "instant",
+      "table": "itinerary_transport_endpoints",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "local_date",
+      "table": "itinerary_transport_endpoints",
+      "type": "date"
+    },
+    {
+      "name": "local_time",
+      "table": "itinerary_transport_endpoints",
+      "type": "time(6) without time zone"
+    },
+    {
+      "name": "clock_precision",
+      "table": "itinerary_transport_endpoints",
+      "type": "smallint"
+    },
+    {
+      "name": "quality",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "basis",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "zone_id",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "supplied_offset_seconds",
+      "table": "itinerary_transport_endpoints",
+      "type": "integer"
+    },
+    {
+      "name": "source_instant",
+      "table": "itinerary_transport_endpoints",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "source_instant_precision",
+      "table": "itinerary_transport_endpoints",
+      "type": "smallint"
+    },
+    {
+      "name": "civil_resolution",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "resolution_offset_seconds",
+      "table": "itinerary_transport_endpoints",
+      "type": "integer"
+    },
+    {
+      "name": "interpretation_key",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "interpretation_input_sha256",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "provenance_refs",
+      "table": "itinerary_transport_endpoints",
+      "type": "jsonb"
+    },
+    {
+      "name": "authored_label",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_text",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_address",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_latitude",
+      "table": "itinerary_transport_endpoints",
+      "type": "double precision"
+    },
+    {
+      "name": "accepted_longitude",
+      "table": "itinerary_transport_endpoints",
+      "type": "double precision"
+    },
+    {
+      "name": "accepted_place_id",
+      "table": "itinerary_transport_endpoints",
+      "type": "uuid"
+    },
+    {
+      "name": "spatial_provenance_refs",
+      "table": "itinerary_transport_endpoints",
+      "type": "jsonb"
+    },
+    {
+      "name": "location_input_revision",
+      "table": "itinerary_transport_endpoints",
+      "type": "bigint"
+    },
+    {
+      "name": "candidate_input_revision",
+      "table": "itinerary_transport_endpoints",
+      "type": "bigint"
+    },
+    {
+      "name": "candidate_provider",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "candidate_provider_place_id",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "candidate_place_id",
+      "table": "itinerary_transport_endpoints",
+      "type": "uuid"
+    },
+    {
+      "name": "candidate_label",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "candidate_address",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "candidate_latitude",
+      "table": "itinerary_transport_endpoints",
+      "type": "double precision"
+    },
+    {
+      "name": "candidate_longitude",
+      "table": "itinerary_transport_endpoints",
+      "type": "double precision"
+    },
+    {
+      "name": "candidate_confidence",
+      "table": "itinerary_transport_endpoints",
+      "type": "numeric"
+    },
+    {
+      "name": "candidate_state",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "candidate_observed_at",
+      "table": "itinerary_transport_endpoints",
+      "type": "timestamp(6) with time zone"
+    },
+    {
+      "name": "candidate_error_code",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_line1",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_line2",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_locality",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_region",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_postal_code",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "authored_address_country",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_line1",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_line2",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_locality",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_region",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_postal_code",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "accepted_address_country",
+      "table": "itinerary_transport_endpoints",
+      "type": "text"
+    },
+    {
+      "name": "trip_id",
+      "table": "itinerary_transport_endpoints",
+      "type": "uuid"
+    },
+    {
+      "name": "event_id",
+      "table": "itinerary_transport_services",
+      "type": "uuid"
+    },
+    {
+      "name": "service_key",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "transport_subtype",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "attribution",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "operator_namespace",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "operator_issuer",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "operator_value",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "operator_literal",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "service_number",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "service_literal",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "codeshare_operating_key",
+      "table": "itinerary_transport_services",
+      "type": "text"
+    },
+    {
+      "name": "provenance_refs",
+      "table": "itinerary_transport_services",
+      "type": "jsonb"
+    },
+    {
+      "name": "trip_id",
+      "table": "itinerary_transport_services",
+      "type": "uuid"
+    },
+    {
+      "name": "event_id",
+      "table": "trip_flight_intents",
+      "type": "uuid"
+    },
+    {
+      "name": "trip_id",
+      "table": "trip_flight_intents",
+      "type": "uuid"
+    },
+    {
+      "name": "flight_number_literal",
+      "table": "trip_flight_intents",
+      "type": "text"
+    },
+    {
+      "name": "qualification",
+      "table": "trip_flight_intents",
+      "type": "text"
+    },
+    {
+      "name": "trip_id",
+      "table": "trip_item_participants",
+      "type": "uuid"
+    },
+    {
+      "name": "item_id",
+      "table": "trip_item_participants",
+      "type": "uuid"
+    },
+    {
+      "name": "person_id",
+      "table": "trip_item_participants",
+      "type": "uuid"
+    },
+    {
+      "name": "active",
+      "table": "trip_item_participants",
+      "type": "boolean"
+    },
+    {
+      "name": "trip_id",
+      "table": "trip_item_visibility_people",
+      "type": "uuid"
+    },
+    {
+      "name": "item_id",
+      "table": "trip_item_visibility_people",
+      "type": "uuid"
+    },
+    {
+      "name": "person_id",
+      "table": "trip_item_visibility_people",
+      "type": "uuid"
+    }
+  ],
+  "functions": [
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.assert_trip_core_v2_aggregate(item uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog'\nAS $function$ declare root public.itinerary_events;endpoint_count integer;service_count integer;begin\n select * into root from public.itinerary_events where id=item;\n if not found then return;end if;\n if root.business_contract_version is null then perform public.assert_trip_event_aggregate(item);return;end if;\n if not public.trip_core_event_row_valid(to_jsonb(root)) then raise exception 'CORE_V2_INVALID_AGGREGATE' using errcode='23514';end if;\n select count(*) into endpoint_count from public.itinerary_transport_endpoints where event_id=item;\n select count(*) into service_count from public.itinerary_transport_services where event_id=item;\n if root.temporal_shape='TRANSPORT' then\n  if endpoint_count<>2 or not exists(select 1 from public.itinerary_transport_endpoints where event_id=item and role='ORIGIN' and local_date is not null) then raise exception 'CORE_V2_INVALID_ENDPOINTS' using errcode='23514';end if;\n  if root.experience_family='P2' AND (session_user='otr_trip_core_v2_gateway'\n   AND coalesce(current_setting('otr.core.command',true),'') IN ('SET_AUTHORED_FLIGHT_DETAILS','SET_ITEM_PARTICIPATION')\n   AND current_setting('otr.core.family',true) IS NOT DISTINCT FROM 'P2'\n   AND current_setting('otr.core.admission',true) IS NOT DISTINCT FROM 'MANUAL'\n   AND current_setting('otr.core.target_item',true) IS NOT DISTINCT FROM item::text\n   AND root.owner_account_id IS NOT DISTINCT FROM nullif(current_setting('otr.core.actor',true),'')::uuid\n   AND public.trip_sustained_dev_scope_allowed(root.owner_account_id,root.trip_id,null,'CORE_P2_DETAILS')) IS TRUE then\n   if service_count<>0 OR NOT EXISTS(SELECT 1 FROM public.trip_flight_intents WHERE event_id=item AND trip_id=root.trip_id AND qualification='SPARSE')\n    OR EXISTS(SELECT 1 FROM public.itinerary_transport_endpoints ep WHERE ep.event_id=item AND (ep.instant IS NOT NULL OR ep.source_instant IS NOT NULL OR ep.source_instant_precision IS NOT NULL OR ep.interpretation_key IS NOT NULL OR ep.interpretation_input_sha256 IS NOT NULL OR ep.provenance_refs IS NOT NULL OR ep.civil_resolution IS DISTINCT FROM 'PENDING' OR ep.basis IS DISTINCT FROM 'DERIVED_CIVIL' OR ep.resolution_offset_seconds IS NOT NULL OR ep.supplied_offset_seconds IS NOT NULL))\n   then raise exception 'CORE_V2_INVALID_AUTHORED_FLIGHT' using errcode='23514';end if;\n  else\n  if root.experience_family='P2' and (service_count not between 1 and 4 or exists(select 1 from public.itinerary_transport_services where event_id=item and transport_subtype<>'FLIGHT') or not exists(select 1 from public.trip_flight_intents where event_id=item and qualification='QUALIFIED')) then raise exception 'CORE_V2_INVALID_FLIGHT' using errcode='23514';end if;\n  end if;\n  if root.experience_family='P5' and (service_count<>1 or exists(select 1 from public.itinerary_transport_services where event_id=item and transport_subtype='FLIGHT')) then raise exception 'CORE_V2_INVALID_SEGMENT' using errcode='23514';end if;\n elsif endpoint_count<>0 or service_count<>0 then raise exception 'CORE_V2_DUPLICATE_SCHEDULE' using errcode='23514';end if;\n if root.experience_family='P2' and root.temporal_shape='CALENDAR' and not exists(select 1 from public.trip_flight_intents where event_id=item and qualification='SPARSE') then raise exception 'CORE_V2_INVALID_SPARSE_FLIGHT' using errcode='23514';end if;\n if root.participation_mode='SELECTED_MEMBERS' and not exists(select 1 from public.trip_item_participants where item_id=item and active) or root.participation_mode<>'SELECTED_MEMBERS' and exists(select 1 from public.trip_item_participants where item_id=item and active) then raise exception 'CORE_V2_INVALID_PARTICIPATION' using errcode='23514';end if;\n if root.visibility='SELECTED_PERSONS' and not exists(select 1 from public.trip_item_visibility_people where item_id=item) or root.visibility<>'SELECTED_PERSONS' and exists(select 1 from public.trip_item_visibility_people where item_id=item) then raise exception 'CORE_V2_INVALID_VISIBILITY' using errcode='23514';end if;\nend $function$\n",
+      "name": "assert_trip_core_v2_aggregate"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.trip_core_boundary_valid(row_data jsonb, prefix text)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'pg_catalog'\nAS $function$ declare d date; t time; p integer; q text; b text; n timestamptz; s timestamptz; sp integer;r text;off integer;z text;ik text;ih text;begin\n d:=(row_data->>(prefix||'local_date'))::date;t:=(row_data->>(prefix||'local_time'))::time;p:=(row_data->>(prefix||'clock_precision'))::integer;\n q:=row_data->>(prefix||'quality');b:=row_data->>(prefix||'basis');s:=(row_data->>(prefix||'source_instant'))::timestamptz;sp:=(row_data->>(prefix||'source_instant_precision'))::integer;\n r:=row_data->>(prefix||'civil_resolution');off:=(row_data->>(prefix||'resolution_offset_seconds'))::integer;z:=row_data->>(prefix||'zone_id');ik:=row_data->>(prefix||'interpretation_key');ih:=row_data->>(prefix||'interpretation_input_sha256');\n n:=(row_data->>case prefix when 'start_' then 'planned_start' when 'end_' then 'planned_end' else 'instant' end)::timestamptz;\n if d is not null and (not isfinite(d) or extract(year from d) not between 1 and 9999) or t is not null and t>=time '24:00' or n is not null and not isfinite(n) then return false;end if;\n if (t is null)<>(p is null) or p is not null and (p not between -1 and 6 or p=-1 and extract(second from t)<>0 or p>=0 and extract(epoch from t)<>trunc(extract(epoch from t),p)) then return false;end if;\n if (s is null)<>(sp is null) or sp is not null and (sp not between -1 and 6 or sp=-1 and extract(second from s at time zone 'UTC')<>0 or sp>=0 and extract(epoch from s)<>trunc(extract(epoch from s),sp)) then return false;end if;\n if n is not null then\n  if q<>'EXACT' or q is null then return false;end if;\n  if b='SOURCE_INSTANT' then return s is not null and n=s;end if;\n  return b='DERIVED_CIVIL' and d is not null and t is not null and z is not null and r in ('UNIQUE','FOLD_RESOLVED') and off is not null and ik is not null and ih ~ '^[0-9a-f]{64}$' and n=((d+t) at time zone 'UTC')-make_interval(secs=>off);\n end if;\n if s is not null or b='SOURCE_INSTANT' or off is not null or ik is not null or ih is not null or r is not null and r<>'PENDING' then return false;end if;\n if t is null then return (q='UNKNOWN' or q is null) and (b='DERIVED_CIVIL' or b is null);end if;\n return q='ESTIMATED' and b='DERIVED_CIVIL' and r='PENDING';\nexception when others then return false;end $function$\n",
+      "name": "trip_core_boundary_valid"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.trip_core_event_row_valid(r jsonb)\n RETURNS boolean\n LANGUAGE plpgsql\n IMMUTABLE\n SET search_path TO 'pg_catalog'\nAS $function$ declare family text:=r->>'experience_family';shape text:=r->>'temporal_shape';begin\n if r->>'business_contract_version'<>'2' or r->>'temporal_contract_version'<>'1' or r->>'owner_account_id' is null or r->>'visibility' not in ('PRIVATE','GROUP','SELECTED_PERSONS') or r->>'participation_mode' not in ('WHOLE_GROUP','SELECTED_MEMBERS','SELF') or r->>'participant_scope'<>(case when r->>'participation_mode'='WHOLE_GROUP' then 'WHOLE_GROUP' else 'ASSIGNED' end) or jsonb_typeof(r->'field_state')<>'object' or r->>'semantic_revision' is null then return false;end if;\n if family not in ('P1','P2','P3','P4','P5','P6') or shape not in ('POINT','CALENDAR','ALL_DAY','SPAN','STAY','TRANSPORT','WINDOW') then return false;end if;\n if family='P3' and (shape<>'STAY' or r->>'end_local_date' is null) or family='P5' and shape<>'TRANSPORT' or family='P2' and shape not in ('CALENDAR','TRANSPORT') or family in ('P1','P4','P6') and shape in ('STAY','TRANSPORT') then return false;end if;\n if shape='TRANSPORT' then return r->>'start_local_date' is null and r->>'end_local_date' is null and r->>'planned_start' is null and r->>'planned_end' is null;end if;\n return r->>'start_local_date' is not null and public.trip_core_boundary_valid(r,'start_') and public.trip_core_boundary_valid(r,'end_') and (r->>'end_local_date' is null or (r->>'end_local_date')::date >=(r->>'start_local_date')::date) and (r->>'planned_start' is null or r->>'planned_end' is null or (r->>'planned_end')::timestamptz >= (r->>'planned_start')::timestamptz);\nexception when others then return false;end $function$\n",
+      "name": "trip_core_event_row_valid"
+    }
+  ]
+}

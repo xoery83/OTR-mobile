@@ -1,0 +1,51 @@
+{
+  "status": "HOST_ONLY_IMAGE_BUILT_ISOLATED_PASS_NOT_DEPLOYED",
+  "observedAt": "2026-11-04T05:17:35.108647+00:00",
+  "image": "sha256:5a33c03597da26d655a417e5a36b2277f99d2b3132db1dd15ebcbdd0dd59c058",
+  "parentImage": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "imageConfigExactParent": true,
+  "singleNewLayer": true,
+  "bundles": {
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67",
+    "mcp/c02-host.mjs": "68a54bb4eacbc0a74b7832e04751cc1ca5fcbcb82858141d143797175bcbe973",
+    "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+    "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb"
+  },
+  "checks": [
+    {
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "path": "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items",
+      "status": 401
+    },
+    {
+      "path": "/v1/auth/guest-adoptions/status",
+      "status": 401
+    },
+    {
+      "path": "/v1/auth/guest-adoptions/preflight",
+      "status": 401
+    }
+  ],
+  "hostFileMode": "0644",
+  "applicationUserReadCheck": "UID10001_PASS",
+  "defaultClosedHandler": "NULL_PASS",
+  "network": "none",
+  "privateMounts": 0,
+  "defaultContainerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+  "defaultConfigSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+  "currentServiceUnchanged": true,
+  "configurationFilesVerified": 18,
+  "mountedFilesVerified": 5,
+  "sharedLockAvailable": true,
+  "protectedTimerCount": 0,
+  "runtimeActivated": false,
+  "businessWrites": 0,
+  "providerCalls": 0,
+  "sourceCommit": "7be57c8611f9310d17bc6a4d519ff67ba77a75a3",
+  "rejectedFirstImage": "sha256:bcf1dda6816c46f43b65ff28936d8e43fbda26ca60e2cbc1efa505556d7e7dd4",
+  "firstImageDisposition": "UNQUALIFIED_DO_NOT_DEPLOY_HOST_FILE_EACCES",
+  "secondBuildDisposition": "NO_IMAGE_LEGACY_BUILDER_DOES_NOT_SUPPORT_COPY_CHMOD"
+}

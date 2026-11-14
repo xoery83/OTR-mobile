@@ -1,0 +1,72 @@
+{
+  "version": "otr.mcp.read/1",
+  "state": "SERVER_CONFIRMED",
+  "items": [
+    {
+      "view": "SUMMARY",
+      "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+      "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "itemRevision": 1,
+      "family": "P3",
+      "title": "Synthetic Nelson QA lodge (unbooked)",
+      "localDates": [
+        "2026-12-10",
+        "2026-12-13"
+      ],
+      "status": "planned",
+      "hidden": false,
+      "temporalShape": "STAY",
+      "detail": {
+        "tool": "get_trip_item",
+        "arguments": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "item_id": "3616da44-0d35-4400-a739-01f1029565ea"
+        }
+      }
+    },
+    {
+      "view": "SUMMARY",
+      "itemId": "73f6d7a2-3191-46ca-aba9-ea57d61f2183",
+      "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "itemRevision": 1,
+      "family": "P1",
+      "title": "Synthetic Abel Tasman QA walk",
+      "localDates": [
+        "2026-12-11"
+      ],
+      "status": "planned",
+      "hidden": false,
+      "temporalShape": "CALENDAR",
+      "detail": {
+        "tool": "get_trip_item",
+        "arguments": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "item_id": "73f6d7a2-3191-46ca-aba9-ea57d61f2183"
+        }
+      }
+    },
+    {
+      "view": "SUMMARY",
+      "itemId": "b26b8f5e-8db3-406a-a5e4-81219210c8bc",
+      "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+      "itemRevision": 1,
+      "family": "P6",
+      "title": "Synthetic Nelson QA gallery visit",
+      "localDates": [
+        "2026-12-12"
+      ],
+      "status": "planned",
+      "hidden": false,
+      "temporalShape": "CALENDAR",
+      "detail": {
+        "tool": "get_trip_item",
+        "arguments": {
+          "trip_id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+          "item_id": "b26b8f5e-8db3-406a-a5e4-81219210c8bc"
+        }
+      }
+    }
+  ],
+  "snapshot": "78f86514d68ea51fa9112d0620a74e6d46f91c6a87b9d9677372b66cc7f206d6",
+  "next_cursor": null
+}

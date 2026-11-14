@@ -25,13 +25,28 @@ export async function screenCapturePhotoRelevance(
   current();
   const png = [137, 80, 78, 71, 13, 10, 26, 10].every((b, i) => bytes[i] === b);
   const jpeg = bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
+  const ascii = (start: number, end: number) =>
+    String.fromCharCode(...bytes.subarray(start, end));
+  const expectedSignature = {
+    "image/png": png,
+    "image/jpeg": jpeg,
+    "image/webp": ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP",
+    "image/gif": ["GIF87a", "GIF89a"].includes(ascii(0, 6)),
+  }[pin.mediaType];
   if (
     bytes.length !== pin.byteCount ||
     (await dependencies.hash(bytes)) !== pin.sha256 ||
-    !(pin.mediaType === "image/png" ? png : jpeg)
+    !expectedSignature
   )
     throw new Error("PHOTO_IMPORT_ORIGINAL_CHANGED");
   current();
+  const uncertain = {
+    version: 1,
+    pin,
+    relevance: { status: "UNCERTAIN", reason: "OCR_UNAVAILABLE" },
+    choice: "UNDECIDED",
+  } as const;
+  if (pin.mediaType === "image/webp" || pin.mediaType === "image/gif") return uncertain;
   let extraction: CaptureLocalExtraction;
   try {
     extraction = await dependencies.extract(new Uint8Array(bytes), pin.mediaType);
@@ -39,12 +54,7 @@ export async function screenCapturePhotoRelevance(
     current();
     if (error instanceof Error && error.message === "CAPTURE_ORIGINAL_MISMATCH")
       throw new Error("PHOTO_IMPORT_ORIGINAL_CHANGED");
-    return {
-      version: 1,
-      pin,
-      relevance: { status: "UNCERTAIN", reason: "OCR_UNAVAILABLE" },
-      choice: "UNDECIDED",
-    };
+    return uncertain;
   }
   current();
   if (

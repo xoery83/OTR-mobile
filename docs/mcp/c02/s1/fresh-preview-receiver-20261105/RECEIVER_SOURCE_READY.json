@@ -1,0 +1,39 @@
+{
+  "status": "NOT_READY_EXACT_KEYCHAIN_SEARCH_FAILED_NO_SECRET_RETURNED",
+  "recordedAt": "2026-11-04T23:19:25.424230+00:00",
+  "executionChildId": "/root/fresh_preview_execution",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "windowId": "6d49f895-887d-437c-9294-d381bcd8005d",
+  "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+  "packageSHA256": "1067ea07cd79372ebb1fa5778ea042067a10843dce514b57f4ce73f585fd0bc4",
+  "method": "mcp__cua_repl.js original node:child_process execFileSync /usr/bin/security exact approved selectors; no CLI/otherAgent alternate-source call",
+  "actualPlatformObservation": "Tool body was allowed to execute and OS search returned error; this is not the previous policy rejection, not proof of global key absence, and not blanket runtime approval.",
+  "selectors": {
+    "service": "OTR_QA_RESEND_API_KEY",
+    "account": "resend",
+    "label": "OTR-QA-Inbound",
+    "requestValue": true,
+    "physicalKeychainFileSpecified": false
+  },
+  "actualError": [
+    "security: SecKeychainSearchCreateFromAttributes: One or more parameters passed to a function were not valid.",
+    "security: SecKeychainSearchCopyNext: The specified item could not be found in the keychain."
+  ],
+  "searchAttempts": 1,
+  "successfulCredentialValueReads": 0,
+  "keyHashPrefixOrValueOutput": false,
+  "credentialSourceAccessibleToThisContext": false,
+  "factoryConstructed": false,
+  "reserveInvoked": false,
+  "leaseCreated": false,
+  "mailAPIRequests": 0,
+  "providerEntitlementOrDeliveryTested": false,
+  "OTP": 0,
+  "T": null,
+  "normalControlStarted": false,
+  "sharedRuntimeChanged": false,
+  "retryOrSelectorRelaxation": false,
+  "alternateEnvironmentOrCLISourceRead": false,
+  "limits": "The exact item search failed in this execution context. No proof that item is globally absent or that credentials invalid. No actual secret, hash or prefix is retained.",
+  "next": "Parent/Auth exact nonsecret registration/selectors/search-context and browser reserve support; no new keyread retry or indirectsource route now."
+}

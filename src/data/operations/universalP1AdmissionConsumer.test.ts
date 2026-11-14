@@ -1,3 +1,8 @@
+vi.mock("expo/fetch", () => ({
+  fetch: () => {
+    throw Error("UNEXPECTED_NATIVE_FETCH");
+  },
+}));
 import { ApiClientError } from "../api/client";
 import { sourcePlanReadFixture } from "../repositories/__fixtures__/sourcePlanRead";
 import { universalP1Identity } from "@/domain/trip/universalImportIdentity";

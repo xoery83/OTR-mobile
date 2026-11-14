@@ -1,0 +1,17 @@
+{
+  "request_id": "MCP-C02-S1-CORE-TRACE-20261104-001",
+  "candidate": "978f0200",
+  "packet": "1dc655f7",
+  "root1_judgment": "READY",
+  "source_status": "SOURCE_RELEASED",
+  "main": "7c1301c6a2ac7bdfe22e3c00f31f747db2810977",
+  "source_receipt": "docs/mcp/c02/diagnostics/ROOT1_SOURCE_MAIN_VALIDATION.json at main7c1301c6",
+  "claim_cause": "Existing CLI registers A-D only and LOCAL_PREP only; no Root1 management route",
+  "actual_claim_attempt": "NOT_INVOKED; do not describe static rejection as an observed runtime error",
+  "resolution": "Owner correction permits existing reliable sole-writer/fresh remoteCAS; Root1 used it and independently read back remote main",
+  "source_lock": "RELEASED",
+  "mc_status": "SUBMITTED_SOURCE_RELEASE_ACK_PENDING",
+  "hosted_status": "NOT_DEPLOYED; source notice sent to Root2, qualified paired bundle packet next",
+  "consumer_status": "ORIGINAL_a8c1_UNKNOWN_NOT_RETRIED",
+  "next": "MCP prepares paired C02Host/image/collector pins; Root2 separate deployment qualification, no window or Apply authority"
+}

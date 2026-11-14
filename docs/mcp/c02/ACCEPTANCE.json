@@ -1,0 +1,235 @@
+{
+  "status": "IN_PROGRESS_SPLIT_QUALIFICATION_PLANNING",
+  "work_package_id": "MCP-C02",
+  "slice": "Full-field P3 Stay Create/Edit",
+  "created_at": "2026-11-02T17:46:09.603195+00:00",
+  "local": {
+    "schema_adapter_readback": "PASS",
+    "sdk_profile_confinement": "PASS",
+    "core_create_text_schedule": "PASS_SYNTHETIC_ONLY",
+    "review": "NO_BLOCKER",
+    "model_v1": "PARTIAL_FAMILY_UNIT_SHORTENED",
+    "model_v2": "PARTIAL_SUPPORTED_NOTES_OMITTED",
+    "model_v3": "PASS_LOCAL_DISCOVERY_FULL_SUPPORTED_CREATE_PREVIEW_ONLY"
+  },
+  "consumer": {
+    "fresh_chat": "NOT_RUN",
+    "create": "NOT_RUN",
+    "edit": "NOT_RUN",
+    "applied_receipts": [],
+    "independent_supabase_readback": "NOT_RUN"
+  },
+  "native": "NOT_RUN_NO_NEW_CLOUD_OPERATION",
+  "shared_dev": "NO_DEPLOYMENT_OR_PROTECTED_ACTIVATION_BY_THIS_SPRINT",
+  "completed_old_item_touched": false,
+  "historical_unknown_retried": false,
+  "field_coverage": "P3_FIELD_COVERAGE.md",
+  "source_fact_coverage": "SYNTHETIC_FACT_COVERAGE.json",
+  "model_transcript_v1": "blank-v1.jsonl.gz",
+  "review": "REVIEW.json",
+  "integration_request": "INTEGRATION_REQUEST.md",
+  "blockers": [
+    "A1/thinjoin only: current Supabase Console observation platform timeout; old retry budget consumed",
+    "B1 current actor/Trip/Core capabilities not observed; no live mount availability claim",
+    "Fresh B1 case caller + exact write plan/normal Session/independent readback qualification required before any new DEV write"
+  ],
+  "next": "BACKEND_INDEPENDENT_PREP: narrow fresh normal-QA SDK case plan; preserve A1 platform block and old operations",
+  "model_transcript_v2": "blank-v2.jsonl.gz",
+  "model_transcript_v3": "blank-v3.jsonl.gz",
+  "model_tests_bounded_complete": true,
+  "consumer_blocker": "A1 existing consumer flow platform observation blocked; does not block B1 source preparation",
+  "mission_control": {
+    "started": "ACCEPTED_STATE6_PLAN2",
+    "old_751_same_event": "ACCEPTED_STATE1_PLAN1",
+    "ready": "SUBMITTED_NO_ACK",
+    "hosted_blocked": "SUBMITTED_NO_ACK",
+    "publication": "UNCONFIRMED",
+    "slice_acks": "S1/S2 AGENT_REPORTED; S3 PENDING_VERIFICATION; persistent Inbox+Publish24 snapshot96461bef32744fd2"
+  },
+  "slice_registry": "SLICES.json",
+  "s3": "LOCAL_PASS_SIMPLE_MANUAL_TEXT_ONLY_HOSTED_NOT_RUN",
+  "structured_place_contract": "LOCAL_MAPPING_CORE_PASS_NOT_PUBLIC_TOOL_OR_RECEIPT",
+  "historical_initial_status": "IN_PROGRESS_S1_QUALIFICATION_PENDING_S2_OWNING_GAP_S3_LOCAL_PASS",
+  "qualification_split": {
+    "updated_at": "2026-11-05T02:21:10.241893+00:00",
+    "contract": {
+      "path": "docs/mcp/c02/TEST_QUALIFICATION_SPLIT.md",
+      "sha256": "1295e670d130596ab7956985406d82425dfafab73ca3a6840c51914ad58082c6"
+    },
+    "authoritative_scope": "Current split levels below take precedence over older initial-sprint snapshots elsewhere in this file; no acceptance broadened.",
+    "levels": {
+      "A0": {
+        "status": "HISTORICAL_LOCAL_MODEL_AND_SDK_EVIDENCE_REUSE_VERSION_SCOPED",
+        "consumerPass": false
+      },
+      "A1_RIMU": {
+        "status": "NOT_RUN",
+        "blocker": "SUPABASE_CONSOLE_PLATFORM_OBSERVATION_FOR_EXISTING_CONSUMER_FLOW",
+        "blocksWholeLane": false
+      },
+      "B0_P3": {
+        "status": "LOCAL_CORE_HANDLER_SDK_EVIDENCE_REUSE",
+        "PostgreSQLClaim": "Separate owning historical PG evidence only, not every in-memory fixture"
+      },
+      "B1_P3_HISTORICAL": {
+        "status": "INTERNAL_P3_CLOUD_PASS_SCOPE_ONLY",
+        "evidence": "docs/mcp/acceptance/P3_VERIFY.json",
+        "newFullFieldPass": false
+      },
+      "B1_P3_CURRENT": {
+        "status": "BACKEND_ENTRY_IDENTIFIED_CURRENT_ACTOR_TRIP_CAPABILITIES_NOT_OBSERVED",
+        "readsOrWritesThisRound": 0,
+        "ordinaryBackendEndpoints": [
+          "GET /v2/trips/:trip/core/capabilities",
+          "GET /v2/trips/:trip/core/collection",
+          "GET /v2/trips/:trip/core/objects/ITEM/:item",
+          "GET /v2/trips/:trip/core/operations/:operation",
+          "POST /v2/trips/:trip/core/commands"
+        ],
+        "session": "Fresh legitimate ordinary QA Session; no borrowed session or ServiceRole",
+        "requiresConsumerOAuth": false,
+        "requiresTemporaryMcpIssuerOrConsole": "No, if normal Backend/Core runtime and actor policies already enabled; current availability unverified",
+        "readyRunner": "Existing runGolden components reusable; old fixed fixture/IDs/auto-approval path cannot be executed unchanged",
+        "knownLocalNext": "Narrow fresh-case caller and exact digest confirmation plan using existing SDK/handler/internalSessionAuthorizer; no new framework"
+      },
+      "THIN_JOIN_FULL_P3": {
+        "status": "NOT_RUN",
+        "required": "One real consumer OAuth/audience/discovery/schema/Adapter authorization plus exact approved Create/Edit/readback; Native independently reported",
+        "twoAxisPassesEqualConsumerE2E": false
+      }
+    },
+    "slices": {
+      "S1_SUPPORTED_P3": {
+        "A0": "LOCAL_MODEL_V3_PREVIEW_PASS_HISTORICAL_VERSION",
+        "A1": "OLD_REAL_CREATE_PREVIEW_PASS_NEW_RIMU_NOT_RUN",
+        "B0": "LOCAL_CORE_SDK_PASS",
+        "B1": "OLD_INTERNAL_CREATE_EDIT_APPLIED_READBACK_PASS_NOT_CURRENT_FULLFIELD",
+        "ConsumerCreate": "OLD_a8c1_UNKNOWN_NO_NEW_POST",
+        "Native": "OLD_NOTES_REV3_UI_COLD_ONLY"
+      },
+      "S2_ROOM_SPARSE": {
+        "A0": "NOT_CLAIMED",
+        "A1": "NOT_RUN",
+        "B0": "LOCAL_READY_UNMOUNTED_DEFAULT_FALSE",
+        "B1": "NOT_RUN",
+        "owningPort": "DELIVERED_4c8d0fd9_NOT_DESIGN_BLOCKER",
+        "HostedActivation": "NOT_QUALIFIED"
+      },
+      "S3_PLACE": {
+        "A0": "NOT_CLAIMED",
+        "A1": "NOT_RUN",
+        "B0": "SIMPLE_MANUAL_CORE_RECEIPT_RECOVERY_READBACK_PASS_STRUCTURED_MAPPING_SEPARATE",
+        "B1": "NOT_RUN",
+        "limits": "No qualified/provider/source preservation capability inferred"
+      },
+      "P4_RENTAL": {
+        "A0": "NOT_CLAIMED",
+        "A1": "NOT_RUN",
+        "B0": "LOCAL_STANDARD_SDK_SCALARS_AND_MANUAL_ENDPOINT_PASS",
+        "B1": "NOT_RUN",
+        "limits": "No P4 Hosted/Supabase/Native or full-family Consumer PASS"
+      }
+    },
+    "existingConsumerNotes": {
+      "Claude": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf APPLIED rev1to2 Notes only",
+      "ChatGPT": "2777810c-24d9-4ecf-998c-9fc5dd00de34 APPLIED rev2to3 Notes only",
+      "reexecute": false
+    },
+    "evidenceHashes": {
+      "docs/mcp/phase4b/ACCEPTANCE.md": "6a458ca4fb3869b8e5e04d37a5cb0d6c93fd6cd6d3fc96731247e4e1f74af007",
+      "docs/mcp/c02/P3_FIELD_COVERAGE.md": "75200236aeafe885aca19fdcbfec5545641dc824fa6c577b01724939fc3c276a",
+      "docs/mcp/c02/s2/ACCEPTANCE.json": "6f8615a26c1bacbc52a7746fc3395ab5fa0c6b0888a1b6074dafa4a827ba6f4e",
+      "docs/mcp/c02/s3/ACCEPTANCE.md": "1f9c4d2b973b01ee8f34c26588b073da3c587dbd005765f5bdc05f1060c90c2c",
+      "docs/mcp/c02/s3/STRUCTURED_PLACE_CONTRACT.md": "3838d8efbd3a360c121f62aeaff06b9104c20fb276e31720f09c20d50b501691",
+      "docs/mcp/c02/p4/LOCAL_FIELD_COVERAGE.md": "92f7e02e68b49e3318371b7386f8aa8016b9ca77aabe29cc18dcae8fd40d8d75",
+      "docs/mcp/slice1/E389_CONSUMER_ACCEPTANCE.json": "852dae3e09cfcd21af174ef47df0d6a542ec29249f4173b55389871af54e0832",
+      "docs/mcp/chatgpt-notes/continuation-20261102/ACCEPTANCE.json": "f4b273f27a47475feb34b46445e018d6dec09132d94f4b920ad0dd6bb03a2c9b",
+      "docs/mcp/chatgpt-notes/continuation-20261102/NATIVE_COLD_RESULT_20261103.json": "2e2b1ac0ffe058cf853191ee8f3fa796f9e9df763e95c3d2087762ba87ac7b8d",
+      "docs/mcp/c02/s1/proof-consumer-20261104/actual/ACCEPTANCE.json": "b70f7a7d6f6b89dfb5fc070f2c4fc9229dd979b4d3a33f5aa7d38655d23de7c5",
+      "docs/mcp/c02/s1/verified-create-20261104/actual/ACCEPTANCE.json": "e1b59b45134808b8409f9575b1366f47cdc9519eeea46e8d7db94bc18ec6de42",
+      "docs/mcp/acceptance/P3_VERIFY.json": "0fe31c1821020a89cd3f40a66549b90fa75154f59f1c041d023648e5851d743b",
+      "docs/ops/manual-cloud-e2e-20261028/P3_DEV_RECEIPT.json": "bb48191ba60f80284e2fb4d2a7fa02a56eaac8d3b476e1d07d385939a405dc92"
+    },
+    "sourceInvestigationHashes": {
+      "mcp/golden.ts": "26d25f389a1be913e0d44a7662f41c4725243293d376d8f4814a5156ced7c3d4",
+      "mcp/dev-e2e.ts": "ba067093d3e060e9c34b1ff603661236dae691f0b985f1d58ba06711a7a8020a",
+      "mcp/internal.ts": "691967741cb41199fda2429f2003b12be05a8472ccbaa9feccf4992ad837c908",
+      "mcp/server.ts": "0701819356bafce0fb1742e3fffdf34f7a342bc1ff252851d56a8138f1cf71c4",
+      "mcp/guide.ts": "4e13369d0da699c14080e196d121fb0edb131580dfc004eaa84ae296d0b1250a",
+      "mcp/mutationContract.ts": "c0735fdd92c772df55cd6a3ce37b124ff4b75aaa76653e9047712a182799646f",
+      "mcp/contract.ts": "8a7b8d1404aeb21af341e0010a205966b368dc9b6b9b12ac6d406c88e1eba63e",
+      "mcp/mutation.ts": "3ee620ea1c9f18b348d085b1ffefd040a971af32dc00360338d979b70e03dacd",
+      "mcp/fieldAdapter.ts": "6525009fc0836030f50b8b478dfe403c792aee8d102eb3362bd53d6d698fc96f",
+      "mcp/goldenReadback.ts": "8bf546013ef6ebb4271efb95d81aad15bd9b5bdfed577c8103e67c80dcd5ffce",
+      "backend/src/app.ts": "e4916473f34d1823568ae8c11cbc290d0645fa7e75bb2e5ecf5bef4bbea2361f",
+      "backend/src/tripCoreV2Http.ts": "faa4381b2ae18f913edc575f8256f670f74315217fd4064a7a0e1c30a095b44d",
+      "backend/src/serverCapture.ts": "b4fea4c8aba1e98d7e472d2efaf35ffcc1c098e660806f52950b2cdfcebaf09e",
+      "backend/src/tripCreateRuntime.ts": "17f4d798b816ceaf798b5c1ce5139d2c90bb4e0121b7c6c57fedfd9d5be15ebe",
+      "backend/src/tripSustainedRuntime.ts": "a912ee6c6bd5141e201b88f91ade9576896797b78c508e7ac8f8a5db4d6bfcde"
+    },
+    "bridge": [
+      "Actual Guide/schema/handler/Adapter/profile/fixture versions",
+      "Actual model-selected typed inputs and Preview/confirmation transcript for A",
+      "Actual typed input/Core command digest/IDs/actor/base/CAS/Receipt and independent persisted readback for B",
+      "Explicit mismatches/differences; no unrelated PASS-to-E2E promotion"
+    ],
+    "triggerRules": "See versioned contract table; affected A/B cases, one thin join on actual boundary changes or release milestone, not every field change",
+    "scopeGuard": {
+      "existing6d49": "PREVIEW_ONLY_SAVE_FALSE_UNCONSUMED_T_NULL",
+      "newCloudWritesThisRound": 0,
+      "newAuthOrSessionThisRound": 0,
+      "UNKNOWN": "a8c1/f107/9b FROZEN_NO_CLONE_OR_REPLAY",
+      "noNewCapabilityOrDashboardMutation": true
+    },
+    "uniqueLiveUnknown": "Actual ordinary DEV Backend/Core mount and enabled exact P3 commands for Account1f3d/Tripcc44; no probe this round. Any missing mount/capability must be reported precisely before writeplan execution.",
+    "backend_preflight_entry": {
+      "status": "BLOCKED_EXISTING_APPROVED_ENV_INPUT_ABSENT_NO_AUTH_STARTED",
+      "entry": {
+        "path": "scripts/mcp/c02-backend-qa.mts",
+        "sha256": "63d72fdd5cede1ddb67f7d2a5a6003b13ddf6bcde42fc814e9c093bcdbb9d220"
+      },
+      "tests": {
+        "path": "scripts/mcp/c02-backend-qa.test.mts",
+        "sha256": "d7a7757a0c1bfcc79e7667291e8b457cc152c56c5e5646023db7f957d38f91d0",
+        "cases": 11,
+        "result": "PASS_FIXTURE_ONLY"
+      },
+      "contract": {
+        "path": "docs/mcp/c02/BACKEND_QA_PREFLIGHT.md",
+        "sha256": "8e7698ba7a90944898f081fc1516074599477a8a224d28a9e6ebb883313a36ad"
+      },
+      "normalSessionHelper": {
+        "path": "scripts/auth/registered-qa-host-session.ts",
+        "sha256": "c57737e680e611307aeaa4e5514caa0796be4e32aeb02b11ff4e605a22da17b3",
+        "actualCalled": false
+      },
+      "typecheck": "PASS_SCOPED_EXISTING_PROJECT_BUNDLER_SETTINGS",
+      "methods": "GET_ONLY_NO_COMMAND_POST_OR_APPLY_PATH",
+      "ordinaryQAAuthCredentialLeaseActual": "ENV_INPUT_ABSENT; NATIVE_MAILBOX_CONFLICT_REPLY_PENDING; NO_AUTH_OR_LEASE_STARTED",
+      "backendBuildIdentity": "NOT_EXPOSED_HTTP_DO_NOT_GUESS",
+      "currentActorTripCapabilities": "NOT_OBSERVED",
+      "draft": "New independent intent/IDs, actual Trip dates, canonical command digests, Notes edit conditional on verified revision1; no Apply/Save authority",
+      "runtimeOrSource6d49Changed": false,
+      "priorIndependentReview": {
+        "path": "docs/mcp/c02/REVIEW_BACKEND_PREFLIGHT.json",
+        "sha256": "24c41d2f752cdb2c7c440650da9896e7957d3b80d1633a41273a4295a491d884",
+        "verdict": "NO_BLOCKER_ORIGINAL_READONLY_CANDIDATE_NOT_NEW_GUARD"
+      },
+      "credentialGuard": "EXISTING_ENV_ONLY_MISSING_UNAVAILABLE_BEFORE_RUNNER_NO_KEYCHAIN_FALLBACK; actual provenance/source/flags/coordination NOT_QUALIFIED",
+      "envGuardReview": {
+        "path": "docs/mcp/c02/REVIEW_BACKEND_ENV_GUARD.json",
+        "sha256": "66bc14412d1165dc1302acba5729bfedf8509631bba545c057c1da00bb320c39",
+        "commit": "b11f9850",
+        "verdict": "NO_BLOCKER_READONLY_ENV_GUARD_DELTA"
+      },
+      "readonlyScopeManifest": {
+        "path": "docs/mcp/c02/BACKEND_READONLY_SCOPE.json",
+        "sha256": "057cc24a20faa8b750e8a05ac8dc2b1839a24360436698cc7301089e2be216fb"
+      }
+    }
+  },
+  "historical_initial_blockers": [
+    "S1 new exact Hosted qualification/Owner access/save authority",
+    "S2 Core sparse Stay/room preservation interface"
+  ]
+}

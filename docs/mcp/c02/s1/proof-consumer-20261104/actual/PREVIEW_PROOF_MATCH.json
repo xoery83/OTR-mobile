@@ -1,0 +1,24 @@
+{
+  "status": "SERVER_PREVIEW_HASHES_MATCH_ORIGINAL",
+  "windowId": "b08a466d29f348a896176c563646f417",
+  "matchedRecord": {
+    "timestamp": "2026-11-03T21:21:38.788995428Z",
+    "requestId": "0dc0344f-5d09-492d-82a2-9fef9f707ad4",
+    "status": 200,
+    "durationMs": 1434,
+    "tool": "create_trip_item",
+    "responseProof": {
+      "version": "otr.mcp.response-proof/1",
+      "kind": "PREVIEW",
+      "inputSHA256": "d0092f662a03971a1ca24b0ed07961f50572a46abd112347242f62d72bf589f7",
+      "outputSHA256": "ff5d986caccc96d946588865d90672ed0b90c3f3b12fba7185b60038a1434c0f",
+      "previewDigest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc"
+    }
+  },
+  "traceTailMayBeTruncated": true,
+  "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "itemId": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+  "saveAuthorized": false,
+  "writeExecutedByRoot2": false,
+  "readFailuresStillOpen": true
+}

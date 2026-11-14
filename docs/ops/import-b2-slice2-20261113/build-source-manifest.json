@@ -1,0 +1,18 @@
+{
+  "bundleId": "com.xoery.otrmobile.b1full20261113",
+  "simulator": "1B2252F4-4F90-4F93-9223-545269EAA06C",
+  "finalTemporaryDisplayPatchRemoved": true,
+  "sourceSha256": {
+    "src/data/operations/universalActivityReader.ts": "9c9ee312f6ededb841fd482c0d1948136e5845846e507e96fb22fec5e0f55069",
+    "src/data/operations/universalV3Activity.ts": "9d7b91f538e96c6e1a7c14ce7ae7fb878c665e3e9a6514cf24e61ef056f43536",
+    "src/data/sync/syncOperationRepository.ts": "22b87676501c4725962bf7bfb241f82174e17d1dbb6286eea9f42851ce45f34c",
+    "src/features/capture/UniversalCaptureResults.tsx": "092a2a58958479847bdb1dc34b7aa17a8ca38ea80c7886873af46790468e3f75",
+    "src/features/capture/UniversalV3Review.tsx": "c2fa181bb57e076c3e1d43d219ff628428f12a0f03856e6f8db89c1677bb098e",
+    "src/features/capture/CaptureActivity.tsx": "14f474154fc4bc5a3b83e90a7b21c6351a6e29e7451e052dd02ef4373bcf852f",
+    "src/features/capture/CaptureProgress.tsx": "aec2eb9ece40f9f44a00a50279738511507e9f9dd677dc3570c422041a20bc18",
+    "src/ui/catalogs.ts": "4c378da915b4483742ed7932d285a9576db8d9c30be4c8c13b7544e9a557e233"
+  },
+  "jsBundleSha256": "ccab0c4864e6226c51c8aad5e35a053e1f5d0ffe20917adc5aa412124df795d5",
+  "installedJsBundleSha256": "ccab0c4864e6226c51c8aad5e35a053e1f5d0ffe20917adc5aa412124df795d5",
+  "lastChange": "Activity-only observation opt-in; existing Updates path unchanged; same Activity UI evidence reused"
+}

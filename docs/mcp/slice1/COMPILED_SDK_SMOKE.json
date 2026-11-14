@@ -1,0 +1,18 @@
+{
+  "status": "COMPILED_SDK_LOCAL_DISCOVERY_PASS_NOT_HOSTED",
+  "toolNames": [
+    "get_operation_status",
+    "get_otr_operating_guide",
+    "get_trip",
+    "get_trip_item",
+    "get_trip_item_edit_base",
+    "list_trip_items",
+    "list_trips",
+    "update_trip_item"
+  ],
+  "guide": "otr.ai.guide/2",
+  "profile": "SLICE1_NOTES_EDIT",
+  "backendCalls": 0,
+  "providerCalls": 0,
+  "transport": "OFFICIAL_SDK_IN_PROCESS_FETCH"
+}

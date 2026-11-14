@@ -1,0 +1,97 @@
+{
+  "operation": {
+    "id": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+    "trip_id": "285ffde2-a74c-4876-993e-b763cb457632",
+    "entity_id": "ledger-expense_mwfnyqw7_i811nr0u1x",
+    "idempotency_key": "ledger-idempotency_mwfnz7vm_umzru4w06b",
+    "status": "COMPLETED",
+    "payloadSHA256": "010d5a65ea1bccbbf36179e9822e927970be003bec0130a962b34f310fc7a298"
+  },
+  "receipt": {
+    "operationId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+    "commandId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+    "idempotencyKey": "ledger-idempotency_mwfnz7vm_umzru4w06b",
+    "expenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+    "commandType": "CREATE",
+    "intentSequence": 1,
+    "disposition": "APPLIED",
+    "canonicalRevision": 1
+  },
+  "canonical": {
+    "id": "c02ea242-33b4-577e-a325-def35524fec6",
+    "journeyId": "285ffde2-a74c-4876-993e-b763cb457632",
+    "creatorMemberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+    "payerMemberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+    "title": "Recovery Synthetic Expense",
+    "description": null,
+    "category": "other",
+    "occurredAt": "2026-11-14",
+    "economicDate": "2026-11-14",
+    "original": {
+      "minor": 100,
+      "currency": "NZD",
+      "scale": 2
+    },
+    "businessStatus": "ACCEPTED",
+    "settlementParticipation": "INCLUDED",
+    "revision": 1,
+    "deletedAt": null,
+    "createdAt": "2026-11-14T03:17:55.237Z",
+    "updatedAt": "2026-11-14T03:17:55.237Z",
+    "participants": [
+      {
+        "memberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+        "displayNameSnapshot": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+        "householdIdSnapshot": null
+      }
+    ],
+    "splits": [
+      {
+        "memberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+        "method": "EQUAL_PERSON",
+        "originalMinor": 100,
+        "settlementMinor": 100,
+        "weightUnits": null,
+        "percentageUnits": null,
+        "roundingAdjustmentMinor": 0
+      }
+    ],
+    "valuation": {
+      "policy": "SAME_CURRENCY",
+      "original": {
+        "minor": 100,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "settlement": {
+        "minor": 100,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "rateSnapshotId": null,
+      "paymentRecordId": null,
+      "reason": null,
+      "id": "acf68bd9-b692-4a20-a37f-d5da49df412b"
+    },
+    "paymentRecords": [],
+    "auditEvents": [
+      {
+        "id": "7bb313d9-d690-46ff-bc40-480fe206df27",
+        "expenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+        "actorUserId": "00000000-0000-4000-8000-000000000001",
+        "actorMemberId": null,
+        "eventType": "CREATED",
+        "reason": null,
+        "changedGroups": [
+          "FINANCIAL_CORE",
+          "DESCRIPTIVE"
+        ],
+        "revision": 1,
+        "createdAt": "2026-11-14T03:17:55.237Z"
+      }
+    ]
+  },
+  "wireSHA256": "b621dda8276925a29b12286a0645f8d0eb1e9664eef2e93c87472e5555b7c585",
+  "normalRecoveryEntry": "Full App Settings > System Health > Check again",
+  "newOperationCreated": false
+}

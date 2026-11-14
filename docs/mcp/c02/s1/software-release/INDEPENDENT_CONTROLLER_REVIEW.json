@@ -1,0 +1,49 @@
+{
+  "status": "NO_BLOCKER_CONTROLLER_DELTA_ONLY",
+  "reviewer": "/root/photo_results_recovery_v3",
+  "gateSha256": "fe7508f4611c166b8f3935253517accf8bfdda7e50ab5705d09abbc0e1f54cd4",
+  "files": {
+    "release.py": "e2b8cbbe7c6b256800a5ff43453aef824d39ab576ca2a15dd33fc755430a4f6e",
+    "prebuild.py": "c8782bdf70685775ee35df67b54084fbfe6c1a153b92e95967f226cb40e4a9e7",
+    "execute.py": "0ec7922e93698b6f5bdcd760940e1f745af9290b519b3caa9ac7ac0b9925b3eb"
+  },
+  "packagePins": {
+    "server-capture.mjs": "17d4812319262931dd27061a8d8f5a254dd80cd881dffdaf5acc0fafc2a92584",
+    "c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "Dockerfile": "ab18a56f2d55d2dddf28890a3a80aa36cedc2725d599887f142489c4e8536008"
+  },
+  "exactPreimage": {
+    "containerId": "920f1038c3dd891971a2cb63c3e6b8c968df31060b25803f65f2d807db7b5ea6",
+    "image": "sha256:1efe1fad902475bcfe4047290e59c944c78453f6d32c88d24aac64cb60d8d6dc",
+    "configSha256": "180d32be681ac4b017f6b6f67c0811f6ea6dc898db398d186abbcb402c4bc961"
+  },
+  "checks": [
+    "Both scripts AST-parse without importing or executing them",
+    "Release equals successful prior controller except packet path/status and added absence assertion for all three MCP QA keys",
+    "Prebuild pins both bundles and exact two-COPY Dockerfile FROM1efe; network disabled build; candidate image Config equals base",
+    "Prebuild validates current exact tuple, approved prior plan hash, mounted/config hashes and all prior bundle hashes; changes only capture and adds mcp/c02-host bundle",
+    "Release rechecks tuple/environment/host/mount/config identity under existing nonblocking resource lock, inherits original Config and HostConfig, checks all candidate bundle hashes and protected401/health",
+    "Failure after mutation retains and restores exact original CID, original Config/image/mounts/HostConfig, then finally releases lock; no restore to an older image",
+    "No QA key insertion, PG port injection, SQL/role/permission/config change, credential or finite window activation in this controller delta",
+    "Execute equals the mature prior one-shot launcher with only packet/source/image/plan/controller pins changed; both local and remote validate fixed controller/plan, O_EXCL intent/output guards remain, detached start has no retry"
+  ],
+  "findings": [],
+  "limitations": [
+    "Read-only controller adaptation review only; accepted S1 bundle behavior not reaudited or retested",
+    "No live preimage, image build, deployment, Host/SQL/main/device action performed",
+    "Actual human approval and later close-probe receipt remain Root responsibilities; this review is not execution authority"
+  ],
+  "actions": {
+    "host": 0,
+    "network": 0,
+    "sql": 0,
+    "main": 0,
+    "device": 0
+  },
+  "prebuildReceipt": {
+    "sha256": "0fdcd236ad91baf3edf9c9f6368b46a8ff4bae1ef72e3761b4b5454ddedf774a",
+    "image": "sha256:0b46836523c57968e8e2270a5e7ce62c4a007a2fe1a280f09063b2541b5de59a",
+    "planSHA256": "8c1a2d879b6c5992d6254b24b86a97c9a9335d9250da8b038bd0380003301343",
+    "serviceStill": "920f1038c3dd891971a2cb63c3e6b8c968df31060b25803f65f2d807db7b5ea6"
+  }
+}

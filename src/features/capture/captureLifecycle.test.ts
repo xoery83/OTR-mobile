@@ -41,7 +41,8 @@ vi.mock("@/data/operations/defaultCaptureSubmission", () => ({
   createDefaultCaptureSubmissionSession: ui.createSession,
   createDefaultCaptureRecoveryAction: ui.createRecovery,
 }));
-vi.mock("react", () => ({
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
   useRef(initial: unknown) {
     const index = ui.cursor++;
     if (!(index in ui.slots)) ui.slots[index] = { current: initial };
@@ -54,7 +55,7 @@ vi.mock("react", () => ({
     return [
       ui.slots[index],
       (value: unknown) => {
-        ui.slots[index] = value;
+        ui.slots[index] = typeof value === "function" ? value(ui.slots[index]) : value;
       },
     ];
   },
@@ -72,9 +73,14 @@ vi.mock("react", () => ({
     return (ui.slots[index] as { callback: unknown }).callback;
   },
 }));
-const navigation = { setParams: ui.setParams, isFocused: () => ui.focused };
+const navigation = {
+  setParams: ui.setParams,
+  isFocused: () => ui.focused,
+  getParent: () => undefined,
+};
 vi.mock("expo-router", () => ({
   useNavigation: () => navigation,
+  useIsFocused: () => ui.focused,
   useLocalSearchParams: () => ({ jobId: ui.jobId, tripId: ui.tripId }),
   router: {
     navigate: ui.navigate,
@@ -101,6 +107,13 @@ vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/controls", () => ({ UiButton: "button", UiSection: "section" }));
 vi.mock("@/data/auth/authRepository", () => ({ readLocalSession: ui.session }));
+vi.mock("expo", () => ({ requireOptionalNativeModule: () => null }));
+vi.mock("@/features/day-feed/LocalItemImportOriginals", () => ({
+  LocalItemImportOriginals: () => null,
+}));
+vi.mock("@/features/documents/ImportDocumentsPanel", () => ({
+  ImportDocumentsPanel: () => null,
+}));
 vi.mock("expo-document-picker", () => ({ getDocumentAsync: ui.files }));
 vi.mock("expo-image-picker", () => ({ launchImageLibraryAsync: ui.photos }));
 const selected = { canceled: false, assets: [{ name: "one.pdf", uri: "temp://one" }] };
@@ -223,7 +236,12 @@ it("blur during a local session read prevents late admission and refocus checks 
 
 it("reopened Job Add more unlocks a fresh volatile roster without creating another Job until Add", async () => {
   const model = {
-    batch: { jobId: "same-job" },
+    batch: {
+      jobId: "same-job",
+      batchId: "same-job",
+      accountId: "A",
+      context: { tripPrior: null },
+    },
     inputs: [],
     counts: { selected: 1, accepted: 0, failed: 0, pending: 1 },
     availableActions: { canAddMore: true, reacquireInputIds: [] },
@@ -272,7 +290,12 @@ it("double taps share submit; Hide during work permits completion and never auto
 
 it("acknowledged pinned mismatch releases old action so exact original can be selected again", async () => {
   const model = {
-    batch: { jobId: "same-job" },
+    batch: {
+      jobId: "same-job",
+      batchId: "same-job",
+      accountId: "A",
+      context: { tripPrior: null },
+    },
     inputs: [{ id: "input", revision: 3, contentSha256: "pin", state: "FAILED" }],
     counts: { selected: 1, accepted: 0, failed: 1, pending: 0 },
     availableActions: { canAddMore: true, reacquireInputIds: ["input"] },
@@ -390,6 +413,7 @@ it("mounted retained composer includes editor once, blocks unsupported submissio
       isCurrent: () => true,
       onCancel: ui.navigate,
       draftStaging: staging,
+      accountId: owner.accountId,
     }).props as any;
   };
   let composer = draw();
@@ -498,10 +522,17 @@ it("reviewer: a submitted Files roster is not restored as a new unsubmitted draf
       isCurrent: () => true,
       onCancel: ui.navigate,
       draftStaging: staging,
+      accountId: owner.accountId,
     }).props as any;
   };
   const model = {
-    batch: { jobId: "existing-owning-job" },
+    allInputsAccepted: true,
+    batch: {
+      jobId: "existing-owning-job",
+      batchId: "existing-owning-job",
+      accountId: "A",
+      context: { tripPrior: null },
+    },
     inputs: [],
     counts: { selected: 1, accepted: 1, failed: 0, pending: 0 },
     availableActions: { canAddMore: true, reacquireInputIds: [] },
@@ -509,6 +540,7 @@ it("reviewer: a submitted Files roster is not restored as a new unsubmitted draf
   ui.submit.mockImplementation(
     async (_items: unknown, progress: (m: unknown) => void) => {
       progress(model);
+      return model;
     },
   );
   draw();
@@ -516,9 +548,9 @@ it("reviewer: a submitted Files roster is not restored as a new unsubmitted draf
   draw().onFiles();
   await vi.waitFor(() => expect(draw().count).toBe(1));
   draw().onSubmit();
-  await vi.waitFor(() => expect(draw().model).toEqual(model));
+  await vi.waitFor(() => expect(draw().content?.props.model).toEqual(model));
   expect(ui.createSession).toHaveBeenCalledOnce();
-  draw().onCancel();
+  draw().onClose();
   ui.cleanup?.();
   ui.cleanup = null;
   expect(staging.resume(owner, () => true)).toBe(true);
@@ -548,22 +580,27 @@ it("retained C3 failed acknowledgement retries the same owning session, while cl
       isCurrent: () => true,
       onCancel: ui.navigate,
       draftStaging: staging,
+      accountId: owner.accountId,
     }).props as any;
   };
   ui.submit
     .mockRejectedValueOnce(new Error("SYNTHETIC_UNKNOWN_ACK"))
-    .mockResolvedValueOnce(undefined);
+    .mockResolvedValueOnce({
+      allInputsAccepted: true,
+      batch: { jobId: "ack-job", accountId: "A", context: { tripPrior: null } },
+    });
   draw();
   ui.cleanup = ui.effect!() ?? null;
   draw().onFiles();
   await vi.waitFor(() => expect(draw().count).toBe(1));
   draw().onSubmit();
-  await vi.waitFor(() => expect(draw().submitError).toBe(true));
-  expect(staging.getSnapshot().items).toHaveLength(0);
+  await vi.waitFor(() => expect(draw().content?.props.error).toBe(true));
+  expect(staging.getSnapshot().items).toHaveLength(1);
   expect(draw().snapshot.items).toHaveLength(1);
-  draw().onSubmit();
+  expect(draw().content.props.canRetry).toBe(true);
+  draw().content.props.onRetry();
   await vi.waitFor(() => expect(ui.submit).toHaveBeenCalledTimes(2));
-  await vi.waitFor(() => expect(draw().busy).toBe(false));
+  await vi.waitFor(() => expect(draw().content?.props.busy).toBe(false));
   expect(ui.createSession).toHaveBeenCalledOnce();
   expect(ui.submit.mock.calls[1][0]).toEqual(ui.submit.mock.calls[0][0]);
   ui.cleanup!();
@@ -600,18 +637,21 @@ it("authenticated Submit transforms the same sheet into one Job, and explicit Ne
     });
   };
   const model = (id: string) => ({
-    batch: { jobId: id },
+    allInputsAccepted: true,
+    batch: { jobId: id, batchId: id, accountId: "A", context: { tripPrior: null } },
     inputs: [],
     counts: { selected: 1, accepted: 1, failed: 0, pending: 0 },
     availableActions: { canAddMore: true, reacquireInputIds: [] },
   });
   ui.submit
-    .mockImplementationOnce(async (_selected: any, progress: any) =>
-      progress(model("one-job")),
-    )
-    .mockImplementationOnce(async (_selected: any, progress: any) =>
-      progress(model("two-job")),
-    );
+    .mockImplementationOnce(async (_selected: any, progress: any) => {
+      progress(model("one-job"));
+      return model("one-job");
+    })
+    .mockImplementationOnce(async (_selected: any, progress: any) => {
+      progress(model("two-job"));
+      return model("two-job");
+    });
   const first = draw();
   ui.cleanup = ui.effect!() ?? null;
   (draw().props as any).onFiles();
@@ -655,7 +695,14 @@ it("same-sheet Active Imports inspection preserves the unsubmitted composer draf
   staging.setEditorText("Keep this original draft");
   (draw().props as any).onActivity();
   expect(draw().type).toBe(initial.type);
-  ui.reopen.mockResolvedValue({ batch: { jobId: "history-job" } });
+  ui.reopen.mockResolvedValue({
+    batch: {
+      jobId: "history-job",
+      batchId: "history-job",
+      accountId: "A",
+      context: { tripPrior: null },
+    },
+  });
   (draw().props as any).content.props.onOpenJob("history-job");
   await vi.waitFor(() =>
     expect((draw().props as any).content?.props.model?.batch.jobId).toBe("history-job"),

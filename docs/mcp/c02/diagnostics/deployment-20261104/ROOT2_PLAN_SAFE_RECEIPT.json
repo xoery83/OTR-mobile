@@ -1,0 +1,15 @@
+{
+  "status": "EXACT_LATEST_MAIN_DEPLOY_PREPARED",
+  "planSHA256": "691b49b74eef67aa6971c65a661369b3cf93e8b4fbf190d88f125594914c6999",
+  "candidateImage": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "beforeContainerId": "22ba62b13070fcc67a29d60e311aa415383d0522dd81cf6bb8e7592594f3f569",
+  "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa",
+  "bundles": {
+    "server.mjs": "9bff89ca9518cdd776a9477e42d4cbcfcffd1c000d5b873d096270dcf3dc10cb",
+    "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+    "mcp/c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+    "auth-consent/app.js": "6040fcfdbbeccacfd96a1d393410a139fe48ee4d1a6d3c04981f191ce7e1ea67"
+  },
+  "sourceMain": "7c1301c6a2ac7bdfe22e3c00f31f747db2810977",
+  "serviceTouched": false
+}

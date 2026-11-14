@@ -1,0 +1,51 @@
+{
+  "status": "ACTUAL_C7D0_OWNER_SOURCE_MECHANICALLY_BOUND_PENDING_INDEPENDENT_REVIEW",
+  "recordedAt": "2026-11-04T21:52:12.299581+00:00",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "executionChildId": "/root/fresh_preview_execution",
+  "priorReviewedCandidate": "b45616984627fc9f96b3dc117596fabbeaa71a52",
+  "priorUnboundPackageSHA256": "026dff5bbde6a1c964da2f4e84d13a031f825df65ada09117d4961a5e7ed157c",
+  "newPackageSHA256": "d63fc9a71233a8e026463bd34dd9b3778bbfd6640bfc5942278756b0f8f359ff",
+  "gateSHA256": "e602fbfaa1bad7a8554faadc3dd38b19ab6eedb6cbe5a7d465b07b27f1cea72a",
+  "scopeSHA256": "306fd9adbdbb3dffa23fc18a4db6432fb685117fcd5009c5dd82bc9b76035baa",
+  "windowId": "c7d0ee01-0f06-4a4a-9d09-0f6034a3cc3d",
+  "actualHumanSource": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turnId": "01a1a88a-36e5-7771-953b-d22be354ddfb",
+    "userMessageId": "01a1a88a-37ad-71c2-8dcc-59afaec7c78b",
+    "wireSHA256": "c9e55bd1a764a9b5fc1cb4ae6569250602e9b90d6280318d63927c05b64a3e8d",
+    "wrapperSHA256": "a69d9661eea5d168f9d49c169a4f179dd43e67385ebe304afc78c55a193b1bc4",
+    "answer": "批准本轮临时配置、连接及 Preview，不包含保存",
+    "sourceReadMethod": "Direct read_thread exact human userMessage, not parent paraphrase",
+    "sourceRelabeled": false
+  },
+  "actualDerivedSourceChanges": [
+    "c02-normal-control.py",
+    "operators/config_cas.py",
+    "prepare-c02-access-window.py"
+  ],
+  "sourceDiffVerified": "All3 are exact repr-safe source thread/message/text literal substitutions only; other14 byte-identical. Existing UNBOUND rejection still active for unbound input.",
+  "localPureCases": 24,
+  "platformRecognizedExecutionApproval": false,
+  "platformStatus": "Pending Root2 independently verified human source/current platform execution approval; no positive claim by MCP artifact",
+  "OwnerSourceFile": {
+    "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_SOURCE.json",
+    "sha256": "ccf2cdf16fadda998ced479d2054b9b9cbcfa1fcef3a67eabff75328942c384f"
+  },
+  "clock": {
+    "T": null,
+    "normalCloseAt": null,
+    "hardExpiresAt": null
+  },
+  "unchanged": [
+    "Gate/scope/window/inputhashfacts",
+    "MCP17runtimebehavior",
+    "Root2interface5379andreviewedidentityrepair",
+    "EMPTY commandnull confirmations[]",
+    "timecaps and <=120sec originalready rule",
+    "noSave/noEdit/noUNKNOWN"
+  ],
+  "AuthOTPUIHostedConsumerBusiness": 0,
+  "closedC843": "Untouched/nonreusable; no oldsource617b was used",
+  "next": "Same independent source-binding delta Review; Root2 actualsource/platform/currentclose qualification; actual freshUI/livelocalwaiter before own normal control."
+}

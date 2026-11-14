@@ -1,0 +1,310 @@
+{
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "scopeRevision": "FRESH_USER_PREVIEW_ONLY_NO_UNKNOWN_REPLAY",
+  "primary": "MCP-C02 / C02-S1_FRESH_PREVIEW",
+  "templateCandidate": "82b89e1f",
+  "templatePackagePath": "docs/mcp/c02/s1/fresh-preview-20261104/PACKAGE.json",
+  "templatePackageSHA256": "0be7465ba2bd2881569fac83962420f86c3595e4d52c389486ab841d6a86f162",
+  "templateGate": "422e73564ed4d81c7070c9ef8d196d45e519f1bcfc72eb6b21afd319cdc7e41a",
+  "templateWindowId": "3586c569-3f51-4ce9-8699-5e98b3760c80",
+  "templateWindowHex": "3586c5693f514ce986995e98b3760c80",
+  "templateScopeSHA256": "1e18dc4a1438d1b25233ff4939d55f32179e32e4b9182f20c0ad6edd35c58bc9",
+  "hostSHA256": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+  "consumerInputs": {
+    "FRESH_CHAT_TASK.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/FRESH_CHAT_TASK.txt",
+      "sha256": "17db04bb474fdc99ed04031f5fdd8be958e1b5c5625779c6245e94e3dfbe9cce"
+    },
+    "MATERIAL_1.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_1.txt",
+      "sha256": "9e7850badbf63ed4b1219966eb0175704f0bda6166416fe54043440383d28f03"
+    },
+    "MATERIAL_2.txt": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/MATERIAL_2.txt",
+      "sha256": "363c991e08a5db1b1d5c63e94fdb87dcde545052c2f41855a934936691d543dc"
+    },
+    "INDEPENDENT_INTENT.json": {
+      "path": "docs/mcp/c02/s1/fresh-preview-20261104/INDEPENDENT_INTENT.json",
+      "sha256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6"
+    }
+  },
+  "taskEvidenceSHA256": "8a54447f75490fee53861e0d9a8ecc65f4fe3b6525ae6e7092bd06afa82150d6",
+  "softwareDeploymentNecessary": false,
+  "command": null,
+  "confirmations": [],
+  "originalUnknownReplay": "FROZEN_NOT_REQUESTED",
+  "mechanicalOwnerSourceBindingAllowed": {
+    "scope": "Actual human source thread/message/text/wire/receipt pins and consequent static/package hashes only",
+    "mustStayUnchanged": [
+      "OWNER_GATE.md hash",
+      "SCOPE.json hash",
+      "windowId",
+      "consumerInputs",
+      "EMPTY command=null confirmations=[]",
+      "time caps",
+      "noSave/noEdit/noUNKNOWN"
+    ],
+    "review": "Independent actual human source readback + focused pin/diff checks before normal login; no self-approved source"
+  },
+  "root2Qualification": [
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-C843-INDEPENDENT-LOCAL-WRAPPER-REVIEW-20261105/WATCHER_IDENTITY_REVIEW.json",
+      "sha256": "7e6ea37fb2a96c0ea5c641ad69d518a41ef4de0dc4ba398fa1fbc0b025ed6d2b"
+    },
+    {
+      "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/WATCHER_IDENTITY_LOCAL_REPAIR.json",
+      "sha256": "b3f8ae682ccf7ea22631e68ebdfea6b2120ae6726131b2697ad3b88c21a58334"
+    }
+  ],
+  "root2OpsInterface": {
+    "status": "FIXED_INTERFACE_CONSUMED_DERIVED_OPS_AND_LIVE_NOT_YET_CREATED",
+    "interfaceId": "ROOT2-MCP-FUTURE-PREVIEW-WATCHER-INTERFACE-20261105-001",
+    "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/FUTURE_ROOT2_WATCHER_EXECUTION_INTERFACE.json",
+    "sha256": "5379c7fe6433cb502bc991b6ba5ebc4d272b263aeb213a2d01341f0bfddffee1",
+    "reviewedCandidate": {
+      "candidateSHA256": "aee9ac72ab23638e4ca00d129a7ee5ec7fae517dce9a65c36695860e84343858",
+      "manifestPath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-watch-identity-local-repair-20261105/CANDIDATE_MANIFEST.json",
+      "manifestSHA256": "723bb26f7bee63131144015608054c633e2f7bacfe71a31ff7fdb1128b057c4d",
+      "repairReturnPath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/WATCHER_IDENTITY_LOCAL_REPAIR.json",
+      "repairReturnSHA256": "b3f8ae682ccf7ea22631e68ebdfea6b2120ae6726131b2697ad3b88c21a58334",
+      "reviewPath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-C843-INDEPENDENT-LOCAL-WRAPPER-REVIEW-20261105/WATCHER_IDENTITY_REVIEW.json",
+      "reviewSHA256": "7e6ea37fb2a96c0ea5c641ad69d518a41ef4de0dc4ba398fa1fbc0b025ed6d2b",
+      "reviewScope": "NO_BLOCKER exact local argv0 executable equivalence and diagnostic repair;14 independent benign/negative cases, not execution authority",
+      "code": {
+        "start_issuer_watch.py": {
+          "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-watch-identity-local-repair-20261105/start_issuer_watch.py",
+          "sha256": "baa00014c557fd5ca3e2ef2ec5a5b70fdf5463cec41786548ad8a4f8293a3e78"
+        },
+        "execute_empty_cas.py": {
+          "path": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/.root2-private/mcp-watch-identity-local-repair-20261105/execute_empty_cas.py",
+          "sha256": "2916b9b6b17449663c6314c29966cb89230695a32815289791e6cace7b1b46d5"
+        }
+      }
+    },
+    "ownership": {
+      "Root2Ops": "Sole launcher/watch/CAS/timer/Issuer/current-default restore operator. Root2 verifies actual live process immediately before CAS.",
+      "MCP": "Own normal control/browser/session/ScopeConsent/GuideReadPreview and cleanup; consumes Root2 actual readiness only, never starts Root2 watcher or substitutes its own LIVE receipt.",
+      "parentRoot2": "Console official UI activation/restoration and actual postclose receipt producer; coordinates fixed packet/source/independent review."
+    },
+    "exactRoot2Commands": {
+      "issuerWatchLauncher": {
+        "argv": [
+          "python3",
+          "{EXECUTION_ROOT}/start_issuer_watch.py"
+        ],
+        "extraCLIArguments": [],
+        "reads": [
+          "{EXECUTION_ROOT}/FILE_BOUND_ISSUER_PIN.json",
+          "/private/tmp/otr-auth-mcp-slice1-{WINDOW_HEX}/issuer-plan.json"
+        ],
+        "childArgv": [
+          "sys.executable",
+          "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py",
+          "/private/tmp/otr-auth-mcp-slice1-{WINDOW_HEX}",
+          "{ACTUAL_ISSUER_PLAN_SHA}",
+          "--watch"
+        ],
+        "entryPin": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+        "note": "Child is a ROOT2_LOCAL_SQL_CLOSE_WATCH_NOT_REMOTE_PID. Existing issuer-plan gate5309 is frozen SQL policy class, not Owner Gate/source; do not relabel."
+      },
+      "emptyCAS": {
+        "argv": [
+          "python3",
+          "{EXECUTION_ROOT}/execute_empty_cas.py"
+        ],
+        "extraCLIArguments": [],
+        "preconditions": [
+          "Actual dualTimer receipt C02_BOTH_ABSOLUTE_TIMERS_VERIFIED",
+          "Actual same-new-window LIVE issuer watch passes current ps/raw-plan/source-byte/terminal/deadline guards",
+          "Fresh current singleWriter/default/CAS/restore and Console qualification per fixed Gate"
+        ],
+        "remoteArgv": [
+          "python3",
+          "/opt/otr/dev-backend/build/auth-consumer-write-qa-{WINDOW_HEX}/config_cas.py",
+          "/opt/otr/dev-backend/build/auth-consumer-write-qa-{WINDOW_HEX}/empty-cas.json",
+          "{ACTUAL_CAS_PLAN_SHA}"
+        ],
+        "unknown": "Unknown actual transition means readonly reconciliation and owning cleanup; no blind CAS resend."
+      }
+    },
+    "LIVEContract": {
+      "privatePath": "{EXECUTION_ROOT}/ISSUER_WATCHER_START.json",
+      "receiptSHA256": "Only hash actual emitted bytes after actual spawn/observed validation; no fixed future LIVE hash exists now. Root2 supplies exact path/hash+observed time with its actual operational handoff.",
+      "requiredStatus": "ISSUER_CLOSE_WATCHER_LIVE_PROCESS_VERIFIED",
+      "requiredFields": [
+        "watchLocation",
+        "pid",
+        "launcherPid",
+        "processIdentity.pid",
+        "processIdentity.ppid",
+        "processIdentity.born",
+        "processIdentity.argv",
+        "processIdentity.state",
+        "at",
+        "windowId",
+        "gateSHA256",
+        "issuerPlanSHA256",
+        "watchEntrySHA256",
+        "normalCloseAt",
+        "hardExpiresAt"
+      ],
+      "meaning": "Actual child spawned, firstpoll alive, same parent/exact suffix plus strict pinned interpreter equivalence and process identity, secondpoll alive; only then exclusive0600 LIVE record. Existence or prior PREVALIDATED_STARTING alone is never readiness.",
+      "diagnosticBeforeLIVE": "{EXECUTION_ROOT}/WATCHER_IDENTITY_OBSERVATION.json records actual raw expected/observed/childPoll operands before any success assertion; stdout prevalidation summary expressly not LIVE.",
+      "currentCASConsumer": "Immediately observe same actual local child again. Same pid/ppid/birth/raw argv as recorded; strict executable bytes/paths still pinned; no zombie/dead/terminal/CLOSE/result; actual binder rawplan hash equals FILE_BOUND pin/record, correct new window/Gate and before normalClose.",
+      "MCPExposure": "Root2 may give non-sensitive actual readiness summary + exact LIVE receipt path/hash and current timers/restore evidence. MCP does not infer launch readiness from a static fixture or a planned path."
+    },
+    "interpreterContract": {
+      "allowedRealpathsAndSHA256": [
+        {
+          "path": "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+          "sha256": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+          "device": 16777238,
+          "inode": 64013554,
+          "owner": 502,
+          "isRegular": true
+        },
+        {
+          "path": "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python",
+          "sha256": "e89d60f8ccee9db684801330198797723db2ac378cd53e5cfe523128feb76599",
+          "device": 16777238,
+          "inode": 64013540,
+          "owner": 502,
+          "isRegular": true
+        }
+      ],
+      "equivalence": "Only those two exact independently fixed resolved binary paths and hashes, regular owner-matching files; canonicalize argv0 only. All suffixes remain exact; parent/birth/state/current raw identity and actual plan/terminal/time checks remain.",
+      "interpreterDrift": "Any binary/path/install change fails closed and needs a new focused qualification; do not auto-enroll arbitrary ps output or trust a matching basename."
+    },
+    "mechanicalDerivationOnly": {
+      "Root2Files": [
+        "Future new execution-root copies of reviewed start_issuer_watch.py and execute_empty_cas.py; never execute current hardcoded c843 candidate or overwrite archived c843 code.",
+        "Existing Root2 wait/preposition/inspect/prepareCAS/Timer/disarm/readback wrappers derived under the new exact package/current before-image."
+      ],
+      "mustBind": [
+        "Every old window UUID/hex, Gate/scope and Owner source reference must match the actual new MCP packet and trusted actual approval provenance.",
+        "Local bound/control/status/LIVE/pin/terminal/diagnostic paths and remote dedicated root/timer names must use the new fixed UUID; new artifacts start absent.",
+        "All17 MCP static/package hashes from actual future packet are consumed and copied exactly; actual Owner wire/three source guards independently matched.",
+        "Actual current accepted default container/image/Config/environment/HostConfig/mount/files/current restore pointer and Console/Issuer before-image, not historical6ff9 unconditional target.",
+        "Config/issuer/CAS hashes and immutable T/deadlines only come from actual binder/CAS artifacts, never placeholders or copied c843 values.",
+        "After mechanical derivation verify focused source diff/hash pins/all current identities, actual remote-literal compile and affected process guard cases; independent review of exact delta before real wait/launch."
+      ],
+      "MCP17LogicChangeRequiredForIdentityRepair": false,
+      "MCP17Boundary": "Identity fix is Root2 local wrapper only. MCP normal-control/receiver/Rimu behavior needs no repair. Ordinary future new-Gate/window/source mechanical derivation of MCP static pins remains MCP owned; that is not a new source behavior change induced by this fix. If any logic change appears necessary, stop and name exact file/delta instead of widening this interface."
+    },
+    "actualExecutionRoot": null,
+    "adaptedManifestSHA256": null,
+    "actualLIVESHA256": null
+  },
+  "defaultStalenessRule": "Requalify actual current default on any accepted Import/default/settings change; current6ff9 is not an unconditional future restore target.",
+  "status": "ACTUAL_ADVANCE_SOURCE_BOUND_PENDING_INDEPENDENT_DELTA_REVIEW",
+  "windowId": "6d49f895-887d-437c-9294-d381bcd8005d",
+  "windowHex": "6d49f895887d437c9294d381bcd8005d",
+  "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+  "scopeSHA256": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+  "generatedStaticDirectory": "dist/mcp-c02-fresh-6d49f895887d437c9294d381bcd8005d-receiver-advance-bound/static",
+  "clockStarted": false,
+  "authorityActivated": false,
+  "startsAt": null,
+  "normalCloseAt": null,
+  "hardExpiresAt": null,
+  "saveApproved": false,
+  "sourceCandidate": "b45616984627fc9f96b3dc117596fabbeaa71a52",
+  "normalLoginPermittedBeforeActualRoot2Waiting": false,
+  "ownerSource": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/OWNER_SOURCE.json",
+    "sha256": "6d111606ef6c421a5d31bc9e00afa3a519fb244b2698df3aca41222c7db78f0b",
+    "status": "ACTUAL_ADVANCE_HUMAN_SOURCE_BOUND_CONTEXT_REVIEWED_PLATFORM_PENDING"
+  },
+  "ownerSourceLiteralPins": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "messageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+    "text": "\u6211\u63d0\u524d\u6279\u51c6\u4f60\u7684\u5ba1\u6279\u3002\u4e00\u4f1a\u513f\u4e0d\u7528\u95ee\u6211\u4e86"
+  },
+  "reviewStatus": "OWNER_SOURCE_BINDING_PENDING_INDEPENDENT_DELTA_REVIEW",
+  "credentialBoundary": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/RECEIVER_CREDENTIAL_BOUNDARY.json",
+    "sha256": "93935d255facb01a4db0548a8ba278a510adfdab31e3e2904fee4262b97ed1c5",
+    "reviewCorrectionSource": {
+      "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/CREDENTIAL_BOUNDARY_REVIEW.json",
+      "sha256": "89da1ee06ba1829e2aa54491de821a84a8ee8d239fe1403e62af3b37139849e6"
+    },
+    "currentApproval": false
+  },
+  "priorC7D0": {
+    "windowId": "c7d0ee01-0f06-4a4a-9d09-0f6034a3cc3d",
+    "gateSHA256": "e602fbfaa1bad7a8554faadc3dd38b19ab6eedb6cbe5a7d465b07b27f1cea72a",
+    "state": "CONSUMED_CLOSED_AFTER_CONTROLLED_ACTIVATION_CONSUMER_BLOCKED_NO_PREVIEW",
+    "ownCleanupPath": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/OWN_SESSION_FINAL.json",
+    "ownCleanupSHA256": "64ae9f31765251ff287328657b48de160365f077316045c09d4225c7d6660481",
+    "globalFinal": {
+      "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/ROOT2_FINAL_EARLY_CLOSE_RECEIPT.json",
+      "sourcePath": "/Users/xoery/Project/otr-mobile-import/root2-hosted-ops-acceptance-20261103/docs/handoffs/ROOT2_HOSTED_OPS_V4/requests/ROOT2-MCP-FRESH-P3-QUALIFICATION-20261105/c7d0/FINAL_EARLY_CLOSE_RECEIPT.json",
+      "sha256": "c9507111d7c87caa58591bf97a19f7796c5b987a07df6fa6c63bd61c8a915196",
+      "actualActivatedThenRestored": true,
+      "resources": [],
+      "archivalLabelLimit": "Inherited disarm archival status literal says C7D0_CLOSED_WITHOUT_ACTIVATION_NOT_REUSABLE even though this window DID activate. Treat that legacy label only as closed/revoked/nonreusable, never as no-activation evidence. This final receipt and actual CAS/Issuer/Console receipts state real activation. Remote CAS is archived and activationPermitted=false; no runnable authority remains. No live scope or safety limitation results."
+    },
+    "approvalReusable": false
+  },
+  "staticFiles": {
+    "SCOPE.json": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "c02-normal-control.py": "63ea323aa07a3fb8adfb1792c474541abe7da84eee2efcbf6b3ecfad1236b662",
+    "c02-timers.py": "9f1d257b4439b8bcd21b0f84f772c16d14df09ac9296d016f74171d6fa32a8b4",
+    "c02-timers.test.py": "9aabcba8af8637fd10a7af7b572ddcc08f7dcab89c60b76a20994506ac3fc550",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_CLOSED_INSTALL.sql": "e7f7558a674a6e9b9c09bb7c110e5232d8fc863ad11d1881a0a92d802b30f2ec",
+    "issuer-source/docs/ops/auth-mcp-oauth-20261031/QA_TOKEN_HOOK_INSTALL.template.sql": "2c93dec55e9353e9df06bf497ed25f9b320c77aaf6fc58e32b3fe345dcbef28c",
+    "issuer-source/docs/ops/auth-mcp-slice1-20261101/operators/issuer_close.py": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+    "issuer-source/scripts/auth/render-mcp-qa-hook.py": "1e2682c0fb8f15e17d5a3455c54b4f4a1147c2dd242d5d0c3ca3484c64f88341",
+    "issuer-source/scripts/auth/render-mcp-write-qa-hook.py": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+    "normal-control.mts": "1cf9cc63b49f40673a6c65cf16630d3250bd77c8580f4bc93f873748d2aa36df",
+    "operators/config_cas.py": "8b75fa3c292e03e75090375c9e10ddfd8df6b4d6df8fd1855c70e9b426cbc0dc",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f",
+    "prepare-c02-access-window.py": "33d8a204f0ed1d65d307993d587f24f936f0bd41aab280826f31050854f0b145"
+  },
+  "mechanicalRebind": "Fixed new window/Gate/scope and consequent pins; replace obsolete generic Owner-source literals with explicit UNBOUND pins and one fail-closed guard; no authority expansion",
+  "receiverSourceReadiness": {
+    "status": "NOT_AUTHORIZED_NOT_READ_NOT_READY",
+    "mustPrecedeAnyTOrOTP": true,
+    "moduleImportIsCredentialReadiness": false,
+    "credentialReadOccurred": false,
+    "providerEntitlementVerified": false,
+    "sourceReadinessReceipt": null
+  },
+  "root2FutureArchivalLabelRequest": "Use neutral CLOSED_NOT_REUSABLE for future metadata; Root2 owns change, no original evidence rewrite.",
+  "actualFocusedChecks": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/FOCUSED_CHECKS.json",
+    "sha256": "4b26d1a4366c80d51e60dcdc327b015446d5c6d496b1ec183fbce0512234fd3c"
+  },
+  "preparationFiles": {
+    "prepare_static.py": "99c8440ae2b1058cdda51c69214b4fd70b64eccca1563c8fc0a2e41d60771a81",
+    "check_rebind.py": "af0915348473939df9c32ead1613d1202d33990fc3d649bd2a950e27b79b8b12",
+    "OWNER_SOURCE.json": "6d111606ef6c421a5d31bc9e00afa3a519fb244b2698df3aca41222c7db78f0b",
+    "OPS_INTERFACE_BINDING.json": "ddc48c7ed1606827ac3401570d35be22b6ce52ae8828078c512daa701cf2f9f7",
+    "RECEIVER_CREDENTIAL_BOUNDARY.json": "93935d255facb01a4db0548a8ba278a510adfdab31e3e2904fee4262b97ed1c5",
+    "APPROVAL_CONTEXT.json": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+    "ADVANCE_OWNER_WIRE.json": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+    "ADVANCE_OWNER_TEXT.txt": "5d42b013912d183f14fcdc9e12ed013bad3c48d2c298dc9030d62b484bcc5b6d",
+    "APPROVAL_CONTEXT_MESSAGES.json": "c90d41d497e7ffb3563346321069ba6495d5f60c5735b84a5439880b98a09f3f"
+  },
+  "approvalContext": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/APPROVAL_CONTEXT.json",
+    "sha256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+    "status": "ACTUAL_ADVANCE_HUMAN_CONTEXT_RECORDED_PENDING_INDEPENDENT_SINGLE_SCOPE_PLATFORM_MAPPING",
+    "actualHumanStatementAvailable": true,
+    "executionSourceBound": true,
+    "platformRecognized": false,
+    "contextRecordIsPriorUnboundStage": true
+  },
+  "priorUnboundPackageSHA256": "a7b8a6ba21a1b603734e18b5bcb978e7cf0e1cb5dc93f3665e666191f5b70c98",
+  "previousUnboundGeneratedStaticDirectory": "dist/mcp-c02-fresh-6d49f895887d437c9294d381bcd8005d-receiver-fixed-final/static",
+  "unboundCandidateReview": {
+    "path": "docs/mcp/c02/s1/fresh-preview-receiver-20261105/REVIEW.json",
+    "sha256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220",
+    "commit": "80130ead7ec7d294d4ba3395d92f1edab9d9dd12",
+    "verdict": "NO_BLOCKER_UNBOUND_MECHANICAL_CREDENTIAL_AND_SINGLE_ADVANCE_CONTEXT"
+  }
+}

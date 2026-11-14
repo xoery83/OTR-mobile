@@ -1,0 +1,138 @@
+{
+  "project": "tuqigdxrvrerfewsxqgm",
+  "sqlSHA256": "253e53a8d0eeb483883758263f883cfed8bb65415cbfd3024baa083b7ecf7af9",
+  "startedAt": 1794564547.401483,
+  "providerCalls": 0,
+  "writerIdentity": [
+    28,
+    7
+  ],
+  "before": [
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "3224ef85fb4e193bf5293f7ba86d03d1",
+      "oid": 65418,
+      "owner": "postgres",
+      "proname": "assert_trip_core_v2_aggregate",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "d4b0cc0ff4bbffff9b68baccf5d21e2b",
+      "oid": 65713,
+      "owner": "postgres",
+      "proname": "trip_core_finite_read_state_guard",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "b12097211f42ad0a45a446a3d020d7bc",
+      "oid": 65263,
+      "owner": "postgres",
+      "proname": "trip_core_guard_write",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "c1d71225e6e42040db61a74832762f4a",
+      "oid": 67735,
+      "owner": "postgres",
+      "proname": "trip_document_bind_private_custody",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "a6591fd730fc1f5298a729ebab6cefeb",
+      "oid": 66181,
+      "owner": "postgres",
+      "proname": "trip_sustained_core_capabilities",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "fe5cba505cfc711cfa5593ee26a3ac6b",
+      "oid": 66180,
+      "owner": "postgres",
+      "proname": "trip_sustained_dev_scope_allowed",
+      "session_user": "postgres"
+    }
+  ],
+  "sendDisposition": "ACKNOWLEDGED",
+  "after": [
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "9fe9da1b0017053e9cf2fef3b8e1bd0b",
+      "oid": 65418,
+      "owner": "postgres",
+      "proname": "assert_trip_core_v2_aggregate",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "b1b580acb9cfe4a2c1f5e54da45ca854",
+      "oid": 65713,
+      "owner": "postgres",
+      "proname": "trip_core_finite_read_state_guard",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "6e1171d4ad2872c44a7e294ead7ab5d7",
+      "oid": 65263,
+      "owner": "postgres",
+      "proname": "trip_core_guard_write",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "be76211a589cc820eaa5020daae1c012",
+      "oid": 67735,
+      "owner": "postgres",
+      "proname": "trip_document_bind_private_custody",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_gateway=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "c0f23166e363febc0594d9dd1ccb159e",
+      "oid": 66181,
+      "owner": "postgres",
+      "proname": "trip_sustained_core_capabilities",
+      "session_user": "postgres"
+    },
+    {
+      "acl": "{postgres=X/postgres,otr_trip_core_v2_writer=X/postgres}",
+      "current_database": "postgres",
+      "current_user": "postgres",
+      "md5": "f593afc154e60ffbe885d887af48820a",
+      "oid": 66180,
+      "owner": "postgres",
+      "proname": "trip_sustained_dev_scope_allowed",
+      "session_user": "postgres"
+    }
+  ],
+  "verified": true,
+  "identityUnchanged": true,
+  "completedAt": 1794564560.231204
+}

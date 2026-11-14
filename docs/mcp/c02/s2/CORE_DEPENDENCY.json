@@ -1,0 +1,14 @@
+{
+  "status": "CONSUMED_EXACT_FIXED_ROOT1_MAIN_SOURCE_NOT_HOSTED",
+  "main": "4c8d0fd9dc4d0210f02b6bfaace5ced0f59f454a",
+  "candidate": "5393cbaf77397c07d103b793035152d7e7a763fa",
+  "files": {
+    "src/domain/trip/tripCoreV2Commands.ts": "58ccc22a6a20fd97a401a22aa8d7b77bb19aaccecdabc114d96f2a4c9faa8acc",
+    "src/domain/trip/tripCoreV2Mutation.ts": "bb2cad24cf10295f94d744b4175c1c112059816362afc4f268f5da16666ae050",
+    "src/domain/trip/tripCoreV2StayPatch.test.ts": "da33c30494365f88882fcb198cd712924abdaf8963b521a4f58438c4f5170ad5",
+    "backend/src/tripCoreV2StayPatchReceipt.test.ts": "40d472321f226f4e7de5e8506a2acd638e47efa588aea429fa1459a21df51752",
+    "docs/ops/core-sparse-stay-20261104/HANDOFF.md": "6e15d695141f78c370457d47cd72b7f73264d350080a12202f693b4f472959df",
+    "docs/ops/core-sparse-stay-20261104/INDEPENDENT_REVIEW.json": "c138bf4914cb760e03f86277964a77f4adbe856dfa21309c87fa5632fe9d41f5"
+  },
+  "limits": "Exact owning source consumption, including earlier authoritative coreCanManage restriction already on main; no MCP-authored Core changes. Old deployed Backend remains unqualified for sparse shape."
+}

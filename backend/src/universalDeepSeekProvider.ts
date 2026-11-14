@@ -62,9 +62,12 @@ const completion = z.object({
     .length(1),
   usage: z.unknown(),
 });
+const ordinaryCompletion = completion.partial({ usage: true });
+
 export function decodeUniversalDeepSeekResponse(
   bytes: Uint8Array,
   priceSchedule?: UniversalPriceSchedule,
+  allowMissingUsage = false,
 ) {
   const buffer = Buffer.from(bytes);
   if (buffer.byteLength > 131072) throw Error("UNIVERSAL_RESPONSE_BOUND");
@@ -74,7 +77,7 @@ export function decodeUniversalDeepSeekResponse(
   } catch {
     throw new Error("UNIVERSAL_PROVIDER_JSON_INVALID");
   }
-  const parsed = completion.safeParse(raw);
+  const parsed = (allowMissingUsage ? ordinaryCompletion : completion).safeParse(raw);
   if (!parsed.success) throw new Error("UNIVERSAL_PROVIDER_COMPLETION_INVALID");
   // Official alias version revalidated 2026-11-04: api-docs.deepseek.com/quick_start/pricing/.
   if (
@@ -129,15 +132,16 @@ export function decodeUniversalDeepSeekResponse(
   return { output, usage, costNanos, providerRequestId: parsed.data.id };
 }
 
-export function createUniversalDeepSeekProvider(deps: {
+export function createUniversalDeepSeekExecution(deps: {
   custody: UniversalProviderCustody;
   send: Send;
   priceSchedule?: UniversalPriceSchedule;
   costGuardDisabled?: boolean;
+  allowMissingUsage?: boolean;
+  requestProfile?: "local-first";
   beforeRemoteSend?(): Promise<{ readCurrentClaim(): Promise<() => void> }>;
-}): UniversalProvider {
+}) {
   return {
-    mode: "HOSTED",
     async interpret(input: Input) {
       let phase = "ACQUIRE";
       let transportStarted: number | undefined;
@@ -160,7 +164,7 @@ export function createUniversalDeepSeekProvider(deps: {
         }
       }
       try {
-        const request = buildUniversalDeepSeekRequest(input);
+        const request = buildUniversalDeepSeekRequest(input, deps.requestProfile);
         const credential = await deps.custody.acquire({
           actorId: input.actorId,
           accountId: input.accountId,
@@ -232,7 +236,11 @@ export function createUniversalDeepSeekProvider(deps: {
           throw new Error("UNIVERSAL_PROVIDER_HTTP_FAILURE");
         phase = "DECODE";
         const { output, usage, costNanos, providerRequestId } =
-          decodeUniversalDeepSeekResponse(bytes, deps.priceSchedule);
+          decodeUniversalDeepSeekResponse(
+            bytes,
+            deps.priceSchedule,
+            deps.allowMissingUsage,
+          );
         await credential.assertCurrent();
         phase = "SETTLE";
         await deps.custody.settle({
@@ -249,7 +257,6 @@ export function createUniversalDeepSeekProvider(deps: {
         return {
           output,
           providerReceipt: {
-            outcome: "SETTLED" as const,
             requestId: providerRequestId,
             requestSha256: request.requestSha256,
             responseSha256: sha(bytes),
@@ -276,6 +283,22 @@ export function createUniversalDeepSeekProvider(deps: {
           code: `UNIVERSAL_PROVIDER_${phase}_${kind}`,
         });
       }
+    },
+  };
+}
+
+export function createUniversalDeepSeekProvider(
+  deps: Parameters<typeof createUniversalDeepSeekExecution>[0],
+): UniversalProvider {
+  const execution = createUniversalDeepSeekExecution(deps);
+  return {
+    mode: "HOSTED",
+    async interpret(input) {
+      const result = await execution.interpret(input);
+      return {
+        ...result,
+        providerReceipt: { ...result.providerReceipt, outcome: "SETTLED" },
+      };
     },
   };
 }

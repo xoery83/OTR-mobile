@@ -1,0 +1,33 @@
+{
+  "status": "CLOSED_BEFORE_ORIGINAL_DEADLINE",
+  "authEvidenceCommit": "c104a0f5",
+  "authEvidenceDirectory": "docs/ops/auth-mcp-fresh-20261102",
+  "issuerClosedAt": "2026-11-01T20:39:03.396433Z",
+  "normalControlCleanup": "DELETE204_AND_READBACK_ABSENT; PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "oauthEnabled": false,
+  "hookEnabled": false,
+  "dynamicRegistrationEnabled": false,
+  "siteUrl": "http://localhost:3000",
+  "rootRestore": {
+    "observedAt": "2026-11-01T20:39:46.679576Z",
+    "container": "cb71e00e7698ee78558cc787cb8f175ac3f0a5708fe6c129ba15c0d456953d2c",
+    "configSHA256": "335997de5233bb374e49b62abf34e10231bbf2b3e4856228092b075111cc6c34",
+    "image": "sha256:fbd9074e232861dd272ad16b950045db8be0df82f979b2fafa8da8e91dba1f66",
+    "health": 200,
+    "protected": 401,
+    "qaKeysAbsent": true,
+    "hostAnd23FilesExact": true,
+    "timerInactive": true,
+    "shortLockReleasedAt": "2026-11-01T20:39:46.521Z"
+  },
+  "rootEvidenceSource": "Root immutable commit 6f458c5a; exact FINAL_CLOSE_READBACK independently read and identities matched",
+  "consumerSessionRefreshNegativeIndependentlyTested": false,
+  "historicalUnknownReplayed": false,
+  "rootEvidence": {
+    "commit": "6f458c5a",
+    "path": "docs/ops/mcp-slice1-root-integration-20261101/fresh-recovery-20261102/FINAL_CLOSE_READBACK.json",
+    "sha256": "325f19a4016b6b9c3263473cadb31e3164796b01834d64eef1e9e1a8326bbb19",
+    "status": "ROOT_CLOSED_SERVER_VERIFIED",
+    "releasedAt": "2026-11-01T20:39:46.521967+00:00"
+  }
+}

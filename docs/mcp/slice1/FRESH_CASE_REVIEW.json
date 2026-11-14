@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_FRESH_CASE_PREPARATION_NO_BLOCKER_NOT_WRITE_AUTHORIZED",
+  "reviewer": "/root/mcp_independent_review",
+  "scope": [
+    "scripts/mcp/slice1-readback.ts selector and paths",
+    "QA_CASES_FRESH.json commands and identities",
+    "RECOVERY_SDK_CANDIDATE.json pins and artifact",
+    "RECOVERY_COMPILED_SDK_SMOKE.json scope"
+  ],
+  "review": "NO_BLOCKER",
+  "checks": {
+    "independentPrepareUpdateAndIdentityRecompute": "BOTH_CASES_MATCH_NOTES_ONLY",
+    "originalQaCasesBytes": "UNCHANGED_c87a647",
+    "currentSdk51Hashes": "MATCH_ONLY_GUIDE_DIFFERS",
+    "compiledSdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+    "freshSqlBaseline": "PASS_ROOT_CHILDREN_RECEIPT_ZERO",
+    "invalidSelector": "REJECTED_BEFORE_FILE_OR_SQL_IO",
+    "rootTypecheck": "PASS",
+    "changedScriptLint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "noBusinessPostCode": true,
+  "unknownReplay": false,
+  "writeAuthority": false
+}

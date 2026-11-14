@@ -1,0 +1,77 @@
+{
+  "status": "CHATGPT_P3_NOTES_CONSUMER_EDIT_E2E_PASS_CLOSED",
+  "scope": "Actual ChatGPT / same synthetic P3 Notes only; no all-MCP, all-P1–P6, real Nelson or Native acceptance",
+  "windowId": "751df5929be940f7b18e4f55e584692c",
+  "gateSHA256": "58638943af2139e76c31777065ed5663625eec35f66e85d57967dbc7073c0e1b",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "beforeRevision": 2,
+  "revision": 3,
+  "actualOAuthConsent": "PASS_NORMAL_OTP_CONSENT_EXISTING_SCOPE",
+  "operatingGuide": "OPERATING_FIELDS_CAPABILITIES_ACTUALLY_CONSUMED",
+  "actualEditBase": "SERVER_CONFIRMED_CAN_EDIT_TRUE",
+  "actualPreview": "PREVIEW_FC18_EXACT_NOTES",
+  "handlerProof": {
+    "status": "MATCHED_HANDLER_OUTPUT_NOT_APPLY_AUTHORITY",
+    "baseRequestId": "fef00356-3986-44ec-8e61-f374452c541c",
+    "previewRequestId": "85e8780f-2622-4ff5-8cca-5ac0405bb1be",
+    "logsSHA256": "6a41410d10cf149013b900833fd79b184803d71e74006cd800fe379e7d925ae9",
+    "quotedSHA256": "c5fb3511953acf9fe63d93bab3201dadea4afbe721528dfe123ab51b01cee979"
+  },
+  "explicitConsumerConfirmation": true,
+  "platformPermission": "ALLOW_ONCE_ONLY_NOT_ALWAYS_ALLOW",
+  "consumerApplyCount": 1,
+  "formalMutationResult": "APPLIED",
+  "consumerSameIdReadback": "SERVER_CONFIRMED_REV3_NOTES_MATCH",
+  "independentSupabase": {
+    "observedAt": "2026-11-02T09:25:32.560378+00:00",
+    "receiptCount": 1,
+    "receiptSHA256": "7dac9d3f647a4f1535cdeeca7b5bcf07312ebee3998bfb52837be25a49e447c9",
+    "notesExact": true,
+    "otherRootFieldsAndFieldStateUnchanged": true,
+    "all11ChildCollectionsUnchanged": true,
+    "businessPostsByReadback": 0
+  },
+  "allowedChangedFields": [
+    "description",
+    "semantic_revision",
+    "updated_at",
+    "field_state.itinerary_events.description"
+  ],
+  "historicalUnknownReplayed": false,
+  "newOperationIdUsed": false,
+  "rootClose": {
+    "status": "ROOT_CLOSED_SERVER_VERIFIED",
+    "verifiedAt": "2026-11-02T09:28:04.050688+00:00",
+    "defaultContainerId": "6ebe6ed8b2062b442d69631e0ccaa11745c0d94ca9b9412c8b818dd2c5cf68e0",
+    "defaultConfigSHA256": "bcb0b2399018bb98b23f9744600ff008cd275fc750b9a9e7469f7af5fa170e5b",
+    "qaKeysAbsent": true,
+    "healthProtectedProbes": "200_401",
+    "all23FilesHostExact": true,
+    "timerInactive": true,
+    "grantDelete204AndOwnSessionCleanup": "ROOT_REPORTED_PASS_EXIT0",
+    "issuerDenyAllAt": "2026-11-02T09:25:08Z",
+    "originalIssuerOwnerInvokerSearchPathACLVerifiedAt": "2026-11-02T09:29:05.316614+00:00",
+    "consoleOAuthOffHookDisabledSiteLocalhost": "ROOT_REPORTED_SAVED_RELOADED",
+    "sharedDevReleased": true,
+    "rootEvidenceCommit": "ec141cae",
+    "lateDiagnosticCapture": "ALREADY_DEFAULT_NOT_CAPTURED_NOT_RECONSTRUCTED"
+  },
+  "nativeDownstream": "SCOPED_IPAD_UI_PROCESS_COLD_AND_FORMSQA_SQLITE_EVIDENCE_VERIFIED_FINAL_NATIVE_RECEIPT_PENDING",
+  "claudePriorSameSemanticNotesSlice": "PASS_CLOSED_E389_1D6_REV1_TO_2_NOT_REPEATED",
+  "codeCommits": {
+    "sdkProof": "f522fc4c",
+    "offlineComparator": "2121a34e",
+    "owningCoreCanEdit": "fe96aed1"
+  },
+  "deployedImage": "sha256:97da9caa94ecd6a92ec57a85c8e071fb98c5060d6a75b8901667a2305acb5602",
+  "initialFailuresRetained": [
+    "PRE_READY_UI_FAILURE.json",
+    "OTP helper initial missing TS loader before send; first delivered OTP scalar reference loss; second normal resend verified once; no code stored"
+  ],
+  "mainMerge": "NOT_PERFORMED_THIS_SLICE",
+  "nativeResultEvidence": "NATIVE_DOWNSTREAM_20261103.json",
+  "priorNativeResultEvidence": "NATIVE_HANDOFF_RESULT.json"
+}

@@ -1,4 +1,4 @@
-import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { AppState } from "react-native";

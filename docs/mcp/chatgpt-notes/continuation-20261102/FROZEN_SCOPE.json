@@ -1,0 +1,19 @@
+{
+  "status": "EXECUTED_PASS_CLOSED_AUTHORITY_CONSUMED",
+  "windowId": "751df5929be940f7b18e4f55e584692c",
+  "gatePath": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/chatgpt-notes/continuation-20261102/OWNER_GATE.md",
+  "gateSHA256": "58638943af2139e76c31777065ed5663625eec35f66e85d57967dbc7073c0e1b",
+  "frozenAt": "2026-11-02T08:27:35.261410+00:00",
+  "preGateReview": "PRE_GATE_INCREMENT_REVIEW.json",
+  "scopeDraftUnchangedBusinessIdentity": true,
+  "actualOwnerApprovalReceived": true,
+  "clockStarted": true,
+  "consumerApplies": 1,
+  "finalReview": "FINAL_BINDING_REVIEW.json",
+  "executionPackage": "FINAL_EXECUTION_PACKAGE.json",
+  "dispatcherBinding": "FINAL_DISPATCHER_BINDING.json",
+  "ownerQuestionPresented": true,
+  "approvalEvidence": "ACTUAL_MCP_OWNER_APPROVAL.json",
+  "authorityConsumed": true,
+  "acceptance": "ACCEPTANCE.json"
+}

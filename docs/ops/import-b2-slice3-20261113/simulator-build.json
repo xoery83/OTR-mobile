@@ -1,0 +1,12 @@
+{
+  "deviceUDID": "1B2252F4-4F90-4F93-9223-545269EAA06C",
+  "bundleId": "com.xoery.otrmobile.b1full20261113",
+  "backendURL": "https://api-dev.xoery.art",
+  "provider": "SYNTHETIC_PROVIDER_ONLY",
+  "core": "REAL_DEV_AUTH_QUEUE_SYNC_RECEIPT",
+  "finalConfirmBeforeSave": false,
+  "bundleSHA256": "5f45ae30ac4b9354ab7651d0f6dcbd66d982b0cda2363df2fc219c47db5e81ed",
+  "productFixtureIncluded": false,
+  "physicalDeviceTested": false,
+  "productionModified": false
+}

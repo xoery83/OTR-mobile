@@ -1,0 +1,14 @@
+{
+  "status": "SOURCE_COMPATIBLE_PIN_UPDATED_NO_SESSION_LAUNCHED",
+  "checked_at": "2026-11-03T04:15:37.958889+00:00",
+  "owning_commit": "eb884c67",
+  "helper_path": "scripts/auth/registered-qa-host-session.ts",
+  "previous_sha256": "c57737e680e611307aeaa4e5514caa0796be4e32aeb02b11ff4e605a22da17b3",
+  "current_sha256": "a8b9b8e264270f4ddf84dbf65e2cdf7365f61efa3c0d69c6989a4af8422f055d",
+  "mcp_launcher_sha256": "2857591fd52995ac2eb85dcc137186fa8dafcae4b703725f844300ea36fc096a",
+  "reason": "Owning Auth extracted normal callbacks, immutable validated DEV options; existing registered Host signature and cleanup preserved, allowRegistration remains false. No Scope/role/actor/OTP receiving or permission expansion.",
+  "owning_evidence": "docs/ops/auth-c04-20261103/finite-qa-candidate/EXECUTION_GATE_DRAFT_MANIFEST.json normalAuthCallbackComposition",
+  "mcp_inspection": "Scoped committed helper diff reviewed. Remaining3 entry/helper pins matched. No sessions, clocks or network actions.",
+  "validation": "MCP narrow control boundary regression PASS; independently rerun Auth extracted normal callbacks 3PASS/16stable skipped (mocks only), no OTP/network/session. Initial Vitest cache sandbox write denial resolved with scoped test permission.",
+  "authority": "c231 connection+Preview only; formal Apply remains unapproved"
+}

@@ -70,7 +70,7 @@ it("71 is unique and executes approved byte-exact DDL", () => {
   expect(createHash("sha256").update(migration.sql).digest("hex")).toBe(
     "fd503ea7e3d83cd28d2bbffc5e14a62025719a1ca41ebab3b0a42e0899bc18df",
   );
-  expect(Math.max(...migrations.filter((x) => x.id !== 71).map((x) => x.id))).toBe(70);
+  expect(Math.max(...migrations.filter((x) => x.id < 71).map((x) => x.id))).toBe(70);
 });
 it("70 to71 and restart preserve scalar, Journal, cover preferences and original photos", async () => {
   const f = fixture();

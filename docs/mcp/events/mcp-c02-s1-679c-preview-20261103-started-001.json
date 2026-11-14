@@ -1,0 +1,42 @@
+{
+  "event_id": "mcp-c02-s1-679c-preview-20261103-started-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "field_slice": "S1 fresh ChatGPT P3 supported Create Preview only",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "STARTED",
+  "reported_event_type": "STARTED",
+  "created_at": "2026-11-03T04:44:56.860575+00:00",
+  "current_status": "NEW679C_OWN_AUTH_READY_UNIQUE_BINDER_ROOT_RUNTIME_QUALIFICATION_PENDING",
+  "commit": "fac54b0b",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/access-preflight/RENEWAL_WINDOW_BOUND_20261103.json",
+    "docs/mcp/c02/s1/access-preflight/RENEWAL_REBIND_REVIEW.json",
+    "docs/mcp/c02/s1/access-preflight/ROOT_NEW_ISSUER_APPROVAL.json",
+    "docs/mcp/c02/s1/access-preflight/FINITE_RUN_CLOSE_20261103.json"
+  ],
+  "completed": [
+    "Previouse325 actualEMPTYCAS and default/issuer/timer safe close; ownSession refresh revoked, selected Auth2tablecounts0; noConsumer request/Apply",
+    "Owner new direct Root issuer approval independently verified, originalMCPc231 scope provenance separate",
+    "Actual Host Node and transient cleanup source bugs minimally fixed,9puretests/narrowcontrol/independentReviewPASS",
+    "Newunused679c mechanical packageReviewPASS/defaultclosedRootstage; ownnormalOTP/getUserready, T04:42:58.792/D05:12:58.792Z, noreset"
+  ],
+  "unfinished": [
+    "Current actual protected runtime/issuer/console qualification",
+    "Fresh consumer OAuth/Guide/Read/P3 Create Preview",
+    "Apply/Save requires separate approval; not authorized in this window"
+  ],
+  "blocked_by": [],
+  "next_action": "Root freshCAS/dualabsolute timers/issuerwatcher and fixed issuer/consoleactivation under newdirectapproval; MCP then actual consumer Preview and cleanup, no business Apply.",
+  "acceptance": {
+    "local": "QUALIFIED_FIXED_SOURCE_AND_MECHANICAL_REBIND",
+    "hosted": "DEFAULT_CLOSED_FILES_STAGED_ACTIVATION_PENDING",
+    "consumer": "NOT_RUN",
+    "native": "NOT_RUN"
+  },
+  "scope_note": "MCP-C02 IN_PROGRESS; notCreate/EditE2EPASS. HistoricalUNKNOWNs untouched.",
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED"
+}

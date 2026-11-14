@@ -1,0 +1,38 @@
+{
+  "event_id": "mcp-chatgpt-751-native-readback-20261103-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source_agent": "MCP",
+  "capability_id": "CAP-MCP-CONSUMER-EDIT",
+  "work_package_id": "MCP-C02",
+  "execution_slice_id": "MCP-C02:ACCEPTANCE",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "HANDOFF",
+  "reported_event_type": "HANDOFF",
+  "created_at": "2026-11-02T19:17:36.573513+00:00",
+  "current_status": "ORIGINAL_277_NATIVE_SCOPED_EVIDENCE_VERIFIED_FINAL_NATIVE_RECEIPT_PENDING",
+  "commit": "1a6a8e41",
+  "related_event_id": "mcp-chatgpt-p3-notes-751-20261102-001",
+  "summary": "Original Notes-only cloud result unchanged. Native physical iPad process-cold Details UI and separate FormsQA read-only SQLite rev3 independently matched by MCP. Not C02 full-field or fresh mutation.",
+  "evidence_paths": [
+    "docs/mcp/chatgpt-notes/continuation-20261102/NATIVE_DOWNSTREAM_20261103.json",
+    "docs/mcp/chatgpt-notes/continuation-20261102/NATIVE_COLD_RESULT_20261103.json",
+    "docs/mcp/chatgpt-notes/continuation-20261102/NATIVE_FORMSQA_SQLITE_20261103.json"
+  ],
+  "completed": [
+    "Original Native AX confirms property/date and exact three-line Notes after process close/open",
+    "Separate FormsQA read-only target matches Account1f3/Tripcc44/Item3616 rev3, complete8.0/access1/nonrevoked",
+    "No Apply/Edit/UNKNOWN replay or historical Item modification"
+  ],
+  "unfinished": [
+    "Native final receipt SHA/normal account-binding evidence finalization",
+    "Physical iPad revision not directly visible; FormsQA SQLite does not replace physical-iPad DB proof"
+  ],
+  "blocked_by": [],
+  "dependencies": [
+    "Native final owning receipt; current C02 protected integration remains its separate unresolved work item"
+  ],
+  "next_action": "Receive final Native evidence/commit, preserve exact surface scope, update only original Notes downstream handoff. Do not close full-field MCP-C02.",
+  "old_notes_native_not_run_history": "Superseded only by precise UI-cold and FormsQA SQLite evidence now supplied; no broad Native PASS",
+  "new_cloud_operations": 0,
+  "ack_status": "SUBMITTED_NOT_ACKNOWLEDGED"
+}

@@ -1,0 +1,36 @@
+{
+  "verdict": "LOCAL_ONLY_NO_BLOCKER_PUBLICATION_REPAIR",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-04T23:56:41.660685+00:00",
+  "candidateCommit": "e819c2b87837137abd67f72926ae7a873872e249",
+  "repairReceiptSHA256": "e879b45c7bc0462af26832e38a35e5771c298441732a8c2d42c193ae20e2aa32",
+  "originalReviewSHA256": "8a3ecfcd4595dd94b7c2c528605d9204b9d570519123b3e687a114f58fce149c",
+  "originalFindingResolved": "Both request and ACK readers now wait for publicationComplete nlink1. Request wait is before attempted consumption; actual strict private-file validation remains unchanged.",
+  "actualIndependentChecks": [
+    "Exact source delta equals added publicationComplete plus replacing request/ACK existence checks; no other caller behavior change",
+    "Four focused tests run independently: deterministic request link/unlink gap does not consume attempt; deterministic ACK gap waits; permanent multi-link request gives0 portcalls/no ACK; permanent multi-link ACK bounded timeout",
+    "Strict readPrivate O_NOFOLLOW/owner0600/single-link/size checks and atomic no-replacement publish unchanged",
+    "Owning attempt consumed only once after publication completion; owning failure/uncertain ACK retains reservation and no retry/refund/delete authority introduced",
+    "Late owner processing after browser timeout remains reservation UNKNOWN; no success may imply UI send, no refund/NOT_SENT/terminal proof inferred",
+    "Inactive normal-control source byte-identical to prior candidate; DEFAULT_OFF and unconditional NOT_LIVE_READY remain",
+    "Fixed6d49 Gate/Package byte-identical to prior candidate"
+  ],
+  "testCommand": "node --import tsx --test --test-name-pattern=link-before-unlink|permanent multi-link scripts/mcp/c02-browser-reservation.test.mts",
+  "independentTestsRun": 4,
+  "independentTestsPassed": 4,
+  "prior16RerunByReviewer": false,
+  "author20AndScopedTypecheck": "Recorded by author; not relabeled independent20 or independent typecheck",
+  "liveReadiness": false,
+  "reviewIsAuthority": false,
+  "remaining": "Browser caller remains future local-only candidate; any eventual browser live path still needs separate exact source/integration/owning terminal qualification. Current mainline SDK Consent selection is outside this review and not blocked by this local repair.",
+  "notExecuted": [
+    "Auth port",
+    "Keychain",
+    "API",
+    "Browser",
+    "OTP",
+    "Hosted"
+  ],
+  "packageMutation": false,
+  "gitCommit": "NOT_COMMITTED_BY_REVIEWER; parent coordinates single Git writer"
+}

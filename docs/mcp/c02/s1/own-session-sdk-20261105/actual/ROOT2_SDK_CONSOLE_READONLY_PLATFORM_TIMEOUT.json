@@ -1,0 +1,15 @@
+{
+  "status": "CURRENT_CONSOLE_OBSERVATION_UNAVAILABLE_PLATFORM_TIMEOUT",
+  "action": "CUA consoleTab.getAXState() on existing Supabase DEV Console tab",
+  "origin": "https://supabase.com",
+  "attempts": 2,
+  "result": "Automatic origin approval review timed out without decision; authority to observe was not granted. This is not an unsafe verdict.",
+  "retryAllowanceConsumed": true,
+  "noBypass": true,
+  "localProducerReviewSHA256": "114bbb898cbbee8a30559237a3d6dda1a7b67c334ecddc2e41744f5686f14078",
+  "currentConsoleVerified": false,
+  "actualReleaseProduced": false,
+  "clockStarted": false,
+  "protectedWrites": 0,
+  "next": "Await platform observation authority availability, then fresh Console/current/close qualification under original scope; no extra source code or generic Owner approval inferred."
+}

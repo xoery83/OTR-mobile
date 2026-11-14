@@ -7,6 +7,12 @@ const sdk = vi.hoisted(() => ({
   camera: vi.fn(),
   photos: vi.fn(),
   files: vi.fn(),
+  hasLease: vi.fn(),
+  leased: vi.fn(),
+}));
+vi.mock("./captureFileLease", () => ({
+  hasCaptureFileLease: sdk.hasLease,
+  pickLeasedCaptureFiles: sdk.leased,
 }));
 vi.mock("expo-image-picker", () => ({
   getCameraPermissionsAsync: sdk.permission,
@@ -25,6 +31,7 @@ const image = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.unstubAllEnvs();
   sdk.permission.mockResolvedValue({ granted: true });
 });
 it("preserves an explicit Camera IMAGE selection without asking library or broad permissions", async () => {
@@ -153,3 +160,36 @@ it.each(["clear", "close-resume", "account-ABA", "initial-permission"] as const)
     expect(staging.getSnapshot().items).toEqual([]);
   },
 );
+
+it("uses the existing system copy picker for V3 and preserves legacy file leases", async () => {
+  sdk.hasLease.mockReturnValue(true);
+  sdk.leased.mockResolvedValue([]);
+  sdk.files.mockResolvedValue({
+    canceled: false,
+    assets: [
+      {
+        uri: "file:///cache/original.pdf",
+        name: "original.pdf",
+        mimeType: "application/pdf",
+        size: 950,
+      },
+    ],
+  });
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED", "true");
+  expect(await pickCaptureMaterial("files")).toEqual([
+    {
+      source: "files",
+      temporaryUri: "file:///cache/original.pdf",
+      name: "original.pdf",
+      typeHint: "application/pdf",
+      size: 950,
+    },
+  ]);
+  expect(sdk.files).toHaveBeenCalledWith(
+    expect.objectContaining({ copyToCacheDirectory: true, base64: false }),
+  );
+  expect(sdk.leased).not.toHaveBeenCalled();
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED", "false");
+  await pickCaptureMaterial("files");
+  expect(sdk.leased).toHaveBeenCalledOnce();
+});

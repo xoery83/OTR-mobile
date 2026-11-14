@@ -1,0 +1,36 @@
+{
+  "status": "PRE_OTP_LOCAL_KEYCHAIN_SANDBOX_FAILURE_PROVEN_NO_AUTH_REQUEST",
+  "windowId": "a2f8c128ba794de4bcf3c98d324ffc63",
+  "helperRunId": "acb96435-a5af-48ac-adf9-4ae79d5d247c",
+  "journalPath": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-4A9sPD/run.json",
+  "journalSHA256": "a8c70d9da7aa36be2b50c0fd45a9db2e55e8a13c87413adad4fa037be1e4bb36",
+  "journalPhaseAbsent": true,
+  "sandboxKeychain": {
+    "status": 44,
+    "credentialReturned": false
+  },
+  "escalatedReadOnlyKeychainProbe": {
+    "status": 0,
+    "credentialReturned": true,
+    "credentialPrinted": false,
+    "networkCalls": 0
+  },
+  "otpRequested": false,
+  "sessionCreated": false,
+  "qaLock": "RELEASED_BY_HELPER",
+  "businessT_D": null,
+  "retry": "FIRST_REAL_AUTH_SUCCEEDED_IN_AUTHSTART_DIRECTORY; final controlled CANCEL and refresh rejection PASS; no browser OTP",
+  "recovery": "Original failed directories/markers restored in place and untouched thereafter. Same-window new private authstart paths only; exclusive protections remain. Root explicitly confirmed pre-OTP local recovery.",
+  "preservedFailedDirectories": [
+    "/private/tmp/otr-auth-consumer-control-c02-a2f8c128ba794de4bcf3c98d324ffc63",
+    "/private/tmp/otr-mcp-c02-access-a2f8c128ba794de4bcf3c98d324ffc63"
+  ],
+  "recoveredAt": "2026-11-03T07:48:17.074721+00:00",
+  "authstartLauncher": {
+    "path": "/private/tmp/otr-mcp-c02-diagnostic-a2f8c128ba794de4bcf3c98d324ffc63/c02-normal-control-authstart.py",
+    "sha256": "f7bce3a3b7a72499a3bb25c323104afc249e3dbd57005e83311ed9ebf8e8995c",
+    "sourceSHA256": "65577026240352c76d09ab3e0456e8b3b9ba7c4ffa2b0732f50577eb88db064b",
+    "delta": "Only run directory and normal-control argument path gain authstart suffix; WINDOW/Gate/ENTRY/helper pins/exclusive logic unchanged",
+    "inverseDiff": "EXACT"
+  }
+}

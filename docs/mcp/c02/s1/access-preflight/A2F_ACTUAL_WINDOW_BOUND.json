@@ -1,0 +1,19 @@
+{
+  "status": "CLOSED_EARLY_CUA_INFRASTRUCTURE_BLOCKED_CONSUMER_NOT_STARTED",
+  "windowId": "a2f8c128-ba79-4de4-bcf3-c98d324ffc63",
+  "gateSHA256": "d0f576f6356bf70cd2388c9c934e38ec4563addbc0ca7a8e7b970e8bfd0c19c6",
+  "startsAt": "2026-11-03T07:50:13.502000Z",
+  "normalCloseAt": "2026-11-03T08:18:13.502000Z",
+  "expiresAt": "2026-11-03T08:20:13.502000Z",
+  "normalControlStartedAt": "2026-11-03T07:48:59.353764+00:00",
+  "binderAfterControlMilliseconds": 74148.23583984375,
+  "command": null,
+  "confirmations": [],
+  "configSHA256": "ab16057875e5c83f66b8e3a93d2859ef44945b6f17c665bd15b6f6210ebc123d",
+  "timersIssuerConsole": "ROOT_ACTUAL_ACTIVATION_AND_FINAL_RESTORE_VERIFIED",
+  "resetAllowed": false,
+  "consumerAuthStarted": false,
+  "businessApply": false,
+  "actualDefaultRestored": "2026-11-03T08:01:52Z",
+  "actualIssuerClosed": "2026-11-03T08:02:08.051671Z"
+}

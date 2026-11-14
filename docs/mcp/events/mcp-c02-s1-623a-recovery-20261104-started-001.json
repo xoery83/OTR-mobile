@@ -1,0 +1,32 @@
+{
+  "event_id": "mcp-c02-s1-623a-recovery-20261104-started-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "work_package_id": "MCP-C02",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "slice": "C02-S1",
+  "event_type": "STARTED",
+  "actual_occurred_at": "2026-11-04T02:02:27.395Z",
+  "current_status": "READONLY_RECOVERY_WINDOW_BOUND_EMPTY_ACTIVATION_PENDING",
+  "evidence_paths": [
+    "docs/mcp/c02/diagnostics/recovery-20261104/OWNER_APPROVAL.json",
+    "docs/mcp/c02/diagnostics/recovery-20261104/actual/WINDOW_BOUND.json"
+  ],
+  "completed": [
+    "Actual Owner connection/originalScopeConsent/read-only recovery approval",
+    "Independent own QA control READY",
+    "13pins/9timer/independentReview/close qualification",
+    "Single immutable clock bound"
+  ],
+  "unfinished": [
+    "EMPTY CAS ACTIVE",
+    "Consumer OAuth/read-only operation query",
+    "Original APPLIED/Create/Edit/Native"
+  ],
+  "blocker": "Root2 original EMPTY CAS transport response pending; default remains6ff; no duplicate submit",
+  "dependency": "Root2 protected runtime execution",
+  "next_action": "Root2 original request resolution/readback then consumer reconnect; no businessApply",
+  "normal_close_at": "2026-11-04T02:30:27.395Z",
+  "hard_deadline": "2026-11-04T02:32:27.395Z",
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMISSION_PENDING"
+}

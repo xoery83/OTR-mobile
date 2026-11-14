@@ -1,0 +1,34 @@
+{
+  "status": "OWN_NORMAL_CONTROL_READY_UNIQUE679C_BINDER_NOT_YET_AUTHORITY",
+  "plan": {
+    "gateSHA256": "c2315ce8580b7658bcf3f52c0df698981750cf5daa98cfe7b05dc307110fa157",
+    "windowId": "679c81a4-6347-4879-8849-92440106c9d1",
+    "startsAt": 1793680978792,
+    "normalCloseAt": 1793682658792,
+    "expiresAt": 1793682778792,
+    "command": null
+  },
+  "directory": "/private/tmp/otr-auth-mcp-slice1-679c81a463474879884992440106c9d1",
+  "ownControlLaunch": "2026-11-03T04:42:25.246551Z",
+  "ownControlProcessSession": 80621,
+  "confirmationsEmpty": true,
+  "businessApplyAuthorized": false,
+  "consumerPromptSent": false,
+  "originalScopeApproval": "MCPc231",
+  "additionalIssuerApproval": {
+    "sourceThreadId": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+    "sourceMessageId": "01a19fb1-1622-7ba1-9af7-5d760ff5b5d6",
+    "wireSHA256": "59647c86816ef3592ad15f6c0c5c5e2007e848203a291e5bcb0112a50b73aee5"
+  },
+  "files": {
+    "C02_EMPTY_CONFIG.json": "e346ccd88183e2c087d07cdb0b6d1e17c3855d723910c27e4e0129b33aad538a",
+    "C02_NEW_OWNER_BINDING.json": "76a8de07d185d2b4f644d674b16b1f3b5881c7aee83780313d7c0d757ab2ea61",
+    "issuer-plan.json": "00c13f4a991ae4b57c21d1ade60287d647cca46071d9358c4c808da7eb2d78b8",
+    "active.sql": "615e706bac38de44d3a1f5229bdbec7cda5b6b24c8d47e652de6ce6104ffc1ab",
+    "close.sql": "581af97c23152fd9c5f806464bb87e44edf2b9cacefe67f5d23afaf025afb831",
+    "C02_ROOT_REQUEST.json": "9ba5cb5bea9933fda62ee3ce5f2bc5ad545bfdf1f313ad777a32ec3850824d7e",
+    "C02_ROOT_TEMPLATE.json": "3ec43a94fb86a9c7b3025ea5fc8adbd36047b6bc112290b4271ab24052e45c74"
+  },
+  "Root": "Exact input package submitted; actual armed/servable receipts pending",
+  "secretsRecorded": false
+}

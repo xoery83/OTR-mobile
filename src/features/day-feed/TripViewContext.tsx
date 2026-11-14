@@ -208,7 +208,7 @@ export type TripQuickActions = {
   tripId: string;
   generation: number;
   owner: symbol;
-  itinerary(date: string | null): void;
+  itinerary?: (date: string | null) => void;
   photos?: () => void;
 };
 export type DayShellChrome = {

@@ -4,21 +4,36 @@ import type {
   UniversalTaskActivity,
   UniversalImportResult,
 } from "@/data/api/universalImportContracts";
-import { universalBatchPreparedSchema } from "@/data/api/universalImportContracts";
+
+import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
+import {
+  captureAccountRequestContext,
+  type AccountRequestContext,
+} from "@/data/auth/accountRequestContext";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import { ApiClientError } from "@/data/api/client";
+
 import { readLocalSession } from "@/data/auth/authRepository";
-import { createUniversalImportTransport } from "@/data/api/universalImportTransport";
+import {
+  openUniversalCaptureBackend,
+  isCaptureRequestError,
+  parsePreparedUniversalBatch,
+  type UniversalCaptureBackend,
+} from "@/data/operations/universalCaptureConsumer";
 import { createUniversalCaptureConsumer } from "@/data/operations/universalCaptureConsumer";
 
 export function useUniversalCapture(
   model: CaptureJobReadModel,
   isCurrent: () => boolean,
 ) {
+  const [localFirst, setLocalFirst] = useState<UniversalV3ExecutionStatus | null>(null);
+  const [localFirstSelected, setLocalFirstSelected] = useState<boolean | null>(
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" ? null : false,
+  );
   const [activity, setActivity] = useState<UniversalTaskActivity | null>(null);
   const [result, setResult] = useState<UniversalImportResult | null>(null);
   const [busy, setBusy] = useState(false),
     [unavailable, setUnavailable] = useState(false);
+  const [formatUnavailable, setFormatUnavailable] = useState(false);
   const [photoReviewRequired, setPhotoReviewRequired] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [canStart, setCanStart] = useState(true);
@@ -57,6 +72,16 @@ export function useUniversalCapture(
     model.assignedTripId,
   ]);
   const controller = useRef<AbortController | null>(null);
+  const localFirstTransport = useRef<
+    | {
+        context: AccountRequestContext;
+        transport: UniversalCaptureBackend;
+        accountId(): Promise<string>;
+      }
+    | false
+    | null
+  >(null);
+  const localFirstState = useRef<UniversalV3ExecutionStatus | null>(null);
   const consumer = useRef<ReturnType<typeof createUniversalCaptureConsumer> | null>(null);
   const scopeCurrent = () =>
     alive.current &&
@@ -70,7 +95,8 @@ export function useUniversalCapture(
       controller.current?.abort();
     };
   }, []);
-  const retainedStartEnabled = process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true" &&
+  const retainedStartEnabled =
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true" &&
     process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PDF_ENABLED === "true" &&
     process.env.EXPO_PUBLIC_OTR_UNIVERSAL_PNG_ENABLED === "true";
   async function run(execute: boolean) {
@@ -79,7 +105,13 @@ export function useUniversalCapture(
       if (execute && !executing.current && !deferredStart.current) {
         deferredStart.current = true;
         setStartPending(true);
-        if (retainedStartEnabled) controller.current?.abort();
+        if (
+          retainedStartEnabled &&
+          (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED !== "true" ||
+            localFirstTransport.current === false)
+        ) {
+          controller.current?.abort();
+        }
       }
       return;
     }
@@ -91,6 +123,75 @@ export function useUniversalCapture(
     if (execute) setPhotoReviewRequired(false);
     setAttempted(true);
     try {
+      const trip = model.batch.context?.tripPrior?.id ?? model.assignedTripId;
+      if (
+        trip &&
+        process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true" &&
+        localFirstTransport.current !== false
+      ) {
+        const analysis = model.batch.batchId;
+        if (!localFirstTransport.current) {
+          const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
+          if (!baseUrl) throw Error("UNIVERSAL_BACKEND_UNAVAILABLE");
+          controller.current = new AbortController();
+          const accountId = async () => {
+            const id = (await readLocalSession())?.identity?.userId;
+            if (!id) throw Error("UNIVERSAL_ACCOUNT_UNAVAILABLE");
+            return id;
+          };
+          const context = await captureAccountRequestContext(trip, accountId);
+          if (!current() || context.accountId !== model.batch.accountId)
+            throw Error("UNIVERSAL_CAPTURE_STALE");
+          const transport = openUniversalCaptureBackend(accountId, {
+            signal: controller.current.signal,
+            assertCurrent: () => {
+              if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+            },
+          });
+          const capability = await transport
+            .localFirstCapability(context, analysis)
+            .catch((error) => {
+              if (isCaptureRequestError(error) && error.status === 404)
+                return { localFirst: false, existing: null };
+              throw error;
+            });
+          if (!current()) return;
+          localFirstTransport.current = capability.localFirst
+            ? { context, transport, accountId }
+            : false;
+          setLocalFirstSelected(capability.localFirst);
+          if (capability.localFirst) {
+            localFirstState.current = capability.existing;
+            setLocalFirst(capability.existing);
+          }
+        }
+        const v3 = localFirstTransport.current;
+        if (v3) {
+          const stage = localFirstState.current?.state;
+          if (
+            execute &&
+            stage !== "PROCESSING" &&
+            stage !== "REVIEW_READY" &&
+            stage !== "OUTCOME_UNKNOWN"
+          ) {
+            if (!current()) return;
+            const { stageLocalFirstCapture } =
+              await import("@/data/operations/universalV3Capture");
+            await stageLocalFirstCapture(v3.context, model, {
+              ...v3,
+              assertCurrent: () => {
+                if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
+              },
+            });
+          }
+          const state = await v3.transport.readLocalFirstExecution(v3.context, analysis);
+          if (current()) {
+            localFirstState.current = state;
+            setLocalFirst(state);
+          }
+          return;
+        }
+      }
       if (!consumer.current) {
         const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
         if (!baseUrl) throw Error("UNIVERSAL_BACKEND_UNAVAILABLE");
@@ -100,8 +201,7 @@ export function useUniversalCapture(
           if (!id) throw Error("UNIVERSAL_ACCOUNT_UNAVAILABLE");
           return id;
         };
-        const transport = createUniversalImportTransport(getAccountId, {
-          baseUrl,
+        const transport = openUniversalCaptureBackend(getAccountId, {
           signal: controller.current.signal,
           assertCurrent: () => {
             if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
@@ -154,7 +254,7 @@ export function useUniversalCapture(
                 startRetained: async (context, job) => {
                   const { prepareDefaultUniversalCaptureSources } =
                     await import("@/data/operations/defaultUniversalOriginalSource");
-                  return universalBatchPreparedSchema.parse(
+                  return parsePreparedUniversalBatch(
                     await prepareDefaultUniversalCaptureSources(context, job, {
                       baseUrl,
                       getAccountId,
@@ -164,7 +264,8 @@ export function useUniversalCapture(
                       pendingPdfProfile: "OTR_PDF_CAPTURE_ORIGINAL_V1",
                       pendingPngProfile: "OTR_PNG_CAPTURE_ORIGINAL_V1",
                       startRetained: (input) => transport.prepareRetained(context, input),
-                      readMaterialIntake: (batchId) => transport.materialIntake(context, batchId),
+                      readMaterialIntake: (batchId) =>
+                        transport.materialIntake(context, batchId),
                     }),
                   );
                 },
@@ -197,8 +298,8 @@ export function useUniversalCapture(
                       if (!current()) throw Error("UNIVERSAL_CAPTURE_STALE");
                       const { prepareAdmittedPngOriginal } =
                         await import("@/data/operations/universalPngOriginalPreparation");
-                      const { createSourcePngPreparationTransport } =
-                        await import("@/data/api/sourcePngPreparationTransport");
+                      const { openUniversalPngSourceBackend } =
+                        await import("@/data/operations/universalCaptureConsumer");
                       const { captureStorageDependencies } =
                         await import("@/data/repositories/defaultLocalCaptureInboxRepository");
                       const assertCurrent = () => {
@@ -210,8 +311,7 @@ export function useUniversalCapture(
                         hash: captureStorageDependencies.sha256,
                         assertCurrent,
                         signal: controller.current?.signal,
-                        port: createSourcePngPreparationTransport(getAccountId, {
-                          baseUrl,
+                        port: await openUniversalPngSourceBackend(getAccountId, {
                           signal: controller.current?.signal,
                           assertRequestCurrent: assertCurrent,
                         }),
@@ -229,7 +329,7 @@ export function useUniversalCapture(
                       } catch (error) {
                         if (
                           !current() ||
-                          (error instanceof ApiClientError &&
+                          (isCaptureRequestError(error) &&
                             error.status !== undefined &&
                             [400, 401, 403, 404, 405, 413, 422].includes(error.status))
                         )
@@ -258,14 +358,17 @@ export function useUniversalCapture(
         setUnavailable(next === null && !consumer.current.queued);
       }
     } catch (error) {
+      if (current())
+        setFormatUnavailable(
+          error instanceof Error && error.message === "UNIVERSAL_V3_FILE_FORMAT",
+        );
       let code = "";
       try {
-        code =
-          error instanceof ApiClientError
-            ? (error.code ?? "")
-            : error instanceof Error
-              ? error.message
-              : "";
+        code = isCaptureRequestError(error)
+          ? (error.code ?? "")
+          : error instanceof Error
+            ? error.message
+            : "";
       } catch {
         // Error metadata must not interrupt recovery.
       }
@@ -303,7 +406,7 @@ export function useUniversalCapture(
         setUnavailable(
           !needsPhotoReview &&
             !(
-              error instanceof ApiClientError &&
+              isCaptureRequestError(error) &&
               error.status === 404 &&
               error.code === "TASK_NOT_FOUND"
             ),
@@ -341,6 +444,8 @@ export function useUniversalCapture(
   }, [model.assignedTripId]);
   useEffect(() => {
     const pending = () => {
+      if (localFirstTransport.current)
+        return localFirstState.current?.state === "PROCESSING";
       const state = current() ? consumer.current?.activity?.state : activity?.state;
       if (state) return ["PENDING", "WAITING", "PROCESSING"].includes(state);
       // A QUEUED prepare receipt may bind the Task before activity is projected.
@@ -362,8 +467,11 @@ export function useUniversalCapture(
     };
     // This timer only schedules an owning GET; it never invents progress or retries a paid call.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, activity?.state, queued]);
+  }, [result, activity?.state, queued, localFirst?.state]);
   return {
+    formatUnavailable,
+    localFirst,
+    localFirstSelected,
     activity,
     result,
     busy,

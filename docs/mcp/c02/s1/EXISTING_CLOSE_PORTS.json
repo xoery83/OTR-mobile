@@ -1,0 +1,15 @@
+{
+  "status": "PINNED_EXISTING_VERSION_NEUTRAL_PORTS_NOT_EXECUTED",
+  "source": "/private/tmp/otr-mcp-chatgpt-751df5929be940f7b18e4f55e584692c-20261102/operators",
+  "artifacts": {
+    "deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "contract": "New C02 close caller delegates exact retained-container restore; no old751 close-current/Gate dispatcher or activation entry reused. Privileged execution remains Root-only after exact authorization.",
+  "c02CloseEntrySHA256": "cee418c733de0bdfcc7e48552992b6a0689d4cadb498af1e5d391c3db6e8a014",
+  "windowBinderSHA256": "29e867d1d3cb9a32025e2b38a3911c4147b07d91fa95c74ef6ac8dca5fb2f7c0",
+  "existingIssuerRendererSHA256": "cfc72ff8a4bfbcc4ea1e6b80e3ea04480411d8034692d00284ed6ba3c5f8c4ad",
+  "existingIssuerCloserSHA256": "bdee2c85c14809907265d420f635ed54b9972dfae397e1ab5db7ac455389097c",
+  "issuerSourcePins": "ISSUER_SOURCE_PINS.json"
+}

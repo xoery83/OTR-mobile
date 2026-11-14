@@ -1,0 +1,47 @@
+{
+  "status": "LOCAL_PRE_GATE_INCREMENT_READY_AWAIT_REVIEW",
+  "windowId": "751df5929be940f7b18e4f55e584692c",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "profile": "ChatGPT",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "redirectUri": "https://chatgpt.com/connector/oauth/CYUxrs56rSrW",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "expectedRevision": 2,
+  "previewDigest": "fc182c0b2b679c82ca7060601254d317890d1c4eff0f4f101f0f01de0dc9b88c",
+  "gateSHA256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "actualDefault": {
+    "containerId": "6ebe6ed8b2062b442d69631e0ccaa11745c0d94ca9b9412c8b818dd2c5cf68e0",
+    "configSHA256": "bcb0b2399018bb98b23f9744600ff008cd275fc750b9a9e7469f7af5fa170e5b",
+    "image": "sha256:97da9caa94ecd6a92ec57a85c8e071fb98c5060d6a75b8901667a2305acb5602"
+  },
+  "closePlanSHA256": "c80a60bfc10cd212b78ef5eccec39f8b7a69b7b044a89efb6c7471d9361ce497",
+  "closeEntrySHA256": "7172066253a490708594ac948906f39b3636307f5197b86a585736cb8c8b803b",
+  "collectorSHA256": "34d1bdb480b3dee26457aaac02fc5ee4ae3c15aa76cad7164c32354bec3efb06",
+  "comparatorSnapshotSHA256": "88bb9afbe3bda20acf6407d34ebb1c8ca2f022b5631ca8f7f1f7fd6f0cb7b1cc",
+  "entries": {
+    "prepare-empty-round.py": "b50a40934f6e3b6ad81a35f67389a2a0d14b464559952598fbb810da0bc6dfa8",
+    "confirm-once.py": "266f5fc343f5afd844e93bcb00745e1f39983a49ca9f03921b085dde2595a108",
+    "launch-own-control.py": "67b9296c2ca7ccfccfe701b4a56b803f05cbeec4ed1506c3efd054862d6adac9",
+    "preflight-actual-owner-wire.py": "431ef41b5232d9be78370a90f3d49077f2f8ceec2f418a4a5f2c84a9479f49ef",
+    "prepare-fixed-window.py": "c8ef383fd561a6547814fc8479a27af600dc9cff034c79870e14a1f6562ab1df",
+    "activate-issuer.py": "079b2479a0000d9aa27c9e0419d7ce057a5726bd85559b5c0253998c08d983c0",
+    "collect-preview-proof.py": "3eb307944121a19d184e8e95b47eb37f150c2734174e9c072094c8f85ce1ed5e",
+    "stage-closed-restore.py": "a403bb2c95d89bd807f33d286a1e65c4c2ddfc3ba47881b4f9874f37501dac68"
+  },
+  "midProofSequence": "EMPTY/current CID read-only capture \u2192 Root context/logSHA \u2192 frozen existing comparator \u2192 matching human Gate \u2192 singleton \u2192 consumer once Apply",
+  "timing": {
+    "maximumMinutes": 30,
+    "tokenMaxSeconds": 60,
+    "normalCloseLeadSeconds": 120,
+    "ownControlMaxMinutes": 35,
+    "notStarted": true,
+    "extensionAllowed": false
+  },
+  "newBusinessObjects": false,
+  "newSqlRlsGrantRoleSecretProviderBudget": false,
+  "actualNewOwnerApprovalPresent": false,
+  "clockSessionOrAuthorityStarted": false
+}

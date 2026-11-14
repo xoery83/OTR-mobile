@@ -1,0 +1,34 @@
+{
+  "windowId": "eed8fa4b93044f31a5d03244bea1051b",
+  "runtimeWindowId": "eed8fa4b-9304-4f31-a5d0-3244bea1051b",
+  "gateSHA256": "01e7b28c7b8b299d67a100de9e93689cdddcc2f9c7337a4925f241a567fc4792",
+  "directory": "/private/tmp/otr-mcp-c02-consumer-eed8fa4b93044f31a5d03244bea1051b",
+  "oldDirectory": "/private/tmp/otr-mcp-c02-consumer-b08a466d29f348a896176c563646f417",
+  "files": {
+    "normal-control.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "c02-normal-control.py": "bf17ac7fd18f10119c3ec1ee1eac594df53038765e7ade2d95470881e2840e1b",
+    "SCOPE.json": "0948d2132d396f2577b23328ce2a8bd34d72dfdd3ad6ac0309b2d09f37f819ad",
+    "prepare-c02-access-window.py": "89272c89a651cbb6134c2d5dccff25c96f8ea1c863b48f87271973605271f646",
+    "c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "c02-timers.test.py": "0049e4901a178f10e9b62b70a594661425c0c62f99e03d4b578121f35afcf46e",
+    "c02-timers.py": "2803255935dff8fa00d3d2dbc9a6916e799cab74189fb7d6707189b995bcb17f",
+    "c02-close.py": "ec14819fe76ffe92dd4ba5fe0e9f808e7fde3f545ad4edc923d8147547eb33a6",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/config_cas.py": "aa9fb9fc6feaa4bedd6d1a82fee4bf04cedb13ab000e68f5a8656f5e0eafde2b",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "clockStarted": false,
+  "authorityActivated": false,
+  "businessSaveAuthorized": false,
+  "sourceMain": "7946800b02a0b63c0b1a8a748b2492bd04dc6367",
+  "deploymentReceiptCommit": "b589643f",
+  "protectedRoutes": [
+    [
+      "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items"
+    ]
+  ],
+  "originalOperationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "exactCreateSHA256": "d02a79051bab0aa8ed2534e4273c1ee6655d9a380aa9aba41dfe02decfb56b40"
+}

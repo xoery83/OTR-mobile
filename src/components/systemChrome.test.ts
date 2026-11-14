@@ -19,7 +19,7 @@ it("keeps native header visibility, routes and state contracts", () => {
     );
   }
   const ledger = read("../features/ledger/LedgerStage6Screen.tsx");
-  expect(ledger).toContain("hidden={!journey}");
+  expect(ledger).toContain("hidden={!journey || (!scopedJourneyId && Boolean(workingTrip))}");
   expect(ledger).toContain("onPress={openNewExpense}");
   expect(ledger).toContain("openSearch();");
   expect(ledger).toContain("journeySearch.current?.blur();");

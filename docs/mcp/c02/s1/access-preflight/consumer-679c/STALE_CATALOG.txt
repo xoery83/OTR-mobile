@@ -1,0 +1,26 @@
+- dialog "OTR DEV QA":
+  - heading "OTR DEV QA" [level=2]:
+    - generic: OTR DEV QA
+    - generic: App
+  - button "Write1" [expanded]:
+    - generic: Write1
+  - generic: update_trip_item
+  - paragraph: Preview/Apply a Notes-only TEXT edit at the current Item revision. Read the current Notes first and show exact Before/After. Do not provide title, dates, clear or other fields. Trusted exact user confirmation and owning receipt required.
+  - button "Read7" [expanded]:
+    - generic: Read7
+  - generic: get_operation_status
+  - paragraph: Read owning exact operation receipt. UNKNOWN is not failed or absent.
+  - generic: get_otr_operating_guide
+  - paragraph: Start here before organizing travel attachments. Read OPERATING, FIELDS and CAPABILITIES to learn OTR semantics, reconciliation, legal tools and recovery. Read-only; no business writes.
+  - generic: get_trip
+  - paragraph: Read authorized Trip basic information.
+  - generic: get_trip_item
+  - paragraph: Read an authorized accepted Item, retaining its type and temporal semantics.
+  - generic: get_trip_item_edit_base
+  - paragraph: Read the complete lawful Item record and children/field_state from the existing verified Core collection, plus current Item DTO. Full Details canEdit is object-management eligibility, not runtime, Consent or command authorization; legacy closed projections are not a fresh permission result. Preserve returned flags and read the Operating Guide. Redacted evidence is not absent evidence. Do not modify this read base or assume any preservation mutation is available.
+  - generic: list_trip_items
+  - paragraph: List accepted P1–P6 Items by inclusive local-date overlap; UUID order, not Day Feed order.
+  - generic: list_trips
+  - paragraph: List authorized server-confirmed Trips; UUID cursor order.
+  - button "关闭对话框" [active]:
+    - generic: 关闭对话框

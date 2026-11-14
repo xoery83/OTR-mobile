@@ -1,0 +1,78 @@
+{
+  "status": "CONSUMER_THREE_STEPS_AND_SINGLE_REVOKE_PROBE_COMPLETED",
+  "gateSha256": "deac94b128a36d0617888f54cc24550f205b7574e9cde4147e1523ac208231fc",
+  "windowId": "462db18f31494ae39fc61a0c257daac9",
+  "fixtureCommit": "c7db8c37",
+  "fixtureSha256": "2ed5ed11565e1ae8df81e38f807d307622a66845e398fa76071acd0364e23101",
+  "directOwnerApprovalSource": {
+    "threadId": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+    "turnId": "01a1950c-a544-7163-af40-c75ab2263385",
+    "messageId": "01a1950c-a5bc-76d3-95ee-58304df03354",
+    "answer": "批准此精确窗口及一次原 ID 恢复提交"
+  },
+  "reconnectCount": 1,
+  "pendingAuthorizationMd5": "c21511a7cf00af674f494c0dc4e9ad29",
+  "bindingTenBoolPassAt": "2026-11-01T03:50:50.594939Z",
+  "normalOtpSendCount": 1,
+  "normalOtpRequestedAt": "2026-11-01T03:51:36.410Z",
+  "newQaReceivedMailId": "c162d131-024b-443f-9042-30bb64876c10",
+  "otpValueRetained": false,
+  "explicitReadEditConsentAt": "2026-11-01T03:53:08.249Z",
+  "consentButton": "允许读取和编辑旅行",
+  "autoReview": {
+    "initialConsentDecision": "REJECTED: visible evidence assumed read-only",
+    "supplementalEvidence": "Re-read original direct human approval and its exact Gate explicit Read/Edit Consent scope",
+    "sameButtonSupplementalAttempts": 1,
+    "supplementalResult": "ALLOWED normal click",
+    "alternateExecutionOrProxy": false
+  },
+  "businessSteps": [
+    {
+      "tool": "get_operation_status",
+      "approvedAt": "2026-11-01T03:55:07.285Z",
+      "response": "ORIGINAL_BB_STATUS_BEFORE.json",
+      "outcome": "UNKNOWN",
+      "errorCode": "NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT",
+      "absenceIsNotNoCommit": true
+    },
+    {
+      "tool": "update_trip_item",
+      "approvedAt": "2026-11-01T03:58:43.673Z",
+      "response": "ORIGINAL_BB_APPLY.json",
+      "outcome": "APPLIED",
+      "revision": 2,
+      "freshIndependentConditions": "R_FRESH_NORMAL_PREAPPLY / R_FRESH_INDEPENDENT_PREFLIGHT / R_FRESH_WRITE_GRANT_READBACK",
+      "sameOriginalOperation": "bb0cb010-0cb4-432b-8995-670aaec95b3d",
+      "newGateAuthorizedRecoveryAttempts": 1
+    },
+    {
+      "tool": "get_trip_item",
+      "approvedAt": "2026-11-01T04:00:23.520Z",
+      "response": "ORIGINAL_BB_READBACK.json",
+      "outcome": "SERVER_CONFIRMED",
+      "revision": 2,
+      "dates": [
+        "2026-12-11",
+        "2026-12-13"
+      ]
+    }
+  ],
+  "newOperationIdsAllocated": false,
+  "createToolCalled": false,
+  "sameConnectionRevokeProbe": {
+    "normalRevokeAt": "2026-11-01T04:01:19.892Z",
+    "promptAt": "2026-11-01T04:02:09.908Z",
+    "approvedAt": "2026-11-01T04:02:20.519Z",
+    "observedAt": "2026-11-01T04:02:29.027Z",
+    "count": 1,
+    "authenticationRequired": true,
+    "noItemDataReturned": true,
+    "connectClicked": false,
+    "soleRevocationCausalityClaimed": false,
+    "safeLogsBeforeContainerRemoval": "ORIGINAL_BB_AUTH_R_SAFE_LOGS_BEFORE_RUNTIME_REMOVE.json"
+  },
+  "fullCloseEvidence": "PENDING_AUTH_FINAL_READBACK",
+  "nativeColdEvidence": "PENDING_NATIVE_FINAL_READBACK",
+  "realOwnerNelsonAccessOrWrite": false,
+  "consentScreenshot": "NOT_RETAINED: initial auto-review rejected entire attempted screenshot+click call; no retrospective capture or recreated image"
+}

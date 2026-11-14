@@ -1,0 +1,12 @@
+{
+  "status": "CONSUMER_READY",
+  "windowId": "462db18f31494ae39fc61a0c257daac9",
+  "readyAt": "2026-11-01T03:48:11.976946+00:00",
+  "expiresAt": "2026-11-01T04:13:56.113000Z",
+  "negativeCloseAt": "2026-11-01T04:11:56.113Z",
+  "oauthServerSavedReloadVerified": true,
+  "dcrEnabled": false,
+  "anonymousMcpStatus": 401,
+  "nativeFinalAck": "PENDING",
+  "originalOperationOnly": "bb0cb010-0cb4-432b-8995-670aaec95b3d"
+}

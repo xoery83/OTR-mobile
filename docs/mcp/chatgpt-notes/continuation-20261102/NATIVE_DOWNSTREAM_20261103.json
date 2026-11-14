@@ -1,0 +1,62 @@
+{
+  "status": "NATIVE_SCOPED_UI_COLD_AND_FORMSQA_SQLITE_EVIDENCE_VERIFIED_FINAL_NATIVE_RECEIPT_PENDING",
+  "observed_at": "2026-11-02T19:16:15.570601+00:00",
+  "source_thread": "01a17101-8b2d-7240-ab67-f4c34a5d90d9",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "original_cloud_operation": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "cloud_revision": 3,
+  "cloud_result": "UNCHANGED_PASS_CLOSED_NO_NEW_APPLY",
+  "physical_ipad": {
+    "reported_build": 143,
+    "reported_source": "533b749a",
+    "reported_js": "a04d1b59",
+    "details_and_process_cold_ui": "PASS_ORIGINAL_AX_VERIFIED",
+    "notes_exact": true,
+    "dates": "2026-12-10/2026-12-13",
+    "revision_directly_visible_in_ui": false,
+    "same_lawful_account": "NATIVE_REPORTED_FINAL_BINDING_RECEIPT_PENDING"
+  },
+  "formsqa": {
+    "sqlite_readonly": "PASS_TARGETED_1F3_ITEM_REV3",
+    "certificate": [
+      {
+        "revision": "8.0",
+        "complete": 1,
+        "business_version": 2,
+        "read_version": 2,
+        "temporal_version": 1
+      }
+    ],
+    "scope": [
+      {
+        "revoked": 0,
+        "access_revision": 1
+      }
+    ],
+    "is_physical_ipad_sqlite_proof": false
+  },
+  "source_artifacts": {
+    "physical_ipad_cold_result": {
+      "path": "/private/tmp/otr-sync-c01-ipad-20261103/MCP_COLD_RESULT.json",
+      "sha256": "2e2b1ac0ffe058cf853191ee8f3fa796f9e9df763e95c3d2087762ba87ac7b8d"
+    },
+    "physical_ipad_cold_ax": {
+      "path": "/private/tmp/otr-sync-c01-ipad-20261103/mcp-cold-details.json",
+      "sha256": "413b03475d01912ca6ed8f1371103fe72784afd65b311c7fc439050fe7aa1977"
+    },
+    "formsqa_sqlite_readback": {
+      "path": "/private/tmp/otr-sync-c01-device-20261103/MCP_SQLITE_READBACK.json",
+      "sha256": "e5b9dde1b962c8c6020f1c878956f9194b379ab5fe01e860f4c8fe0aeb64a5db"
+    }
+  },
+  "source_mutation": "NONE_BY_THIS_HANDOFF",
+  "native_final_receipt_sha": "PENDING",
+  "limits": [
+    "Native physical UI and FormsQA SQLite are separate surfaces; physical revision not displayed",
+    "Original historical server receipt reused, not a fresh mutation",
+    "No C02 full-field/second Account/realtime trigger acceptance",
+    "Native final receipt/Account binding pending source finalization"
+  ]
+}

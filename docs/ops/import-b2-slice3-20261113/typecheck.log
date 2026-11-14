@@ -1,0 +1,8 @@
+
+> otr-mobile@0.1.0 typecheck
+> tsc --noEmit
+
+backend/src/__fixtures__/universalContinuationRuntime.ts(658,44): error TS2339: Property 'presentationTier' does not exist on type '{}'.
+backend/src/__fixtures__/universalContinuationRuntime.ts(660,67): error TS2339: Property 'presentationTier' does not exist on type '{}'.
+browser/auth-consent/main.tsx(1,28): error TS7016: Could not find a declaration file for module 'react-dom/client'. '/Users/xoery/Project/otr-mobile/node_modules/react-dom/client.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-dom` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-dom/client';`

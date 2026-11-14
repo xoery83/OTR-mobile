@@ -1,0 +1,12 @@
+{
+  "version": "otr.mcp.read/1",
+  "state": "SERVER_CONFIRMED",
+  "trip": {
+    "id": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+    "name": "MCP Synthetic Nelson QA 20261031",
+    "destination": null,
+    "startDate": "2026-12-10",
+    "endDate": "2026-12-13",
+    "createdAt": "2026-10-31T01:13:09.944898+00:00"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "status": "DEFAULT_CLOSED_COMPILED_ONLY_UNMODIFIED_AUTH_WRAPPER",
+  "sourceCommit": "2ff76bc0",
+  "profile": "SLICE1_NOTES_EDIT",
+  "sourceCount": 51,
+  "pinsSHA256": "24aa0ae13df894177c41d54f0b56077602453efea306feb61d882ca413c77495",
+  "sdkSHA256": "45ff3aee01cc1213a1f78d2dcb2bff2d7d1029ca3ea3508f96824ee92aa7c2f6",
+  "runtimeSHA256": "416c7a22c564f0bb5891908a137a2b75ddeedbe25ceca70a14750a0262713c94",
+  "wrapperSHA256": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+  "artifact": "/private/tmp/otr-mcp-read-auth-runtime-20261102/runtime.mjs",
+  "esbuildVersion": "0.28.2",
+  "authSourceChanged": false,
+  "providerCalls": 0,
+  "activation": false
+}

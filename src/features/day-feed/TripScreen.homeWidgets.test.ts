@@ -1,3 +1,4 @@
+import { TripDayHeading } from "./TripDayHeading";
 import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
 import { selectTodaysJourneyRows } from "@/domain/trip/todaysJourney";
 // TEMP QA-tool caller test: explicit mocked normal-reader inputs, not certificate/Auth evidence.
@@ -238,6 +239,7 @@ vi.mock("@/ui/theme", () => ({
     floatingSurface: "floatingSurface",
     tripIntroduction: "tripIntroduction",
     dayPast: "dayPast",
+    dayFuture: "dayFuture",
     background: "background",
   }),
 }));
@@ -2369,4 +2371,16 @@ it("refreshes the Owner Guest date range locally without an accepted Snapshot or
   expect(find(tree, DayFeed).projection).toBeUndefined();
   expect(local.items).toEqual([]);
   expect(state.view.date).toBe("2026-11-05");
+});
+
+it("keeps the owning Day header and phase transition when the Trip has no start date", async () => {
+  state.routeMode = "day";
+  state.snapshot.trip = { startDate: null, endDate: null };
+  const feed = find(await loaded(), DayFeed);
+  expect(feed.presentation.renderDayHeading).toBeTypeOf("function");
+  const heading = find(feed.presentation.renderDayHeading(state.view.date, false), TripDayHeading);
+  expect(heading.start).toBeNull();
+  expect(heading.date).toBe(state.view.date);
+  expect(heading.dayColor).toBe("dayFuture");
+  expect(heading.previousColor).toBeDefined();
 });

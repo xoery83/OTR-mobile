@@ -1,0 +1,51 @@
+{
+  "verdict": "NO_BLOCKER_EXACT_ADVANCE_HUMAN_SOURCE_ONLY_BINDING",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-04T23:13:56.951804+00:00",
+  "candidateCommit": "fff8f405fcf4e2ed609f52bfbc6dffa30c829223",
+  "priorReviewedCandidate": "e473f2d05c8d96055dddc37d4498d89bd4e5e1e1",
+  "packageSHA256": "1067ea07cd79372ebb1fa5778ea042067a10843dce514b57f4ce73f585fd0bc4",
+  "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+  "scopeSHA256": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+  "windowId": "6d49f895-887d-437c-9294-d381bcd8005d",
+  "actualHumanSource": {
+    "verification": "Same reviewer direct read_thread original human userMessage and adjacent context in preceding independentReview97d2; retained exact original tool result compared to current unchanged wire/text/context",
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turnId": "01a1a8aa-8932-7b41-90ff-55f09a6cb423",
+    "userMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+    "exactText": "我提前批准你的审批。一会儿不用问我了\n",
+    "wireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+    "contextSHA256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+    "contextReviewSHA256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220",
+    "humanContainsGateHash": false,
+    "questionReplyWrapper": false,
+    "sourceRelabeled": false,
+    "singleNextScopeOnly": true
+  },
+  "actualIndependentChecks": [
+    "All3 authority guard sources equal only predefined repr-safe thread/message/plaintext literal replacements versus reviewed unbound candidate; other14 static files byte-identical",
+    "Gate/scope/runtime/inputs/task/EMPTY/confirmation/time caps/Root2 interface/credential boundary/source-readiness requirements unchanged",
+    "24 pure three-guard source cases PASS with old/unbound/wrong-hash/Save/replay negatives; no runtime execution",
+    "Exact plainhuman text including original final newline preserved in wire/source artifact, only defined strip comparison in guard; no fabricated question/answer/hash or Root2 source",
+    "Context artifact bytes and prior independent contextReview unchanged; package binding-status metadata advances while original unbound-stage record is explicitly historical",
+    "Bindingreceipt0ca5388b07791fef1aa9c989734e0417cc7c8f40643b5446efdb753e639e3d07 hash verified",
+    "platformRecognizedExecutionApproval false, credentialReadApproved false, SaveApproved false, allT/deadlines null, no keyread/current readiness fabricated"
+  ],
+  "platformRecognizedExecutionApproval": false,
+  "credentialReadAuthorizedByReview": false,
+  "SaveApproved": false,
+  "clockStarted": false,
+  "remaining": "Root2/platform must independently recognize the real contextual human source and qualify actual current default/close and specified credential-source access. Actual nonsecret receiver-source readiness must precede anyT/OTP. Refusal cannot be bypassed. Save/Edit/UNKNOWN remain excluded.",
+  "notExecuted": [
+    "Keychain",
+    "mailAPI",
+    "Auth",
+    "OTP",
+    "Browser",
+    "Ops",
+    "Hosted",
+    "Consumer"
+  ],
+  "historicalBehaviorTestsRerun": false,
+  "packageMutation": false
+}

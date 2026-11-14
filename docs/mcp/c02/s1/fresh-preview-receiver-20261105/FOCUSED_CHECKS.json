@@ -1,0 +1,53 @@
+{
+  "status": "LOCAL_FOCUSED_MECHANICAL_AND_EXPLICIT_CREDENTIAL_SCOPE_CHECKS_PASS_PENDING_INDEPENDENT_REVIEW",
+  "recordedAt": "2026-11-04T23:12:01.614474+00:00",
+  "executionChildId": "/root/fresh_preview_execution",
+  "sourceFilesPinned": 17,
+  "consumerInputHashes": 4,
+  "actualGuardEntrypoints": 3,
+  "ownerSourcePureCases": 24,
+  "freshnessBoundaryCases": 2,
+  "EMPTYAccepted": true,
+  "CREATE_EDITRejected": true,
+  "comparison": "16 source files match prior reviewed c7d0UNBOUND after ordinary newwindow/Gate/scope/consequentpin substitutions. OnlySCOPEdata adds explicit credentialproposal; all business fields equal. No MCP runtime logic changed. Local generator gains equality/hashassertions to carry this one explicit descriptor.",
+  "credentialWordingCorrections": [
+    "Keychainselectors do not specify physicalsystemfile",
+    "Up to12 listpolls of20metadata each before localfilter, no provider-recipient entitlement proved",
+    "Onlyunique matchingdetailbody GET/revalidation; max24GETstarts/120seclease",
+    "Keyretainedclosure; stop/releasereferences, no guaranteedzeroization",
+    "Newexactcredentialpermission/platform/source-readiness beforeanyT/OTP; importalone insufficient"
+  ],
+  "oldReviewPreserved": {
+    "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/CREDENTIAL_BOUNDARY_REVIEW.json",
+    "sha256": "89da1ee06ba1829e2aa54491de821a84a8ee8d239fe1403e62af3b37139849e6"
+  },
+  "credentialRead": 0,
+  "newOTP": 0,
+  "OwnerSource": null,
+  "T": null,
+  "actualLIVE": null,
+  "historicalSuitesRerun": false,
+  "priorC7D0FinalSHA256": "c9507111d7c87caa58591bf97a19f7796c5b987a07df6fa6c63bd61c8a915196",
+  "Root2GlobalCloseActualActivatedThenRestored": true,
+  "independentNewReview": "PENDING",
+  "gateSHA256": "c0b6da5b5691ac2e834e1f54b0787f63d214a7395b436413db0c65fc08f73551",
+  "scopeSHA256": "3ff8d17b06449f70a4963535a8eb79ba63b2e0149e5dfcf1421103616f0c01f8",
+  "advanceHumanStatementAvailable": true,
+  "advanceContextIndependentReview": "NO_BLOCKER97d2_BEFORE_BINDING",
+  "actualExecutionSourceBound": true,
+  "platformExecutionApproval": false,
+  "actualSourceBindingDeltaReview": "PENDING",
+  "actualHumanSource": {
+    "threadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turnId": "01a1a8aa-8932-7b41-90ff-55f09a6cb423",
+    "userMessageId": "01a1a8aa-8a58-7b83-833a-63f62d66aa2c",
+    "wireSHA256": "1511200f3d42d3d686cd18b117c39c2b8f9216e1d334de2974cd311744e513b9",
+    "exactText": "\u6211\u63d0\u524d\u6279\u51c6\u4f60\u7684\u5ba1\u6279\u3002\u4e00\u4f1a\u513f\u4e0d\u7528\u95ee\u6211\u4e86\n",
+    "contextSHA256": "7791a583d2d9306d5a5ffdcc663b214f0311d2f5715b56691fba0501aae129dc",
+    "contextReviewSHA256": "97d2c8d926477a89992dd3b1ac14d4aa7ee01d7463e70292e2b72826d2196220",
+    "humanContainsGateHash": false,
+    "questionReplyWrapper": false,
+    "sourceRelabeled": false,
+    "singleNextScopeOnly": true
+  }
+}

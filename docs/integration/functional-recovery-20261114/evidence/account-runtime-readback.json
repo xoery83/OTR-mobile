@@ -1,0 +1,185 @@
+{
+  "method": "Separate read-only Python SQLite connection to normal App readback; NOT an independent PostgreSQL query",
+  "trip": [
+    {
+      "id": "285ffde2-a74c-4876-993e-b763cb457632",
+      "name": "Recovery Account Edited",
+      "accepted_at": "2026-11-14T00:19:02.308Z"
+    }
+  ],
+  "operations": [
+    {
+      "id": "46ad305e-5cc1-42bd-b77f-913e686ae94c",
+      "operation_type": "CREATE_TRIP",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "5de67360-0e6d-4277-a485-60ee76f84285",
+      "operation_type": "TRIP_NORMAL_READBACK",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "57f18c5d-2230-47b3-ad26-94005e4c7458",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "c079c504-5af0-40a4-97f1-faabc8e40ecd",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "98b7e374-5ba7-4960-a3b0-6ba412fe5337",
+      "operation_type": "UPDATE_TRIP_METADATA",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+      "operation_type": "LEDGER_CREATE_EXPENSE",
+      "status": "RETRYABLE",
+      "attempt_count": 7,
+      "last_error_code": "BACKEND_UNAVAILABLE",
+      "last_request_id": "6a6bc7e2-fa39-4e60-bb3c-2078b5bfec8f"
+    },
+    {
+      "id": "5cfbf5f5-c22f-41b0-a487-afd474a992f7",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "83458df7-8e6d-4b9a-aade-d2bd9551585e",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "e247c34d-2ee8-4373-9f75-634ec854931a",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "d76351f0-a5be-4dcc-b392-ec4c29fb7301",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    },
+    {
+      "id": "c72eb532-eed8-46f0-bb86-8478aa0cd430",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null,
+      "last_request_id": null
+    }
+  ],
+  "items": [
+    {
+      "id": "3c882923-c30d-43be-98bc-eac4254dddce",
+      "title": "Recovery Synthetic Stay",
+      "semantic_revision": 1
+    },
+    {
+      "id": "442f1586-fe38-47ea-98da-61e9242a6729",
+      "title": "Recovery Account Plan Edited",
+      "semantic_revision": 2
+    },
+    {
+      "id": "a2bec075-efae-4a5a-9daa-0e20c883ebcf",
+      "title": "Recovery Synthetic Activity",
+      "semantic_revision": 1
+    },
+    {
+      "id": "a82c1887-6d25-4dc1-bdfc-9c1141dfcf5c",
+      "title": "Recovery Synthetic Train Edited",
+      "semantic_revision": 2
+    },
+    {
+      "id": "f725b620-11d9-46fa-a0e0-4027cf71b85a",
+      "title": "Recovery Synthetic Rental",
+      "semantic_revision": 1
+    }
+  ],
+  "coreReceipts": [
+    {
+      "operation_id": "57f18c5d-2230-47b3-ad26-94005e4c7458",
+      "receipt_sha256": "ecc61cfa632480ca93bc1144abc0de7d6b90ca62179b6493b25691403ab2c2f0",
+      "receipt_version": 2
+    },
+    {
+      "operation_id": "c079c504-5af0-40a4-97f1-faabc8e40ecd",
+      "receipt_sha256": "d85580b3f9c04e0d88b0405d16814ec16cd3afa98242c2a6ec533ea3f200e867",
+      "receipt_version": 2
+    },
+    {
+      "operation_id": "5cfbf5f5-c22f-41b0-a487-afd474a992f7",
+      "receipt_sha256": "7e38cbc5837e014fc65f9a974b2d640e44904f706c92a4cc4e269cafafbc1b74",
+      "receipt_version": 2
+    },
+    {
+      "operation_id": "83458df7-8e6d-4b9a-aade-d2bd9551585e",
+      "receipt_sha256": "41977d9aac8ef54d4dd3c0958c272869b5a1ed494516a68aa41031d55042d632",
+      "receipt_version": 2
+    },
+    {
+      "operation_id": "e247c34d-2ee8-4373-9f75-634ec854931a",
+      "receipt_sha256": "0657c0b5ec5f9f7e34fa2c5fd44ccfa7b95ebf8d3bced93f38aeea68a726a39d",
+      "receipt_version": 2
+    },
+    {
+      "operation_id": "d76351f0-a5be-4dcc-b392-ec4c29fb7301",
+      "receipt_sha256": "f16f7b5f9979afae7bc41ecc7e5f613954ec54c44f29a69fdf2afced9daf972b",
+      "receipt_version": 2
+    },
+    {
+      "operation_id": "c72eb532-eed8-46f0-bb86-8478aa0cd430",
+      "receipt_sha256": "e68fd9bb429180ac9b4df09cf5f2bd983da4b4ddaa9f2afe40931f13db78b193",
+      "receipt_version": 2
+    }
+  ],
+  "ledger": [
+    {
+      "journey_id": "285ffde2-a74c-4876-993e-b763cb457632",
+      "title": "Recovery Account Edited",
+      "settlement_currency": "NZD"
+    }
+  ],
+  "expenses": [
+    {
+      "id": "ledger-expense_mwfnyqw7_i811nr0u1x",
+      "title": "Recovery Synthetic Expense",
+      "original_amount_minor": 100,
+      "original_currency": "NZD",
+      "server_revision": 0,
+      "sync_status": "PENDING_CREATE"
+    }
+  ],
+  "providerCallsThisAudit": 0,
+  "settlementConfirmThisAudit": 0,
+  "originalB1OrQA179Resubmitted": false,
+  "coldLaunchObserved": "Normal same Account; new Trip and edited P1 visible; no new login"
+}

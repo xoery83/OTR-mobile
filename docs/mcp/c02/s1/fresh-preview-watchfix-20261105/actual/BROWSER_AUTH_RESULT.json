@@ -1,0 +1,39 @@
+{
+  "status": "BROWSER_AUTH_BLOCKED_CREDENTIAL_SOURCE_PRE_OTP_AGENT_TABS_CLOSED",
+  "recordedAt": "2026-11-04T22:15:28.980289+00:00",
+  "windowId": "c7d0ee01-0f06-4a4a-9d09-0f6034a3cc3d",
+  "freshChatTab": "1962067626",
+  "connectionTab": "1962067627",
+  "actualFlow": [
+    "Existing ChatGPT OTR DEV QA account actions->Reconnect",
+    "ChatGPT ConnectOTR dialog->Connect once",
+    "CDP contentQuad timeout reconciled readonly; successful navigation to genuinely new normal OTR email page, no repeatclick",
+    "Receiver preparation rejected before execution; no browserchallenge",
+    "Owning normalcontrolFINISH and bothnewtabsclosed"
+  ],
+  "endDOMObservedAt": "2026-11-04T22:14:09.164Z",
+  "endDOM": {
+    "origin": "https://api-dev.xoery.art",
+    "path": "/oauth/consent",
+    "heading": "连接 OTR",
+    "emailFieldPresent": true,
+    "sendVerificationButtonDisabled": true
+  },
+  "authorizationRequestIdentifier": "OMITTED; no rawquery/state/code/token stored",
+  "browserOTP": 0,
+  "Consent": 0,
+  "toolRefresh": 0,
+  "taskMaterialSent": false,
+  "Preview": false,
+  "allAgentTabsClosed": true,
+  "userTabsUnchanged": true,
+  "screenshot": {
+    "path": "/private/tmp/otr-mcp-c7d0-auth-rejected.png",
+    "sha256": "ec70ef5846a2bd738a5e9621efd6ac65edaf08c75550414e0a261e26f1a87c23",
+    "committed": false
+  },
+  "rejection": {
+    "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/actual/CREDENTIAL_SOURCE_AUTO_REVIEW_REJECTION.json",
+    "sha256": "23b0c1155c86598db87b0238bc3a439c76c350bff35373126f2fe67f987a6b42"
+  }
+}

@@ -23,7 +23,7 @@ export function DayFeedFidelityHeading({
   onCycleStyle,
 }: {
   date: string;
-  start: string;
+  start: string | null;
   today: string;
   empty: boolean;
   onAdd?(): void;
@@ -73,7 +73,10 @@ export function DayFeedFidelityHeading({
             ? t("dayHeader.accessibility", {
                 title,
                 subtitle,
-                day: t("fidelity.dayOrdinal", { day: ordinal }),
+                day:
+                  ordinal === null
+                    ? subtitle
+                    : t("fidelity.dayOrdinal", { day: ordinal }),
                 style: t(`dayHeader.style${styleMode}`),
               })
             : undefined
@@ -89,11 +92,13 @@ export function DayFeedFidelityHeading({
       >
         <View
           accessible={!onCycleStyle}
-          accessibilityLabel={t("fidelity.dayOrdinal", { day: ordinal })}
+          accessibilityLabel={
+            ordinal === null ? subtitle : t("fidelity.dayOrdinal", { day: ordinal })
+          }
           style={[
             styles.badge,
-            isToday && styles.todayBadge,
-            isTomorrow && styles.tomorrowBadge,
+            isToday && ordinal !== null && styles.todayBadge,
+            isTomorrow && ordinal !== null && styles.tomorrowBadge,
             {
               width: Math.max(isToday ? 49 : 43, 30 * fontScale),
               height: Math.max(isToday ? 55 : 49, (badgeTop ? 44 : 32) * fontScale),
@@ -104,16 +109,16 @@ export function DayFeedFidelityHeading({
             style={[
               styles.binding,
               styles.bindingLeft,
-              isToday && styles.bindingOnAccent,
-              isTomorrow && styles.bindingTomorrow,
+              isToday && ordinal !== null && styles.bindingOnAccent,
+              isTomorrow && ordinal !== null && styles.bindingTomorrow,
             ]}
           />
           <View
             style={[
               styles.binding,
               styles.bindingRight,
-              isToday && styles.bindingOnAccent,
-              isTomorrow && styles.bindingTomorrow,
+              isToday && ordinal !== null && styles.bindingOnAccent,
+              isTomorrow && ordinal !== null && styles.bindingTomorrow,
             ]}
           />
           {badgeTop ? (
@@ -121,8 +126,8 @@ export function DayFeedFidelityHeading({
               numberOfLines={1}
               style={[
                 styles.badgeTop,
-                isToday && styles.badgeOnAccent,
-                isTomorrow && styles.badgeTomorrow,
+                isToday && ordinal !== null && styles.badgeOnAccent,
+                isTomorrow && ordinal !== null && styles.badgeTomorrow,
               ]}
             >
               {badgeTop}
@@ -131,8 +136,8 @@ export function DayFeedFidelityHeading({
           <UiText
             style={[
               styles.badgeLabel,
-              isToday && styles.badgeOnAccent,
-              isTomorrow && styles.badgeTomorrow,
+              isToday && ordinal !== null && styles.badgeOnAccent,
+              isTomorrow && ordinal !== null && styles.badgeTomorrow,
             ]}
           >
             {badgeBottom}

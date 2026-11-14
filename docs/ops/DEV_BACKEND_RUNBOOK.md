@@ -11,6 +11,75 @@ Service/container: `backend` / `otr-dev-backend`
 Always pass `-f deploy/dev-backend/compose.yml`; without it, Compose may discover the
 unrelated `/opt/otr` AI/media project.
 
+## Standard shared Mobile DEV execution
+
+An approved routine task can use the existing authorized DEV identities
+throughout release, authorized migration, synthetic QA and rollback. The
+closed software release uses the Host Writer and is independent of CP14.
+Historical finite-window procedures below retain their original scope.
+
+### Closed Backend release
+
+Prepare an immutable packet in a private directory. Bind the DEV project,
+source commit, unique 32-hex execution ID, Linux amd64 image ID, archive size
+and digest. Include the actual retained CID and image, Writer inode and device,
+Docker config/HostConfig/env/mount digests, mounted-file digests, closed Caddy
+state and socket identity, protected probes and built bundle hashes in
+`deploy-plan.json`. Copy the tracked Host entry into the packet as
+`release.py`. Pin all artifacts by SHA256 in `EXECUTION_REQUEST.json`.
+The packet declares zero SQL writes and Provider calls. An optional reviewed
+non-root decoder smoke can be pinned with the packet.
+
+```sh
+python3 -B scripts/dev/backend_closed_release.py check   "$packet/EXECUTION_REQUEST.json" "$packet_sha"
+python3 -B scripts/dev/backend_closed_release.py release "$packet/EXECUTION_REQUEST.json" "$packet_sha"
+```
+
+`check` is local. `release` stages under the existing Host Writer and verifies
+the exact target, active container, image, closed routes, workers and health.
+The original CID is retained for exact rollback. Read `closure.json` and its
+independent Host result before reporting deployment. Any ambiguous SSH or
+Host result requires read-only reconciliation of the original execution and
+receipts. Keep its execution ID and intents.
+
+There is no PDF/PNG/V3 packet-kind whitelist, Platform decision reference,
+second Agent approval, human clock window or historical QA Attempt prerequisite
+in this entry. Existing technical deadlines, exclusive Writer, hashes,
+preimages, healthy rollback and protected runtime checks remain.
+
+### Database migration and CP14
+
+Root2 uses the existing guarded linked DEV PostgreSQL transport
+([SqlTransport](../../scripts/import/universal_scope_close.py)) under the same
+Writer. Verify the linked project `tuqigdxrvrerfewsxqgm`, database system
+identity and actual session/current role with a read-only transaction. Pin
+the reviewed transactional SQL, independent postimage queries and exact
+eligible inverse by SHA256. Under the Writer verify preimages, apply the
+approved transaction once and compare independent postimages. Reconcile
+uncertain commit outcomes read-only before any inverse. The closed software
+entry above has zero SQL execution capability.
+
+For an authorized CP14 admin operation, run the existing Host custody preflight
+from the operator worktree. It automatically renews the same DEV Actor when
+needed. A current session does not make an Auth request.
+
+```sh
+python3 -B scripts/import/cp14_host_session.py
+```
+
+The helper refreshes once at 60 seconds or less remaining, independently
+checks the Actor with `/auth/v1/user`, and atomically replaces the root-private
+custody file. Logs contain status, redacted Actor and expiry. On an uncertain
+refresh, mismatch, or persistence failure, leave the private intent and any
+staged rotation for Auth to reconcile. Automatic sends stay fenced until Auth
+has reconciled that attempt. Use the real Admin Gateway and verify effective
+grants separately. See [scoped authority and review boundary](../adr/2026-11-10-dev-execution-autonomy.md).
+
+Escalate new or expanded privilege or security policy, Production or
+real-user impact, destructive or nonrecoverable operations, material product
+decisions, and new or unbounded third-party costs. Ordinary technical
+recovery stays with the execution owner within the task and actual authority.
+
 ## R3 accepted installation and remaining device gate
 
 2026-10-08: Owner accepted same-project DEV `tuqigdxrvrerfewsxqgm`, CLOSED-only

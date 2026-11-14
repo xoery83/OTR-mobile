@@ -21,6 +21,7 @@ export function coreActorReadRecords(
   authorizedExpenseIds: readonly string[] = [],
   authorizedEvidenceRefs: readonly string[] = [],
   ordinaryOrderVersion?: 1,
+  localDocumentMetadata = false,
 ): CoreReadRecord[] {
   const redact = (row: Record<string, unknown>) => {
     const copy = structuredClone(row);
@@ -59,7 +60,9 @@ export function coreActorReadRecords(
       if (
         (kind === "ORDER" && ordinaryOrderVersion !== 1) ||
         !coreCanRead(graph, actor, kind as CoreKind, row) ||
-        (kind === "DOCUMENT" && !authorizedOriginalIds.includes(row.id as string))
+        (kind === "DOCUMENT" && !(row.custody === "LOCAL_ONLY"
+          ? localDocumentMetadata
+          : authorizedOriginalIds.includes(row.id as string)))
       )
         continue;
       const revision = row[kind === "ITEM" ? "semantic_revision" : "revision"] as number;
@@ -152,6 +155,7 @@ export async function buildCoreActorCollection(
   authorizedExpenseIds: readonly string[] = [],
   authorizedEvidenceRefs: readonly string[] = [],
   ordinaryOrderVersion?: 1,
+  localDocumentMetadata = false,
 ) {
   if (!actor.active) throw new Error("NOT_VISIBLE");
   const records = coreActorReadRecords(
@@ -161,6 +165,7 @@ export async function buildCoreActorCollection(
     authorizedExpenseIds,
     authorizedEvidenceRefs,
     ordinaryOrderVersion,
+    localDocumentMetadata,
   );
   const sorted = [...bindings].sort((a, b) => a.person_id.localeCompare(b.person_id));
   for (const { revision, ...body } of sorted)

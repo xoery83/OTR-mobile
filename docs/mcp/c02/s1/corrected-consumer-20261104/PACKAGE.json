@@ -1,0 +1,31 @@
+{
+  "windowId": "e0d1c568cbae4b0ca3a0dec92e4ececf",
+  "runtimeWindowId": "e0d1c568-cbae-4b0c-a3a0-dec92e4ececf",
+  "gateSHA256": "b2dfa4046fa4beda20d7aa581238294e50010d01df542c54f5cdcaa89182b7c5",
+  "directory": "/private/tmp/otr-mcp-c02-consumer-e0d1c568cbae4b0ca3a0dec92e4ececf",
+  "oldDirectory": "/private/tmp/otr-mcp-c02-consumer-2377fd0a8cb245de8bc5a289458a2d6c",
+  "files": {
+    "normal-control.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "c02-normal-control.py": "1d628dc624f13cd05f9ba19601408147a9265643648d47df42c5ca695e6d79ca",
+    "SCOPE.json": "f62c16b18763a68345d480379a105fd091c476aa5573bbe9136f4a9a19155b6f",
+    "prepare-c02-access-window.py": "89272c89a651cbb6134c2d5dccff25c96f8ea1c863b48f87271973605271f646",
+    "c02-host.mjs": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+    "c02-timers.test.py": "59be2e8139141b75035f3aedf60a5a2d08d2c15a78ef40f0c037ed1993cd3f5e",
+    "c02-timers.py": "1f7900d06045378c45eba1765baa8ef5aaf2864317c15a85a07a85e537faf50f",
+    "c02-close.py": "e2f45d0492a455d60edfcc87283049a4f096033a6d149dfcf777ed1debb52c81",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/config_cas.py": "13bd5274c0cf4cc1b7a6e4480f4f14cbba0cc187f069f39d6df2040959286fab",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "clockStarted": false,
+  "authorityActivated": false,
+  "businessSaveAuthorized": false,
+  "root2Qualification": "../fresh-consumer-20261104/ROOT2_READ_ONLY_QUALIFICATION.json",
+  "protectedRoutes": [
+    [
+      "/v2/trips/cc44a705-6f43-41e0-a2f9-16f334b2a6b2/core/items"
+    ]
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "status": "COMPILED_GUIDE_SDK_LOCAL_DISCOVERY_PASS_NOT_CONSUMER",
+  "sdkSHA256": "3b5ceca51d6ad4ba56312041880d01452e68d7bf1069dd19454ba34868e62083",
+  "toolNames": [
+    "get_operation_status",
+    "get_otr_operating_guide",
+    "get_trip",
+    "get_trip_item",
+    "get_trip_item_edit_base",
+    "list_trip_items",
+    "list_trips",
+    "update_trip_item"
+  ],
+  "notesMapping": {
+    "read": "get_trip_item item.description is Notes (also get_trip_item_edit_base item.description)",
+    "write": "update_trip_item change.kind=TEXT; change.notes replaces Notes; preserve the entire original for append"
+  },
+  "backendCalls": 0,
+  "providerCalls": 0,
+  "transport": "OFFICIAL_SDK_IN_PROCESS_FETCH",
+  "activation": false
+}

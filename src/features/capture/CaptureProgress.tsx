@@ -1,4 +1,7 @@
-import { isPhotoImportMaterial } from "@/domain/capture/photoImportRelevance";
+import {
+  isPhotoImportMaterial,
+  isV3PhotoImportMaterial,
+} from "@/domain/capture/photoImportRelevance";
 import {
   canPrepareMixedQaSourceProposals,
   prepareMixedQaSourceProposals,
@@ -9,7 +12,7 @@ import {
   type UniversalPhotoRelevanceCopy,
 } from "./UniversalPhotoRelevanceRow";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { lazy, Suspense, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { projectCaptureActivity } from "@/domain/capture/captureActivityProjection";
 import { UiButton, UiText } from "@/ui/controls";
@@ -40,6 +43,12 @@ export function CaptureProgress({
   onActivity,
   onNewImport,
   onOpenAcceptedItem,
+  onOpenReview,
+  onOpenDocument,
+  onReturnToTrip,
+  onResultsReady,
+  onDone,
+  activityPositionsRef,
   isCurrent,
   photoRelevanceCopy,
 }: {
@@ -56,6 +65,12 @@ export function CaptureProgress({
   onActivity: () => void;
   onNewImport: () => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
+  onOpenReview?(jobId: string): void;
+  onOpenDocument?(itemId: string, documentId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  onResultsReady?(ready: boolean): void;
+  onDone?(): void;
+  activityPositionsRef?: { current: Record<string, number> };
   isCurrent?: () => boolean;
   photoRelevanceCopy?: UniversalPhotoRelevanceCopy;
 }) {
@@ -63,9 +78,27 @@ export function CaptureProgress({
   const styles = useThemedStyles(createStyles);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [qaPrepareState, setQaPrepareState] = useState("IDLE");
+  const [legacyPhotoScope, setLegacyPhotoScope] = useState<string | null>(null);
+  const trip = model?.batch.context.tripPrior?.id ?? model?.assignedTripId;
+  const universalScope = model
+    ? `${model.batch.accountId}:${model.batch.batchId}:${trip ?? ""}`
+    : null;
+  const reportLegacyPhotoReview = useCallback(
+    (enabled: boolean) => setLegacyPhotoScope(enabled ? universalScope : null),
+    [universalScope],
+  );
   const qaPreparing = useRef(false);
   const scroll = useRef<ScrollView>(null);
   const position = useRef({ y: 0, height: 0, contentHeight: 0 });
+  const restoring = useRef(false);
+  const positionKey = model?.batch.jobId;
+  useLayoutEffect(() => {
+    position.current.y =
+      positionKey && activityPositionsRef
+        ? (activityPositionsRef.current[positionKey] ?? 0)
+        : 0;
+    restoring.current = position.current.y > 0;
+  }, [positionKey, activityPositionsRef]);
   const page = (direction: number) => {
     const p = position.current;
     p.y = Math.max(
@@ -82,6 +115,11 @@ export function CaptureProgress({
     error = true;
   }
   const hasUniversalReader = Boolean(isCurrent && model?.allInputsAccepted);
+  const canSelectV3 =
+    hasUniversalReader &&
+    !!trip &&
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true";
+  const showLegacyPhotoReview = !canSelectV3 || legacyPhotoScope === universalScope;
   const body = (
     <ScrollView
       ref={scroll}
@@ -90,16 +128,36 @@ export function CaptureProgress({
       }}
       onContentSizeChange={(_width, height) => {
         position.current.contentHeight = height;
+        if (restoring.current) {
+          scroll.current?.scrollTo({
+            y: Math.min(
+              position.current.y,
+              Math.max(0, height - position.current.height),
+            ),
+            animated: false,
+          });
+          if (height >= position.current.y + position.current.height)
+            restoring.current = false;
+        }
+      }}
+      onScrollBeginDrag={() => {
+        restoring.current = false;
       }}
       onScroll={({ nativeEvent }) => {
-        position.current.y = nativeEvent.contentOffset.y;
+        if (!restoring.current) {
+          position.current.y = nativeEvent.contentOffset.y;
+          if (positionKey && activityPositionsRef)
+            activityPositionsRef.current[positionKey] = position.current.y;
+        }
       }}
       scrollEventThrottle={16}
       keyboardShouldPersistTaps="handled"
       style={styles.body}
       contentContainerStyle={styles.content}
     >
-      <UiText style={styles.secondary}>{t("capture.progress.closeHint")}</UiText>
+      {!canSelectV3 ? (
+        <UiText style={styles.secondary}>{t("capture.progress.closeHint")}</UiText>
+      ) : null}
       {reading || busy ? (
         <UiText accessibilityLiveRegion="polite" style={styles.copy}>
           {t(reading ? "capture.jobLoading" : "capture.progress.saving")}
@@ -112,17 +170,25 @@ export function CaptureProgress({
       ) : null}
       {activity ? (
         <>
-          <UiText style={styles.copy}>{captureActivityTime(activity.recordedAt)}</UiText>
-          {/* Current normal C3 load verifies each accepted payload/binding; the history selector alone does not. */}
-          <UiText style={styles.copy}>
-            {t(
-              error || reading
-                ? "capture.progress.recordedCounts"
-                : "capture.progress.localCounts",
-              activity.counts,
-            )}
-          </UiText>
-          <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
+          {!canSelectV3 ? (
+            <>
+              <UiText style={styles.copy}>
+                {captureActivityTime(activity.recordedAt)}
+              </UiText>
+              {/* Current normal C3 load verifies each accepted payload/binding; the history selector alone does not. */}
+              <UiText style={styles.copy}>
+                {t(
+                  error || reading
+                    ? "capture.progress.recordedCounts"
+                    : "capture.progress.localCounts",
+                  activity.counts,
+                )}
+              </UiText>
+            </>
+          ) : null}
+          {!canSelectV3 ? (
+            <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
+          ) : null}
           {!hasUniversalReader || (detailsOpen && model?.processingEvents?.length) ? (
             <UiText style={styles.secondary}>
               {t(
@@ -168,28 +234,38 @@ export function CaptureProgress({
                 originalsListedElsewhere
                 readTripTargets={readTripTargets}
                 onOpenAcceptedItem={onOpenAcceptedItem}
-                key={`${model.batch.accountId}:${model.batch.batchId}:${model.batch.context.tripPrior?.id ?? model.assignedTripId ?? ""}`}
+                onOpenReview={onOpenReview}
+                onOpenDocument={onOpenDocument}
+                onReturnToTrip={onReturnToTrip}
+                processingDetails={detailsOpen}
+                onDone={onDone}
+                onHistoryChange={setDetailsOpen}
+                onResultsReady={onResultsReady}
+                key={universalScope}
+                onLegacyPhotoReview={reportLegacyPhotoReview}
                 model={model}
                 isCurrent={isCurrent}
               />
             </Suspense>
           ) : null}
-          <UiButton
-            label={t(
-              detailsOpen
-                ? "capture.progress.hideDetails"
-                : "capture.progress.showDetails",
-            )}
-            variant="text"
-            onPress={() => {
-              setDetailsOpen((open) => !open);
-              if (!detailsOpen && model && isCurrent?.()) {
-                void import("@/data/operations/captureMixedQaManifest")
-                  .then((api) => api.exportMixedQaManifest(model, isCurrent))
-                  .catch(() => {});
-              }
-            }}
-          />
+          {!canSelectV3 ? (
+            <UiButton
+              label={t(
+                detailsOpen
+                  ? "capture.progress.hideDetails"
+                  : "capture.progress.showDetails",
+              )}
+              variant="text"
+              onPress={() => {
+                setDetailsOpen((open) => !open);
+                if (!detailsOpen && model && isCurrent?.()) {
+                  void import("@/data/operations/captureMixedQaManifest")
+                    .then((api) => api.exportMixedQaManifest(model, isCurrent))
+                    .catch(() => {});
+                }
+              }}
+            />
+          ) : null}
           {detailsOpen &&
           model &&
           isCurrent &&
@@ -255,84 +331,98 @@ export function CaptureProgress({
               ))}
             </View>
           ) : null}
-          <UiText accessibilityRole="header" style={styles.copy}>
-            {t("capture.ai.originals")}
-          </UiText>
-          {activity.currentInputs.map((item) => (
-            <View key={item.inputId} style={styles.fact}>
-              <UiText style={styles.copy}>
-                {item.originalFilename ??
-                  t(
-                    model?.inputs.find((input) => input.id === item.inputId)?.kind ===
-                      "TEXT"
-                      ? "capture.ai.submittedText"
-                      : "capture.unnamed",
-                  )}
+          {!canSelectV3 || detailsOpen || showLegacyPhotoReview ? (
+            <>
+              <UiText accessibilityRole="header" style={styles.copy}>
+                {t("capture.ai.originals")}
               </UiText>
-              <UiText style={styles.secondary}>
-                {t(
-                  item.state === "ACCEPTED"
-                    ? "capture.accepted"
-                    : item.state === "FAILED"
-                      ? "capture.failed"
-                      : "capture.pending",
-                )}
-              </UiText>
-              {photoRelevanceCopy && isCurrent && model && !reading && !error
-                ? (() => {
-                    const input = model.inputs.find((input) => input.id === item.inputId);
-                    return input &&
-                      isPhotoImportMaterial(input) &&
-                      input.state === "ACCEPTED" ? (
-                      <UniversalPhotoRelevanceRow
-                        model={model}
-                        input={input}
-                        isCurrent={isCurrent}
-                        copy={photoRelevanceCopy}
-                      />
-                    ) : null;
-                  })()
-                : null}
-              {item.failureCode ? (
-                <UiText style={styles.secondary}>
-                  {t(`capture.failure.${item.failureCode}`)}
-                </UiText>
-              ) : null}
-              {activity.recoveryInputIds.includes(item.inputId) ? (
-                <UiButton
-                  label={t(
-                    model?.inputs.find((input) => input.id === item.inputId)
-                      ?.contentSha256
-                      ? "capture.recoverPinned"
-                      : model?.inputs.find((input) => input.id === item.inputId)
-                            ?.acquisitionSource === "photos"
-                        ? "capture.continueMissingPhoto"
-                        : "capture.continueMissing",
-                  )}
-                  variant="secondary"
-                  disabled={busy || reading}
-                  onPress={() => onRecover(item.inputId)}
-                />
-              ) : null}
-              {item.continuesFromJobId ? (
-                <UiButton
-                  label={t("capture.priorJob")}
-                  variant="text"
-                  disabled={busy || reading}
-                  onPress={() => onOpenJob(item.continuesFromJobId!)}
-                />
-              ) : null}
-              {item.continuedIn.map((link) => (
-                <UiButton
-                  key={link.inputId}
-                  label={t("capture.nextJob")}
-                  variant="text"
-                  disabled={busy || reading}
-                  onPress={() => onOpenJob(link.jobId)}
-                />
+              {activity.currentInputs.map((item) => (
+                <View key={item.inputId} style={styles.fact}>
+                  <UiText style={styles.copy}>
+                    {item.originalFilename ??
+                      t(
+                        model?.inputs.find((input) => input.id === item.inputId)?.kind ===
+                          "TEXT"
+                          ? "capture.ai.submittedText"
+                          : "capture.unnamed",
+                      )}
+                  </UiText>
+                  <UiText style={styles.secondary}>
+                    {t(
+                      item.state === "ACCEPTED"
+                        ? "capture.accepted"
+                        : item.state === "FAILED"
+                          ? "capture.failed"
+                          : "capture.pending",
+                    )}
+                  </UiText>
+                  {showLegacyPhotoReview &&
+                  photoRelevanceCopy &&
+                  isCurrent &&
+                  model &&
+                  !reading &&
+                  !error
+                    ? (() => {
+                        const input = model.inputs.find(
+                          (input) => input.id === item.inputId,
+                        );
+                        return input &&
+                          (isPhotoImportMaterial(input) ||
+                            (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED ===
+                              "true" &&
+                              isV3PhotoImportMaterial(input))) &&
+                          input.state === "ACCEPTED" ? (
+                          <UniversalPhotoRelevanceRow
+                            model={model}
+                            input={input}
+                            isCurrent={isCurrent}
+                            copy={photoRelevanceCopy}
+                          />
+                        ) : null;
+                      })()
+                    : null}
+                  {item.failureCode ? (
+                    <UiText style={styles.secondary}>
+                      {t(`capture.failure.${item.failureCode}`)}
+                    </UiText>
+                  ) : null}
+                  {activity.recoveryInputIds.includes(item.inputId) ? (
+                    <UiButton
+                      label={t(
+                        model?.inputs.find((input) => input.id === item.inputId)
+                          ?.contentSha256
+                          ? "capture.recoverPinned"
+                          : model?.inputs.find((input) => input.id === item.inputId)
+                                ?.acquisitionSource === "photos"
+                            ? "capture.continueMissingPhoto"
+                            : "capture.continueMissing",
+                      )}
+                      variant="secondary"
+                      disabled={busy || reading}
+                      onPress={() => onRecover(item.inputId)}
+                    />
+                  ) : null}
+                  {item.continuesFromJobId ? (
+                    <UiButton
+                      label={t("capture.priorJob")}
+                      variant="text"
+                      disabled={busy || reading}
+                      onPress={() => onOpenJob(item.continuesFromJobId!)}
+                    />
+                  ) : null}
+                  {item.continuedIn.map((link) => (
+                    <UiButton
+                      key={link.inputId}
+                      label={t("capture.nextJob")}
+                      variant="text"
+                      disabled={busy || reading}
+                      onPress={() => onOpenJob(link.jobId)}
+                    />
+                  ))}
+                </View>
               ))}
-            </View>
-          ))}
+            </>
+          ) : null}
         </>
       ) : null}
       {canRetry &&
@@ -346,17 +436,21 @@ export function CaptureProgress({
           onPress={onRetry}
         />
       ) : null}
-      <UiButton
-        label={t("capture.progress.activeImports")}
-        variant="secondary"
-        disabled={busy || reading}
-        onPress={onActivity}
-      />
-      <UiButton
-        label={t("capture.progress.newImport")}
-        disabled={busy || reading}
-        onPress={onNewImport}
-      />
+      {!canSelectV3 || detailsOpen ? (
+        <>
+          <UiButton
+            label={t("capture.progress.activeImports")}
+            variant="secondary"
+            disabled={busy || reading}
+            onPress={onActivity}
+          />
+          <UiButton
+            label={t("capture.progress.newImport")}
+            disabled={busy || reading}
+            onPress={onNewImport}
+          />
+        </>
+      ) : null}
     </ScrollView>
   );
   return (

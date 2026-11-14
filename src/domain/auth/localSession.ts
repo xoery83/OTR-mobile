@@ -4,6 +4,12 @@ export type AccountIdentity = {
   userId: string;
   displayName: string;
   email: string | null;
+  // Optional Apple suggestion, separate from confirmed Profile/document fields.
+  appleFirstSignInName?: {
+    givenName?: string | null;
+    familyName?: string | null;
+    middleName?: string | null;
+  };
 };
 
 export type LocalSession = {

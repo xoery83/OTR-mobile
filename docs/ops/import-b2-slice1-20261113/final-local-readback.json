@@ -1,0 +1,29 @@
+{
+  "drafts": [
+    {
+      "scope": "bdc65c02-2526-4990-9331-9c5359c73ec9",
+      "copy": ".json",
+      "staged": 0,
+      "editorChars": 0,
+      "containsURI": false
+    },
+    {
+      "scope": "bdc65c02-2526-4990-9331-9c5359c73ec9",
+      "copy": ".previous",
+      "staged": 0,
+      "editorChars": 0,
+      "containsURI": false
+    },
+    {
+      "scope": "unassigned",
+      "copy": ".json",
+      "staged": 0,
+      "editorChars": 0,
+      "containsURI": false
+    }
+  ],
+  "retainedOriginals": 6,
+  "originalHashMismatches": 0,
+  "captureBatches": 2,
+  "captureInputs": 6
+}

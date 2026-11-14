@@ -1,0 +1,48 @@
+{
+  "traceSHA256": "437f3a03231430f5f7a6d4e16dfd119a9f5b558d9fc7f803f5787b5f2bdfa573",
+  "records": 19,
+  "coreRecords": [],
+  "writeStageRecords": [
+    {
+      "timestamp": "2026-11-04T04:50:38.711548235Z",
+      "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+      "method": "GET",
+      "stage": "PRECHECK",
+      "elapsedMs": 0
+    },
+    {
+      "timestamp": "2026-11-04T04:50:39.368829379Z",
+      "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+      "method": "GET",
+      "stage": "CORE_BOUNDARY_ENTERED",
+      "elapsedMs": 658
+    },
+    {
+      "timestamp": "2026-11-04T04:50:45.510678496Z",
+      "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+      "method": "GET",
+      "stage": "CORE_RETURNED",
+      "elapsedMs": 6800,
+      "coreStatus": 404
+    },
+    {
+      "timestamp": "2026-11-04T04:50:45.510777643Z",
+      "diagnosticId": "a2d29584-0ef9-497e-9676-0a00a41eab39",
+      "method": "GET",
+      "stage": "POSTCHECK",
+      "elapsedMs": 6800,
+      "coreStatus": 404
+    }
+  ],
+  "previewProofs": [
+    {
+      "version": "otr.mcp.response-proof/1",
+      "kind": "PREVIEW",
+      "inputSHA256": "d0092f662a03971a1ca24b0ed07961f50572a46abd112347242f62d72bf589f7",
+      "outputSHA256": "ff5d986caccc96d946588865d90672ed0b90c3f3b12fba7185b60038a1434c0f",
+      "previewDigest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc"
+    }
+  ],
+  "originalPreviewThreeHashesMatch": true,
+  "tailMayBeTruncated": true
+}

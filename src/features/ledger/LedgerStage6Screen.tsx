@@ -4,7 +4,7 @@ import {
 } from "@/data/auth/accountRequestContext";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
-import { subscribeLedgerOperationalSyncCompletion } from "@/data/sync/ledgerOperationalSync";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import { segmentedControlTokens } from "@/ui/segmented";
 import type { TextInput as NativeTextInput } from "react-native";
 import { UiTextInput as TextInput } from "@/ui/forms";
@@ -15,10 +15,10 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import { ExpenseConflictList } from "./ExpenseConflictList";
-import { readLastApiFailure } from "@/data/api/client";
+import { readLastApiFailure } from "@/data/operations/localOperations";
 import { useNetworkState } from "expo-network";
 import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
-import { refreshLedgerFxSnapshotCache } from "@/data/sync/ledgerFxSnapshotCoordinator";
+import { refreshLedgerFxSnapshotCache } from "@/data/operations/kickLedgerSync";
 import {
   useCallback,
   useEffect,
@@ -1295,15 +1295,6 @@ export function LedgerStage6Screen({
                             <Text maxFontSizeMultiplier={2} style={styles.empty}>
                               {t("ledger.noExpenses")}
                             </Text>
-                            <Pressable
-                              accessibilityRole="button"
-                              onPress={openNewExpense}
-                              style={styles.primary}
-                            >
-                              <Text maxFontSizeMultiplier={2} style={styles.primaryText}>
-                                {t("ledger.addExpense")}
-                              </Text>
-                            </Pressable>
                           </View>
                         ) : null}
                         {expenses.length ? (

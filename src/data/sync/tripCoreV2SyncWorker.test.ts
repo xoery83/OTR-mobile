@@ -623,7 +623,9 @@ it.each(["APPEND_INSTRUCTION", "CORRECT_INSTRUCTION"] as const)(
       enabledAdmissionModes: ["MANUAL"],
       enabledFamilies: ["P1"],
     });
-    await expect(f.openWorker.push(f.operation)).rejects.toThrow("CORE_FAMILY_CLOSED");
+    await expect(f.openWorker.push(f.operation)).rejects.toThrow(
+      name === "CORRECT_INSTRUCTION" ? "CORE_INSTRUCTION_SYNC_CLOSED" : "CORE_FAMILY_CLOSED",
+    );
     expect(f.transport.submit).not.toHaveBeenCalled();
   },
 );
@@ -690,4 +692,62 @@ it("recovers the original Instruction receipt before a closed new-submit gate or
   expect(f.transport.capabilities).not.toHaveBeenCalled();
   expect(f.transport.submit).not.toHaveBeenCalled();
   expect(f.applyReceipt).toHaveBeenCalledWith(expect.anything(), receipt);
+});
+
+it("leaves a reviewed relationship pending until the original Item and Document are read back", async () => {
+  const f = await fixture();
+  const document = randomUUID();
+  const command = {
+    contractVersion: 2,
+    intentVersion: 2,
+    operationId: op,
+    tripId: trip,
+    command: "RECONCILE_ITEM_DOCUMENTS",
+    target: { kind: "ITEM", id },
+    baseVector: [
+      { kind: "DOCUMENT", id: document, revision: 1 },
+      { kind: "ITEM", id, revision: 1 },
+    ],
+    admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+    payload: { add: [document], remove: [] },
+  };
+  f.repo.pending = async () => [{ command }] as never;
+  f.repo.readGraph = async () => ({ itinerary_events: [{ id, experience_family: "P2" }] }) as never;
+  let metadataReadback = false;
+  f.repo.acceptedSnapshot = async () => ({
+    graph: {
+      itinerary_events: [{ id, semantic_revision: 1 }],
+      trip_operational_documents: metadataReadback ? [{ id: document, revision: 1 }] : [],
+    },
+  }) as never;
+  f.repo.refresh = vi.fn();
+  f.transport.collection = vi.fn();
+  vi.mocked(f.transport.capabilities).mockResolvedValue({
+    ...coreClosedCapabilities,
+    activationState: "ENABLED",
+    enabledCommands: ["RECONCILE_ITEM_DOCUMENTS"],
+    enabledFamilies: ["P1"],
+    enabledAdmissionModes: ["MANUAL"],
+  });
+  vi.mocked(f.transport.submit).mockResolvedValue({
+    projection: "FULL", domainReceiptId: randomUUID(),
+    receipt: { outcome: "APPLIED" },
+  } as never);
+  const operation = { ...f.operation, payloadJson: canonicalCoreJson(command) };
+  await expect(f.worker.push(operation)).rejects.toThrow("CORE_DOCUMENT_DEPENDENCY_PENDING");
+  expect(f.transport.submit).not.toHaveBeenCalled();
+  metadataReadback = true;
+  await f.worker.push(operation);
+  expect(f.transport.submit).toHaveBeenCalledTimes(1);
+  expect(f.transport.submit).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+    command: "RECONCILE_ITEM_DOCUMENTS", operationId: op,
+  }));
+});
+
+it("an UNKNOWN command reads its original receipt without repeating a POST", async () => {
+  const f = await fixture();
+  f.operation.failureCategory = "UNKNOWN";
+  await expect(f.worker.push(f.operation)).rejects.toThrow("CORE_OUTCOME_UNKNOWN");
+  expect(f.transport.receipt).toHaveBeenCalledOnce();
+  expect(f.transport.submit).not.toHaveBeenCalled();
 });

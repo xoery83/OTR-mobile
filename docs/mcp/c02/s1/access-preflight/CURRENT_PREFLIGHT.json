@@ -1,0 +1,61 @@
+{
+  "status": "BOUNDED_CURRENT_READONLY_PREFLIGHT_NOT_FINITE_ACCESS_AUTHORITY",
+  "recorded_at": "2026-11-02T23:26:25.672809+00:00",
+  "dev_project_ref": "tuqigdxrvrerfewsxqgm",
+  "source": "MCP visible Chrome UI and two single read-only SELECTs; no hidden browser state/credentials/API requests",
+  "console": {
+    "oauth_server_enabled": false,
+    "hook_enabled": false,
+    "configured_hook_type": "Postgres function",
+    "configured_hook_schema": "public",
+    "configured_hook_function": "otr_mcp_qa_access_token",
+    "site_url": "http://localhost:3000",
+    "general_redirect_urls": [],
+    "dcr_saved_value": "UNKNOWN_NOT_EXPOSED_WHILE_SERVER_DISABLED",
+    "dcr_execution_condition": "Must explicitly verify/set false before enabling temporary server; unavailable or unexpected preimage stops activation."
+  },
+  "client835": {
+    "source": "CLIENT835_230236.json",
+    "actor": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "active_selected_consents": 0,
+    "unexpired_selected_authorizations": 0,
+    "has_secret_hash": true,
+    "secret_hash_value_selected": false,
+    "note": "Existing public/none metadata retained; no client modification or secret usage."
+  },
+  "hook_catalog": "HOOK_METADATA_230035.json",
+  "consumer_ui": {
+    "status": "FRESH_BLANK_CHAT_COMPOSER_AND_ATTACHMENTS_ENABLED_NO_PROMPT_OR_OTR_CONNECTION",
+    "tab_id": "1962067209",
+    "screenshot": "/private/tmp/otr-mcp-c02-chatgpt-ready-20261103.jpg"
+  },
+  "normal_control": {
+    "status": "NOT_STARTED_NO_SESSION",
+    "existing_generic_entry_sha256": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "snapshot": "/private/tmp/otr-mcp-c02-s1-package-20261103/normal-control.mts",
+    "code_pins": {
+      "/private/tmp/otr-auth-consumer-b3-control-20261101.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+      "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/registered-qa-host-session.ts": "c57737e680e611307aeaa4e5514caa0796be4e32aeb02b11ff4e605a22da17b3",
+      "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/resend-inbound-otp-e2e.ts": "d85a134817d827caf34461f01050e0ebb50edc9357f66b7d1554b4bd38951358",
+      "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/mcp-oauth-qa-checks.ts": "1e6fc65133201b7d2c7660b0f772e1d6232207929efeecb3fb0b920e39667402"
+    },
+    "actor_specific_inbox_lock": "No active.lock observed; recheck before launch; never take another Session or force-release the lock.",
+    "limits": "Existing helper performs normal OTP/getUser and owns in-memory session; control entry only reads/revokes selected Client grants and logs out own session. Its registered Trip ID is historical identity proof, not a business Trip read. Business requests remain fixed to cc44."
+  },
+  "screenshots": [
+    "/private/tmp/otr-mcp-c02-oauth-closed-20261103.jpg",
+    "/private/tmp/otr-mcp-c02-hook-disabled-20261103.jpg",
+    "/private/tmp/otr-mcp-c02-siteurl-20261103.jpg",
+    "/private/tmp/otr-mcp-c02-access-preflight-20261103/CLIENT835_230236.jpg"
+  ],
+  "actions": {
+    "metadata_selects": 2,
+    "sql_mutations": 0,
+    "business_rows_selected": 0,
+    "secret_values_selected": 0,
+    "console_saves": 0,
+    "qa_sessions_started": 0,
+    "issuer_or_window_activated": false
+  },
+  "freshness_rule": "Repeat exact current preimage/CAS immediately before protected changes; current observations are not perpetual authority. No old snapshot is silently substituted."
+}

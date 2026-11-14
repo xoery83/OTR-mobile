@@ -106,6 +106,7 @@ export function projectCoreItem(
         mediaType: r.media_type,
         sha256: r.sha256,
         byteSize: r.byte_size,
+        ...(r.custody === "LOCAL_ONLY" ? { custody: "LOCAL_ONLY" as const } : {}),
         canOpenOriginal: authority.originalDocumentIds?.includes(r.id as string) ?? false,
       }));
   const documentSummaries = documents(

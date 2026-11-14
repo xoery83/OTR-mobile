@@ -1,3 +1,5 @@
+import { LocalItemImportOriginals } from "@/features/day-feed/LocalItemImportOriginals";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { ImportDocumentsPanel } from "@/features/documents/ImportDocumentsPanel";
 import type { ImportDocumentScope } from "@/data/repositories/importDocumentsRepository";
 import { universalQaFixture } from "@/data/operations/universalQaFixture";
@@ -33,8 +35,13 @@ export function CaptureContent({
   onCancel,
   jobId,
   draftStaging,
+  draftPersistenceError = false,
   onReopenJob,
   onOpenAcceptedItem,
+  onOpenReview,
+  onReturnToTrip,
+  activityPositionsRef,
+  embeddedComposer = false,
   accountId,
 }: {
   isCurrent: () => boolean;
@@ -45,8 +52,13 @@ export function CaptureContent({
   onCancel: () => void;
   jobId?: string;
   draftStaging?: ReturnType<typeof createCaptureStaging>;
+  draftPersistenceError?: boolean;
   onReopenJob?: (id: string) => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
+  onOpenReview?(jobId: string): void;
+  onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
+  activityPositionsRef?: { current: Record<string, number> };
+  embeddedComposer?: boolean;
   accountId?: string;
 }) {
   useUiLocale();
@@ -70,6 +82,7 @@ export function CaptureContent({
   const selectedTripName =
     draft.tripTarget === undefined ? invocationTripName : draft.tripTarget?.name;
   const submittedTripPrior = useRef<string | null>(null);
+  const [reviewJob, setReviewJob] = useState<string | null>(null);
   const [pasteSession] = useState(
     () => `import-paste:${Date.now()}:${++pasteInvocation}`,
   );
@@ -92,6 +105,14 @@ export function CaptureContent({
   >(null);
   const [reopening, setReopening] = useState(!!jobId);
   const [activity, setActivity] = useState(false);
+  const [resultsJob, setResultsJob] = useState<string>();
+  const [resultDocument, setResultDocument] = useState<{
+    tripId: string;
+    itemId: string;
+    documentId: string;
+  }>();
+  const localPositions = useRef<Record<string, number>>({});
+  const positionsRef = activityPositionsRef ?? localPositions;
   const [documents, setDocuments] = useState<{
     scope: ImportDocumentScope;
     captureId?: string;
@@ -135,6 +156,7 @@ export function CaptureContent({
     session.current = null;
     recoveryActions.current.clear();
     setDocuments(null);
+    setResultDocument(undefined);
     setActivity(false);
     setModel(null);
     setReopening(true);
@@ -145,7 +167,10 @@ export function CaptureContent({
       const api = await import("@/data/operations/defaultCaptureSubmission");
       if (!stillCurrent()) return;
       const next = await api.reopenDefaultCaptureJob(id);
-      if (stillCurrent()) setModel(next);
+      if (stillCurrent()) {
+        setModel(next);
+        if (next && jobId !== id) onReopenJob?.(id);
+      }
     } catch {
       if (stillCurrent()) setReadError(true);
     } finally {
@@ -228,7 +253,19 @@ export function CaptureContent({
       const retained = submitPrior
         ? await owner.submit(selected, progress, submitPrior)
         : await owner.submit(selected, progress);
+      if (
+        retained.allInputsAccepted &&
+        (retained.batch.context.tripPrior?.id ?? retained.assignedTripId) &&
+        process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true"
+      ) {
+        const { retainImportSubmission } =
+          await import("@/data/repositories/importSubmissionRepository");
+        await retainImportSubmission(retained);
+        if (current()) progress({ ...retained });
+      }
       if (draftStaging && current() && retained.allInputsAccepted) staging.cancel();
+      if (current() && retained.allInputsAccepted && jobId !== retained.batch.jobId)
+        onReopenJob?.(retained.batch.jobId);
     } catch {
       if (current()) {
         setSubmitError(true);
@@ -326,7 +363,42 @@ export function CaptureContent({
     };
     return (
       <CaptureComposer
+        embedded={embeddedComposer}
+        visible={!reviewJob}
+        onDismiss={() => {
+          if (reviewJob && current()) onOpenReview?.(reviewJob);
+        }}
         snapshot={draft}
+        maxAttachments={
+          process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true"
+            ? 5
+            : undefined
+        }
+        onPreview={
+          accountId
+            ? async (id) => {
+                if (!current()) return null;
+                const item = staging
+                  .getDraftSnapshot()
+                  .items.find((item) => item.stagingId === id);
+                if (!item) return null;
+                const { readCaptureDraftPreview } =
+                  await import("@/data/repositories/captureDraftRepository");
+                if (!current()) return null;
+                const original = await readCaptureDraftPreview(accountId, item);
+                if (!current()) return null;
+                if ("text" in original) return original.text ?? "";
+                const { previewImportOriginal } =
+                  await import("@/native/importOriginalPreview");
+                await previewImportOriginal(
+                  original,
+                  current,
+                  item.source === "magic_input" ? "" : (item.name ?? ""),
+                );
+                return null;
+              }
+            : undefined
+        }
         onQaSample={
           universalQaFixture(
             accountId,
@@ -441,7 +513,9 @@ export function CaptureContent({
                       ? "capture.composer.paste.limit"
                       : "capture.composer.paste.failed",
                 )
-              : undefined
+              : draftPersistenceError
+                ? t("capture.composer.draftWarning")
+                : undefined
         }
         duplicate={duplicate}
         title={
@@ -452,7 +526,13 @@ export function CaptureContent({
                   : "importDocuments.inbox",
               )
             : accountId && (activity || attempted || reopening || model)
-              ? t(activity ? "capture.progress.activeImports" : "capture.progress.title")
+              ? t(
+                  activity
+                    ? "capture.progress.activeImports"
+                    : model?.batch.jobId === resultsJob
+                      ? "capture.ux.resultsTitle"
+                      : "capture.progress.title",
+                )
               : undefined
         }
         contextLabel={
@@ -472,7 +552,21 @@ export function CaptureContent({
         }
         content={
           accountId ? (
-            documents ? (
+            resultDocument ? (
+              <>
+                <UiButton
+                  label={t("capture.results.back")}
+                  variant="text"
+                  onPress={() => {
+                    if (current()) setResultDocument(undefined);
+                  }}
+                />
+                <LocalItemImportOriginals
+                  {...resultDocument}
+                  generation={getAccountGeneration()}
+                />
+              </>
+            ) : documents ? (
               <>
                 <UiButton
                   label={t("capture.activityReturn")}
@@ -538,6 +632,28 @@ export function CaptureContent({
                       }
                     : undefined
                 }
+                onDone={hide}
+                onResultsReady={(ready) =>
+                  setResultsJob(ready ? model?.batch.jobId : undefined)
+                }
+                activityPositionsRef={positionsRef}
+                onReturnToTrip={onReturnToTrip}
+                onOpenDocument={(itemId, documentId) => {
+                  const tripId =
+                    model?.batch.context.tripPrior?.id ?? model?.assignedTripId;
+                  if (current() && tripId)
+                    setResultDocument({ tripId, itemId, documentId });
+                }}
+                onOpenReview={
+                  onOpenReview
+                    ? (id) => {
+                        if (current()) {
+                          if (embeddedComposer) onOpenReview(id);
+                          else setReviewJob(id);
+                        }
+                      }
+                    : undefined
+                }
                 onRetry={() => void submit()}
                 onRecover={(id) => void recover(id)}
                 onOpenJob={(id) => void openJob(id)}
@@ -571,6 +687,7 @@ export function CaptureContent({
                   (scope === "TRIP" && !selectedTripPrior)
                 )
                   return;
+                setResultDocument(undefined);
                 setDocuments({ scope });
               }
             : undefined

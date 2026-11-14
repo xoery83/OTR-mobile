@@ -1,0 +1,32 @@
+{
+  "event_id": "mcp-c02-s1-eed8-create-20261104-started-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "work_package_id": "MCP-C02",
+  "slice": "C02-S1",
+  "event_type": "EXECUTION_UPDATE",
+  "transition": "STARTED",
+  "actual_occurred_at": "2026-11-03T21:45:14.740Z",
+  "current_status": "EXACT_OWNER_APPROVED_WINDOW_ACTIVE_PREVIEW_RETURNED_APPLY_PENDING",
+  "commit": "be4c19dd",
+  "evidence_paths": [
+    "docs/mcp/c02/s1/verified-create-20261104/OWNER_APPROVAL.json",
+    "docs/mcp/c02/s1/verified-create-20261104/ROOT2_OWNER_SOURCE_BINDING.json"
+  ],
+  "completed": [
+    "Root2 actual Owner source verified; b08a closed",
+    "Fresh own QA normal OTP/Consent; unused eed8 started with immutable deadline",
+    "Same original consumer Preview returned; no new mutation identity"
+  ],
+  "unfinished": [
+    "Current three-hash and DB check then exact CREATE CAS",
+    "Single Apply/APPLIED/independent readback; separate Edit/Native"
+  ],
+  "blockers": [],
+  "next_action": "Server proof verification and existing single-confirmation CAS then real consumerApply",
+  "actual_resource_lock": "ROOT2_SHORT_CREATE_CAS_ONLY",
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMISSION_PENDING",
+  "normal_close_at": "2026-11-03T22:13:14.740Z",
+  "hard_deadline": "2026-11-03T22:15:14.740Z"
+}

@@ -8,7 +8,7 @@ created=False
 checks=[]
 def docker(*args):return subprocess.run(['docker',*args],capture_output=True,text=True)
 try:
- result=docker('run','--name',NAME,'--network','none','-d',IMAGE);assert result.returncode==0,result.stderr;created=True
+ result=docker('run','--pull=never','--name',NAME,'--network','none','-d',IMAGE);assert result.returncode==0,result.stderr;created=True
  for _ in range(50):
   if docker('exec',NAME,'pg_isready','-U','supabase_admin').returncode==0:break
   time.sleep(.2)
@@ -31,6 +31,7 @@ invoke('external_integration_set_kill',admin(expected_version=revision,kill_swit
  before={s:scalar("select md5(prosrc) from pg_proc where oid='public."+s+"'::regprocedure;") for s in signatures}
  sql((ROOT/'backend/sql/universal_provider_admission_candidate.sql').read_text(),'postgres')
  sql((ROOT/'backend/sql/universal_task_read_candidate.sql').read_text(),'postgres')
+ sql((ROOT/'backend/sql/universal_v3_task_read_candidate.sql').read_text(),'postgres')
  for signature in signatures:
   body=base64.b64decode(scalar("select encode(convert_to(prosrc,'UTF8'),'base64') from pg_proc where oid='public."+signature+"'::regprocedure;")).decode()
   restored=hashlib.md5(re.sub(r'\n/\* UNIVERSAL_BRANCH_BEGIN \*/.*?/\* UNIVERSAL_BRANCH_END \*/\n','',body,flags=re.S).encode()).hexdigest()
@@ -78,6 +79,11 @@ invoke('external_integration_set_kill',admin(expected_version=revision,kill_swit
  mark(c,expect_error='CP14_DISPATCH_FENCE');checks.append('duplicate dispatch rejected')
  receipt=json.loads(sql(f"set session authorization otr_external_integration_call_gateway;select model_task_read_universal_receipt('{actor}','{c['task_id']}','{c['attempt_id']}','{c['call_id']}');",'supabase_admin').stdout.strip())
  assert receipt['hasStart'] and receipt['admission']['profile_snapshot']==profile;checks.append('protected current Task/START receipt readback')
+ v3read=f"select model_task_read_universal_v3_receipt('{actor}','{c['task_id']}','{c['attempt_id']}','{c['call_id']}');"
+ assert sql('set session authorization otr_external_integration_call_gateway;'+v3read,'supabase_admin').stdout.strip()==''
+ for role in ['anon','authenticated','service_role']:
+  assert sql('set session authorization '+role+';'+v3read,'supabase_admin',True).returncode!=0
+ checks.append('V3 receipt reader installs closed, refuses V1 admission and is inaccessible to app roles')
  # Kill after durable dispatch must revoke the exact scope consulted by credential acquire/send.
  rev=int(scalar("select config_version from external_integration_environment_state where environment='DEV';"))
  invoke('external_integration_set_kill',admin(expected_version=rev,kill_switch=True))

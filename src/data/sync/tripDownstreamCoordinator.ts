@@ -1,9 +1,12 @@
 import { ApiClientError } from "../api/client";
 import type { createMemberAccessLossAdapter } from "../api/memberAccessLossAdapter";
 import { coreUuid, coreRevision } from "@/domain/trip/tripCoreV2";
+import { authorizedTripVersionFromCollection } from "@/domain/trip/tripAuthorizedVersion";
+import type { ImportHash } from "@/domain/trip/flightImportReview";
 import { AppState } from "react-native";
 import {
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   type AccountScope,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
@@ -62,11 +65,40 @@ export type TripDiscoveryReadObservation = Readonly<{
   scope: AccountScope;
   status: "RESTORING" | "CONFIRMED" | "UNAVAILABLE";
 }>;
+export async function refreshCoreDownstreamVersioned(
+  core: Parameters<typeof refreshCoreDownstream>[0],
+  context: AccountRequestContext,
+  transport: CoreReadTransport,
+  hash: ImportHash,
+) {
+  const observed: { collection?: Awaited<ReturnType<CoreReadTransport["collection"]>> } =
+    {};
+  const changed = await refreshCoreDownstream(core, context, {
+    collection: async (...args) => {
+      observed.collection = await transport.collection(...args);
+      return observed.collection;
+    },
+  });
+  if (!observed.collection) throw Error("CORE_DOWNSTREAM_COLLECTION_MISSING");
+  const result = await authorizedTripVersionFromCollection(
+    observed.collection,
+    context.accountId,
+    context.tripId,
+    hash,
+  );
+  assertAccountRequestGeneration(context);
+  return { changed, version: result.token };
+}
+
 type Dependencies = {
   scope(): Promise<AccountScope | null>;
   account(): Promise<string>;
   discover(scope: AccountScope): Promise<string[]>;
-  pull(scope: AccountScope, tripId: string): Promise<boolean>;
+  version?(scope: AccountScope, tripId: string): Promise<string>;
+  pull(
+    scope: AccountScope,
+    tripId: string,
+  ): Promise<boolean | { changed: boolean; version: string }>;
   notify(scope: AccountScope, tripIds: string[], discoveryChanged: boolean): void;
   observeDiscovery?(observation: TripDiscoveryReadObservation): void;
   now?: () => number;
@@ -76,11 +108,13 @@ type ReadState = {
   failures: number;
   running?: Promise<void>;
   observation?: TripDiscoveryReadObservation;
+  version?: string;
 };
 
 // Ephemeral read coalescing only. Certificates and Pending/UNKNOWN remain owned by Core.
 export function createTripDownstreamCoordinator(deps: Dependencies) {
   const reads = new Map<string, ReadState>();
+  let versionGeneration = 0;
   const now = deps.now ?? Date.now;
   let tail = Promise.resolve();
   const serial = (work: () => Promise<void>) => {
@@ -91,7 +125,7 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
   async function run(
     scope: AccountScope,
     id: string,
-    work: () => Promise<void>,
+    work: (state: ReadState) => Promise<void>,
     invalidated = false,
     isCurrent?: () => boolean,
   ) {
@@ -130,7 +164,7 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
         return;
       }
       observe("RESTORING");
-      await work();
+      await work(current);
       await assertAccountRequestContext(scope, deps.account);
     })
       .then(
@@ -162,9 +196,20 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     return run(
       scope,
       tripId,
-      async () => {
-        const changed = await deps.pull(scope, tripId);
+      async (state) => {
+        const capturedVersionGeneration = versionGeneration;
+        const version = await deps.version?.(scope, tripId);
         await assertAccountRequestContext(scope, deps.account);
+        if (capturedVersionGeneration !== versionGeneration) return;
+        if (version !== undefined && version === state.version) return;
+        const result = await deps.pull(scope, tripId);
+        await assertAccountRequestContext(scope, deps.account);
+        // Only the actual validated/applied collection can establish a cache token.
+        state.version =
+          typeof result === "boolean" || capturedVersionGeneration !== versionGeneration
+            ? undefined
+            : result.version;
+        const changed = typeof result === "boolean" ? result : result.changed;
         if (changed) deps.notify(scope, [tripId], false);
       },
       invalidated,
@@ -186,6 +231,10 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
       return (
         reads.get(`${scope.generation}:${scope.accountId}:discovery`)?.observation ?? null
       );
+    },
+    clearVersions() {
+      versionGeneration += 1;
+      for (const state of reads.values()) delete state.version;
     },
     async discovery() {
       const scope = await deps.scope();
@@ -235,15 +284,18 @@ let coordinator: ReturnType<typeof createTripDownstreamCoordinator> | undefined;
 let foregroundTrip: AccountRequestContext | null = null;
 subscribeAccountGeneration(() => {
   foregroundTrip = null;
+  coordinator?.clearVersions();
 });
 
 export function observeForegroundTrip(context: AccountRequestContext) {
   if (context.generation !== getAccountGeneration()) return () => {};
   const lease = Object.freeze({ ...context });
   foregroundTrip = lease;
+  coordinator?.clearVersions();
   return () => {
     if (foregroundTrip !== lease) return;
     foregroundTrip = null;
+    coordinator?.clearVersions();
   };
 }
 const discoveryObservationListeners = new Set<

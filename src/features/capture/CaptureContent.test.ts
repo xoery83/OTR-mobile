@@ -370,3 +370,10 @@ it("normal Universal progress delegates availability to its owning reader while 
   expect(legacy).toContain(t("capture.processingUnavailable"));
   expect(legacy).toContain(t("capture.progress.outcomesUnavailable"));
 });
+
+vi.mock("@/features/day-feed/LocalItemImportOriginals", () => ({
+  LocalItemImportOriginals: () => null,
+}));
+vi.mock("@/features/documents/ImportDocumentsPanel", () => ({
+  ImportDocumentsPanel: () => null,
+}));

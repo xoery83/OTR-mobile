@@ -1,0 +1,39 @@
+{
+  "status": "ACTUAL_READ_EXPIRY_LAYER_LOCATED_NOT_PERMISSION_GAP",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "closeReceiptSHA256": "6e056360d320f8687731dffffc9e3f498e5ca2109e88670b53f86f70f52e89c5",
+  "failedRequest": {
+    "event": "MCP_QA_REQUEST",
+    "dockerTimestamp": "2026-11-01T22:50:41.648081769Z",
+    "requestId": "64bec1c5-13c5-4c9a-a247-a34917c3771d",
+    "durationMs": 23109,
+    "status": 200,
+    "tool": "get_trip_item_edit_base",
+    "errorCode": "AUTH_REQUIRED",
+    "authFailureSource": "BACKEND_401"
+  },
+  "expiredReadStage": {
+    "event": "MCP_QA_READ_STAGE",
+    "dockerTimestamp": "2026-11-01T22:50:41.640422406Z",
+    "diagnosticId": "808824a5-692c-4184-933f-5c4812b0e0ae",
+    "elapsedMs": 12742,
+    "resource": "ITEM",
+    "stage": "POSTCHECK",
+    "remainingMs": 0,
+    "owningResponseStatus": 200,
+    "failure": "EXPIRED"
+  },
+  "otherDiagnosticIds": [
+    "130d5ae5-e242-452e-9f9c-240a8f94af22",
+    "aec59bb2-e35f-4aae-ad8f-690551b6f7f1"
+  ],
+  "correlationBasis": "Serial consumer calls and nonoverlapping request intervals; SDK requestId is not backend diagnosticId.",
+  "proven": "Core collection and Item returned200; Auth POSTCHECK rejected expired grant; MCP surfaced backend401 as HTTP200 tool AUTH_REQUIRED.",
+  "notProven": "Historical80dd/f107 exact phase, consumer refresh-token network behavior, future repaired consumer PASS.",
+  "repairScope": "Only strictly single whitelisted read tools/call HTTP401 challenge; no batch conversion, server retry, TTL/scope/check/ACL change or write UNKNOWN replay.",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "operationState": "NOT_SUBMITTED",
+  "previewCount": 0,
+  "applyCount": 0,
+  "historicalUnknownReplayed": false
+}

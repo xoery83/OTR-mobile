@@ -1,0 +1,35 @@
+{
+  "status": "CURRENT_DEFAULT_SOURCE_CORE_VIEW_ONLY_REBUILT_NOT_DEPLOYED",
+  "captureSHA256": "fa90e74706a907de045480cb5c9a9bb56b7e210008434f6edba6fb3f75b885c1",
+  "buildArgv": [
+    "node_modules/.bin/esbuild",
+    "backend/src/serverCapture.ts",
+    "--bundle",
+    "--platform=node",
+    "--target=node24",
+    "--format=esm",
+    "--alias:@=./src",
+    "--external:./src/data/auth/guestLocalWorkspace.ts",
+    "--alias:expo-crypto=./backend/src/headlessExpoCrypto.ts",
+    "--external:react-native",
+    "--external:expo-*",
+    "--outfile=dist/server-capture.mjs",
+    "--metafile=dist/read-diagnostic-capture-meta.json",
+    "--banner:js=import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);"
+  ],
+  "nonBundledBuildContext": {
+    "src/data/auth/guestLocalWorkspace.ts": "c1515d9bfb8732c23883c82d024d0450650b90168792d1591b2b63f1ef76de01",
+    "package.json": "111ecbd78b38404da7406329018ccbc98ff09c4a894da94ab0e21e51507890b4",
+    "tsconfig.json": "138ba4149f065ba4b99abf7b732314aec1f21ceb5883f863c03f05be66d7ea47"
+  },
+  "dependencySymlink": "/private/tmp/otr-photo-acquire-63b8aa6d-20261101/tree/node_modules",
+  "hostCalls": 0,
+  "businessCalls": 0,
+  "changedProductionFiles": [
+    "src/domain/trip/tripCoreV2Views.ts"
+  ],
+  "otherBundledInputsPreserved": 351,
+  "newCaptureSHA256": "e29be6ac4ff4d0813a6b1244f2f8d7d934077b92d14dac9605ca28e316e8c6bc",
+  "coreWriterCommit": "fe96aed1b077ed5e1d660aed764c1afe6facea19",
+  "mcpCandidateCommit": "ac44e091"
+}

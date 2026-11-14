@@ -1,0 +1,19 @@
+{
+  "verdict": "NO_BLOCKER_MECHANICAL_FRESH_HANDOFF_REBIND",
+  "reviewer": "/root/preview_proof_review",
+  "source": "collaboration FINAL_ANSWER",
+  "packageSHA256": "84cf26dff2673418849498395987a839636ac35f45174ea1a0edacc94c6ee96b",
+  "gateSHA256": "d74c7292cc155852132899249a4b21327749a75f5355c1b8c17594a12b0856d7",
+  "actualFocusedChecks": "17 derived sources and generator transformations byte-identical;4 consumer input hashes, Gate/scope/Entry/Timer/Host pins and EMPTY-only/newtimer binding PASS",
+  "historicalTestsRerun": false,
+  "normalLoginBeforeActualWaitingAck": false,
+  "clockFreshnessSeconds": 120,
+  "prior3586Reusable": false,
+  "originalUnknown": "FROZEN",
+  "notExecuted": [
+    "Auth",
+    "Hosted",
+    "Consumer"
+  ],
+  "remaining": "Root2 actual waiter/current qualification and actual consumer results; not Save authority"
+}

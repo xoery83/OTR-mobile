@@ -1,0 +1,13 @@
+{
+  "recipient": "Auth",
+  "purpose": "Exact resource conflict check",
+  "accountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+  "status": "MCP_NO_HOLD",
+  "scope": "Only MCP actual hold; not global resource availability",
+  "sessionOrReceiverHeld": false,
+  "currentMcpQaAccount": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "currentMcpQaSessionActive": false,
+  "currentMcpWindowActive": false,
+  "source": "MCP own current execution state",
+  "a2aFirstAttempt": "Automatic permission approval review timeout; not confirmed delivered"
+}

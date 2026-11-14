@@ -1,6 +1,7 @@
 import { itemSchema } from "./contract";
-import { createReadTools, type BackendRead } from "./read";
+import { mapStructuredManualPlace, mapRentalManualPlace } from "./structuredPlace";
 import { mapSparseStay } from "./sparseStay";
+import { createReadTools, type BackendRead } from "./read";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -66,6 +67,11 @@ export type PreparedMutation =
       summary: string;
       readBase?: z.infer<typeof itemSchema>;
       sparseStay?: { baseDigest: string; change: unknown; roomIds: string[] };
+      structuredPlace?: {
+        baseDigest: string;
+        patch: unknown;
+        role?: "PICKUP" | "RETURN";
+      };
     }
   | { kind: "TRIP"; command: TripCreateWireRequest; summary: string };
 function authoredPlace(label: string, address?: string) {
@@ -189,6 +195,7 @@ export function prepareCreate(account: string, raw: unknown): PreparedMutation {
               : place
                 ? { place }
                 : {}),
+            ...(i.family === "P3" && i.rooms !== undefined ? { rooms: i.rooms } : {}),
             ...(i.family === "P3" && (i.property_name || i.stay)
               ? {
                   details: {
@@ -226,7 +233,10 @@ export function prepareUpdate(_account: string, raw: unknown): PreparedMutation 
     admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
     payload:
       c.kind === "TEXT"
-        ? { title: c.title, ...(c.notes !== undefined ? { description: c.notes } : {}) }
+        ? {
+            ...(c.title !== undefined ? { title: c.title } : {}),
+            ...(c.notes !== undefined ? { description: c.notes } : {}),
+          }
         : c.kind === "FLIGHT_DETAILS"
           ? {
               flightNumberLiteral: c.flight_number,
@@ -308,7 +318,8 @@ export function createMutationTools(context: {
   read?: BackendRead;
   confirm?: ConfirmChanges;
   signal?: AbortSignal;
-  // Trusted owning Host qualification only; never a tool parameter.
+  preservationGuard?: (prepared: PreparedMutation) => Promise<string | null>;
+  // Trusted owning Host qualification only; not a tool parameter. Existing mounts never set this.
   sparseStaySupported?: boolean;
 }) {
   async function sparseStayGuard(p: PreparedMutation): Promise<string | null> {
@@ -346,6 +357,59 @@ export function createMutationTools(context: {
       return "SPARSE_STAY_FULL_BASE_UNAVAILABLE";
     }
   }
+  async function placeEditGuard(p: PreparedMutation): Promise<string | null> {
+    if (
+      p.kind !== "ITEM" ||
+      (p.command.command !== "SET_ITEM_PLACE" && !p.structuredPlace)
+    )
+      return null;
+    if (!context.read || !p.readBase) return "PLACE_EDIT_REQUIRES_FULL_CURRENT_READ";
+    try {
+      const base = await createReadTools(
+        context.accountId,
+        context.read,
+        context.signal,
+      ).get_trip_item_edit_base({
+        trip_id: p.command.tripId,
+        item_id: p.command.target.id,
+      });
+      if (contentDigest(base.item) !== contentDigest(p.readBase))
+        return "CURRENT_REVISION_OR_FIELDS_CONFLICT";
+      if (p.structuredPlace) {
+        if (contentDigest(base.record) !== p.structuredPlace.baseDigest)
+          return "STRUCTURED_PLACE_CURRENT_FULL_BASE_CONFLICT";
+        const mapped = p.structuredPlace.role
+          ? mapRentalManualPlace(base, p.structuredPlace.role, p.structuredPlace.patch)
+          : mapStructuredManualPlace(base, p.structuredPlace.patch);
+        if (contentDigest(mapped.payload) !== contentDigest(p.command.payload))
+          return "STRUCTURED_PLACE_PAYLOAD_MISMATCH";
+        return null;
+      }
+      const row = base.record.body as Record<string, unknown>;
+      const current = corePlaceSchema.parse(
+        Object.fromEntries(
+          Object.keys(corePlaceSchema.shape).map((key) => [key, row[key]]),
+        ),
+      );
+      const states = row.field_state as Record<
+        string,
+        { origin: string; evidence_ref: unknown }
+      >;
+      for (const [key, value] of Object.entries(current)) {
+        if (!["authored_label", "authored_address"].includes(key) && value !== null)
+          return "PLACE_FIELD_PRESERVATION_REQUIRES_OWNING_PORT";
+        const state = states[`itinerary_events.${key}`];
+        if (
+          (value !== null && !state) ||
+          (state && (state.origin !== "MANUAL" || state.evidence_ref !== null))
+        )
+          return "SOURCE_PLACE_PATCH_REQUIRES_OWNING_PRESERVATION";
+      }
+      return null;
+    } catch {
+      return "PLACE_FULL_BASE_UNAVAILABLE";
+    }
+  }
   async function request(
     method: "GET" | "POST",
     path: string,
@@ -380,7 +444,9 @@ export function createMutationTools(context: {
   async function dateEditGuard(p: PreparedMutation): Promise<string | null> {
     if (
       p.kind !== "ITEM" ||
-      !["SET_ITEM_SCHEDULE", "SET_AUTHORED_FLIGHT_DETAILS"].includes(p.command.command)
+      p.command.command === "SET_ITEM_PLACE" || // Full record + DTO are checked together by placeEditGuard.
+      (!p.readBase &&
+        !["SET_ITEM_SCHEDULE", "SET_AUTHORED_FLIGHT_DETAILS"].includes(p.command.command))
     )
       return null;
     if (!context.read) return "DATE_EDIT_REQUIRES_CURRENT_READ";
@@ -399,6 +465,10 @@ export function createMutationTools(context: {
       const item = itemSchema.parse(await readBoundedJson(response, 1048576, boundary));
       if (item.tripId !== p.command.tripId || item.itemId !== p.command.target.id)
         return "CURRENT_ITEM_SCOPE_MISMATCH";
+      if (p.readBase)
+        return contentDigest(item) === contentDigest(p.readBase)
+          ? null
+          : "CURRENT_REVISION_OR_FIELDS_CONFLICT";
       if (p.command.command === "SET_AUTHORED_FLIGHT_DETAILS") {
         if (
           item.family !== "P2" ||
@@ -499,7 +569,11 @@ export function createMutationTools(context: {
   ): Promise<MutationResult> {
     const identity = mutationIdentity(context.accountId, p);
     if (mode === "PREVIEW") {
-      const error = (await sparseStayGuard(p)) ?? (await dateEditGuard(p));
+      const error =
+        (await sparseStayGuard(p)) ??
+        (await dateEditGuard(p)) ??
+        (await placeEditGuard(p)) ??
+        (await context.preservationGuard?.(p));
       return error
         ? { ...identity, outcome: "REJECTED", error_code: error }
         : { ...identity, outcome: "PREVIEW" };
@@ -535,7 +609,11 @@ export function createMutationTools(context: {
     }
     if (!known || known.status !== 404)
       return { ...identity, outcome: "UNKNOWN", error_code: "RECOVERY_UNAVAILABLE" };
-    const guard = (await sparseStayGuard(p)) ?? (await dateEditGuard(p));
+    const guard =
+      (await sparseStayGuard(p)) ??
+      (await dateEditGuard(p)) ??
+      (await placeEditGuard(p)) ??
+      (await context.preservationGuard?.(p));
     if (guard) return { ...identity, outcome: "REJECTED", error_code: guard };
     const posted = await request(
       "POST",

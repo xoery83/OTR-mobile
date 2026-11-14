@@ -1,0 +1,18 @@
+{
+  "status": "OWN_SESSION_CLEANED_INDEPENDENT_ROOT2_FULL_CLOSE_VERIFIED",
+  "windowId": "c7fe4ac0-3f88-452c-9899-b686ec2f7d25",
+  "controlProcessSessionId": 10121,
+  "exitCode": 1,
+  "owningJournal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-mXeLgx/run.json",
+  "ownSessionRunId": "53c89014-5fb0-4abf-8e59-63c378ddcbd2",
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "ownSessionActiveLockExists": false,
+  "grantHttpCleanup": "UNCONFIRMED_NO_HTTP_STATUS_CAPTURED",
+  "grantAbsenceIndependentRoot2Read": "PASS_ZERO_EFFECTIVE_GRANT_CONSENT_AND_AUTHORIZATION",
+  "consumerTaskSubmitted": false,
+  "businessOperations": 0,
+  "casExecuted": false,
+  "originalUnknownReplay": false,
+  "noFurtherWindowToday": true,
+  "supersedingRoot2Receipt": "FINAL_EARLY_CLOSE_RECEIPT.json"
+}

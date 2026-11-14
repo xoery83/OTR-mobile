@@ -1,0 +1,36 @@
+{
+  "status": "LOCAL_REVIEWED_DEPLOYED_DEFAULT_BOUND_OWNER_ACCESS_APPROVAL_REQUIRED",
+  "windowId": "623a2797-978a-4e05-ac85-c7ec5a83e15b",
+  "gateSHA256": "be1ea4aec28e5d416215ac93819c7ecf22e8dc347f34f80a7dd0739be879f0ee",
+  "directory": "/private/tmp/otr-mcp-c02-recovery-623a2797978a4e05ac85c7ec5a83e15b",
+  "files": {
+    "normal-control.mts": "626e96acfe0d65c1c39bc9a9672948ff609bc535b786805aeeaf7e04c9c12947",
+    "c02-normal-control.py": "04f67bc920ff1803d730d0d65f62afb1c41b6680e22133af692a8b79310ce013",
+    "SCOPE.json": "ab4ac54d606f4fa02a3bb05acd952d3bdff26c8b6ad6d199b21ad8878c78ecbe",
+    "prepare-c02-access-window.py": "89272c89a651cbb6134c2d5dccff25c96f8ea1c863b48f87271973605271f646",
+    "c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+    "c02-timers.test.py": "42830292697050e6b003ab36a56b9a24f89b951b7ae5f04f60e68860de383ecd",
+    "c02-timers.py": "2f7f875a66a902d991c590f8b8ea20f7b190cc85b01402d2e109671c30cd1199",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "operators/deploy.py": "8389f0f2a2fdd2a01c2bbedeac63b2f8d2e4ed71a1be7420838f8d15c99ac4e8",
+    "operators/prepare_cas.py": "19a06eeabc3030e35717984a7d4e48ba6448b681aadeba134f729a7b7579dc07",
+    "operators/config_cas.py": "fa44d6f4d6d5de004f0d8727d4786bd846cd5ff8077f7626de1c088dbc08fb0c",
+    "operators/restore.py": "e7c06f49fb8457dd087086ff074b03064801e5d42ec379006ae827d62f5bee2b",
+    "operators/universal_runtime_close.py": "931be989f9c5d8a7f3c9fc20c016970344326a0e8482b91feb105190ffff2e5f"
+  },
+  "sourceMain": "7c1301c6",
+  "clockStarted": false,
+  "authorityActivated": false,
+  "businessSaveAuthorized": false,
+  "originalOperationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "required": "Actual new deployed CID/config and independent close receipt before qualification/approval",
+  "default": {
+    "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+    "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+    "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+    "environmentSHA256": "94737055f657616ddd6cbc193200c0e9077c04b7f3f8030bd8516e21bf9895fa"
+  },
+  "deployment_receipt": "docs/mcp/c02/diagnostics/deployment-20261104/ACTUAL_FINAL_DEPLOYMENT_RECEIPT.json",
+  "close_probe": "SOFTWARE_DEFAULT_CLOSE_PROBE_PASS",
+  "root2_activation_conditions": "Fresh CAS/no conflict/DCR=false/issuerConsole/watchdog/source binding still mandatory; no start before Owner approval"
+}

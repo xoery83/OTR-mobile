@@ -33,6 +33,7 @@ export type CoreSyncTransport = {
     import("../../domain/trip/tripCoreV2SourceContract").CoreSourceFinalizeResultV2
   >;
 
+  collection?: Parameters<Repository["refresh"]>[1]["collection"];
   capabilities(context: AccountRequestContext, operationId?: string): Promise<unknown>;
   receipt(
     context: AccountRequestContext,
@@ -217,6 +218,8 @@ export function createCoreV2SyncWorker(
       }
       if (!result && sourceItem && intent.state === "APPLIED")
         throw new SyncDependencyError("CORE_ACCEPTED_RECEIPT_UNAVAILABLE");
+      if (!result && operation.failureCategory === "UNKNOWN")
+        throw new Error("CORE_OUTCOME_UNKNOWN");
       if (!result) {
         const capabilities = coreCapabilitiesSchema.parse(
           await corePhase("CORE_CAPABILITIES_READ", () =>
@@ -232,7 +235,7 @@ export function createCoreV2SyncWorker(
           !capabilities.enabledAdmissionModes.includes(command.admission.mode)
         )
           throw new SyncDependencyError("CORE_CAPABILITY_CLOSED");
-        if (command.admission.mode !== "MANUAL" && !capabilities.sourceEvidenceAvailable)
+        if (["REVIEWED_SOURCE", "AUTO_SOURCE"].includes(command.admission.mode) && !capabilities.sourceEvidenceAvailable)
           throw new SyncDependencyError("CORE_SOURCE_EVIDENCE_CLOSED");
         const isInstruction = command.target.kind === "INSTRUCTION";
         let instructionFamily: string | undefined;
@@ -303,7 +306,28 @@ export function createCoreV2SyncWorker(
           )
             throw new SyncDependencyError("CORE_FAMILY_CLOSED");
         }
-        if (family && !capabilities.enabledFamilies.includes(family as never))
+        if (command.command === "RECONCILE_ITEM_DOCUMENTS" && ["MANUAL", "IMPORT"].includes(command.admission.mode)) {
+          const ready = async () => {
+            const state = await repository.acceptedSnapshot(context);
+            return !!state && command.baseVector.every((base) => {
+              if (base.kind === "ITEM") {
+                const item = state.graph.itinerary_events.find(({ id }) => id === base.id);
+                return !!item && Number(item.semantic_revision) >= Number(base.revision);
+              }
+              if (base.kind === "DOCUMENT") {
+                const document = state.graph.trip_operational_documents.find(({ id }) => id === base.id);
+                return !!document && Number(document.revision) >= Number(base.revision);
+              }
+              return false;
+            });
+          };
+          if (!(await ready())) {
+            if (transport.collection) await repository.refresh(context, { collection: transport.collection });
+            if (!(await ready())) throw new SyncDependencyError("CORE_DOCUMENT_DEPENDENCY_PENDING");
+          }
+        }
+        if (family && command.command !== "RECONCILE_ITEM_DOCUMENTS" &&
+            !capabilities.enabledFamilies.includes(family as never))
           throw new SyncDependencyError("CORE_FAMILY_CLOSED");
         // Parent/family identity is not correction provenance or dispatch-phase proof.
         if (isInstruction) {

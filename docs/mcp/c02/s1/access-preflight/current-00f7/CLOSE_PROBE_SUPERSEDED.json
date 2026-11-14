@@ -1,0 +1,12 @@
+{
+  "recorded_at": "2026-11-03T02:17:17.366994+00:00",
+  "status": "DO_NOT_EXECUTE_CURRENT_DEFAULT_SUPERSEDED",
+  "candidate_sha256": "a3cbfe5876372361d32a6fe4c844228a6bd1d0681e3b2d858dc12eb19fcaa2b5",
+  "new_cid": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+  "new_image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+  "new_runtime_hash": "1febb2a7715e33c891c62fe97f9e4c26bca2edd1e7c8213363a86a046f48606d",
+  "source": "Root actual shared writer release notice; full sanitized binding requested",
+  "mcp_window_started": false,
+  "business_applies": 0,
+  "decision": "Do not execute00f7/11faa probes. Rebind from complete latest snapshot including changed runtime mounted file; never combine with old hashes."
+}

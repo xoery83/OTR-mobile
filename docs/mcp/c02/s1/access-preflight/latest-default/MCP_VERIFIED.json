@@ -1,0 +1,20 @@
+{
+  "status": "LATEST_DEFAULT_COMPATIBLE_AND_UNCHANGED_CLOSE_PASS",
+  "verified_at": "2026-11-02T23:46:24.713241+00:00",
+  "verification": "MCP independent local cross-check of Root fixed actual release/probe receipts, no extra Host calls",
+  "container_id": "94eecf2f7fb1cf50b8c2d2a4d7a85cf4f2358e39733f7025335857d8149c55be",
+  "image": "sha256:bf00719ef724ae21bd0316b5a062554ac5310667b79a639b06370694c33e4f7f",
+  "config_sha256": "1bc26f8f27b0bba6092bc6b788c23fd0ba148a117f80cb601b075531862302d4",
+  "capture_sha256": "d0be795b402ce929f47e41054a9e1c3043b4d8758a3714919ad95e257177338c",
+  "mcp_host_sha256": "6c9b722c8cee3563e0c4bf24dd434fd6c91288d4e7249322941dd11f2da3814d",
+  "mcp_loader_sha256": "78601db76e9a9c91c747c7c3d1ad270d7342156f37074bc08716c9334d72ae2c",
+  "mcp_preservation_basis": "Root explicit preservation report and same-base allOtherBundlesUnchanged prebuild + actual controller readback",
+  "raw_receipts_sha256": {
+    "IMAGE_READY.json": "7547fa58ecdaf14c5b7dce8593235d252da51f0c03f36713e0ee207e21adc719",
+    "INDEPENDENT_READBACK.json": "0c5b11e21ea9888e3f6fbd4dfbb2899255b2ac6656504d052f7ce2a499c1f475",
+    "CLOSE_PROBE.json": "9292c19b6ef65b81fb5100d3960fcfcedf06fc67ae6d8f8d4c8a5bf2f66b2e99"
+  },
+  "restore_rule": "Only this latest default after fresh-CAS. Earlier a96/0b and920f/1efe are software rollback history, not business-window restore targets.",
+  "authority_activated": false,
+  "consumer": "NOT_RUN"
+}

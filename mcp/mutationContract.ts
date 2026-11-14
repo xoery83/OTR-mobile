@@ -1,5 +1,13 @@
 import { z } from "zod";
 import { uuid, date, itemSchema } from "./contract";
+import { trip_stay_roomsSchema } from "../src/domain/trip/tripCoreV2";
+export const stayRooms = z
+  .array(trip_stay_roomsSchema.omit({ trip_id: true, event_id: true }))
+  .max(64)
+  .refine(
+    (rooms) => new Set(rooms.map((r) => r.room_id)).size === rooms.length,
+    "Duplicate room identity",
+  );
 const action = {
   mode: z.enum(["PREVIEW", "APPLY"]).default("PREVIEW"),
   preview_digest: z
@@ -93,12 +101,13 @@ export const createItemInput = z.strictObject({
       title: z.string().trim().min(1).max(200),
       notes: z.string().max(5000).nullable().optional(),
       dates: scheduledCalendar,
-      place: z.string().trim().min(1).max(256).optional(),
-      property_name: z.string().trim().min(1).max(256).optional(),
+      place: z.string().trim().min(1).max(500).optional(),
+      property_name: z.string().trim().min(1).max(500).optional(),
       place_address: z.string().trim().min(1).max(2000).optional(),
       return_place: label.optional(),
       return_address: z.string().trim().min(1).max(2000).optional(),
       stay: stay.optional(),
+      rooms: stayRooms.optional(),
       rental: rental.optional(),
       transport: transport.optional(),
       flight_number: z.string().trim().min(1).max(255).optional(),
@@ -122,6 +131,7 @@ export const createItemInput = z.strictObject({
     )
     .refine((x) => !x.property_name || x.family === "P3", "property_name belongs to P3")
     .refine((x) => !x.stay || x.family === "P3", "stay belongs to P3")
+    .refine((x) => x.rooms === undefined || x.family === "P3", "rooms belong to P3")
     .refine((x) => !x.rental || x.family === "P4", "rental belongs to P4")
     .refine(
       (x) => (!x.return_place && !x.return_address) || x.family === "P4",
@@ -142,11 +152,16 @@ export const updateItemInput = z.strictObject({
   item_id: uuid,
   expected_revision: z.number().int().positive().safe(),
   change: z.discriminatedUnion("kind", [
-    z.strictObject({
-      kind: z.literal("TEXT"),
-      title: z.string().trim().min(1).max(200),
-      notes: z.string().max(5000).nullable().optional(),
-    }),
+    z
+      .strictObject({
+        kind: z.literal("TEXT"),
+        title: z.string().trim().min(1).max(200).optional(),
+        notes: z.string().max(5000).nullable().optional(),
+      })
+      .refine(
+        (c) => c.title !== undefined || c.notes !== undefined,
+        "At least one changed text field required",
+      ),
     z.strictObject({ kind: z.literal("DATES"), dates: calendar }),
     z.strictObject({ kind: z.literal("SCHEDULE"), dates: scheduledCalendar }),
     z.strictObject({

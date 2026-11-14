@@ -1,0 +1,20 @@
+{
+  "status": "CONSUMER_SINGLE_APPLY_UNKNOWN_RECOVERY_SAME_ID_ONLY",
+  "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "itemId": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+  "preview": "PASS_CURRENT_CONSUMER_AND_SERVER_THREE_HASHES",
+  "ownerConfirmation": "EXACT_CREATE_APPROVED; ROOT2_DIRECT_CREATE_CAS_APPROVED",
+  "createCas": "PASS_INDEPENDENTLY_VERIFIED",
+  "consumerApply": "ONE_REPORTED_CALL_UNKNOWN_QUERY_SAME_OPERATION",
+  "consumerRecovery": "UNKNOWN_NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT",
+  "independentReadback": "2026-11-03T22:06:05Z_coreReceipt0_legacyReceipt0_target0",
+  "appliedReceipt": "NOT_OBSERVED",
+  "revision": null,
+  "edit": "NOT_RUN",
+  "native": "NOT_RUN",
+  "retries": "NONE_BY_MCP; no new ID; historical UNKNOWN untouched",
+  "ownSessionCleanup": "PASS; Grant204",
+  "environmentClose": "CLOSED_VERIFIED_ed204b2d; timers off, lock released, OAuth off, issuer deny-all",
+  "rootCause": "NOT_ESTABLISHED; QUERY_SAME_OPERATION alone does not identify auth/core/transport/timeout",
+  "next": "Preserve originalID UNKNOWN. Close and exact diagnostic evidence; no further Apply without separately justified lawful recovery."
+}

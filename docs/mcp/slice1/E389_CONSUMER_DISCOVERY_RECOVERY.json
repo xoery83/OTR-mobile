@@ -1,0 +1,11 @@
+{
+  "layer": "CLAUDE_CONSUMER_TURN_TOOL_REGISTRY",
+  "errorObserved": "461 text Tool 'mcp__OTR_DEV_QA__get_operation_status' is not available in this turn, nor is any other 'mcp__OTR_DEV_QA__' tool. Do not call them in this turn \u2014 continue your reply without them.",
+  "evidenceSHA256": "962a60ae411207991824dad49fdcecd4c7e11c9fefbbe0d12d9928112fb372be",
+  "failedConsumerMessage": 12,
+  "businessApplyCountAtFailure": 0,
+  "repair": "reload same existing chat; verify OTR connector enabled; new read/preview turn",
+  "focusedRetest": "message14 actual status/EditBase/Preview PASS; message16 one APPLY/APPLIED/readback PASS",
+  "backendCodeChange": false,
+  "newOperationId": false
+}

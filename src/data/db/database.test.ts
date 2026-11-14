@@ -37,7 +37,7 @@ describe("SQLite migrations", () => {
     await runMigrations(database);
     await runMigrations(database);
 
-    expect(executedSql).toHaveLength(migrations.length + 4);
+    expect(executedSql).toHaveLength(migrations.length + 6);
     expect(appliedMigrationIds).toEqual(
       new Set(migrations.map((migration) => migration.id)),
     );
@@ -58,14 +58,14 @@ describe("SQLite migrations", () => {
       "trip_canonical_event_read_only_mirror",
     );
     expect(migrations.map(({ id }) => id)).toEqual(
-      Array.from({ length: 76 }, (_, i) => i + 1),
+      Array.from({ length: 79 }, (_, i) => i + 1),
     );
     await runMigrations(database);
     await runMigrations(database);
     const upgradeSql = migrations
       .filter(({ id }) => id >= 45)
       .flatMap((m) =>
-        m.id === 73
+        m.id === 73 || m.id === 77
           ? [
               expect.stringContaining("PRAGMA foreign_keys=OFF"),
               m.sql,
@@ -79,7 +79,7 @@ describe("SQLite migrations", () => {
       expect.stringContaining("schema_migrations"),
     ]);
     expect(appliedMigrationIds).toEqual(
-      new Set(Array.from({ length: 76 }, (_, i) => i + 1)),
+      new Set(Array.from({ length: 79 }, (_, i) => i + 1)),
     );
   });
 
@@ -89,6 +89,12 @@ describe("SQLite migrations", () => {
     let sqlite = new DatabaseSync(path);
     const applied: number[] = [];
     let mirrorBefore: string;
+    let coreDocumentBefore: string;
+    const coreDocument = () =>
+      JSON.stringify([
+        sqlite.prepare("SELECT * FROM trip_core_trip_operational_documents").all(),
+        sqlite.prepare("SELECT * FROM trip_core_trip_item_document_links").all(),
+      ]);
     const mirror = () =>
       JSON.stringify([
         sqlite.prepare("SELECT * FROM trip_canonical_events").all(),
@@ -113,6 +119,27 @@ describe("SQLite migrations", () => {
             VALUES('account','trip','event','ORIGIN','2026-10-04T01:00:00.123456Z','2026-10-04','01:00'),
                   ('account','trip','event','DESTINATION','2026-10-04T03:00:00.654321Z','2026-10-04','03:00');`);
           mirrorBefore = mirror();
+        }
+        if (migration?.id === 76) {
+          sqlite.exec(`
+            INSERT INTO trip_core_itinerary_events
+              (cache_account_id,mirror_key,id,trip_id,semantic_revision,owner_account_id,
+               visibility,created_at,updated_at,field_state,business_contract_version,
+               experience_family,temporal_contract_version,temporal_shape,title,event_type,
+               status,participation_mode,participant_scope)
+              VALUES('account','item','item','trip',1,'account','VISIBLE','time','time','{}',
+                     2,'P1',2,'DATE','Prior item','activity','active','NONE','ALL');
+            INSERT INTO trip_core_trip_operational_documents
+              (cache_account_id,mirror_key,id,trip_id,revision,owner_account_id,visibility,
+               created_at,updated_at,field_state,title,media_type,byte_size,sha256,custody,
+               storage_object_key,content_version,custody_receipt_id)
+              VALUES('account','doc','doc','trip',1,'account','VISIBLE','time','time','{}',
+                     'Prior document','application/pdf',128,'digest','PRIVATE_STORAGE',
+                     'existing-object',1,'existing-receipt');
+            INSERT INTO trip_core_trip_item_document_links VALUES
+              ('account','link','trip','item','doc',1,'account','time');
+          `);
+          coreDocumentBefore = coreDocument();
         }
       },
       async getFirstAsync<T>(sql: string, ...args: unknown[]) {
@@ -188,9 +215,12 @@ describe("SQLite migrations", () => {
       const priorData = existing();
       sqlite.exec("PRAGMA foreign_keys=ON");
       await runMigrations(adapter());
-      expect(applied).toEqual(Array.from({ length: 33 }, (_, i) => 44 + i));
+      expect(applied).toEqual(Array.from({ length: 36 }, (_, i) => 44 + i));
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
+      expect(coreDocument()).toBe(coreDocumentBefore!);
+      expect(sqlite.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+      expect(sqlite.prepare("PRAGMA foreign_keys").get()?.foreign_keys).toBe(1);
       expect(() =>
         sqlite.exec(
           "INSERT INTO trip_canonical_transport_endpoints(account_id,trip_id,event_id,role) VALUES('account','trip','missing','ORIGIN')",
@@ -208,19 +238,23 @@ describe("SQLite migrations", () => {
       expect(before.find((row) => row.id === 74)).toMatchObject({
         id: 74, name: "trip_person_cloud_create_receipts",
       });
-      expect(before.at(-1)).toMatchObject({
-        id: 76,
-        name: "capture_file_png_photo_decisions",
+      expect(before.find((row) => row.id === 76)).toMatchObject({
+        id: 76, name: "capture_file_png_photo_decisions",
       });
+      expect(before.find((row) => row.id === 77)).toMatchObject({
+        id: 77, name: "trip_core_local_document_metadata",
+      });
+      expect(before.at(-1)).toMatchObject({ id: 79, name: "server_parent_metadata_confirmations" });
       expect(before.map((row) => row.id)).toEqual(
-        Array.from({ length: 76 }, (_, i) => i + 1),
+        Array.from({ length: 79 }, (_, i) => i + 1),
       );
       sqlite.close();
       sqlite = new DatabaseSync(path);
       await runMigrations(adapter());
-      expect(applied).toEqual(Array.from({ length: 33 }, (_, i) => 44 + i));
+      expect(applied).toEqual(Array.from({ length: 36 }, (_, i) => 44 + i));
       expect(existing()).toBe(priorData);
       expect(mirror()).toBe(mirrorBefore!);
+      expect(coreDocument()).toBe(coreDocumentBefore!);
       expect(sqlite.prepare("SELECT * FROM schema_migrations ORDER BY id").all()).toEqual(
         before,
       );
@@ -243,7 +277,7 @@ describe("SQLite migrations", () => {
 
     await runMigrations(database);
 
-    expect(executedSql).toHaveLength(migrations.length);
+    expect(executedSql).toHaveLength(migrations.length + 2);
     expect(executedSql[1]).toContain("CREATE TABLE IF NOT EXISTS itinerary_items");
     expect(appliedMigrationIds).toContain(4);
     expect(appliedMigrationIds).toContain(6);
@@ -271,7 +305,7 @@ describe("SQLite migrations", () => {
       "ledger_my_spending_facts",
     );
     const latest = migrations.at(-1)!;
-    expect(latest.id).toBe(76);
+    expect(latest.id).toBe(79);
     expect(migrations.find((migration) => migration.id === 39)?.sql).toContain(
       "original_mime_type",
     );
@@ -759,9 +793,9 @@ it.each([0, 55])(
       expect(applied.filter((id) => id >= 56 && id <= 62)).toEqual([
         56, 57, 58, 59, 60, 61, 62,
       ]);
-      expect(applied.at(-1)).toBe(76);
+      expect(applied.at(-1)).toBe(79);
       if (priorVersion === 55)
-        expect(applied).toEqual(Array.from({ length: 21 }, (_, i) => 56 + i));
+        expect(applied).toEqual(Array.from({ length: 24 }, (_, i) => 56 + i));
       const state = () => ({
         versions: sql
           .prepare(

@@ -1,0 +1,33 @@
+{
+  "status": "EXECUTED_AND_CLOSED_CONSUMER_EDIT_BLOCKED_NO_SUBMISSION",
+  "gateSHA256": "b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251",
+  "reviewableCommit": "2ab17467",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "recordedAt": "2026-11-01T19:12:26.851179+00:00",
+  "ownerReply": "批准",
+  "deployed": true,
+  "qaActivated": true,
+  "clockFixed": true,
+  "otpSent": true,
+  "notesApproved": false,
+  "consumerDraftSent": true,
+  "historicalUnknownReplay": false,
+  "newCaseIsIndependent": true,
+  "readiness": {
+    "Claude": "MCP_UI_RECEIVING_BRIDGE_READBACK_ALL_READY_WAIT_EMPTY_ISSUER",
+    "ChatGPT": "SOFTWARE_LOCAL_READY_c8c145bd_ACTIVATION_CONDITIONAL_ON_CLAUDE_PASS_FULL_CLOSE_AND_ALL_READY",
+    "gateScopeCheckByAuth": "NO_BLOCKER",
+    "gateBytesUnchanged": true
+  },
+  "actualDefault": {
+    "containerId": "cb71e00e7698ee78558cc787cb8f175ac3f0a5708fe6c129ba15c0d456953d2c",
+    "configSHA256": "335997de5233bb374e49b62abf34e10231bbf2b3e4856228092b075111cc6c34",
+    "image": "sha256:fbd9074e232861dd272ad16b950045db8be0df82f979b2fafa8da8e91dba1f66",
+    "independentlyVerifiedAt": "2026-11-01T20:07:56Z",
+    "rootCommit": "df7b0b46",
+    "qaKeysAbsent": true,
+    "lockReleased": true
+  },
+  "consumerResult": "FRESH_OUTCOME.json",
+  "closure": "FRESH_CLOSURE.json"
+}

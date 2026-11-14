@@ -12,3 +12,15 @@ export {
 } from "./oauth";
 export type { BackendMutation, ConfirmChanges, ApprovalRequest } from "./mutation";
 export type { BackendRead } from "./read";
+export {
+  createDomainAdapters,
+  prepareMetadata,
+  prepareTraveler,
+  prepareExpense,
+  prepareExpenseCreate,
+  prepareExpenseUpdate,
+  type DomainBackend,
+  type DomainContext,
+  type ExpenseRecovery,
+} from "./domainAdapter";
+export type { TaskDomainBinding, BindTaskDomains } from "./domainToolRegistry";

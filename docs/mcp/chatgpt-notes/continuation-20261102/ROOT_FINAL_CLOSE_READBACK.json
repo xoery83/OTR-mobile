@@ -1,0 +1,21 @@
+{
+  "status": "ROOT_CLOSED_SERVER_VERIFIED",
+  "windowId": "751df5929be940f7b18e4f55e584692c",
+  "checkedAt": "2026-11-02T09:28:04.050688+00:00",
+  "containerId": "6ebe6ed8b2062b442d69631e0ccaa11745c0d94ca9b9412c8b818dd2c5cf68e0",
+  "configSHA256": "bcb0b2399018bb98b23f9744600ff008cd275fc750b9a9e7469f7af5fa170e5b",
+  "health": "healthy",
+  "bothQaKeysAbsent": true,
+  "defaultHostExact": true,
+  "all23FilesMatch": true,
+  "httpHealth200Protected401": true,
+  "timerInactive": true,
+  "helper": {
+    "status": "ALREADY_DEFAULT_READBACK_ONLY"
+  },
+  "mcpDiagnostics": {
+    "status": "UNAVAILABLE",
+    "reason": "ALREADY_DEFAULT_NOT_CAPTURED",
+    "evidence": "BOUNDED_TAIL_NOT_COMMIT_PROOF"
+  }
+}

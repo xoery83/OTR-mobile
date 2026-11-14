@@ -1,0 +1,16 @@
+{
+  "status": "AUTO_REVIEW_REJECTED_ROOT2_DIRECT_OWNER_CONFIRMATION_REQUIRED",
+  "source": "Root2 final turn01a1a43a-e987-71a2-b4d3-c0f4ea6132b6",
+  "action": "Shared DEV EMPTY CAS container replacement",
+  "reason": "Automatic approval requires direct Owner authorization in Root2 chat; rejects cross-chat approval evidence",
+  "owner_approval_in_mcp": "VALID_SCOPE_APPROVED_but_NOT_ACCEPTED_BY_ROOT2_REVIEW",
+  "runtime_activation": false,
+  "issuer_console_activation": false,
+  "consumer_login": false,
+  "business_get": false,
+  "business_apply": false,
+  "original_operation": "a8c1_UNKNOWN_UNTOUCHED",
+  "normal_close_at": "2026-11-04T02:30:27.395Z",
+  "hard_deadline": "2026-11-04T02:32:27.395Z",
+  "next": "Owner answers Root2 exact prompt directly before deadline; no bypass or clock reset"
+}

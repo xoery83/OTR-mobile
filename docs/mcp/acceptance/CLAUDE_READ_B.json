@@ -1,0 +1,56 @@
+{
+  "stage": "CLAUDE_CONSUMER_B",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "d2b8167f-ee42-4ac1-b5ef-4dc003c0d141",
+  "chatUrl": "https://claude.ai/chat/f295c0d1-2b93-4808-8366-06bb5b3724b7",
+  "hardDeadline": "2026-10-31T15:20:25.498Z",
+  "oauth": "PASS_NORMAL_OTP_EXPLICIT_READ_CONSENT",
+  "discovery": [
+    "list_trips",
+    "get_trip",
+    "list_trip_items",
+    "get_trip_item"
+  ],
+  "get_trip": "PASS_SERVER_CONFIRMED",
+  "list_trip_items": "PASS_SERVER_CONFIRMED_3_ITEMS_NO_NEXT_PAGE",
+  "get_trip_item": {
+    "status": "FAILED_AUTH_REQUIRED_BEFORE_REVOKE",
+    "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+    "itemReturned": false,
+    "retry": false
+  },
+  "independentComparison": {
+    "p3Summary": "MATCH",
+    "fullP3": "NOT_COMPARED_CONSUMER_DETAIL_FAILED",
+    "backendItemSha256": "c2f9627883fc5a266bae2444ac230f8dbf99f8044afc119c39dfa5a536ce807b"
+  },
+  "foreignDenial": "NOT_TESTED_AUTH_FAILURE_FIRST",
+  "write": "NOT_ADVERTISED_OTR_READ_POLICY_NOT_PLATFORM_LIMITATION",
+  "revoke": {
+    "normalDeleteHttp": 204,
+    "ackAt": "2026-10-31T15:14:32.556Z",
+    "routeStillLiveAtDelete": true,
+    "freshAbsence": "AUTH_OWNER_ACK",
+    "oneLiveProbe": "CLIENT_REQUIRES_AUTHENTICATION_NO_ITEM_RESPONSE",
+    "reconnect": false,
+    "serverHttp401": "NOT_PROVEN",
+    "causality": "NOT_PROVEN_AUTH_FAILED_BEFORE_REVOKE",
+    "modelStoppedAfterAuthenticationPrompt": true
+  },
+  "businessWrites": 0,
+  "ownerNelsonAccess": false,
+  "fullClosure": "B_INDEPENDENTLY_CLOSED",
+  "independentReview": {
+    "status": "NO_BLOCKER",
+    "reviewer": "mcp_independent_review",
+    "scope": "raw responses, evidence limits, privacy and documentation consistency",
+    "images": [
+      "CLAUDE_CONSENT_B.png",
+      "CLAUDE_REVOKE_B.png"
+    ],
+    "removed": "Unrelated sidebar screenshot and blank read viewport were not retained"
+  },
+  "closureEvidence": "CLAUDE_B_AUTH_CLOSED.json",
+  "closedObservedAt": "2026-10-31T15:24:34.398994+00:00",
+  "closureTiming": "Hook/runtime closed before deadline; final independent configuration/ACL/grant observations are later. AS Save ACK preceded 15:19:07Z; reload screenshot15:21:08Z."
+}

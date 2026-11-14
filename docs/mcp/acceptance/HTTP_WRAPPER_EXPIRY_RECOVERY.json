@@ -1,0 +1,61 @@
+{
+  "status": "LOCAL_HTTP_CORE_MEMORY_RED_GREEN_PASS_NOT_DEV",
+  "baselineCommit": "279e0aab",
+  "baselineServerSha256": "c987111ebe9a628f11aaec03fa199e229aa0c7134f04255a97ac37026aa1cc4a",
+  "sourceSha256": {
+    "mcp/server.ts": "03a5184aedb35d32d93c0ce2be64e07cc8bdcb9f402efba2b68bf98121f46c15",
+    "mcp/mutation.test.ts": "8a0f94b3ece69ec7d63393a4daa284307d2c401c4a17b11d575c300431877670",
+    "mcp/consumer.test.ts": "6ce50e2efaabfe0d13ccbabbb86088c71584a4a4807689939a20c03565500688"
+  },
+  "red": {
+    "test": "preserves only original recovery identity when authorization expires after Core commits",
+    "exitCode": 1,
+    "verifiedBeforeFailure": [
+      "one POST",
+      "one actual Core graph item",
+      "one formal APPLIED receipt in memory"
+    ],
+    "failure": "structuredContent undefined instead of UNKNOWN with original operation/query"
+  },
+  "green": {
+    "standardSdkHttpCreateAfterCommitExpiry": "PASS",
+    "standardSdkHttpBatchAfterCommitExpiry": "PASS",
+    "coreExecution": "existing owning coreHttpBoundary and mutation execution via memory transaction fixture",
+    "postCountPerRegression": 1,
+    "committedItemCountPerRegression": 1,
+    "retainedReceiptOutcome": "APPLIED",
+    "expiredReturn": "UNKNOWN, original caller-derived query/identity, null revision, empty summary, invalid-token authentication metadata",
+    "batchDataSuppressed": [
+      "review",
+      "business revisions",
+      "receipt",
+      "duplicate item IDs",
+      "authored titles"
+    ],
+    "mcpDirectoryTests": 62,
+    "mcpTypecheck": "PASS",
+    "scopedEslint": "PASS",
+    "diffCheck": "PASS"
+  },
+  "substitutes": [
+    "authorize port and time",
+    "Core memory persistence/admission/ACL fixture"
+  ],
+  "notQualified": [
+    "DEV OAuth adapter integration with new source",
+    "PostgreSQL commit for this regression",
+    "consumer Edit retry",
+    "consumer rendering of new UNKNOWN auth-error projection"
+  ],
+  "externalDevOrProductionRequests": 0,
+  "liveDeployment": false,
+  "gateReopened": false,
+  "scopeCorrection": "A command without CLI path inherited unrelated repository tests; interrupted, then explicitly filtered mcp/ passed. Unrelated failures do not count as MCP acceptance.",
+  "independentReview": {
+    "reviewer": "mcp_independent_review",
+    "status": "NO_BLOCKER",
+    "liveActions": false,
+    "testsIndependentlyRerun": false,
+    "boundary": "Only initially authorized valid APPLY, pure original identity recovery, no expired business data or backend call; initial/PREVIEW/status deny unchanged"
+  }
+}

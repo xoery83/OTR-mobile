@@ -1,0 +1,781 @@
+{
+  "trip_id": "00000000-0000-4000-8000-000000000002",
+  "sources": [
+    {
+      "id": "hotel-original",
+      "name": "hotel-original",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "CONFIRMATION",
+      "confirmation_status": "CONFIRMED"
+    },
+    {
+      "id": "hotel-amendment",
+      "name": "hotel-amendment",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "AMENDMENT",
+      "confirmation_status": "CONFIRMED"
+    },
+    {
+      "id": "hotel-supplement",
+      "name": "hotel-supplement",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "SUPPLEMENT",
+      "confirmation_status": "CONFIRMED"
+    },
+    {
+      "id": "taxi-a",
+      "name": "taxi-a",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "CONFIRMATION",
+      "confirmation_status": "CONFIRMED"
+    },
+    {
+      "id": "taxi-b",
+      "name": "taxi-b",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "CONFIRMATION",
+      "confirmation_status": "CONFIRMED"
+    },
+    {
+      "id": "plan",
+      "name": "plan",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "PLAN"
+    },
+    {
+      "id": "people",
+      "name": "people",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "USER_ASSERTION",
+      "confirmation_status": "UNKNOWN"
+    },
+    {
+      "id": "existing-otr",
+      "name": "existing-otr",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "USER_ASSERTION",
+      "confirmation_status": "UNKNOWN"
+    },
+    {
+      "id": "hotel-change-request",
+      "name": "hotel-change-request",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "AMENDMENT",
+      "confirmation_status": "PENDING"
+    },
+    {
+      "id": "flight-itinerary",
+      "name": "flight-itinerary",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "CONFIRMATION",
+      "confirmation_status": "CONFIRMED"
+    },
+    {
+      "id": "other-supplier",
+      "name": "other-supplier",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "CONFIRMATION",
+      "confirmation_status": "CONFIRMED"
+    },
+    {
+      "id": "hut-plan",
+      "name": "hut-plan",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "PLAN"
+    },
+    {
+      "id": "refund-note",
+      "name": "refund-note",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "USER_ASSERTION",
+      "confirmation_status": "UNKNOWN"
+    },
+    {
+      "id": "unrelated",
+      "name": "unrelated",
+      "media_type": "text/markdown",
+      "readable": true,
+      "readable_scope": "Named section in supplied materials; page1 where stated; full text readable",
+      "kind": "USER_ASSERTION",
+      "confirmation_status": "UNKNOWN"
+    }
+  ],
+  "candidates": [
+    {
+      "key": "hotel",
+      "family": "P3",
+      "existing_item_id": "3892112c-4288-4586-a2b6-ef8ebc07cb2f",
+      "claims": [
+        {
+          "id": "fact-2",
+          "source_id": "hotel-original",
+          "locator": "hotel-original, page1 / named section",
+          "field": "title",
+          "value": "Fern QA Lodge",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-3",
+          "source_id": "hotel-original",
+          "locator": "hotel-original, page1 / named section",
+          "field": "property_name",
+          "value": "Fern QA Lodge",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-1",
+          "source_id": "hotel-original",
+          "locator": "hotel-original, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-10",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-4",
+          "source_id": "hotel-amendment",
+          "locator": "hotel-amendment, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-11",
+          "certainty": "CONFIRMED",
+          "replaces_claim_id": "fact-1"
+        },
+        {
+          "id": "fact-5",
+          "source_id": "hotel-original",
+          "locator": "hotel-original, page1 / named section",
+          "field": "dates.end_date",
+          "value": "2026-12-12",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-6",
+          "source_id": "hotel-change-request",
+          "locator": "hotel-change-request, page1 / named section",
+          "field": "dates.end_date",
+          "value": "2026-12-13",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-7",
+          "source_id": "hotel-original",
+          "locator": "hotel-original, page1 / named section",
+          "field": "dates.start_time",
+          "value": "15:00",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-8",
+          "source_id": "hotel-original",
+          "locator": "hotel-original, page1 / named section",
+          "field": "stay.permitted_checkin_from",
+          "value": "14:00",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-9",
+          "source_id": "hotel-original",
+          "locator": "hotel-original, page1 / named section",
+          "field": "stay.permitted_checkin_until",
+          "value": "20:00",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-10",
+          "source_id": "hotel-supplement",
+          "locator": "hotel-supplement, page1 / named section",
+          "field": "place_address",
+          "value": "1 Example Road, Nelson",
+          "certainty": "CONFIRMED"
+        }
+      ]
+    },
+    {
+      "key": "water-taxi",
+      "family": "P5",
+      "claims": [
+        {
+          "id": "fact-11",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "title",
+          "value": "Example Water Taxi",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-12",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-12",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-13",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "dates.start_time",
+          "value": "09:00",
+          "certainty": "CONFLICTING"
+        },
+        {
+          "id": "fact-14",
+          "source_id": "taxi-b",
+          "locator": "taxi-b, page1 / named section",
+          "field": "dates.start_time",
+          "value": "09:30",
+          "certainty": "CONFLICTING"
+        },
+        {
+          "id": "fact-15",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "transport.subtype",
+          "value": "WATER_TAXI",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-16",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "transport.operator",
+          "value": "Example Water Taxi",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-17",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "transport.origin",
+          "value": "Nelson",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-18",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "transport.destination",
+          "value": "Example Bay",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-19",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "transport.checkin.date",
+          "value": "2026-12-12",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-20",
+          "source_id": "taxi-a",
+          "locator": "taxi-a, page1 / named section",
+          "field": "transport.checkin.time",
+          "value": "08:30",
+          "certainty": "CONFIRMED"
+        }
+      ]
+    },
+    {
+      "key": "hike",
+      "family": "P1",
+      "claims": [
+        {
+          "id": "fact-21",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "title",
+          "value": "Example Bay hike",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-22",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-12",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-23",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "place",
+          "value": "Example Bay",
+          "certainty": "PLANNED"
+        }
+      ]
+    },
+    {
+      "key": "gallery",
+      "family": "P6",
+      "claims": [
+        {
+          "id": "fact-24",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "title",
+          "value": "Gallery QA activity",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-25",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-13",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-26",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "activity.session_label",
+          "value": "Morning",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-27",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "activity.admission_note",
+          "value": "Bring confirmation",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-28",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "activity.entry_place",
+          "value": "Example East Door",
+          "certainty": "PLANNED"
+        }
+      ]
+    },
+    {
+      "key": "rental",
+      "family": "P4",
+      "claims": [
+        {
+          "id": "fact-29",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "title",
+          "value": "Rental QA",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-30",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "rental.supplier",
+          "value": "Example Cars",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-31",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "rental.reserved_category",
+          "value": "compact",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-32",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "rental.or_similar",
+          "value": true,
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-33",
+          "source_id": "plan",
+          "locator": "plan, page1 / named section",
+          "field": "rental.actual_vehicle_model",
+          "value": null,
+          "certainty": "MISSING"
+        },
+        {
+          "id": "fact-34",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-10",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-35",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "dates.start_time",
+          "value": "11:00",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-36",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "dates.end_date",
+          "value": "2026-12-13",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-37",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "dates.end_time",
+          "value": "16:00",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-38",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "place",
+          "value": "Nelson",
+          "certainty": "CONFIRMED"
+        },
+        {
+          "id": "fact-39",
+          "source_id": "other-supplier",
+          "locator": "other-supplier, page1 / named section",
+          "field": "return_place",
+          "value": "Nelson",
+          "certainty": "CONFIRMED"
+        }
+      ]
+    },
+    {
+      "key": "flight-out",
+      "family": "P2",
+      "claims": [
+        {
+          "id": "fact-40",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "title",
+          "value": "QA101 Auckland \u2192 Nelson",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-41",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "flight_number",
+          "value": "QA101",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-42",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-10",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-43",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.start_time",
+          "value": "09:00",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-44",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.end_date",
+          "value": "2026-12-10",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-45",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.end_time",
+          "value": "10:30",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-46",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "origin.name",
+          "value": "Auckland",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-47",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "destination.name",
+          "value": "Nelson",
+          "certainty": "PLANNED"
+        }
+      ]
+    },
+    {
+      "key": "flight-back",
+      "family": "P2",
+      "claims": [
+        {
+          "id": "fact-48",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "title",
+          "value": "QA202 Nelson \u2192 Auckland",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-49",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "flight_number",
+          "value": "QA202",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-50",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-13",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-51",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.start_time",
+          "value": "18:00",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-52",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.end_date",
+          "value": "2026-12-13",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-53",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "dates.end_time",
+          "value": "19:30",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-54",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "origin.name",
+          "value": "Nelson",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-55",
+          "source_id": "flight-itinerary",
+          "locator": "flight-itinerary, page1 / named section",
+          "field": "destination.name",
+          "value": "Auckland",
+          "certainty": "PLANNED"
+        }
+      ]
+    },
+    {
+      "key": "hut-overnight",
+      "family": "P3",
+      "claims": [
+        {
+          "id": "fact-56",
+          "source_id": "hut-plan",
+          "locator": "hut-plan, page1 / named section",
+          "field": "title",
+          "value": "Example Hut overnight",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-57",
+          "source_id": "hut-plan",
+          "locator": "hut-plan, page1 / named section",
+          "field": "property_name",
+          "value": "Example Hut",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-58",
+          "source_id": "hut-plan",
+          "locator": "hut-plan, page1 / named section",
+          "field": "dates.start_date",
+          "value": "2026-12-12",
+          "certainty": "PLANNED"
+        },
+        {
+          "id": "fact-59",
+          "source_id": "hut-plan",
+          "locator": "hut-plan, page1 / named section",
+          "field": "dates.end_date",
+          "value": null,
+          "certainty": "MISSING"
+        }
+      ]
+    }
+  ],
+  "people": [
+    {
+      "name": "Lin Chen",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "LIN/CHEN",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "Alex Smith (PersonA)",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "Alex Smith (PersonB)",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "Alex Smith",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "Mira Patel",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "Sam Lee",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "Jo Brown",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "Kai Wilson",
+      "source_refs": ["people, named section"]
+    },
+    {
+      "name": "New QA Traveler",
+      "source_refs": ["people, named section"]
+    }
+  ],
+  "money": [
+    {
+      "key": "hotel-total",
+      "arrangement_key": "hotel",
+      "nature": "TOTAL",
+      "money": {
+        "minor": 140000,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "paid": "UNKNOWN",
+      "source_refs": ["hotel-original, named section"]
+    },
+    {
+      "key": "hotel-deposit",
+      "arrangement_key": "hotel",
+      "nature": "DEPOSIT",
+      "money": {
+        "minor": 40000,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "paid": "YES",
+      "source_refs": ["hotel-original, named section"]
+    },
+    {
+      "key": "hotel-balance",
+      "arrangement_key": "hotel",
+      "nature": "BALANCE",
+      "money": {
+        "minor": 100000,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "paid": "NO",
+      "source_refs": ["hotel-original, named section"]
+    },
+    {
+      "key": "hotel-refund",
+      "arrangement_key": "hotel",
+      "nature": "REFUND",
+      "money": {
+        "minor": 10000,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "paid": "UNKNOWN",
+      "source_refs": ["refund-note, named section"]
+    },
+    {
+      "key": "unaccepted-quote",
+      "arrangement_key": "unaccepted-quote",
+      "nature": "QUOTE",
+      "money": {
+        "minor": 20000,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "paid": "NO",
+      "source_refs": ["existing-otr, named section"]
+    },
+    {
+      "key": "rental-quote",
+      "arrangement_key": "rental",
+      "nature": "QUOTE",
+      "money": {
+        "minor": 30000,
+        "currency": "NZD",
+        "scale": 2
+      },
+      "paid": "NO",
+      "source_refs": ["other-supplier, named section"]
+    },
+    {
+      "key": "alternative-activity",
+      "arrangement_key": "alternative-activity",
+      "nature": "QUOTE",
+      "money": {
+        "minor": 9000,
+        "currency": "USD",
+        "scale": 2
+      },
+      "paid": "UNKNOWN",
+      "source_refs": ["refund-note, named section"]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "status": "METADATA_ONLY_REBIND_SELF_CHECK_PASS_NOT_EXECUTED",
+  "candidateSHA256": "a3cbfe5876372361d32a6fe4c844228a6bd1d0681e3b2d858dc12eb19fcaa2b5",
+  "priorCandidateSHA256": "8ac5b145d9ab9db511f088515e3e73bceea33efc3ead57530ac37017b4137200",
+  "substitutions": 5,
+  "reverseComparisonExact": true,
+  "syntax": "PASS",
+  "unchanged": [
+    "Original close logic/pins/Gate/source guards",
+    "Env/mount/HostConfig and four nonCapture bundles actual digest equal"
+  ],
+  "currentDefault": {
+    "cid": "00f7fcf61c2424caefeebf2d0f988cc8690cfcd6b64e21724cd9af38cf3c4667",
+    "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "configSHA256": "fa94477edad39a58dde0f6684c428c1c1569be33e6cac6840c47cc154d460b63"
+  },
+  "expectedRemotePlanSHA256": "5a0a22cd9510b485e8a3439e31af3c12c9fd3c8caab641d13346f6e088e60bb9",
+  "expectedReleaseOutputSHA256": "8ecf15d323b4171b2645d2b9b8e9b8392e8bd8afa5063c39f5306c5f1d777023",
+  "supplementSHA256": "4b539bd29f50128a3570e4e9f1e091e786bed4df7f593b2bd6f3c68894c00743",
+  "hostOrNetworkCalls": 0
+}

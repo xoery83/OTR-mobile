@@ -1,0 +1,20 @@
+{
+  "status": "COMPILED_SDK_DISCOVERY_AND_READ401_PASS_NOT_CONSUMER",
+  "sdkSHA256": "45ff3aee01cc1213a1f78d2dcb2bff2d7d1029ca3ea3508f96824ee92aa7c2f6",
+  "toolNames": [
+    "get_operation_status",
+    "get_otr_operating_guide",
+    "get_trip",
+    "get_trip_item",
+    "get_trip_item_edit_base",
+    "list_trip_items",
+    "list_trips",
+    "update_trip_item"
+  ],
+  "readPortCalls": 1,
+  "mutationPortCalls": 0,
+  "finalHTTPStatus": 401,
+  "refreshNetworkFlowTested": false,
+  "devCalls": 0,
+  "activation": false
+}

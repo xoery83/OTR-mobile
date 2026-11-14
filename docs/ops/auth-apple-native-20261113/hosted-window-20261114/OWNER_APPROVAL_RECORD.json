@@ -1,0 +1,13 @@
+{
+  "status": "APPROVED_EXECUTED_ONCE_AND_CLOSED",
+  "manifestSHA256": "f29441e7aa958ac5d6f33069d6d1ec94b130362ce07011e7a6f4ccac8e62b749",
+  "packetCommit": "55c01f65",
+  "softwareCommit": "237e4c66",
+  "ownerDirectReply": "\u6279\u51c6\u6b64\u7cbe\u786e DEV \u6062\u590d\u7a97\u53e3\u53ca\u5173\u95ed\u9a8c\u8bc1",
+  "source": "Direct user question reply in this Auth conversation",
+  "windowId": "c8d26837-3b39-4d9a-9e39-26594b746c16",
+  "scopeExpanded": false,
+  "activated": true,
+  "closed": true,
+  "finalReceipt": "../APPLE_GUEST_WINDOW_FINAL_RECEIPT.json"
+}

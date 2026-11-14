@@ -1,0 +1,10 @@
+{
+  "baselineSHA256": "fa90e74706a907de045480cb5c9a9bb56b7e210008434f6edba6fb3f75b885c1",
+  "candidateSHA256": "e29be6ac4ff4d0813a6b1244f2f8d7d934077b92d14dac9605ca28e316e8c6bc",
+  "diffHunks": 1,
+  "diffLines": 12,
+  "changedSourceInputs": 1,
+  "unrelatedSourceInputsPreserved": 351,
+  "hostCalls": 0,
+  "businessCalls": 0
+}

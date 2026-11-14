@@ -1,0 +1,29 @@
+{
+  "status": "FIRST_OBSERVED_REQUEST_FAILURE_IDENTIFIED",
+  "intervalUTC": [
+    "2026-11-13T18:25:20Z",
+    "2026-11-13T18:27:00Z"
+  ],
+  "cid": "69f805359a15ee37052cd0427824f9a98e40bd330202ae37c0c0a76185475be2",
+  "image": "sha256:1f85595d88531fb6827f1e10a0bd5f440e52f8cc73051ec729bb06f5145392bc",
+  "observedRequests": [
+    {
+      "atUTC": "2026-11-13T18:25:22.633774730Z",
+      "route": "/v2/trips/:id/create-receipt",
+      "status": 404,
+      "requestId": "ae9d9e88-d042-42dc-bcfd-e9f7157e5528",
+      "durationMs": 1
+    }
+  ],
+  "ledgerBootstrap": "NOT_OBSERVED_IN_REQUESTED_INTERVAL",
+  "correlationLimit": "Log has no Actor or concrete Trip ID; temporal correlation only. No response body/safe error code recorded.",
+  "readerMetadata": {
+    "parentLedgerReaderEnvironmentKeysPresent": false,
+    "readerMountDestinations": [
+      "/run/otr/catalog-reader.json"
+    ],
+    "parentReaderPortState": "NOT_PROVED; key absence does not prove port absence",
+    "bundleCodeProjection": "No direct unminified wiring markers found in bounded live bundle inspection"
+  },
+  "operations": "read-only logs/metadata/code; no PG query, no Writer, no service/config changes"
+}

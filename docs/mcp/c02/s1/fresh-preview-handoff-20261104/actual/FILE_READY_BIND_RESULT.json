@@ -1,0 +1,19 @@
+{
+  "status": "C7FE_FILE_READY_BOUND_ONCE_NOT_ACTIVATED",
+  "directory": "/private/tmp/otr-auth-mcp-slice1-c7fe4ac03f88452c9899b686ec2f7d25",
+  "startsAt": "2026-11-04T09:06:11.617Z",
+  "expiresAt": "2026-11-04T09:36:11.617Z",
+  "issuerPlanSHA256": "87080d577d51bdd5622df766f203b8ff0c820086de5593758365c4f7004378bf",
+  "executionGateSHA256": "d74c7292cc155852132899249a4b21327749a75f5355c1b8c17594a12b0856d7",
+  "protectedActions": 0,
+  "confirmationsEmpty": true,
+  "resetAllowed": false,
+  "actualLaunchStartedAt": "2026-11-04T09:05:50.376161+00:00",
+  "actualReadyAt": "2026-11-04T09:06:06.113Z",
+  "bindingSHA256": "708804cd69182114666429ae9f46919b7cbccf4c945bc1316cf4ea620ccb28f2",
+  "boundByFileEvent": true,
+  "OAuthActivated": false,
+  "issuerActivated": false,
+  "timerArm": false,
+  "containerChanged": false
+}

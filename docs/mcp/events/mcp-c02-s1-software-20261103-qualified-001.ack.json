@@ -1,0 +1,27 @@
+{
+  "event_id": "mcp-c02-s1-software-20261103-qualified-001",
+  "package_id": "MCP-C02",
+  "agent_id": "MCP",
+  "lane": "B",
+  "execution_slice_id": "MCP-C02:PROTECTED_INTEGRATION",
+  "received_at": "2026-11-02T22:54:57.229Z",
+  "last_reported_at": "2026-11-02T22:53:49.240418+00:00",
+  "acceptance_status": "PENDING_VERIFICATION",
+  "reported_acceptance": "READY_FOR_INTEGRATION",
+  "acceptance_scope": "仅默认关闭软件deploy/readback/close资格交接声明待MC核验；不含finite-access、Consumer、C02整体、S2/S3/P4验收。",
+  "source": {
+    "kind": "REGISTERED_THREAD",
+    "thread_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+    "turn_id": "01a19e5f-2192-72d2-aaee-2acd066771c1",
+    "message_id": "exec-e22ec943-687b-4d56-969c-daf40f486a8e",
+    "path": "docs/v32/sources/mcp-c02-s1-software-20261103-qualified-001.json",
+    "sha256": "1072d2bb2e7c5adfcbde7ef2679609dfbbea1d52c3dac6aa9750af0e5c834f13"
+  },
+  "dispatch_performed": false,
+  "ack_status": "AGENT_REPORTED",
+  "publication_status": "PUBLISHED",
+  "snapshot_binding": "CONTAINING_PUBLISHED_SNAPSHOT",
+  "snapshot_version": "76963290b30e2924",
+  "build": "1f4559f83f7ae50a",
+  "publication_version": 30
+}

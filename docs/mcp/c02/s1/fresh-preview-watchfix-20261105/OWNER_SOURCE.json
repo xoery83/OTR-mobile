@@ -1,0 +1,31 @@
+{
+  "status": "ACTUAL_HUMAN_APPROVAL_READBACK_VERIFIED_PENDING_PLATFORM_REVIEW",
+  "approvedExecutionGateSHA256": "e602fbfaa1bad7a8554faadc3dd38b19ab6eedb6cbe5a7d465b07b27f1cea72a",
+  "actualOwnerSourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "actualOwnerSourceMessageId": "01a1a88a-37ad-71c2-8dcc-59afaec7c78b",
+  "actualOwnerText": "<send_user_message_question_reply>\n[{\"questionItemId\":\"[\\\"request_user_input_async\\\",\\\"call_6af71895e57a4327835a9f811d909c01\\\",0]\",\"question\":\"是否批准新窗口 c7d0／Gate e602fbfa…（固定包 b4561698）的临时配置、正常 ChatGPT 连接和 P3 Preview，不含保存？\\n\\n上轮 c843 因关闭监听的进程身份校验失败，在激活前结束；已完整清理，未提交资料或保存。本地身份修复、新包和 Ops 派生脚本现均通过独立复核。\\n\\n仅原合成 QA 账号、Trip cc44…、Client 835…，正常 OTP／原 Read/Write Scope Consent，读取 Guide、Trip／现有事项，生成 Rimu Cove QA Guesthouse 的单条住宿 Preview。\\n\\n明确授权 Root2 必要的同镜像共享 DEV 容器 EMPTY 配置替换、既有有限 Issuer 函数体切换、OAuth／Hook／SiteURL 临时设置、计时与完整关闭恢复；DCR 保持关闭，不部署新软件、不扩 Scope。首次临时变更前固定计时，正常 28 分钟关闭、最迟 30 分钟，Token 最长 60 秒。执行前须重新核验实际默认版本、资源、关闭保护及真实监听存活；任一失败即关闭，不延长。\\n\\n全程 command=null、confirmations=[]，不允许 Save／Apply／Edit，不查询或重试历史 UNKNOWN，不访问真实 Nelson。Preview 后保存另请你确认。\\n\\n需要这次批准，是已关闭的 c843 授权不能覆盖新窗口。完整方案：/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_GATE.md\",\"answer\":\"批准本轮临时配置、连接及 Preview，不包含保存\"}]\n</send_user_message_question_reply>\n",
+  "actualOwnerWireSHA256": "c9e55bd1a764a9b5fc1cb4ae6569250602e9b90d6280318d63927c05b64a3e8d",
+  "actualOwnerWirePath": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_APPROVAL_WIRE.json",
+  "directHumanSourceVerified": true,
+  "platformRecognizedExecutionApproval": false,
+  "oldGenericPreferenceReusable": false,
+  "priorC843ApprovalReusable": false,
+  "bindingProcedure": "Only actual current trusted new exact human source can be bound after final Gate/review; none exists now.",
+  "platformExecutionApprovalStatus": "PENDING_ROOT2_INDEPENDENT_SOURCE_AND_PLATFORM_REVIEW",
+  "actualTurnId": "01a1a88a-36e5-7771-953b-d22be354ddfb",
+  "question": "是否批准新窗口 c7d0／Gate e602fbfa…（固定包 b4561698）的临时配置、正常 ChatGPT 连接和 P3 Preview，不含保存？\n\n上轮 c843 因关闭监听的进程身份校验失败，在激活前结束；已完整清理，未提交资料或保存。本地身份修复、新包和 Ops 派生脚本现均通过独立复核。\n\n仅原合成 QA 账号、Trip cc44…、Client 835…，正常 OTP／原 Read/Write Scope Consent，读取 Guide、Trip／现有事项，生成 Rimu Cove QA Guesthouse 的单条住宿 Preview。\n\n明确授权 Root2 必要的同镜像共享 DEV 容器 EMPTY 配置替换、既有有限 Issuer 函数体切换、OAuth／Hook／SiteURL 临时设置、计时与完整关闭恢复；DCR 保持关闭，不部署新软件、不扩 Scope。首次临时变更前固定计时，正常 28 分钟关闭、最迟 30 分钟，Token 最长 60 秒。执行前须重新核验实际默认版本、资源、关闭保护及真实监听存活；任一失败即关闭，不延长。\n\n全程 command=null、confirmations=[]，不允许 Save／Apply／Edit，不查询或重试历史 UNKNOWN，不访问真实 Nelson。Preview 后保存另请你确认。\n\n需要这次批准，是已关闭的 c843 授权不能覆盖新窗口。完整方案：/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_GATE.md",
+  "answer": "批准本轮临时配置、连接及 Preview，不包含保存",
+  "SaveApproved": false,
+  "readback": {
+    "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_APPROVAL_READBACK.json",
+    "sha256": "bc4fdd371a398a94c0853723d14613f8a448628836eca91e4e8d1c1c508a9902"
+  },
+  "wrapper": {
+    "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_APPROVAL_WRAPPER.txt",
+    "sha256": "a69d9661eea5d168f9d49c169a4f179dd43e67385ebe304afc78c55a193b1bc4"
+  },
+  "reply": {
+    "path": "docs/mcp/c02/s1/fresh-preview-watchfix-20261105/OWNER_APPROVAL_REPLY.json",
+    "sha256": "0635fa2a8185ae7e6b6b55ad5d2ffdc21f1b50df4044f9b28f8c3562373a268a"
+  }
+}

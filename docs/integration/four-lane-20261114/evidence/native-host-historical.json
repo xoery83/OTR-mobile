@@ -1,0 +1,71 @@
+{
+  "status": "AUTHORIZED_VERSION_DEV_READ_PASS_NOT_CHEAP_DB_OR_REALTIME_PASS",
+  "source": "624f3c53ff9341ef71e0db4264293c827546619a",
+  "deployedContainerId": "7a77a51d71a155c5f70ee7aab467b62645ca1195d66aa112af28b09455ef9744",
+  "image": "sha256:06b1983196e690a5879054d700a4a6be274208c388d7862a4cb9ba6771e86749",
+  "deliveryTrace": {
+    "requestedAt": "2026-10-31T03:20:48.595287+00:00",
+    "readyAt": "2026-10-31T03:20:48.595287+00:00",
+    "acquiredAt": "2026-10-31T03:20:48.665383+00:00",
+    "mutationFinishedAt": "2026-10-31T03:20:55.500889+00:00",
+    "releasedAt": "2026-10-31T03:20:55.500919+00:00"
+  },
+  "readOnlyActual": {
+    "status": "AUTHORIZED_VERSION_DEV_READ_PASS",
+    "actorAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+    "actualVersion": {
+      "version": "otr.core.authorized-trip-version/1",
+      "actorAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+      "token": "ecf8c4b57561d580d796a41dc8471a588dfce9f6af239a8061d7b7ddf3817982"
+    },
+    "derivedFromValidatedCollectionMatches": true,
+    "repeatedReadStable": true,
+    "requests": [
+      {
+        "path": "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/collection",
+        "method": "GET",
+        "startedAt": "2026-10-31T03:24:14.926Z",
+        "endedAt": "2026-10-31T03:24:34.125Z",
+        "milliseconds": 19198.833209,
+        "status": 200,
+        "decodedResponseBodyBytes": 33196
+      },
+      {
+        "path": "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/authorized-version",
+        "method": "GET",
+        "startedAt": "2026-10-31T03:24:34.162Z",
+        "endedAt": "2026-10-31T03:24:58.103Z",
+        "milliseconds": 23940.764125,
+        "status": 200,
+        "decodedResponseBodyBytes": 227
+      },
+      {
+        "path": "/v2/trips/eb3a3e70-fe4d-4cff-81f8-9945bc804f28/core/authorized-version",
+        "method": "GET",
+        "startedAt": "2026-10-31T03:24:58.107Z",
+        "endedAt": "2026-10-31T03:25:13.058Z",
+        "milliseconds": 14950.838458000006,
+        "status": 200,
+        "decodedResponseBodyBytes": 227
+      }
+    ],
+    "nativeInstalled": false,
+    "privateSubscription": false,
+    "databaseQueryCost": "NOT_MEASURED; implementation still performs full authorized snapshot",
+    "newMutations": 0,
+    "providerCalls": 0
+  },
+  "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "owningJournal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-iL4F2i/run.json",
+  "receiverReleased": true,
+  "independentDeploymentReadback": {
+    "at": "2026-10-31T03:21:41.683845Z",
+    "all23ConfigurationFilesUnchanged": true,
+    "mountCount": 9,
+    "oldContainerRetained": true
+  },
+  "review": "Root bounded source/operator NO_BLOCKER",
+  "next": "Owning cheap Actor-visible read port; Native version transport remains unmounted because actual read takes 14.95-23.94s. Private subscription remains closed pending formal revocation authority."
+}

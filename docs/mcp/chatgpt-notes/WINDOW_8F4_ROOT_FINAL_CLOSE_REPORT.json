@@ -1,0 +1,27 @@
+{
+  "status": "ROOT_REPORTED_FINAL_CLOSED_RELEASED",
+  "sourceThreadId": "01a1753a-2837-7d20-89c8-d8c1476b0ed8",
+  "receivedAt": "2026-11-02T07:14:38.889091+00:00",
+  "serverCloseEvidence": "WINDOW_8F4_ROOT_SERVER_CLOSE.json",
+  "grantDelete": {
+    "at": "2026-11-02T07:10:43Z",
+    "httpStatus": 204
+  },
+  "ownSession": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "controlRun": "d8ee35d0",
+  "controlExitCode": 0,
+  "issuerDenyAllAt": "2026-11-02T07:10:43Z",
+  "issuerOriginalOwnerInvokerSearchPathACLIndependentPassAt": "2026-11-02T07:13:13Z",
+  "console": {
+    "OAuth": "OFF_SAVED_RELOADED",
+    "Hook": "DISABLED_SAVED_RELOADED",
+    "Site": "localhost_SAVED_RELOADED"
+  },
+  "confirmationIntentCreated": false,
+  "rootApplyCount": 0,
+  "sharedDevReleased": true,
+  "provenance": "Final Root artifacts independently read and SHA256 verified; source commit b941ef04",
+  "rootCommit": "b941ef04",
+  "finalOutcomeSHA256": "3450fdff50eab48e05211f870c15f32261a270089dedf141c59a324f8dc57fa0",
+  "finalCloseSHA256": "c412cb752e1c0a99eac626640b02288e0f081be452c36fcfcd975e6a12ab1b46"
+}

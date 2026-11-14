@@ -1,0 +1,9 @@
+{
+  "status": "C02_OWN_TIMERS_DISARMED_AFTER_DEFAULT_CLOSED",
+  "units": [
+    "otr-mcp-c02-b0b7c1c04f18432eb255112f5449c5c0-normal.timer",
+    "otr-mcp-c02-b0b7c1c04f18432eb255112f5449c5c0-normal.service",
+    "otr-mcp-c02-b0b7c1c04f18432eb255112f5449c5c0-hard.timer",
+    "otr-mcp-c02-b0b7c1c04f18432eb255112f5449c5c0-hard.service"
+  ]
+}

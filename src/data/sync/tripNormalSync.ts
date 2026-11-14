@@ -11,6 +11,9 @@ import type { CoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import {
   validateCoreCommand,
   isReviewedSourceCreate,
+  isNormalManualCoreCommand,
+  isNormalImportCoreCommand,
+  isNormalManualCreate,
 } from "@/domain/trip/tripCoreV2Commands";
 import type { TripCreateTarget } from "@/domain/trip/tripCreateContract";
 import {
@@ -39,6 +42,77 @@ type Row = {
   claim_owner?: string | null;
   last_attempt_at?: string | null;
 };
+export const serverParentQueueSql = `SELECT op.* FROM sync_operations op
+ LEFT JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id AND trip.id=op.trip_id
+ WHERE op.owner_user_id=? AND op.created_at>=? AND trip.id IS NULL
+ AND ((op.entity_type='TRIP' AND op.operation_type='UPDATE_TRIP_METADATA')
+ OR (op.entity_type='TRIP_PERSON' AND op.operation_type='TRIP_PERSON_CLOUD_CREATE')
+ OR (op.entity_type='TRIP_READBACK' AND op.operation_type='TRIP_NORMAL_READBACK'))
+ AND (op.status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED','PROCESSING')
+ OR (op.operation_type='UPDATE_TRIP_METADATA' AND op.status='COMPLETED')) ORDER BY op.created_at,op.id`;
+export function serverParentQueueKind(
+  operation: Row,
+): "metadata" | "person" | "readback" | null {
+  if (operation.id !== operation.idempotency_key) return null;
+  try {
+    const raw = JSON.parse(operation.payload_json);
+    if (
+      operation.entity_type === "TRIP" &&
+      operation.operation_type === "UPDATE_TRIP_METADATA"
+    ) {
+      const wire = tripMetadataWireUpdateSchema.parse(raw);
+      return "formatVersion" in wire &&
+        wire.formatVersion === 3 &&
+        wire.operationId === operation.id &&
+        wire.tripId === operation.trip_id &&
+        operation.entity_id === operation.trip_id
+        ? "metadata"
+        : null;
+    }
+    if (
+      operation.entity_type === "TRIP_READBACK" &&
+      operation.operation_type === "TRIP_NORMAL_READBACK"
+    ) {
+      return raw.version === 1 &&
+        raw.tripId === operation.trip_id &&
+        operation.entity_id === operation.trip_id &&
+        z.uuid().safeParse(raw.createOperationId).success &&
+        typeof raw.triggerVersion === "string"
+        ? "readback"
+        : null;
+    }
+    if (
+      operation.entity_type === "TRIP_PERSON" &&
+      operation.operation_type === personCloudCreateKind
+    ) {
+      const person = personCloudCreateSchema.parse(raw);
+      return person.operationId === operation.id &&
+        person.tripId === operation.trip_id &&
+        person.personId === operation.entity_id
+        ? "person"
+        : null;
+    }
+  } catch {
+    /* Retain unsupported or malformed history without dispatch. */
+  }
+  return null;
+}
+export async function normalTripReadbackTrigger(
+  database: Pick<SQLite.SQLiteDatabase, "getAllAsync">,
+  accountId: string,
+  tripId: string,
+) {
+  const rows = await database.getAllAsync<{
+    id: string;
+    status: string;
+    attempt_count: number;
+  }>(
+    "SELECT id,status,attempt_count FROM sync_operations WHERE owner_user_id=? AND trip_id=? AND ((status='COMPLETED' AND operation_type IN ('CREATE_TRIP','UPDATE_TRIP_METADATA','CORE_V2_COMMAND')) OR (entity_type='TRIP_CORE_V2' AND operation_type='CORE_V2_COMMAND' AND status IN ('PENDING','RETRYABLE','DEPENDENCY_BLOCKED') AND attempt_count>0 AND failure_category IS NOT 'AUTH')) ORDER BY id",
+    accountId,
+    tripId,
+  );
+  return JSON.stringify(rows.map((row) => [row.id, row.status, row.attempt_count]));
+}
 export const cloudSourceP1QueueSql = `SELECT op.*,intent.state AS intent_state FROM sync_operations op
        LEFT JOIN local_trip_containers trip ON trip.account_id=op.owner_user_id AND trip.id=op.trip_id
        JOIN trip_core_pending_intents intent ON intent.queue_operation_id=op.id AND intent.account_id=op.owner_user_id AND intent.trip_id=op.trip_id
@@ -49,7 +123,7 @@ export const cloudSourceP1QueueSql = `SELECT op.*,intent.state AS intent_state F
 export function cloudSourceP1Command(operation: Row): CoreCommand | null {
   return cloudCommand(operation, false);
 }
-export const acceptedEditFamilies = ["P3", "P4", "P6"] as const;
+export const acceptedEditFamilies = ["P1", "P2", "P3", "P4", "P5", "P6"] as const;
 export function isManualInstructionEditCommand(command: CoreCommand) {
   return (
     command.target.kind === "INSTRUCTION" &&
@@ -73,23 +147,59 @@ function cloudManualInstructionCommand(operation: Row): CoreCommand | null {
   return command && isManualInstructionEditCommand(command) ? command : null;
 }
 
+export function isManualLocalDocumentCommand(command: CoreCommand) {
+  if (!["MANUAL", "IMPORT"].includes(command.admission.mode)) return false;
+  if (command.command === "CREATE_DOCUMENT_METADATA")
+    return command.target.kind === "DOCUMENT";
+  if (command.command !== "RECONCILE_ITEM_DOCUMENTS" || command.target.kind !== "ITEM")
+    return false;
+  const payload = command.payload as { add: string[]; remove: string[] };
+  return (
+    payload.add.length > 0 &&
+    payload.add.length <= 5 &&
+    payload.remove.length === 0 &&
+    payload.add.every((id) =>
+      command.baseVector.some((base) => base.kind === "DOCUMENT" && base.id === id),
+    )
+  );
+}
+
+// Private SELF creates use the accepted Core Person on every Trip.
+export function cloudManualCreatePerson(command: CoreCommand): string | null {
+  if (
+    !(
+      isNormalManualCreate(command) ||
+      (isNormalImportCoreCommand(command) &&
+        ["CREATE_ITEM", "CREATE_SPARSE_FLIGHT"].includes(command.command))
+    ) ||
+    command.target.kind !== "ITEM" ||
+    !["MANUAL", "IMPORT"].includes(command.admission.mode) ||
+    command.baseVector.length !== 1
+  )
+    return null;
+  const [base] = command.baseVector;
+  if (base.kind !== "ITEM" || base.id !== command.target.id || base.revision !== null)
+    return null;
+  const { participation, acl } = command.payload as {
+    participation: { mode: string; selfPersonId: string | null; people: unknown[] };
+    acl: { visibility: string; people: unknown[] };
+  };
+  return participation.mode === "SELF" &&
+    participation.people.length === 0 &&
+    acl.visibility === "PRIVATE" &&
+    acl.people.length === 0
+    ? participation.selfPersonId
+    : null;
+}
+
 export function isManualAcceptedEditCommand(
   command: CoreCommand,
   family?: (typeof acceptedEditFamilies)[number],
 ) {
   return (
-    command.target.kind === "ITEM" &&
-    command.admission.mode === "MANUAL" &&
-    (["SET_ITEM_TEXT", "SET_ITEM_SCHEDULE", "SET_ITEM_PARTICIPATION"].includes(
-      command.command,
-    ) ||
-      (family !== "P4" && command.command === "SET_ITEM_PLACE") ||
-      ((family === undefined || family === "P3") &&
-        command.command === "SET_STAY_DETAILS") ||
-      ((family === undefined || family === "P4") &&
-        command.command === "SET_RENTAL_DETAILS") ||
-      ((family === undefined || family === "P6") &&
-        command.command === "SET_ACTIVITY_DETAILS"))
+    !isNormalManualCreate(command) &&
+    !isManualLocalDocumentCommand(command) &&
+    isNormalManualCoreCommand(command, family)
   );
 }
 // Preserve the published P6-only helpers for existing consumers.
@@ -97,15 +207,15 @@ export function isManualP6EditCommand(command: CoreCommand) {
   return isManualAcceptedEditCommand(command, "P6");
 }
 export function cloudManualP6EditCommand(operation: Row): CoreCommand | null {
-  const command = cloudManualAcceptedEditCommand(operation);
+  const command = cloudCommand(operation, true);
   return command && isManualP6EditCommand(command) ? command : null;
 }
-function cloudManualAcceptedEditCommand(operation: Row): CoreCommand | null {
+export function normalManualQueueCommand(operation: Row) {
   return cloudCommand(operation, true);
 }
 function cloudCommand(
   operation: Row,
-  manualEdit: boolean,
+  manual: boolean,
   instruction = false,
 ): CoreCommand | null {
   try {
@@ -118,9 +228,11 @@ function cloudCommand(
       command.tripId !== operation.trip_id ||
       command.target.id !== operation.entity_id ||
       (command.target.kind !== "ITEM" &&
+        !isManualLocalDocumentCommand(command) &&
         !(instruction && isManualInstructionEditCommand(command))) ||
-      !(manualEdit
-        ? isManualAcceptedEditCommand(command) ||
+      !(manual
+        ? isNormalManualCoreCommand(command) ||
+          isNormalImportCoreCommand(command) ||
           (instruction && isManualInstructionEditCommand(command))
         : isReviewedSourceCreate(command))
     )
@@ -294,9 +406,13 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
               command.tripId !== row.trip_id ||
               command.target.id !== operation.entity_id ||
               (command.target.kind !== "ITEM" &&
+                !isManualLocalDocumentCommand(command) &&
                 !(instruction && deps.instructionSubmissionEnabled?.())) ||
-              (command.admission.mode !== "MANUAL" && !isReviewedSourceCreate(command)) ||
-              (adopted.manualOnly === true && command.admission.mode !== "MANUAL")
+              (command.admission.mode !== "MANUAL" &&
+                !isNormalImportCoreCommand(command) &&
+                !isReviewedSourceCreate(command)) ||
+              (adopted.manualOnly === true &&
+                !["MANUAL", "IMPORT"].includes(command.admission.mode))
             )
               continue;
             const instructionScope =
@@ -316,57 +432,23 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
                       "P3",
                     ))))) ||
               isReviewedSourceCreate(command) ||
-              (command.admission.mode === "MANUAL" &&
-                command.command === "CREATE_SPARSE_FLIGHT") ||
-              (command.admission.mode === "MANUAL" &&
-                ["SET_AUTHORED_FLIGHT_DETAILS", "SET_ITEM_PARTICIPATION"].includes(
-                  command.command,
-                ) &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P2"))) ||
-              (command.command === "CREATE_ITEM"
-                ? ["P1", "P3", "P4", "P5", "P6"].includes(
-                    (command.payload as { family: string }).family,
-                  )
-                : [
-                    "SET_ITEM_TEXT",
-                    "SET_ITEM_SCHEDULE",
-                    "SET_ITEM_PLACE",
-                    "SET_ITEM_PARTICIPATION",
-                  ].includes(command.command) &&
-                  (await deps.isManualItem(row.trip_id, command.target.id, "P1"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_SCHEDULE",
-                "SET_ITEM_PLACE",
-                "SET_ITEM_PARTICIPATION",
-                "SET_STAY_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P3"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_SCHEDULE",
-                "SET_ITEM_PARTICIPATION",
-                "SET_RENTAL_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P4"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_PARTICIPATION",
-                "SET_TRANSPORT_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P5"))) ||
-              ([
-                "SET_ITEM_TEXT",
-                "SET_ITEM_SCHEDULE",
-                "SET_ITEM_PLACE",
-                "SET_ITEM_PARTICIPATION",
-                "SET_ACTIVITY_DETAILS",
-              ].includes(command.command) &&
-                command.admission.mode === "MANUAL" &&
-                (await deps.isManualItem(row.trip_id, command.target.id, "P6")));
+              isNormalImportCoreCommand(command) ||
+              (isNormalManualCoreCommand(command) &&
+                (isNormalManualCreate(command) ||
+                  isManualLocalDocumentCommand(command) ||
+                  (
+                    await Promise.all(
+                      acceptedEditFamilies.map(
+                        async (family) =>
+                          isManualAcceptedEditCommand(command, family) &&
+                          (await deps.isManualItem(
+                            row.trip_id,
+                            command.target.id,
+                            family,
+                          )),
+                      ),
+                    )
+                  ).some(Boolean)));
             await guard();
             if (manual) {
               const ready =
@@ -386,7 +468,50 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
         if (!blockedTripIds.includes(row.trip_id)) blockedTripIds.push(row.trip_id);
       }
     }
-    // Authorized cloud-only edits and reviewed Source Creates reuse the exact existing queue.
+    // Reuse original explicit Metadata/Person operations without inventing local Create lineage.
+    const parentRows = await deps.database.getAllAsync<Row>(
+      serverParentQueueSql,
+      scope.accountId,
+      adopted.newTripsFrom,
+    );
+    await guard();
+    const recoveredParents = new Set<string>();
+    for (const operation of parentRows) {
+      const kind = serverParentQueueKind(operation);
+      if (!kind) continue;
+      try {
+        const target = {
+          accountId: scope.accountId,
+          tripId: operation.trip_id,
+          operationId: operation.id,
+        };
+        if (kind === "person") await deps.runPerson(target);
+        else if (kind === "metadata" && operation.status !== "COMPLETED")
+          await deps.runMetadata(target);
+        await guard();
+        runnerCalls++;
+        if (kind === "metadata" || kind === "readback") {
+          if (
+            operation.status !== "COMPLETED" ||
+            !recoveredParents.has(operation.trip_id)
+          ) {
+            const parentOperationId =
+              kind === "readback"
+                ? JSON.parse(operation.payload_json).createOperationId
+                : operation.id;
+            await deps.recoverTripReadback(operation.trip_id, parentOperationId);
+            recoveredParents.add(operation.trip_id);
+          }
+        }
+        await guard();
+        if (!tripIds.includes(operation.trip_id)) tripIds.push(operation.trip_id);
+      } catch {
+        await guard();
+        if (!blockedTripIds.includes(operation.trip_id))
+          blockedTripIds.push(operation.trip_id);
+      }
+    }
+    // Authorized cloud-only Manual and reviewed Source commands reuse the exact existing queue.
     const sourceRows = await deps.database.getAllAsync<Row>(
       cloudSourceP1QueueSql,
       scope.accountId,
@@ -397,7 +522,7 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
       const instruction = deps.instructionSubmissionEnabled?.()
         ? cloudManualInstructionCommand(operation)
         : null;
-      const manual = cloudManualAcceptedEditCommand(operation) ?? instruction;
+      const manual = cloudCommand(operation, true) ?? instruction;
       const command =
         manual ?? (adopted.manualOnly ? null : cloudSourceP1Command(operation));
       if (!command) continue;
@@ -420,7 +545,13 @@ export function createNormalTripSyncWake(deps: Deps, input: NormalTripSyncScope)
             !(await deps.isManualItem(operation.trip_id, parent.parentItemId, "P3"))
           )
             continue;
-        } else if (manual && !recovering) {
+        } else if (
+          manual &&
+          !recovering &&
+          !isManualLocalDocumentCommand(command) &&
+          !isNormalManualCreate(command) &&
+          !isNormalImportCoreCommand(command)
+        ) {
           let eligible = false;
           for (const family of acceptedEditFamilies) {
             if (

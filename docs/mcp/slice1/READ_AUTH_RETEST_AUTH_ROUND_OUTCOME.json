@@ -1,0 +1,42 @@
+{
+  "status": "READ_AND_PREVIEW_PASS_WRITE_NOT_SUBMITTED_WINDOW_CLOSED",
+  "windowId": "acd60fd27aee40e8b6cf1aca727ed169",
+  "gateSHA256": "4ab236c94c0cc34e775823b0160602a19c0f898dc7be8eaf0f3a2eec531f192d",
+  "startsAt": "2026-11-02T00:14:48.231Z",
+  "expiresAt": "2026-11-02T00:42:16.118Z",
+  "normalCloseStartsAt": "2026-11-02T00:40:16.118Z",
+  "rootClosedAt": "2026-11-02T00:40:33.493724Z",
+  "issuerDenyAllAt": "2026-11-02T00:40:31.224564Z",
+  "ownControlCleanupAt": "2026-11-02T00:41:54.355Z",
+  "ownControlCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+  "grantRevocation": "DELETE204_AND_INDEPENDENT_ABSENT",
+  "normalQaLock": "OWN_LOCK_RELEASED_ABSENCE_VERIFIED_AFTER_CLEANUP",
+  "console": {
+    "oauth": "OFF_PERSISTED",
+    "hook": "DISABLED",
+    "siteUrl": "http://localhost:3000",
+    "temporaryTab": "CLOSED"
+  },
+  "finalOriginalAclVerifiedAt": "2026-11-02T00:45:44.419768Z",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "operationState": "NOT_SUBMITTED",
+  "previewDigest": "1d5be7abe7b4ee323bf0631a55b8786eb5e05eddc8d1593fec8f44eb1dd6a546",
+  "previewExpectedRevision": 1,
+  "previewResponseCurrentRevision": null,
+  "itemAndEditBase": "SERVER_CONFIRMED",
+  "actualCredentialRefreshCount": "NOT_CLAIMED",
+  "notesHumanConfirmationReceivedBeforeClose": false,
+  "confirmationTableInstalled": false,
+  "applyAttempts": 0,
+  "newUnknownOperations": 0,
+  "historicalF107And9b": "PRESERVED_NO_RETRY",
+  "evidenceSHA256": {
+    "normal-control-cleanup.json": "8e748e1497c4c1193c4652d1f7cfb5b42d99f6add5f632250442dee581eaf6c0",
+    "root-close-readback.json": "b0dbfabfb4b8fc3e2eda593730e90d08b4cc06eb7686ac517f5215568816fc32",
+    "issuer-close-result.json": "02971275cf649ef91bf6af9b9b90caed01094b4b77c4ffb33d4b7f55f8c3ef61",
+    "final-hook-readonly.json": "efbf0c74baa1348f2b1985dfdffa59deb2e2912953444e2d3c25dbf782e8f297",
+    "actual-preview.json": "ecd51c7328d39cd057ffb78fb136a8cd683b6e39473444a997753d858ab1afc5",
+    "activation-readback.json": "03cf79fa916190005dcdd024b2d849260c62859c81a64d8b73899e0d04588446"
+  }
+}

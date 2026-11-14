@@ -125,15 +125,23 @@ export function createUniversalCaptureConsumer(dependencies: {
         ? dependencies.materialContinuation
         : undefined;
     try {
-      if (allowDispatch && dependencies.startRetained && !dispatchUncertain &&
-        !terminalActivity()) {
+      if (
+        allowDispatch &&
+        dependencies.startRetained &&
+        !dispatchUncertain &&
+        !terminalActivity()
+      ) {
         sourceTaskPrepareAttempted = true;
         const receipt = universalBatchPreparedSchema.parse(
           await dependencies.startRetained(context, model),
         );
         found = receipt.context;
-        if (found.actorId !== context.accountId || found.accountId !== context.accountId ||
-          found.tripId !== context.tripId || found.batchId !== model.batch.batchId)
+        if (
+          found.actorId !== context.accountId ||
+          found.accountId !== context.accountId ||
+          found.tripId !== context.tripId ||
+          found.batchId !== model.batch.batchId
+        )
           throw Error("UNIVERSAL_CAPTURE_SCOPE_MISMATCH");
         preparedThisAction = true;
         queuedReceiptUsed = receipt.status === "QUEUED";
@@ -242,7 +250,8 @@ export function createUniversalCaptureConsumer(dependencies: {
         prepare.inputs.length !== originals.size ||
         new Set(prepare.inputs.map((pin) => pin.id)).size !== originals.size ||
         new Set(prepare.inputs.map((pin) => pin.source_id)).size !== originals.size ||
-        new Set(prepare.inputs.map((pin) => pin.representation_id)).size !== originals.size ||
+        new Set(prepare.inputs.map((pin) => pin.representation_id)).size !==
+          originals.size ||
         prepare.inputs.some((pin) => {
           const original = originals.get(pin.id);
           return (
@@ -323,7 +332,10 @@ export function createUniversalCaptureConsumer(dependencies: {
       (activity
         ? ["PENDING", "WAITING", "PROCESSING"].includes(activity.state)
         : queuedReceiptUsed) &&
-      (!allowDispatch || dispatchUncertain || !dependencies.resumeTask || preparedThisAction)
+      (!allowDispatch ||
+        dispatchUncertain ||
+        !dependencies.resumeTask ||
+        preparedThisAction)
     ) {
       // Passive reads keep the marker pending; explicit resume may reconcile a retained call.
       queued = true;
@@ -372,4 +384,34 @@ export function createUniversalCaptureConsumer(dependencies: {
     start: (model: CaptureJobReadModel) => read(model, true),
     recover: (model: CaptureJobReadModel) => read(model, false),
   };
+}
+
+// Native observes the existing backend session; endpoint configuration stays in data operations.
+export function openUniversalCaptureBackend(
+  account: () => Promise<string>,
+  options: { signal?: AbortSignal; assertCurrent?: () => void } = {},
+) {
+  return createUniversalImportTransport(account, {
+    ...options,
+    baseUrl: process.env.EXPO_PUBLIC_OTR_API_BASE_URL!,
+  });
+}
+export type UniversalCaptureBackend = ReturnType<typeof openUniversalCaptureBackend>;
+export function isCaptureRequestError(error: unknown): error is ApiClientError {
+  return error instanceof ApiClientError;
+}
+export function parsePreparedUniversalBatch(value: unknown) {
+  return universalBatchPreparedSchema.parse(value);
+}
+
+export async function openUniversalPngSourceBackend(
+  account: () => Promise<string>,
+  options: { signal?: AbortSignal; assertRequestCurrent(): void },
+) {
+  const { createSourcePngPreparationTransport } =
+    await import("../api/sourcePngPreparationTransport");
+  return createSourcePngPreparationTransport(account, {
+    ...options,
+    baseUrl: process.env.EXPO_PUBLIC_OTR_API_BASE_URL!,
+  });
 }

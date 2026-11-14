@@ -1,0 +1,12 @@
+{
+  "status": "OWNER_APPROVED_EXACT_FRESH_EXECUTION_NOT_NOTES_SAVE",
+  "gateSHA256": "b94fd543e02f5b0085fe5abe99fdc4d010a88c0c130234ba4f37b8382dde8251",
+  "ownerReply": "批准",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "replyContext": "Approve pending exact b94 finite fresh Consumer Edit execution, sync Auth/Root; Notes remains separately confirmed in Auth after actual preview",
+  "recordedAt": "2026-11-01T20:05:56.313914+00:00",
+  "notesApproval": false,
+  "activated": false,
+  "clockFixed": false,
+  "historicalUnknownReplay": false
+}

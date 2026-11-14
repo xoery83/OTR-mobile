@@ -1,0 +1,30 @@
+{
+  "status": "FRESH_CASE_PREPARATION_BASELINE_PASS_NOT_WRITE_AUTHORITY",
+  "observedAt": "2026-11-01T18:24:24.889048+00:00",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "revision": 1,
+  "title": "Synthetic Nelson QA lodge (unbooked)",
+  "notes": "Synthetic QA only. No Booking/Ticket.",
+  "childCollectionCounts": {
+    "itinerary_transport_endpoints": 0,
+    "itinerary_transport_services": 0,
+    "trip_activity_details": 0,
+    "trip_activity_entry_places": 0,
+    "trip_endpoint_details": 0,
+    "trip_flight_intents": 0,
+    "trip_rental_details": 0,
+    "trip_rental_places": 0,
+    "trip_stay_details": 1,
+    "trip_stay_rooms": 0,
+    "trip_transport_operational_facts": 0
+  },
+  "receiptCount": 0,
+  "readbackBusinessWrites": 0,
+  "legalBackendSessionEstablishedByThisSql": false,
+  "oldUnknownOperationsReplayed": false,
+  "participationMode": "SELF",
+  "visibility": "PRIVATE",
+  "selfPersonId": "0fba6f2e-d0bd-4e65-8e41-decebe8c3154"
+}

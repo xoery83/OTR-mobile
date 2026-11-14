@@ -1,0 +1,310 @@
+{
+  "kind": "ISOLATED_CORE_NOT_DEV_RECEIPT",
+  "networkWrites": 0,
+  "providerCalls": 0,
+  "events": [
+    {
+      "event": "LOCAL_SYNTHETIC_DECISION_SAVED",
+      "candidate": {
+        "candidateId": "00000000-0000-4000-8000-000000006220",
+        "kind": "P1",
+        "subtype": "ACTIVITY",
+        "fields": {
+          "title": "Harbour Museum visit",
+          "schedule.start.local_date": "2026-12-18"
+        },
+        "documentIds": [
+          "69a9d08d-66a3-87a5-b3d9-86ee8b8c2fb7",
+          "7642e9f6-2428-8cb1-a978-800d415f06a8"
+        ]
+      },
+      "decision": {
+        "action": "NEW"
+      },
+      "manual": true
+    },
+    {
+      "event": "OWNING_ISOLATED_CORE_APPLIED",
+      "candidateId": "00000000-0000-4000-8000-000000006220",
+      "commands": [
+        {
+          "operationId": "5334e0e8-f837-8d80-9955-c626c5dd6a94",
+          "command": "CREATE_ITEM",
+          "mode": "MANUAL"
+        },
+        {
+          "operationId": "343f1f3f-0089-8467-83a0-46ca34926a2b",
+          "command": "CREATE_DOCUMENT_METADATA",
+          "mode": "MANUAL"
+        },
+        {
+          "operationId": "3a6f4efb-5597-8135-aef7-380a8d68c7c3",
+          "command": "CREATE_DOCUMENT_METADATA",
+          "mode": "MANUAL"
+        },
+        {
+          "operationId": "93bcdc58-1315-8a14-b132-b1a88419b014",
+          "command": "RECONCILE_ITEM_DOCUMENTS",
+          "mode": "MANUAL"
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "f12a81f7-46cd-8970-9f21-cbdab6154370",
+      "trip_id": "00000000-0000-4000-8000-000000006200",
+      "semantic_revision": 2,
+      "owner_account_id": "00000000-0000-4000-8000-000000000001",
+      "visibility": "PRIVATE",
+      "hidden_at": null,
+      "created_at": "2026-11-14T00:05:00Z",
+      "updated_at": "2026-11-14T00:05:00Z",
+      "field_state": {
+        "itinerary_events.title": {
+          "state": "KNOWN",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.planned_start": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_local_date": {
+          "state": "KNOWN",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_local_time": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_clock_precision": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_quality": {
+          "state": "KNOWN",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_basis": {
+          "state": "KNOWN",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_zone_id": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_supplied_offset_seconds": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_source_instant": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_source_instant_precision": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_civil_resolution": {
+          "state": "KNOWN",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_resolution_offset_seconds": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_interpretation_key": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_interpretation_input_sha256": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        },
+        "itinerary_events.start_provenance_refs": {
+          "state": "CLEARED",
+          "origin": "MANUAL",
+          "protected": true,
+          "changed_revision": 1,
+          "evidence_ref": null
+        }
+      },
+      "business_contract_version": 2,
+      "experience_family": "P1",
+      "temporal_contract_version": 1,
+      "temporal_shape": "CALENDAR",
+      "title": "Harbour Museum visit",
+      "description": null,
+      "event_type": "activity",
+      "status": "planned",
+      "order_index": null,
+      "trip_day_id": null,
+      "participation_mode": "SELF",
+      "participant_scope": "ASSIGNED",
+      "self_person_id": "00000000-0000-4000-8000-000000006201",
+      "activity_category": null,
+      "reservation_id": null,
+      "timing_label": null,
+      "start_local_date": "2026-12-18",
+      "start_local_time": null,
+      "start_clock_precision": null,
+      "start_quality": "UNKNOWN",
+      "start_basis": "DERIVED_CIVIL",
+      "start_zone_id": null,
+      "start_supplied_offset_seconds": null,
+      "start_source_instant": null,
+      "start_source_instant_precision": null,
+      "start_civil_resolution": "PENDING",
+      "start_resolution_offset_seconds": null,
+      "start_interpretation_key": null,
+      "start_interpretation_input_sha256": null,
+      "start_provenance_refs": null,
+      "planned_start": null,
+      "end_local_date": null,
+      "end_local_time": null,
+      "end_clock_precision": null,
+      "end_quality": null,
+      "end_basis": null,
+      "end_zone_id": null,
+      "end_supplied_offset_seconds": null,
+      "end_source_instant": null,
+      "end_source_instant_precision": null,
+      "end_civil_resolution": null,
+      "end_resolution_offset_seconds": null,
+      "end_interpretation_key": null,
+      "end_interpretation_input_sha256": null,
+      "end_provenance_refs": null,
+      "planned_end": null,
+      "authored_label": null,
+      "authored_text": null,
+      "authored_address": null,
+      "accepted_address": null,
+      "accepted_latitude": null,
+      "accepted_longitude": null,
+      "accepted_place_id": null,
+      "spatial_provenance_refs": null,
+      "location_input_revision": null,
+      "authored_address_line1": null,
+      "authored_address_line2": null,
+      "authored_address_locality": null,
+      "authored_address_region": null,
+      "authored_address_postal_code": null,
+      "authored_address_country": null,
+      "accepted_address_line1": null,
+      "accepted_address_line2": null,
+      "accepted_address_locality": null,
+      "accepted_address_region": null,
+      "accepted_address_postal_code": null,
+      "accepted_address_country": null
+    }
+  ],
+  "links": [
+    {
+      "trip_id": "00000000-0000-4000-8000-000000006200",
+      "item_id": "f12a81f7-46cd-8970-9f21-cbdab6154370",
+      "document_id": "69a9d08d-66a3-87a5-b3d9-86ee8b8c2fb7",
+      "active": true,
+      "linked_by": "00000000-0000-4000-8000-000000000001",
+      "linked_at": "2026-11-14T00:05:00Z"
+    },
+    {
+      "trip_id": "00000000-0000-4000-8000-000000006200",
+      "item_id": "f12a81f7-46cd-8970-9f21-cbdab6154370",
+      "document_id": "7642e9f6-2428-8cb1-a978-800d415f06a8",
+      "active": true,
+      "linked_by": "00000000-0000-4000-8000-000000000001",
+      "linked_at": "2026-11-14T00:05:00Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": "69a9d08d-66a3-87a5-b3d9-86ee8b8c2fb7",
+      "trip_id": "00000000-0000-4000-8000-000000006200",
+      "revision": 1,
+      "owner_account_id": "00000000-0000-4000-8000-000000000001",
+      "visibility": "PRIVATE",
+      "hidden_at": null,
+      "created_at": "2026-11-14T00:05:00Z",
+      "updated_at": "2026-11-14T00:05:00Z",
+      "field_state": {},
+      "title": "Museum itinerary.txt",
+      "media_type": "text/plain",
+      "byte_size": 93,
+      "sha256": "ba78921b7ce50bc6154cc68aa17f81cc98a1abe682314cd563e293050c321ccc",
+      "custody": "LOCAL_ONLY",
+      "source_representation_id": null,
+      "storage_object_key": null,
+      "content_version": 1,
+      "ticket_face_index": null,
+      "qr_region": null,
+      "custody_receipt_id": null
+    },
+    {
+      "id": "7642e9f6-2428-8cb1-a978-800d415f06a8",
+      "trip_id": "00000000-0000-4000-8000-000000006200",
+      "revision": 1,
+      "owner_account_id": "00000000-0000-4000-8000-000000000001",
+      "visibility": "PRIVATE",
+      "hidden_at": null,
+      "created_at": "2026-11-14T00:05:00Z",
+      "updated_at": "2026-11-14T00:05:00Z",
+      "field_state": {},
+      "title": "Workshop and museum.txt",
+      "media_type": "text/plain",
+      "byte_size": 102,
+      "sha256": "1f91119f205cf8d6ae4d6e9c3fcec02af245d67d039afdefe34e71532d49efba",
+      "custody": "LOCAL_ONLY",
+      "source_representation_id": null,
+      "storage_object_key": null,
+      "content_version": 1,
+      "ticket_face_index": null,
+      "qr_region": null,
+      "custody_receipt_id": null
+    }
+  ]
+}

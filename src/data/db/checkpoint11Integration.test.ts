@@ -100,7 +100,7 @@ describe("Checkpoint 11 registered composition", () => {
         ).toEqual(prior);
         expect(
           sql
-            .prepare("SELECT id,name FROM schema_migrations WHERE id>=47 ORDER BY id")
+            .prepare("SELECT id,name FROM schema_migrations WHERE id BETWEEN 47 AND 57 ORDER BY id")
             .all(),
         ).toEqual([
           { id: 47, name: "trip_day_read_model" },
@@ -120,7 +120,7 @@ describe("Checkpoint 11 registered composition", () => {
             .prepare("SELECT id FROM schema_migrations ORDER BY id")
             .all()
             .map((r) => r.id),
-        ).toEqual(Array.from({ length: 57 }, (_, i) => i + 1));
+        ).toEqual(Array.from({ length: 79 }, (_, i) => i + 1));
         expect(sql.prepare("PRAGMA synchronous").get()).toMatchObject({ synchronous: 2 });
         const storage = new Map<string, string>();
         const auth = createAuthRepository({

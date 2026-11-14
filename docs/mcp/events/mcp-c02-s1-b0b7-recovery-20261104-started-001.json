@@ -1,0 +1,32 @@
+{
+  "event_id": "mcp-c02-s1-b0b7-recovery-20261104-started-001",
+  "agent_id": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "work_package_id": "MCP-C02",
+  "capability_id": "CAP-MCP-FAMILY-FIELDS",
+  "slice": "C02-S1",
+  "event_type": "STARTED",
+  "actual_occurred_at": "2026-11-04T04:38:06.366Z",
+  "current_status": "EMPTY_ACTIVE_ISSUER_CONSOLE_ACTIVATION_PENDING",
+  "commit": "0305aaf1",
+  "evidence_paths": [
+    "docs/mcp/c02/diagnostics/fresh-recovery-20261104/REVIEW.json",
+    "docs/mcp/c02/diagnostics/fresh-recovery-20261104/actual/WINDOW_BOUND.json"
+  ],
+  "completed": [
+    "Root2 direct originalOwner approval independently verified",
+    "ActualOwner thread/message/wireSHA separated from consumer source in3helpers",
+    "24ownerCases+9timer+13pins/independentNO_BLOCKER",
+    "Independent ownQA controlREADY; one clock bound; EMPTY healthy"
+  ],
+  "unfinished": [
+    "ConsumerOAuth",
+    "OriginalReceipt/Item GET",
+    "APPLIED/Create/Edit/Native"
+  ],
+  "blockers": [],
+  "next_action": "After fullACTIVE normal browserOAuth and original a8c1 GET only; no Apply/replay",
+  "normal_close_at": "2026-11-04T05:06:06.366Z",
+  "hard_deadline": "2026-11-04T05:08:06.366Z",
+  "overall_package_status": "IN_PROGRESS",
+  "ack_status": "SUBMISSION_PENDING"
+}

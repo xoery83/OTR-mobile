@@ -1,0 +1,16 @@
+{
+  "status": "NORMAL_CONTROL_READY_FILE_BOUND_WITHIN120_NO_ACTIVATION_YET",
+  "windowId": "c7fe4ac03f88452c9899b686ec2f7d25",
+  "gateSHA256": "d74c7292cc155852132899249a4b21327749a75f5355c1b8c17594a12b0856d7",
+  "launchStartedAt": "2026-11-04T09:05:50.376161+00:00",
+  "controlReadyAt": "2026-11-04T09:06:06.113Z",
+  "actorAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "controlProcessSessionId": 10121,
+  "sourceAnd17Static5OwningPinsVerifiedBeforeLaunch": true,
+  "waiterPidAliveAndLease90secVerifiedBeforeLaunch": true,
+  "sourcePackage": "4d7d6b28",
+  "consumerTaskSubmitted": false,
+  "saveOrUnknownReplay": false,
+  "secretsRecorded": false
+}

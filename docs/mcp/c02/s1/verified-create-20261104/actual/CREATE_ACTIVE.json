@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-11-03T21:59:43.811125+00:00",
+  "containerId": "87d378c77ffe000420e2de2fbb48eb7a79a854119d92ebb06d203759901326f2",
+  "image": "sha256:bafa65173910d61242ff780dbdae9fd4d297b5011e196fdc390aeba4f057d4e8",
+  "configSHA256": "ff7147b0d60738a0eda29cd40e6873dc2ba1cb928ad184b1ea292403e1336bda",
+  "health": "healthy",
+  "timers": {
+    "otr-mcp-c02-eed8fa4b93044f31a5d03244bea1051b-normal.timer": "NextElapseUSecRealtime=Tue 2026-11-03 22:13:14 UTC\nActiveState=active",
+    "otr-mcp-c02-eed8fa4b93044f31a5d03244bea1051b-hard.timer": "NextElapseUSecRealtime=Tue 2026-11-03 22:15:14 UTC\nActiveState=active"
+  },
+  "workers": {
+    "otr-universal-pdf-worker.service": "RuntimeMaxUSec=infinity\nMainPID=2229750\nActiveState=active",
+    "otr-universal-png-worker.service": "RuntimeMaxUSec=50min\nMainPID=0\nActiveState=failed"
+  },
+  "status": "CREATE_ACTIVE_INDEPENDENTLY_VERIFIED",
+  "phase": "CREATE",
+  "planSHA256": "073a6208192f6f436fdd26290bb2784a8a2e6d2c4778681e027f645b4eee036c",
+  "operationId": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616",
+  "itemId": "a9dbe020-ebce-49fb-ab31-859977f328c6",
+  "applyCalledByRoot2": false,
+  "ownerDirectApproval": "\u786e\u8ba4\u6b64\u7cbe\u786e CREATE CAS\uff0c\u56fa\u5b9a\u622a\u6b62\u4e0d\u53d8",
+  "ownerQuestionCall": "call_85aec834fe3949ddae9cb2413769f033",
+  "normalCloseAt": "2026-11-03T22:13:14.740Z",
+  "hardCloseAt": "2026-11-03T22:15:14.740Z"
+}

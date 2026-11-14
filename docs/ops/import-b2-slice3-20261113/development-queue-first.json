@@ -1,0 +1,18 @@
+[
+  {
+    "id": "34f56192-b201-49b4-ac34-ea8d16d66780",
+    "operation_type": "CREATE_TRIP",
+    "status": "COMPLETED",
+    "attempt_count": 1,
+    "failure_category": null,
+    "last_error_code": null
+  },
+  {
+    "id": "8a499dc4-b198-40c8-8586-f7e96b001564",
+    "operation_type": "TRIP_NORMAL_READBACK",
+    "status": "COMPLETED",
+    "attempt_count": 0,
+    "failure_category": null,
+    "last_error_code": null
+  }
+]

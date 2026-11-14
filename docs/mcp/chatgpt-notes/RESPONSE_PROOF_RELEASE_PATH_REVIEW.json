@@ -1,0 +1,17 @@
+{
+  "status": "NO_BLOCKER_ONE_LITERAL_PLAN_PATH_ONLY",
+  "reviewedAt": "2026-11-02T07:47:20.190745+00:00",
+  "oldControllerSHA256": "4bb7776d2ab96dd3ea29ecf96fddf237c702a5a8ae2b07643682faed4dd0e8c9",
+  "newControllerSHA256": "398b45d75786e569fc243635cfa5edaaeae79b5258de5a35315ee950df499684",
+  "actualASTChecks": {
+    "newExactPathAccepted": true,
+    "oldPathRejected": true,
+    "unrelatedPathRejected": true
+  },
+  "onlyLiteralReplacement": true,
+  "captureRuntimeProbeHashesMatch": true,
+  "newAllowedPlanPath": "/opt/otr/dev-backend/build/mcp-response-proof-f522fc4c-20261102/deploy-plan.json",
+  "externalCalls": 0,
+  "deployExecuted": false,
+  "notReviewed": "Existing unchanged release/CAS/lock/health/rollback framework trusted; no expanded audit."
+}

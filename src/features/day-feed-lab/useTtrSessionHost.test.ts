@@ -21,6 +21,11 @@ const storage = vi.hoisted(() => ({
   writes: 0,
   generation: 0,
 }));
+vi.mock("expo-sqlite", () => ({
+  openDatabaseAsync: () => {
+    throw new Error("UNEXPECTED_NATIVE_DATABASE");
+  },
+}));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => storage.generation,
 }));

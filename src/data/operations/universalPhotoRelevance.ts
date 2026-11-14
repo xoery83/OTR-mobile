@@ -6,7 +6,7 @@ import type { createCaptureSubmissionRepository } from "../repositories/captureS
 import type { createLocalCaptureInboxRepository } from "../repositories/localCaptureInboxRepository";
 import {
   photoImportPinSchema,
-  isPhotoImportMaterial,
+  isV3PhotoImportMaterial,
   resolvePhotoImportDecision,
 } from "@/domain/capture/photoImportRelevance";
 import { screenCapturePhotoRelevance } from "@/native/capturePhotoRelevance";
@@ -40,7 +40,7 @@ export async function screenUniversalPhotoInput(
       job.batch.jobId !== jobId ||
       !input ||
       input.state !== "ACCEPTED" ||
-      !isPhotoImportMaterial(input) ||
+      !isV3PhotoImportMaterial(input) ||
       !input.captureId ||
       !input.payloadId
     )
@@ -50,7 +50,7 @@ export async function screenUniversalPhotoInput(
     const capture = original.capture;
     if (
       capture.accountId !== context.accountId ||
-      !isPhotoImportMaterial(capture) ||
+      !isV3PhotoImportMaterial(capture) ||
       capture.kind !== input.kind ||
       capture.id !== input.captureId ||
       capture.payloadId !== input.payloadId ||

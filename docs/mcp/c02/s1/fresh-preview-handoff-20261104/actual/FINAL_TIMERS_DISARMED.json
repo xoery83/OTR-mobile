@@ -1,0 +1,12 @@
+{
+  "status": "C02_OWN_TIMERS_DISARMED_AFTER_DEFAULT_CLOSED",
+  "units": [
+    "otr-mcp-c02-c7fe4ac03f88452c9899b686ec2f7d25-normal.timer",
+    "otr-mcp-c02-c7fe4ac03f88452c9899b686ec2f7d25-normal.service",
+    "otr-mcp-c02-c7fe4ac03f88452c9899b686ec2f7d25-hard.timer",
+    "otr-mcp-c02-c7fe4ac03f88452c9899b686ec2f7d25-hard.service"
+  ],
+  "stagedCASPlanArchivedNotDeleted": true,
+  "remoteAccessBindingInvalidated": true,
+  "containerChanged": false
+}

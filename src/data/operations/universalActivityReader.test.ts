@@ -7,6 +7,18 @@ import type {
   UniversalExecutionContext,
   UniversalTaskActivity,
 } from "../api/universalImportContracts";
+const adapter = vi.hoisted(() => ({
+  account: vi.fn(),
+  context: vi.fn(),
+  capability: vi.fn(),
+}));
+vi.mock("../auth/authRepository", () => ({ requireActiveUserId: adapter.account }));
+vi.mock("../api/universalImportTransport", () => ({
+  createUniversalImportTransport: () => ({
+    context: adapter.context,
+    localFirstCapability: adapter.capability,
+  }),
+}));
 function fixture() {
   const accountId = randomUUID(),
     tripId = randomUUID();
@@ -199,9 +211,9 @@ it("stops queued detail reads and discards return value when generation changes 
   const onReady = vi.fn(async () => {
     advanceAccountGeneration();
   });
-  expect(
-    await readUniversalActivities(f.jobs, { ...f, onObservation, onReady }),
-  ).toEqual({});
+  expect(await readUniversalActivities(f.jobs, { ...f, onObservation, onReady })).toEqual(
+    {},
+  );
   expect(f.context).toHaveBeenCalledTimes(2);
   expect(onObservation).toHaveBeenCalledTimes(2);
   expect(onReady).toHaveBeenCalledOnce();
@@ -230,9 +242,9 @@ it("retains both Task statuses and continues same-order details after a first de
       .fn()
       .mockRejectedValueOnce(Error("RESULTS_503"))
       .mockResolvedValueOnce(undefined);
-  expect(
-    Object.keys(await readUniversalActivities(f.jobs, { ...f, onReady })),
-  ).toEqual(f.jobs.map((j) => j.batch.batchId));
+  expect(Object.keys(await readUniversalActivities(f.jobs, { ...f, onReady }))).toEqual(
+    f.jobs.map((j) => j.batch.batchId),
+  );
   expect(onReady.mock.calls.map(([job]) => job.batch.batchId)).toEqual(
     f.jobs.map((j) => j.batch.batchId),
   );
@@ -248,4 +260,101 @@ it("cold activity reads use persisted original attribution without changing Acco
   }
   expect(Object.keys(await readUniversalActivities(f.jobs, f))).toHaveLength(2);
   expect(f.jobs.every((job) => job.batch.context.tripPrior === null)).toBe(true);
+});
+
+it("V3 reads two independent batches, never uses V2 context or dispatch, and preserves UNKNOWN", async () => {
+  const { readV3Activities } = await import("./universalActivityReader");
+  const f = fixture();
+  const observe = vi.fn();
+  const saves = vi.fn();
+  const execution = vi
+    .fn()
+    .mockResolvedValueOnce({ state: "OUTCOME_UNKNOWN", taskId: randomUUID() })
+    .mockResolvedValueOnce({
+      state: "REVIEW_READY",
+      taskId: randomUUID(),
+      candidates: [],
+    });
+  await readV3Activities(f.jobs, { ...f, execution, saves, onObservation: observe });
+  expect(observe.mock.calls).toEqual([
+    [f.jobs[0].batch.batchId, { state: "uncertain", saved: 0 }],
+    [f.jobs[1].batch.batchId, { state: "empty", saved: 0 }],
+  ]);
+  expect(saves).not.toHaveBeenCalled();
+  expect(f.context).not.toHaveBeenCalled();
+});
+it("V3 completed requires all original receipts; late observations are discarded", async () => {
+  const { readV3Activities } = await import("./universalActivityReader");
+  const f = fixture();
+  const observe = vi.fn();
+  const state = {
+    state: "REVIEW_READY",
+    taskId: randomUUID(),
+    candidates: [{ candidateId: "one" }],
+  } as const;
+  let current = true;
+  await readV3Activities(f.jobs, {
+    ...f,
+    isCurrent: () => current,
+    execution: async () => state as any,
+    saves: async () => {
+      current = false;
+      return { one: "VERIFIED" };
+    },
+    onObservation: observe,
+  });
+  expect(observe).toHaveBeenCalledTimes(1);
+  expect(observe.mock.calls[0][1].state).toBe("checking");
+});
+
+it("an explicitly legacy batch is not relabelled as V3 waiting", async () => {
+  const { readV3Activities } = await import("./universalActivityReader");
+  const f = fixture(),
+    observe = vi.fn();
+  await readV3Activities(f.jobs, {
+    ...f,
+    execution: async () => undefined,
+    saves: vi.fn(),
+    onObservation: observe,
+  });
+  expect(observe).not.toHaveBeenCalled();
+});
+it("a receipt read error leaves V3 uncertain rather than stuck checking or failed", async () => {
+  const { readV3Activities } = await import("./universalActivityReader");
+  const f = fixture(),
+    observe = vi.fn();
+  await readV3Activities([f.jobs[0]], {
+    ...f,
+    execution: async () =>
+      ({
+        state: "REVIEW_READY",
+        taskId: "task",
+        candidates: [{ candidateId: "candidate" }],
+      }) as any,
+    saves: async () => {
+      throw Error("OFFLINE");
+    },
+    onObservation: observe,
+  });
+  expect(observe.mock.calls.map((call) => call[1].state)).toEqual([
+    "checking",
+    "uncertain",
+  ]);
+});
+
+it("existing Updates callers without V3 observations keep their original lightweight reader", async () => {
+  const { readDefaultUniversalActivities } = await import("./universalActivityReader");
+  const f = fixture();
+  adapter.account.mockResolvedValue(f.jobs[0].batch.accountId);
+  adapter.context.mockImplementation(f.context);
+  adapter.capability.mockClear();
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://dev.example");
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED", "true");
+  try {
+    await readDefaultUniversalActivities(f.jobs, () => true);
+    expect(adapter.context).toHaveBeenCalledTimes(2);
+    expect(adapter.capability).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllEnvs();
+  }
 });

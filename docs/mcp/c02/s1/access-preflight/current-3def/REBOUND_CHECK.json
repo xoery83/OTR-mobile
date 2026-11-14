@@ -1,0 +1,27 @@
+{
+  "status": "CURRENT_LIVE_READBACK_BOUND_SOURCE_PROBE_PREPARED_NOT_EXECUTED",
+  "candidateSHA256": "fbafb49cbd0a752b9b3f64f6625defae01ce67e670a2e026f3b865d9ec6e5c85",
+  "readbackSHA256": "781c378f6ee74affcddd17b4b161bee1134c4643150f390a2680e252a8aaff4c",
+  "priorCandidateSHA256": "a3cbfe5876372361d32a6fe4c844228a6bd1d0681e3b2d858dc12eb19fcaa2b5",
+  "metadataChanges": [
+    "Output directory",
+    "Expected current CID",
+    "Expected current Config SHA",
+    "Explicit latest observed beforeConfigHashes+mountedFileHashes instead of inheriting old deployment runtime hash",
+    "beforeEnvironmentSHA256 updated to current observed1f63; no stale template provenance"
+  ],
+  "mountedFileChanges": {
+    "/opt/otr/dev-backend/private/universal-stage2-continuous/runtime.json": [
+      "d0ca82a7dfc9d1690903683434ad79a87c57e211f75d5e88dd0085cad8e38bc6",
+      "1febb2a7715e33c891c62fe97f9e4c26bca2edd1e7c8213363a86a046f48606d"
+    ]
+  },
+  "releaseTemplate": "Historical00f7 plan supplies unchanged structural keys only; current identity/config/Host/mounts/file hashes explicitly replace snapshot",
+  "protectedActions": 0,
+  "expectedCurrent": {
+    "cid": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+    "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "configSHA256": "b00829fc8f260bac9ab6f31b8e78899d287cd1685e1dfd8f7db1c9fead40480b"
+  },
+  "independentReview": "PENDING"
+}

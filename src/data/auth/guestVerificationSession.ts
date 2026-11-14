@@ -35,6 +35,13 @@ const sessionSchema = z.strictObject({
     userId: coreUuid,
     displayName: z.string(),
     email: z.string().nullable(),
+    appleFirstSignInName: z
+      .strictObject({
+        givenName: z.string().max(2000).nullable().optional(),
+        familyName: z.string().max(2000).nullable().optional(),
+        middleName: z.string().max(2000).nullable().optional(),
+      })
+      .optional(),
   }),
 });
 const metadataKey = (guestId: string) => `otr.mobile.guest-verification.v1.${guestId}`;
@@ -51,6 +58,15 @@ export function createGuestVerificationSession(deps: {
     let session: z.infer<typeof sessionSchema>;
     try {
       session = sessionSchema.parse(input);
+      // Omit only validated optional keys before the existing canonical fingerprint.
+      const name = session.identity.appleFirstSignInName;
+      if (name) {
+        for (const key of ["givenName", "familyName", "middleName"] as const) {
+          if (name[key] === undefined) delete name[key];
+        }
+      } else {
+        delete session.identity.appleFirstSignInName;
+      }
     } catch {
       // Validation diagnostics must never contain Provider credentials.
       throw Error("GUEST_VERIFICATION_SESSION_INVALID");

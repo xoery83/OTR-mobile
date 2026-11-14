@@ -1,17 +1,139 @@
-# MCP E2E acceptance — 31 October 2026
+# Latest C02 a2f8 diagnostic — CLOSED / Consumer NOT_RUN
 
-Current: real finite-QA SDK OAuth Read/refresh/revoke PASS, and actual ChatGPT
-OAuth + list_trips PASS. Consumer Item reads/Write, Claude and Native date edit
-remain incomplete. Final independent Auth restoration passed; raw cleanup wrapper failure is retained.
+Guarded C02 loader software deployed and EMPTY runtime qualified; original QA
+normal Session and cleanup/refresh rejection PASS. CUA automatic origin-review
+service timed out on two readonly observations before reconnect. No consumer OTP,
+Consent, refresh, Guide/Trip read, P3 Preview or Apply ran. This is infrastructure
+unavailability, neither a safety rejection nor an actual refresh/Auth failure.
+Default0c723/68aa/eb99 restored healthy, Issuer denyall, Console restored, own4
+timer/service units inactive, selected835 Grant absent and shared Writer released.
+Original one-bound window closed early; no reset or retry. See
+`c02/s1/access-preflight/A2F_E2E_ACCEPTANCE.json`. MCP-C02 remains IN_PROGRESS;
+the scoped historical Notes results below remain unchanged.
 
-| User outcome | Current evidence / limit |
-| --- | --- |
-| AI reads an OTR Trip/P3 | Public SDK OAuth own Trip/P3 and foreign denial PASS; ChatGPT actual OAuth/list_trips4 PASS. Consumer Item reads remain untested. |
-| AI creates/edits cloud Item | P3 formal APPLIED rev1→2, independent expected full-row/receipt/unique1 and same-op replay PASS. New P5 CHECKIN attempt remains UNKNOWN/owning guard gap. |
-| iPad sees same Item | P3 automatic Create property card and exact UUID cold Viewer PASS. Core-title Edit not directly observable; Nelson original Dec11 observed; date Edit blocked by pre-submit receipt read. |
-| Nelson Preview/Confirm/Apply | Synthetic Trip/three Items APPLIED with independent expected receipts/rows; partial recovery retained. Existing P1 date Edit NOT_SENT. Real Owner25 candidates are private source preview only. |
-| ChatGPT / Claude actual connection | ChatGPT real OAuth/list_trips4 PASS; exact Item/Write/revoke semantics incomplete. Claude NOT_TESTED. |
-| Extended domains | Future owning interfaces only; no new domain authority. |
+# Native Notes downstream evidence — 3 November 2026
+
+Original ChatGPT277 Cloud PASS unchanged. Native physical iPad QA143 normal
+Trip→Day→Focus→Details after process close/open shows exact expected property,
+Dec10–13/three nights and three-line Notes. Raw AX label independently checked.
+Separate FormsQA SQLite targeted read-only projection matches Account1f3/Tripcc44/
+Item3616 revision3/complete8.0/access1/nonrevoked. No fresh mutation/Apply.
+Physical UI does not expose revision; FormsQA SQLite is not physical-iPad DB
+proof. Native final receipt SHA/Account binding pending. This does not qualify
+C02 new full-field Items or two-account/realtime behavior. Evidence:
+chatgpt-notes/continuation-20261102/NATIVE_DOWNSTREAM_20261103.json.
+
+# Latest — ChatGPT P3 Notes, 2 November751: PASS_CLOSED
+
+Real ChatGPT normal OTP/Consent and current Guide/Trip/P3/fullBase PASS.
+FullDetails canEdit=true and original Notes/rev2 matched. Current formal Preview
+four-JSON quotes matched actual bounded handler hashes before trusted singleton.
+Actual consumer explicit confirmation and platform Allow once released one
+original277 Apply, returning formal APPLIED/rev3. Same-ID consumer readback and
+independent Supabase09:25:32Z confirmed exact three Notes lines, one canonical
+receipt, unchanged other root/field_state/all11children. Historical UNKNOWN not
+replayed; no real Nelson/financial/new Item write. Root fully CLOSED/RELEASED,
+actual default6ebe/bcb/97 and original issuer/ACL verified. Native independent Downstream NOT_RUN: no verified normal QA device session
+(commit436cd65b); not inferred from cloud success. Prior Claude e389 remains
+scoped PASS. No all-MCP/all-P1–P6/production acceptance is implied.
+
+Evidence: chatgpt-notes/continuation-20261102/ACCEPTANCE.json and adjacent actual
+proof/quotes/Apply/Root closure files; slice1/FRESH_CHATGPT_READBACK.json. Initial
+UI/OTP execution failures remain recorded. Final close-tail logs unavailable
+because timer restored default first; no missing trace was reconstructed.
+
+The dated earlier sections below retain their original historical scope.
+
+# MCP Slice1 — 2 November e389: Claude Consumer Edit PASS; fully closed
+
+- Real Claude normal OTP/Consent and eight-tool discovery passed. First turn
+  had a stale consumer tool registry; refreshing the same chat restored tools.
+  Preserved actual error; no operation was submitted during that failure.
+- Fresh original-ID status read returned UNKNOWN/NOT_VISIBLE_OR_NOT_FOUND_NOT_NO_COMMIT;
+  that is not NoCommit proof. Execution journal before this Apply showed original
+  1d6 had zero Apply submissions across acd60/78c/e389. Historical f107/9b untouched.
+- Fresh complete EditBase was SERVER_CONFIRMED, same3616/CAS1/original Notes and
+  unchanged full item/record. New formal Preview matched exact1d6/digest1d5.
+- Owner directly approved connection, exact save and MCP-chat source adjustment.
+  Source-only change independently reviewed; Root installed the singleton only
+  after actual Preview matching. Consumer explicit confirmation is message15.
+- Actual consumer message16 submitted exactly one APPLY and received APPLIED,
+  revision2. Consumer same-ID readback SERVER_CONFIRMED and projection preservation
+  passed. Independent Supabase05:18:37.614Z confirmed one canonical receipt,
+  exact Notes and all other root/field_state/all11children unchanged.
+- Actual evidence: E389_ACTUAL_APPLIED.json, E389_ACTUAL_CONSUMER_READBACK.json,
+  E389_CONSUMER_APPLY_TRANSCRIPT.txt, E389_CONSUMER_ACCEPTANCE.json,
+  FRESH_CLAUDE_READBACK.json. No business code/image change in this round.
+- Root fully closed Grant/control/issuer/OAuth/Hook/Site/Host/timer/locks. Default
+  dc58 restored05:20:23Z; original issuer/ACL verified05:22:36Z, well before D.
+  E389_ROOT_FINAL_OUTCOME.json and E389_FINAL_HOOK_READBACK.json are final receipts.
+  ChatGPT same Notes slice NOT_RUN, no iPad claim.
+- canEdit remains false in the current read projection despite actual authorized
+  Core Apply success; record this metadata mismatch without weakening Core checks.
+
+Earlier closed-window sections below are historical, not the latest outcome.
+
+# Earlier78c Notes continuation — BLOCKED_NO_APPLY, closed
+
+Actual78c Claude normalOTP/Consent, originaloperationstatus, fullEditBase and
+freshformalPreview PASS (status call self-corrected two inputvalidation errors).
+Both exacthuman approvals were obtained. MatchedapprovalV1 missedclientId;
+V2 passed existingvalidation and actualsingletonCAS, but independentREADY arrived
+sixseconds after normalclose. No consumerApply was sent. Original1d6 remains
+NOT_SUBMITTED from transcript, Item3616 remainsrev1/originalNotes; independent
+SQL verifies entire root and all11children unchanged/receipts0. Root/Auth fully
+closed before/after respective cleanup deadlines. Exact realwire V1RED/V2GREEN
+plus4negative checks/pureplan PASS without externalIO; no extra permission gap.
+See slice1/CONTINUATION_* and STATUS.md. ChatGPT currentNotes case NOT_RUN.
+The historical consumerCreate/originalbbEdit acceptance below remains separate;
+this current Notes scenario cannot be markedAPPLIED or completeConsumerEditPASS.
+
+# MCP E2E acceptance — 1 November 2026
+
+Current: real finite-QA SDK Read/refresh/revoke and ChatGPT OAuth/list_trips PASS.
+Claude C full P3 twice (including >60s continuation), whole-Item independent
+Backend equality and foreign NOT_VISIBLE PASS. Normal grantDELETE204/fresh
+absence followed by one same-connection probe requires authentication and
+returns no Item. Durable live401 projection and independent full close PASS before deadline.
+Revoke-only causality remains unproven because expiry was not isolated.
+Consumer Create and original-ID Edit now PASS in separately approved finite
+Claude QA windows. R original bb status was UNKNOWN/not-found; fresh independent
+revision1/unchanged fields/receipt absence and explicit new recovery authority
+qualified one same-ID APPLY, returning APPLIED/revision2. Consumer projection,
+normal Backend and unique Supabase Item/receipt match Dec11→13, same Actor/Item,
+CAS1→2 and recomputed command/intent/receipt hashes. Native automatic Day change,
+exact-ID details and normal cold restore PASS. No continuous latency or private
+Realtime SLA claim. Normal revoke/fresh absence plus one same-connection probe
+requires authentication/no Item; safe live401 metadata retained before removal,
+without isolated revoke-only causality. COMPLETE_CLOSED04:05:12Z before R harddeadline.
+See acceptance/ORIGINAL_BB_WINDOW.json and ORIGINAL_BB_INDEPENDENT_COMPARISON.json.
+Earlier W Edit AUTH_REQUIRED and W late final verification remain historical;
+R success does not retrospectively diagnose that failure or qualify consumer
+rendering of the new expiry UNKNOWN result. B historical auth failure is preserved.
+
+Native Connected AI candidate2a360865 has scoped MCP contract review NO_BLOCKER:
+one shared content component, Settings Stack and draft-preserving Capture Modal,
+four static providers, official platform/guide links and no inferred connection
+state or DEV address. Native reports28 focused checks/types/lint/UI and terminology
+guards PASS. Native14402d7f records partial physical Build130 smoke on sourcec9f:
+Settings/expand/native selection-copy menu; ChatGPT Open-button tap and own-app
+return retains expanded state; future providers have no action; Capture returns
+to the exact unsent synthetic note. No clipboard contents were read, no business
+submit/Source/Provider ran; own Session/Claim closed. External browser UI/AX was
+not captured after automatic privacy review rejection, so actual external page,
+login and connection are not PASS. Chinese/Dark/large text/offline/Claude-open/
+cold remain physically untested. See Native-owned
+`docs/ops/native-connected-ai-20261031/IPAD_BUILD130_SMOKE.json` in14402d7f.
+Unified-main publication is still pending; partial smoke is not full acceptance.
+
+| User outcome                       | Current evidence / limit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AI reads an OTR Trip/P3            | Public SDK OAuth own Trip/P3 and foreign denial PASS; ChatGPT actual OAuth/list_trips4 PASS. Claude actual Trip/list3 and C full P3/whole-Item independent match PASS.                                                                                                                                                                                                                                                                                                                                         |
+| AI creates/edits cloud Item        | Actual Claude Create APPLIED/rev1 and original-bb Edit APPLIED/rev2, independent Backend/Supabase/consumer projection PASS; one explicitly newly authorized recovery, no new ID or repeated Apply loop. Internal SDK P3 formal APPLIED rev1→2, independent expected full-row/receipt/unique1 and same-op replay PASS. New P5 CHECKIN attempt remains UNKNOWN/owning guard gap.                                                                                                                                 |
+| iPad sees same Item                | Claude-created same P3 automatically observed Dec12, later original-bb Edit automatically displayed under Dec11; exact-ID details and normal cold restore show Dec11–13/2nights/Only me PASS. No continuous Edit latency claim. Earlier P3 automatic Create property card and exact UUID cold Viewer PASS. Core-title Edit not directly observable; Nelson original Dec11 observed; date Edit run2 UNKNOWN; its before/after remains unverified. Device later recovered for the separate Build130 guide smoke. |
+| Nelson Preview/Confirm/Apply       | Synthetic Trip/three Items APPLIED with independent expected receipts/rows; partial recovery retained. Existing P1 date Edit run2 UNKNOWN; no further submit. Real Owner25 candidates are private source preview only.                                                                                                                                                                                                                                                                                         |
+| ChatGPT / Claude actual connection | ChatGPT real OAuth/list_trips4 PASS; A continuation expired before OTP. Claude C full P3/60s continuation/foreign denial PASS. Claude Write connection/discovery/Create/Edit PASS in finite QA. R full close before harddeadline; previous W late final verification remains recorded. C independent full close PASS.                                                                                                                                                                                          |
+| Extended domains                   | Future owning interfaces only; no new domain authority.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Source and focused verification
 
@@ -173,8 +295,8 @@ then independent DB proves each APPLIED, unique1row/rev1. See
 This is individual receipt completion, not a server-atomic batch or new engine.
 
 Native currently prioritizes its Realtime release. At its request the idle host
-session was normally closed with refresh rejection; date9b was NOT_SENT. Next
-explicit Native observation of P1 Dec11 precedes its fixed CAS1 date move toDec12.
+session was normally closed with refresh rejection; date9b run1 was NOT_SENT.
+That historical next step is superseded by Phase3 run2 UNKNOWN/no retry below.
 Dedicated date-only QA entry will not repeat Trip/three Creates. No Nelson Native
 or Date PASS is claimed yet. Owner real attachments remain outside Git and DEV,
 local read-only preview only; no real travel data was written.
@@ -216,7 +338,6 @@ See MCP_CLIENT_COMPATIBILITY.md, MCP_NELSON_FIELD_COVERAGE.md and Auth contract 
 the remaining activation/consumer/confirmation/Native gates at that checkpoint.
 At that time ChatGPT/Claude Read/Write/revoke all remained NOT_TESTED.
 
-
 ## Phase2 actual P5 attempt and device observation
 
 P5_FIELDS uses one fixed synthetic Water Taxi with09:00 departure,08:45 separate
@@ -242,7 +363,6 @@ No Session/SQLite copy, tap, install/reset or date9b POST. Native tool setup rep
 is pending. Owner explicitly permits missing real Trip/flight fields to stay
 pending while functional QA continues; this does not authorize real Owner writes.
 
-
 ### Actual Nelson before-date UI — PASS; date submission blocked
 
 Device Automation's complete public artifact manifest resolved isolated Runner
@@ -258,7 +378,6 @@ before-date UI and tooling only, not Native Edit or automatic date update.
 See NELSON_NATIVE_OBSERVER.json. Core owning receipt-read diagnosis is pending;
 no repeated Create, timeout increase, Host/permission or Native product change.
 
-
 ### SDK-first OAuth test custody — prepared, not Hosted PASS
 
 mcp/sdkOAuthQa.ts uses the installed official SDK auth()/S256 with one static
@@ -270,7 +389,6 @@ or timeout remains unconfirmed revocation.50 focused tests/types/lint and focuse
 independent NO_BLOCKER pass, including simulated issuer PKCE exchange, callback
 mix-up/duplicate rejection, cancellation cleanup and callback port release.
 These local tests do not qualify actual issuance, OAuth revoke or consumer use.
-
 
 ## Structured current-state Nelson Preview — actual DEV PASS
 
@@ -290,7 +408,6 @@ First actual public SDK OAuth failed before browser/Token because SDK2.4 adds
 Reviewed9c399e01 accepts exactly the two protocol scopes; Auth's supplemental Gate
 must approve the change before execution. No business permission expansion,
 new Client/issuer or actual OAuth acceptance is claimed by this local repair.
-
 
 ## ChatGPT actual consumer OAuth and list_trips — PASS, bounded
 
@@ -315,3 +432,67 @@ See acceptance/CHATGPT_READ.json and QA-only CHATGPT_READ.jpg/CHATGPT_REVOKE.jpg
 Consumer get_trip/list_trip_items/get_trip_item/foreign denial/Write were not
 executed in this short window; SDK qualification remains separate. ChatGPT Read
 success is not Read+Write readiness or general-account/production availability.
+
+## Phase3 normal-QA date continuation — run2 UNKNOWN
+
+Owner's device-block exception is explicit in QA source1da303ba, with4 guard
+checks/types/lint and independent NO_BLOCKER. Native's first automation connection
+timed out; no false readiness or Native before/after PASS was used. The original
+zero-POST attempt is retained byte-for-byte in NELSON_DATE_EDIT_ATTEMPT_01.json.
+
+The new normal-QA Session began09:13:48.302Z. Same operation9b, CAS1 and preview
+digest were retained; Apply returned UNKNOWN/QUERY_SAME_OPERATION and same-op
+status returned404/UNKNOWN. This reaches the POST outcome path, so the current
+operation must no longer be described as NOT_SENT. No durable wire trace/count
+was preserved on failure; raw NELSON_DATE_EDIT.json remains unchanged. The run
+reservation is retained and no second submit is allowed from this result.
+
+Independent read-only09:16:23.125255Z still found rev1/Dec11 and exact receipt0.
+These observations do not establish NoCommit or absence of in-flight work.
+Core/Host owning Writer received exact operation/time diagnostics. Session local
+revoke plus refresh rejection PASS and receiver lock released, independently
+reconciled in NELSON_DATE_EDIT_RUN_02_RECONCILIATION.json. Public consumer Write
+remains untested; this was internal standard MCP QA only.
+
+Future date QA now saves its own POST invocation count before calling Backend
+and reuses the existing P5 sanitized HTTP trace (method, UUID-redacted route,
+status, duration, bounded error class). This fixes failure-path evidence loss;
+it does not reconstruct run2's missing wire evidence or permit another submit.
+No live call was made for this diagnostic change.
+
+## Consumer Read continuation A — execution blocked, independently closed
+
+Approved Gate19253117/b3e66e9d was used for the bounded A attempt. The actual
+consumer reached only the first-party email-login page; no email was entered,
+no OTP/Consent or tool call happened. A focused browser-history lookup blocked
+1328.055 seconds and returned no entries. It is no longer used. This is not a
+Backend data failure or a demonstrated client-plan restriction.
+
+Auth13b79c98 independently proves A complete closure/grant0/normal control logout
+plus negative refresh and retained runtime/config restoration. Raw controller
+FAILED_OR_UNKNOWN is preserved. A cannot be reopened. Evidence:
+acceptance/CHATGPT_ITEM_READ_ATTEMPT_A.json. Independently, a separate normal
+Session fetched the fixed P3 HTTP200/rev1/typed hashc2f962... and closed cleanly
+(acceptance/CONSUMER_BACKEND_BASELINE.json); that is not consumer Read PASS.
+
+## Live Claude window B — 1 November NZ
+
+Normal OTP, explicit Read Consent and four-tool discovery PASS. Actual raw
+`get_trip` and `list_trip_items` Responses are SERVER_CONFIRMED; the latter has
+three retained P3/P1/P6 Items, revision1, no next page. The P3 summary matches
+independent normal-Session Backend baseline fields/dates; full detail comparison
+is incomplete: one `get_trip_item` returned raw AUTH_REQUIRED before revocation.
+No retry, reconnect, foreign call or write followed that failure. Cause is not
+yet diagnosed; it is not evidence of a Claude plan restriction or extra Item scope.
+
+Auth normal DELETE returned204 at15:14:32Z and independently acknowledged fresh
+grant absence while route remained live. The one same-connection live probe
+showed a real tool Request followed by “使用此工具需要身份验证”/Connect, without
+Item response. Connect was not clicked; model waiting was stopped. This is client
+reauthentication evidence, not proven server401 or causal revocation PASS, because
+authentication had already failed before DELETE. Final independent close PASS at15:24:34Z; grant0, Hook/exact ACL and
+localhost/ASoff verified, healthy retained d8b restored, own Session revoked.
+Hook/runtime closed before deadline; final readback was later. See
+acceptance/CLAUDE_B_AUTH_CLOSED.json.
+See acceptance/CLAUDE_READ_B.json, raw TRIP/LIST Response JSON, visible texts and
+CLAUDE_REVOKE_B.png. No sensitive credential was retained.

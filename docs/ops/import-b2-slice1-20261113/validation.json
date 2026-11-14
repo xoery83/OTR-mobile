@@ -1,0 +1,22 @@
+{
+  "targetedTestFiles": 5,
+  "targetedTestsPassed": 59,
+  "uiGuard": "PASS; baseline unchanged: 473 legacy, 168 representative",
+  "scopedLint": {
+    "errors": 0,
+    "existingWarnings": 7
+  },
+  "wholeRepositoryTypecheck": {
+    "status": "EXISTING_FAILURES",
+    "unchangedErrors": [
+      "universalContinuationRuntime.ts:658 presentationTier",
+      "universalContinuationRuntime.ts:660 presentationTier",
+      "browser/auth-consent/main.tsx react-dom/client declaration"
+    ],
+    "changedSourceErrors": 0
+  },
+  "legacyCaptureLifecycleFixture": "NOT_PASS: baseline native initialization failure; temporary diagnostic changes reverted",
+  "newProviderCalls": 0,
+  "newSubmitAnalyzeSave": 0,
+  "physicalIpad": "NOT_VERIFIED"
+}

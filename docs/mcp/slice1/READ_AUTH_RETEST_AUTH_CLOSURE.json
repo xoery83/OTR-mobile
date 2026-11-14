@@ -1,0 +1,20 @@
+{
+  "source": "Auth owning-agent actual closure commentary",
+  "threadId": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "messageId": "msg_085309fc509749d9016ae7de36b1048191aafc5e85ea8bdb41",
+  "status": "AUTH_OWNING_AGENT_VERIFIED_CLOSED",
+  "issuerDenyAll": true,
+  "grantRevoked": true,
+  "controlLogoutAndRefreshNegative": "PASS",
+  "oauthAndHookDisabled": true,
+  "originalSiteRestored": true,
+  "mcpIndependentAuthSqlRerun": false,
+  "immutableFileReceipt": "READ_AUTH_RETEST_AUTH_ROUND_OUTCOME.json",
+  "notesApproved": false,
+  "applyCount": 0,
+  "independentAuthFinalSql": "READ_AUTH_RETEST_AUTH_FINAL_SQL.json",
+  "sourceFileHashVerified": true,
+  "issuerDenyAllAt": "2026-11-02T00:40:31.224564Z",
+  "controlCleanupAt": "2026-11-02T00:41:54.355Z",
+  "originalAclVerifiedAt": "2026-11-02T00:45:44.419768Z"
+}

@@ -1,0 +1,37 @@
+{
+  "eventId": "mcp-c02-s1-power-recovery-20261104-ready-001",
+  "agentId": "Lane B / MCP",
+  "packageId": "MCP-C02",
+  "capabilityId": "CAP-MCP-FAMILY-FIELDS",
+  "stepId": "C02-S1",
+  "workItemId": "MCP-C02-S1-CONTROLLED-REPLAY-20261104-001",
+  "eventType": "READY_FOR_INTEGRATION",
+  "occurredAt": "2026-11-04T06:24:08Z",
+  "status": "LOCAL_STATIC_RECOVERY_REVIEW_PASS_HOSTED_AND_CONSUMER_PENDING",
+  "commit": "f9eae9ed",
+  "evidencePaths": [
+    "docs/mcp/c02/controlled-replay-20261104/POWER_RECOVERY_RECEIPT.json",
+    "docs/mcp/c02/controlled-replay-20261104/PACKAGE.json",
+    "docs/mcp/c02/controlled-replay-20261104/FINAL_REVIEW.json"
+  ],
+  "completed": [
+    "Power recovery of10 exact original static artifacts and candidate Host",
+    "Rebuilt lost source guards; replacement normal-control explicitly new source/hash after Auth NOT_RETAINED",
+    "Persisted18 static sources, fixed new Gate/pins",
+    "Actual72guard/9timer/12control and targeted strictTS/compile/hash-chain PASS; independent NO_BLOCKER"
+  ],
+  "notCompleted": [
+    "Fresh Root2 Hosted/preimage/close qualification",
+    "New exact Owner approval covering UNKNOWN same-ID replay and possible first Create",
+    "Actual Consumer Create/APPLIED/readback",
+    "Separate Consumer Edit/Native downstream"
+  ],
+  "blocker": "New protected execution has no current authority; closed windows and original UNKNOWN are preserved",
+  "dependencyOwner": "Root2 for fresh Hosted qualification and one exact human authorization request",
+  "nextAction": "Root2 evaluates unchanged original Request; qualify current version/CAS/shutdown without activation, then request exact Owner authority once. MCP owns Consumer after lawful return.",
+  "recoveryId": "MC-POWER-RECOVERY-20261104-01-MCP",
+  "ackStatus": "SUBMITTED_NO_ACK",
+  "dashboardUpdated": false,
+  "originalOperationOutcome": "UNKNOWN",
+  "originalOperationReplayed": false
+}

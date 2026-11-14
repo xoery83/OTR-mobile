@@ -1,0 +1,28 @@
+{
+  "status": "NO_BLOCKER_MECHANICAL_LOCAL_BINDING_ONLY",
+  "reviewedAt": "2026-11-02T07:41:30.062673+00:00",
+  "candidate": {
+    "status": "UNBOUND_LOCAL_CLOSE_CANDIDATE_NOT_EXECUTABLE_PACKAGE",
+    "collectorSHA256": "34d1bdb480b3dee26457aaac02fc5ee4ae3c15aa76cad7164c32354bec3efb06",
+    "closeCandidateSHA256": "b2a289695193e0e01f900541640b046db7782d8b4aac3d6991442f1edc733e79",
+    "fixedWindow": "PENDING_MCP_SINGLE_DRI_NEW_GATE",
+    "actualDefaultBinding": "PENDING_SOFTWARE_DEPLOY_AND_FRESH_READBACK",
+    "executionIntentsPresent": false,
+    "sessionClockOrAuthorityStarted": false
+  },
+  "checks": {
+    "candidateAndCollectorSHA256": "PASS",
+    "actualSelectorExactCollector": "PASS",
+    "corruptMissingCollectorRejected": "PASS",
+    "remoteMandatoryCloseBodyByteIdenticalToPrior": "PASS",
+    "captureBeforeRestoreAndDiagnosticFailuresDoNotBlockClose": "PASS",
+    "independentlyExecutedTests": 4,
+    "executionIntentAbsent": "PASS"
+  },
+  "notTested": [
+    "New actual default/window/owner binding; placeholders remain",
+    "Hosted close/diagnostic collection",
+    "Business consumer Apply"
+  ],
+  "boundary": "Unbound non-executable candidate only; no reuse of consumed8f4 authority or identity."
+}

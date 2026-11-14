@@ -1,0 +1,93 @@
+{
+  "before": {
+    "iphone16": {
+      "trip_core_pending_intents": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "trip_core_trip_core_command_receipts": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "capture_submission_batches": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "capture_submission_inputs": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "ipad": {
+      "trip_core_pending_intents": {
+        "count": 31,
+        "sha256": "48aac298dd96ebed0d1cd6ca0f8be38fb0ab70a195f7f37ef8d02d31ab4cebc0"
+      },
+      "trip_core_trip_core_command_receipts": {
+        "count": 31,
+        "sha256": "4a6cc5834ea96f08606e92401a913f622f3164d4fc38b714ccd8c99206d4cdcd"
+      },
+      "capture_submission_batches": {
+        "count": 7,
+        "sha256": "02a76aa39eaaaa246377689ca25975dec521ed19cdcc0315a6e4c875ba26030e"
+      },
+      "capture_submission_inputs": {
+        "count": 13,
+        "sha256": "2964a4449b96ce18a9c0e51f8adb1cfd81f7a0ec0014fde7960655c3bae240e0"
+      }
+    }
+  },
+  "after": {
+    "iphone16": {
+      "trip_core_pending_intents": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "trip_core_trip_core_command_receipts": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "capture_submission_batches": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "capture_submission_inputs": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "ipad": {
+      "trip_core_pending_intents": {
+        "count": 31,
+        "sha256": "48aac298dd96ebed0d1cd6ca0f8be38fb0ab70a195f7f37ef8d02d31ab4cebc0"
+      },
+      "trip_core_trip_core_command_receipts": {
+        "count": 31,
+        "sha256": "4a6cc5834ea96f08606e92401a913f622f3164d4fc38b714ccd8c99206d4cdcd"
+      },
+      "capture_submission_batches": {
+        "count": 7,
+        "sha256": "02a76aa39eaaaa246377689ca25975dec521ed19cdcc0315a6e4c875ba26030e"
+      },
+      "capture_submission_inputs": {
+        "count": 13,
+        "sha256": "2964a4449b96ce18a9c0e51f8adb1cfd81f7a0ec0014fde7960655c3bae240e0"
+      }
+    }
+  },
+  "unchanged": {
+    "iphone16": {
+      "trip_core_pending_intents": true,
+      "trip_core_trip_core_command_receipts": true,
+      "capture_submission_batches": true,
+      "capture_submission_inputs": true
+    },
+    "ipad": {
+      "trip_core_pending_intents": true,
+      "trip_core_trip_core_command_receipts": true,
+      "capture_submission_batches": true,
+      "capture_submission_inputs": true
+    }
+  },
+  "note": "Read-only bounded SQLite checks. Auth/session tables not read; no copy/reset. New synthetic private originals and an unsubmitted iPhone draft are outside these tables."
+}

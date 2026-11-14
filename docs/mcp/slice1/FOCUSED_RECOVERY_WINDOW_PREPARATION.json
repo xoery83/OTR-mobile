@@ -1,0 +1,13 @@
+{
+  "status": "UNIQUE_PREPARATION_ADOPTED_BY_AUTH_ROOT_NO_AUTHORITY",
+  "windowId": "7cb5cd285a774df8bc71375c6890bce4",
+  "generatedBy": "MCP for no-change close-directory binding; Auth retains all issuer/session/QA operations",
+  "startsAt": null,
+  "deadline": null,
+  "otpSent": false,
+  "issuerActivated": false,
+  "editOperationId": "1d6c202d-4e1a-4be0-a3f7-e2ee158eeacf",
+  "editOperationUnchanged": true,
+  "authAdopted": true,
+  "rootNoChangeRestore": "PASS_2026-11-01T21:49:41Z"
+}

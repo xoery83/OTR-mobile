@@ -1,0 +1,53 @@
+{
+  "verdict": "NO_BLOCKER_LOCAL_GUARDED_ACTIVATION_AND_SOURCE_DELTA",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-05T01:17:41.377335+00:00",
+  "candidateCommit": "c640f29bcda363e0ce6b35c309505316fcc6edb4",
+  "packageSHA256": "91bbfc8c5fe565c3656d3991c1a0fa2a39aff154950ef022a1dbd794b473e014",
+  "activationDeltaSHA256": "a57d04b06b26d59e3fd24800e182ef85a8a8453df6268008a767ea136cb4ba97",
+  "sourceBindingReceiptSHA256": "28624a7de442f5e5a7fdbdff601cc6da0cee02a9c73c3765341189fdae4bdd3b",
+  "gateSHA256": "0a4fdc188d708fd42be384081f8b8ca9c02e0a601673696829799804aaa4ef0f",
+  "scopeSHA256": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+  "actualIndependentChecks": [
+    "Python --validate-entry-only follows original validate_binding/actualOwner/gatehash/allpins and returns before env/control-launch/Auth; AST order and synthetic noenv/noAuth fixture independently checked",
+    "Node requires privateRoot2STARTbinding exact suffix/owned0600/singlelink/nofollow/size, calls pinned adjacent Python validator then rereads unchanged bytes and verifies actual sourcePackageSHA before ownSession work",
+    "19derived source pins and three real-source guards independently PASS exact originalhuman/UNBOUND/obsolete/wrongscope/Save negatives; EMPTY/Tnull maintained",
+    "Original advance human wire1511200f and plain text unchanged from prior reviewer directread/context; no fabricated SDK/hash/questionwrapper/Root2 source",
+    "Release relay accepts only releaseReceiptSHA256, actual fixedRoot2receipt independently read+hashchecked with exact package/window/Gate/scope/actor/client/resource/EMPTY and originalT+28/+30; no callerfilled clock/readyboolean accepted",
+    "12 new local runtimegate tests independently PASS including wrongidentity/hash/expiry/future/nonempty/missingunsafe relay and direct unqualifiedmain failing beforeAuth",
+    "Two earlyStop fixtures independently PASS: pending onlyPOST aborts onFINISH and staysUNKNOWN/noRetry; FIFOsender stops while waiting reader",
+    "Connected stop checks reviewed on request/response/body/SDKresult/handoff and FIFOwait/actualreadwrite/return; original finitewindow protections retained",
+    "SDK source removes only unconditional launchfalse in favor of real Python entry+package validation; grants/session cleanup remain owning context, no browserSession/reservation/receiver/secondlogin",
+    "Gate/Scope bytes unchanged; release contract and actual source hashes verified. JSON partial/unsafe/malformed records failclosed; no privateRoot2producer action executed by reviewer"
+  ],
+  "independentDirectedTests": 14,
+  "priorStable22RerunByReviewer": false,
+  "syntheticPythonEntryFixtureRun": true,
+  "runtimeReady": false,
+  "platformExecutionApproval": false,
+  "SaveApproved": false,
+  "clockStarted": false,
+  "actualProducerAccepted": false,
+  "actualProducerRelease": null,
+  "root2ProducerAcceptanceStillRequired": [
+    "Root2 must explicitly accept/adapt ROOT2_SDK_RELEASE_CONTRACT.md SHA94c6c4dcd8ee8119f6e768b5b3a692f0f57df4e2a2009ff25420dcbdc55be2b8 to its actual fixed output schema/path; current candidate truthful actualProducerAccepted=false is not readiness",
+    "Root2 privateSTARTbinding must contain final sourcePackageSHA and original actual source/currentclose/UI/resource checks, original Python wrapper pins and current Auth/SDK source qualification; no hand-written positive substitute",
+    "Actual final SDK_RELEASE_READINESS.json must be published only from completed real activation/readbacks/dualTimers/LIVE/currentrestore and original filebinderT; referenced evidence hashes retained",
+    "Only after complete actual Root2receipt may Root2 once derive/fsync private hash-only relay; MCP ownConsent request must wait for actual producer completion, never infer ready from path existence/partialJSON",
+    "Root2 must maintain actual FINISH/REVOKE/close sequencing and current default restoration; this review does not replace final platform/currentmetadata/producer acceptance",
+    "Actual callback consumer must use qualified sameFIFO owner/deadline/stop path without emitting code/state in logs/toolresults and navigate only real originalChatGPTcallback; real consumerE2E still not tested"
+  ],
+  "notExecuted": [
+    "Root2 privatewriter",
+    "Keychain",
+    "mailAPI",
+    "Auth",
+    "OTP",
+    "Browser",
+    "Hosted",
+    "Real Consent"
+  ],
+  "reviewIsExecutionAuthority": false,
+  "packageMutation": false,
+  "historicalFullGateRerun": false
+}

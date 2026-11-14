@@ -1,0 +1,10 @@
+{
+  "windowId": "751df5929be940f7b18e4f55e584692c",
+  "containerId": "8193f3b0180014cfec3c7a9fa335d1ca9c95c7ad0e4b7c2cd77c441437568739",
+  "configSHA256": "8db9836ab8fa53b8e71c73fd6ec9f1d696018c07689db34946f18ed8d4190894",
+  "observedAt": "2026-11-02T09:16:43.203790+00:00",
+  "collectorSHA256": "34d1bdb480b3dee26457aaac02fc5ee4ae3c15aa76cad7164c32354bec3efb06",
+  "mutations": 0,
+  "logsSHA256": "6a41410d10cf149013b900833fd79b184803d71e74006cd800fe379e7d925ae9",
+  "contextEstablished": true
+}

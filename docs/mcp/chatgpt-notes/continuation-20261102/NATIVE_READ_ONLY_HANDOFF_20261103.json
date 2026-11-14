@@ -1,0 +1,46 @@
+{
+  "status": "READ_ONLY_HANDOFF_ISSUED_NATIVE_NOT_YET_REQUALIFIED",
+  "issued_at": "2026-11-02T18:17:05.102110+00:00",
+  "native_thread": "01a17101-8b2d-7240-ab67-f4c34a5d90d9",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "3616da44-0d35-4400-a739-01f1029565ea",
+  "operationId": "2777810c-24d9-4ecf-998c-9fc5dd00de34",
+  "expected_revision": 3,
+  "expected_title": "Synthetic Nelson QA lodge (unbooked)",
+  "expected_family": "P3",
+  "expected_visibility": "PRIVATE",
+  "expected_dates": {
+    "start": "2026-12-10",
+    "end": "2026-12-13",
+    "start_time": null,
+    "end_time": null
+  },
+  "expected_notes": "Synthetic QA only. No Booking/Ticket.\nSlice1 Fresh Claude Notes QA verified.\nSlice1 Fresh ChatGPT Notes QA verified.",
+  "expected_property_name": "Synthetic QA Lodge",
+  "receiptSHA256": "7dac9d3f647a4f1535cdeeca7b5bcf07312ebee3998bfb52837be25a49e447c9",
+  "cloud_verified_at": "2026-11-02T09:25:32.560378+00:00",
+  "evidence_absolute_paths": {
+    "consumer_apply": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/chatgpt-notes/continuation-20261102/ACTUAL_CONSUMER_APPLY.json",
+    "readback_summary": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/slice1/FRESH_CHATGPT_READBACK.json",
+    "acceptance": "/Users/xoery/.codex/worktrees/mcp-01-read-only/otr-mobile-canonical/docs/mcp/chatgpt-notes/continuation-20261102/ACCEPTANCE.json",
+    "full_private_sql_after": "/private/tmp/otr-mcp-slice1-fresh-20261102/ChatGPT_AFTER_1793611534059.private.json",
+    "full_private_sql_baseline": "/private/tmp/otr-mcp-slice1-fresh-20261102/ChatGPT_BASELINE.private.json"
+  },
+  "qualification": [
+    "Native must independently verify current normal-session Account UUID; nickname/old receipt is insufficient",
+    "Legitimate Pull and same-ID SQLite revision/Notes",
+    "Day Feed target and Item Detail Notes; no UI success inferred from cloud",
+    "Normal App close/reopen cold restore same ID/revision/Notes without logout or data reset",
+    "Fresh read drift requires actual report, no mutation or restoration"
+  ],
+  "prohibited": [
+    "Repeat277 or historical UNKNOWN",
+    "Borrow/transfer Session or Token",
+    "Edit oldItem or reset App data",
+    "Claim C02 downstream before a new cloud operation exists"
+  ],
+  "native_result": "PENDING_NORMAL_SESSION_UUID_VERIFICATION_AND_ACTUAL_READ",
+  "cloud_result_unchanged": "PASS_CLOSED",
+  "c02_cloud_operations": 0
+}

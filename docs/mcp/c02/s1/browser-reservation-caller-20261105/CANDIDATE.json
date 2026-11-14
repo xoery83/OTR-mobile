@@ -1,0 +1,56 @@
+{
+  "status": "LOCAL_CALLER_CANDIDATE_DEFAULT_OFF_NOT_LIVE_READY_REVIEW_PENDING",
+  "requestId": "MCP-C02-S1-FRESH-PREVIEW-QUALIFY-20261105-001",
+  "recordedAt": "2026-11-04T23:34:07.209085+00:00",
+  "authPort": {
+    "candidate": "47a3d2ee2da93cf25bc4ba699a90f082b0299cff",
+    "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/scripts/auth/registered-qa-host-session.ts",
+    "sha256": "0d91a18fab1416179daca912761034121be0556dbc81de61e79f52c450112a3b",
+    "signature": "reserveBrowserChallenge?({accountId,email,requestedAt}): {status:RESERVED_LOCK_RETAINED}",
+    "receipt": {
+      "path": "/Users/xoery/.codex/worktrees/auth-identity-delivery-20261028/otr-mobile-canonical/docs/ops/auth-c04-sync-c02-native-consume-20261105/support/MCP_C02_BROWSER_RESERVATION_PORT_CANDIDATE.json",
+      "sha256": "398fa0789f9268f8a50fe046c10499d1eaaef7d949a0e57439872cd855639d42"
+    }
+  },
+  "sourceFiles": {
+    "scripts/mcp/c02-browser-reservation.mts": "e1bde394db0e59de02d50fc6713271818ac9b414f9cfeb29613e71a70b68a38b",
+    "scripts/mcp/c02-browser-reservation.test.mts": "2a987058ce3e862e5e13ca0eff631867fe1dd9cac51768cd2df2af2313c5fe11",
+    "docs/mcp/c02/s1/browser-reservation-caller-20261105/normal-control.mts": "3d5c5a17d372f06676b364c1e51b58287b387934315c1ba21f824cd820884ddb"
+  },
+  "behavior": [
+    "Private owner700 directory and0600/nofollow/singlelink bounded JSON files; complete bytes published without replacing request/ACK",
+    "Exact window/Gate/scope/account/client/email/time binding; owner one-attempt budget consumes rejected or uncertain requests too",
+    "Owner loop polls in its existing separate process; browser callback waits synchronously maximum5sec for hash-bound ACK and cannot retry",
+    "Only real synchronous Auth port RESERVED_LOCK_RETAINED can generate success ACK; missingport UNAVAILABLE; rejected/uncertainport cannot authorize send",
+    "No unlock/delete/finish authority; no credentials/Session/OTP in request or ACK; success/unknown reservation remains retained by Auth",
+    "Module defaultsOFF; source candidate main rejects LOCAL_SOURCE_CANDIDATE_NOT_LIVE_READY unconditionally; fixed6d49 Package/static untouched"
+  ],
+  "validation": {
+    "target": "node --import tsx --test scripts/mcp/c02-browser-reservation.test.mts",
+    "tests": 20,
+    "result": "PASS_LOCAL_FIXTURES_ONLY",
+    "typecheck": "PASS scoped tsc --ignoreConfig --noEmit with nodeNext and Node types",
+    "actualAuthHostOrReservationExecuted": false,
+    "independentReview": "P2_PUBLICATION_REPAIR_PENDING_SAME_REVIEWER_RECHECK"
+  },
+  "liveBlockers": [
+    "Browser Keychain/APIreceiver branch stopped for Owner-selected manual OTP. Historical source failure remains NOT_READY; no source success inferred. Existing separate normalcontrol prerequisites unchanged.",
+    "Auth browser sender/session terminal-proof consumer missing; no lock release on UI/FINISH/logout assumption",
+    "New source candidate integration/pins and precise execution qualification not done",
+    "Native14752 resource release/isolation must be proved before any futurecontrol/OTP"
+  ],
+  "T": null,
+  "OTP": 0,
+  "API": 0,
+  "SaveApproved": false,
+  "fixedRuntimePackageChanged": false,
+  "manualModeNarrowingProposal": {
+    "path": "docs/mcp/c02/s1/browser-reservation-caller-20261105/MANUAL_OWNER_OTP_SCOPE_DELTA_PROPOSAL.json",
+    "sha256": "d3ba94350836bb43d17a2bb8e778d602c6cc83e461c974f491f10b34ff9179a0",
+    "status": "FIXED_SCOPE_BYTES_UNCHANGED_PENDING_PARENT_ROOT2_NARROWING"
+  },
+  "publicationRepair": {
+    "path": "docs/mcp/c02/s1/browser-reservation-caller-20261105/PUBLICATION_REPAIR.json",
+    "sha256": "e879b45c7bc0462af26832e38a35e5771c298441732a8c2d42c193ae20e2aa32"
+  }
+}

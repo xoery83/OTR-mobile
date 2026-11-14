@@ -1,0 +1,50 @@
+{
+  "tests": {
+    "numTotalTestSuites": 10,
+    "numPassedTestSuites": 10,
+    "numTotalTests": 158,
+    "numPassedTests": 158,
+    "numFailedTests": 0,
+    "success": true
+  },
+  "testFiles": 10,
+  "suites": [
+    "src/data/operations/universalV3Activity.test.ts",
+    "src/data/operations/universalActivityReader.test.ts",
+    "src/features/capture/UniversalCaptureResults.test.ts",
+    "src/features/capture/CaptureProgress.test.ts",
+    "src/features/capture/useUniversalCapture.test.ts",
+    "src/features/capture/UniversalV3Activity.test.ts",
+    "src/features/capture/captureActivityLifecycle.test.ts",
+    "src/features/capture/CaptureContent.test.ts",
+    "src/features/capture/CaptureComposer.test.ts",
+    "src/data/sync/syncOperationDiagnostics.test.ts"
+  ],
+  "uiGuard": {
+    "exitCode": 0,
+    "output": "> otr-mobile@0.1.0 ui:guard\n> node --import tsx scripts/ui/check.ts\n\nUI guard PASS; 473 legacy occurrences; 168 representative UI files checked without baseline forgiveness."
+  },
+  "affectedSourceLint": {
+    "exitCode": 0,
+    "output": ""
+  },
+  "diffCheck": {
+    "exitCode": 0,
+    "output": ""
+  },
+  "wholeRepoTypecheck": {
+    "exitCode": 2,
+    "output": "> otr-mobile@0.1.0 typecheck\n> tsc --noEmit\n\nbackend/src/__fixtures__/universalContinuationRuntime.ts(658,44): error TS2339: Property 'presentationTier' does not exist on type '{}'.\nbackend/src/__fixtures__/universalContinuationRuntime.ts(660,67): error TS2339: Property 'presentationTier' does not exist on type '{}'.\nbrowser/auth-consent/main.tsx(1,28): error TS7016: Could not find a declaration file for module 'react-dom/client'. '/Users/xoery/Project/otr-mobile/node_modules/react-dom/client.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/react-dom` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-dom/client';`"
+  },
+  "noProviderRequestInitiated": true,
+  "noNewSaveInitiated": true,
+  "physicalDeviceVerified": false,
+  "systemOfflineVerified": false,
+  "followUpCompatibilityCheck": {
+    "suite": "src/data/operations/universalActivityReader.test.ts",
+    "passed": 18,
+    "failed": 0,
+    "newCase": "Existing Updates callers do not opt into V3 receipt observation",
+    "totalUniqueTestsValidated": 159
+  }
+}

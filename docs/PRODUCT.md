@@ -341,7 +341,11 @@ The approved Camera entry uses the existing native picker, retained pre-submit t
 
 Owner authorized normal registered DEV Accounts with the existing Trip/Item permissions to use Trip and P1–P6 Manual Cloud Create/Edit, automatic Queue dispatch and cold recovery without a per-account QA allowlist. Existing Auth, ACL, receipt/idempotency and environment gates remain mandatory. This does not authorize Guest Adoption, Import Source/Admission, paid AI, Qualified Flight/Booking/Ticket, or unsupported optional owning fields. Legacy private local travelers require explicit sharing confirmation; attempted/UNKNOWN intent identity is immutable. See `ops/general-account-cloud-sync-20261029` for finite evidence and rollout readiness; this scope statement is not an E2E PASS.
 
-## Photo Import preprocessing — Owner decision 30 October 2026
+## Universal Import V3 images — Owner decision 10 November 2026
+
+An explicit Analyze starts AI interpretation of the supported images in the selected Import batch. V3 skips per-image on-device OCR, relevance screening, and individual continuation prompts. File integrity, supported formats, limits, Trip access, and single-dispatch protections still apply. The separate photo upload entry and legacy Import behavior keep their existing rules.
+
+## Legacy Photo Import preprocessing — Owner decision 30 October 2026
 
 Photo Import uses local OCR only for conservative RELEVANT / IRRELEVANT / UNCERTAIN relevance screening, followed by original-image vision interpretation and existing Results/Review/Admission/Core Save. OCR is not the formal P1–P6 parser or sole model input. Poor/empty OCR is UNCERTAIN; an uncertain image requires explicit AI continuation or Skip, and explicit analysis intent may bypass relevance screening without bypassing Source permissions or cost controls. Retain originals and per-input decisions; one image must not block other sources or replay completed paid work. This decision does not activate a Provider, expand budgets or grant image Source/Save authority. PDF closure remains first. See `docs/ops/universal-product-20261028/photo/PHOTO_PIPELINE_DELTA.md` for inspected code and actual qualification gaps.
 

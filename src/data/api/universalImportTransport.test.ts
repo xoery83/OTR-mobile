@@ -474,3 +474,84 @@ it("carries only a scoped missing-input identity through the Start response", as
   });
   expect(fetcher).toHaveBeenCalledOnce();
 });
+
+it("transports Local-First metadata and binary without legacy execution", async () => {
+  const account = randomUUID(), trip = randomUUID(), analysis = randomUUID();
+  const file = randomUUID(), document = randomUUID();
+  const bytes = new TextEncoder().encode("fixture-original");
+  const originalSha = createHash("sha256").update(bytes).digest("hex");
+  const { DatabaseSync } = await import("node:sqlite");
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const { createUniversalV3Intake } = await import("../../../backend/src/universalV3Intake");
+  const { initializeUniversalTaskDatabase } = await import("../../../backend/src/universalTaskBootstrap");
+  const root = await mkdtemp(join(tmpdir(), "otr-v3-native-transport-"));
+  const sql = new DatabaseSync(":memory:");
+  try {
+    const gateway = {
+      validateAccessToken: async (token: string) =>
+        token === "test-normal-auth" ? { id: account, accountClass: "NORMAL_ACCOUNT" } : null,
+      canReadTrip: async (a: string, t: string) => a === account && t === trip,
+    } as unknown as DevBackendGateway;
+    const handler = createDevBackendHandler({
+      gateway,
+      universalV3Intake: createUniversalV3Intake(initializeUniversalTaskDatabase(sql), root),
+    });
+    const fetcher = vi.fn((url: string | URL | Request, init?: RequestInit) =>
+      handler(new Request(String(url), init)));
+    const getAccount = async () => account;
+    const transport = createUniversalImportTransport(getAccount, {
+      baseUrl: "https://api.example",
+      fetchImplementation: fetcher as typeof fetch,
+      tokenProvider: async () => ({ userId: account, token: "test-normal-auth" }),
+    });
+    const context = await captureAccountRequestContext(trip, getAccount);
+    expect(await transport.startLocalFirst(context, analysis, {
+      version: "otr.import.local-first/1", tripId: trip, mode: "UNIVERSAL",
+      files: [{ fileId: file, documentId: document, length: bytes.length, sha256: originalSha, mediaType: "text/plain" }],
+    })).toEqual({ analysisId: analysis, missingFiles: [file] });
+    await transport.uploadLocalFirst(context, analysis, file, bytes);
+    expect(await transport.readLocalFirst(context, analysis)).toEqual({
+      analysisId: analysis, missingFiles: [],
+    });
+    const binary = fetcher.mock.calls.find(([, init]) => init?.method === "PUT")?.[1];
+    expect(binary?.body).toEqual(bytes);
+    expect(binary?.headers).toMatchObject({
+      "Content-Type": "application/octet-stream", "Content-Length": String(bytes.length),
+    });
+    expect(fetcher.mock.calls.every(([url]) => String(url).includes("/interpretations/intake"))).toBe(true);
+  } finally {
+    sql.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+
+it("reads the idle ordinary V3 analysis through the installed client's bounded transport", async () => {
+  const account = randomUUID(), trip = randomUUID(), analysis = randomUUID();
+  const identity = { id: account, accountClass: "NORMAL_ACCOUNT" as const };
+  const status = vi.fn(async () => null);
+  const start = vi.fn();
+  const handle = createDevBackendHandler({
+    gateway: {
+      validateAccessToken: async () => identity,
+      canReadTrip: async (id: string, t: string) => id === account && t === trip,
+      canWriteTrip: async (id: string, t: string) => id === account && t === trip,
+    } as unknown as DevBackendGateway,
+    universalV3Intake: {} as never,
+    universalV3Execution: { ordinary: true, read: status, start } as never,
+  });
+  const getAccountId = async () => account;
+  const context = await captureAccountRequestContext(trip, getAccountId);
+  const transport = createUniversalImportTransport(getAccountId, {
+    baseUrl: "https://api.example",
+    fetchImplementation: (async (url, init) => handle(new Request(url, init))) as typeof fetch,
+    tokenProvider: async () => ({ userId: account, token: "synthetic" }),
+  });
+  await expect(transport.readLocalFirstExecution(context, analysis)).resolves.toEqual({ state: "NEEDS_ACTION" });
+  expect(status).toHaveBeenCalledOnce();
+  status.mockRejectedValueOnce(Error("FIXTURE_STORE_UNAVAILABLE"));
+  await expect(transport.readLocalFirstExecution(context, analysis)).rejects.toBeInstanceOf(ApiClientError);
+  expect(start).not.toHaveBeenCalled();
+});

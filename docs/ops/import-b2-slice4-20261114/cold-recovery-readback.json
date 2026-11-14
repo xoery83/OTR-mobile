@@ -1,0 +1,13 @@
+{
+  "tripId": "a6155477-182d-4f35-a5d3-10f3d85c1b36",
+  "receiptCount": 12,
+  "itemCount": 4,
+  "activeAssociationCount": 5,
+  "all31RetainedReceiptHashesUnchanged": true,
+  "syntheticDispatches": {
+    "1e256ac9-3582-4eb5-ad8e-e26f95dadff0": 1,
+    "5e1bf829-0ba6-4891-9fb2-f03fb78cd2b0": 1,
+    "8b3ca4ad-cb26-4d26-a9e4-e924144b680b": 1
+  },
+  "realProviderCallsThisSlice": 0
+}

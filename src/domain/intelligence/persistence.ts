@@ -16,6 +16,13 @@ export const inputPinSchema = z.discriminatedUnion("kind", [
     byte_count: count,
   }),
   z.strictObject({
+    kind: z.literal("IMPORT_INTAKE"),
+    file_id: identity,
+    document_id: identity,
+    payload_sha256: digest,
+    byte_count: revision,
+  }),
+  z.strictObject({
     kind: z.literal("SOURCE"),
     source_id: identity,
     material_revision: revision,

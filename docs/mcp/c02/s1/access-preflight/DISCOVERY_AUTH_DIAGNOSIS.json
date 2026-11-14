@@ -1,0 +1,26 @@
+{
+  "status": "LOCAL_CONTRAST_PASS_NO_HOSTED_AUTHORITY",
+  "unusedTechnicalWindowId": "a2f8c128-ba79-4de4-bcf3-c98d324ffc63",
+  "runtimeStarted": false,
+  "appId": "asdk_app_6ae59a2086a481918a9d9bef984507ef",
+  "appVersionId": "asdk_app_v_6ae59a2086b08191a0c881c5c129b609",
+  "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+  "currentUIEvidence": "consumer-679c/CURRENT_AUTH_MODE.txt",
+  "observedAuth": {
+    "supported": "OAuth",
+    "used": "OAuth",
+    "accountStatus": "Requires updated authentication after prior cleanup"
+  },
+  "localEvidence": {
+    "test": "mcp/c02Execution.test.ts",
+    "focusedResult": "4 PASS; 15 unrelated skipped",
+    "anonymousInitializeToolsListToolsCall": "401 AUTH_REQUIRED with protected-resource challenge, zero Backend/confirmation calls",
+    "authenticatedSDK": "Notes7R1W / C02 8R2W, zero Backend/confirmation calls"
+  },
+  "hypothesis": "Anonymous init/list is documented for mixed auth; current UI OAuth labels do not prove a mixed connection. Do not change server auth to fix generic refresh error.",
+  "owningInterfaceGap": "NONE_PROVEN",
+  "historicalRequestEvidence": "679c lost; previous SDK/consumer Auth receipts not substitutes",
+  "next": "Fresh current-version/private-close prerequisite qualification, then one exact Owner-approved diagnostic connection/refresh with EMPTY save table; capture before close.",
+  "sourceOnlyMainIntegration": "0b0d05bf",
+  "protectedActions": 0
+}

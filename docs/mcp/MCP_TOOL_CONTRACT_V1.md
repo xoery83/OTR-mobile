@@ -1,4 +1,45 @@
+# C02-S3 local manual Place adapter — 3 November 2026
+
+`update_trip_item_fields` PLACE now supports simple MANUAL TEXT_ONLY P1/P3/P6
+label/address replacement at the unchanged normal DTO/revision. Omitted address
+retains the existing authored address; explicit null clears. Mandatory full
+legal EditBase record/provenance validation is inside execute, including callers
+without optional host guards. Source/qualified/hidden/structured place data stay
+blocked. Core reasserts the full manual place group metadata, explicitly shown
+in Preview; this is not a sparse source patch. Existing Core CAS/Receipt recovery
+and exact trusted confirmation remain required. No new Tool, Hosted activation,
+S1 profile expansion or role/Scope. See c02/s3/ACCEPTANCE.md.
+
+# C02 P3 local increment — 3 November 2026
+
+`create_trip_item.item.rooms` optionally carries up to64 canonical room tuples:
+`{room_id,category,quantity,capacity}`. IDs are stable unique UUIDs; nullable facts
+stay null. Quantity is positive room count; capacity is positive per-room capacity,
+not total guests. Non-P3 rooms are rejected. Existing requests without rooms retain
+their exact payload/digest. Property and place labels accept approved Core500.
+Material review accepts the same structured room fact and compares sets by room ID
+without changing submission array or command/confirmation hashes. Independent
+Create verification requires the complete room rows and exact child identities.
+
+New optional `P3_STAY_QA` profile only discovers P3 Create and TEXT/DATES/SCHEDULE
+Edit, read/guide/material review and operation status. No Trip create, field edit,
+batch or domain tools. Edit reads fresh full Base and rejects another family.
+Scope, Consent, trusted exact confirmation, Core ACL/CAS and original receipt gates
+remain mandatory. This source change is not Hosted activation or consumer PASS.
+Rooms-bearing Stay-details edits remain blocked on owning preservation support.
+
 # MCP Tool Contract V1 — execution draft, 31 October 2026
+
+## Item permission metadata clarification — 2 November 2026
+
+Full Core Item Details `capabilities.canEdit` reports the existing owning
+`coreCanManage` object-management predicate. It does not promise a currently
+enabled command, valid OAuth Consent, exact confirmation or a successful CAS.
+MCP preserves the returned value; it never derives permissions from an all-false
+pattern or rewrites false to true. Legacy snapshots and compact Day closed flags
+are not a fresh full Details permission result. Actual Backend authorization and
+all existing Mutation/Receipt checks remain final. The local correction and
+deployment boundary are recorded in capability-consistency/LOCAL_QUALIFICATION.json.
 
 Keep four read tools. Add create_trip/create_trip_item/update_trip_item and
 get_operation_status through existing typed Backend ports only. First Item create
@@ -32,6 +73,15 @@ confirmation host. Writes require otr.trips.write and real client identity;
 get_operation_status is read-only. Backend/confirmation ports absent means closed.
 The internal normal-session bridge is explicit QA-only, not public OAuth.
 
+A single-item preview digest binds the verified Account and exact prepared command,
+including target, operation and expected revision; it has no Session or timestamp.
+Changing Session alone does not invalidate an unchanged preview. It does not reuse
+the old grant, Consent or confirmation: APPLY needs current authority and fresh
+trusted confirmation, recovers the original receipt first, and rechecks the current
+date-edit guard and Core ACL/CAS. Changed fields/revision require review, never
+rewriting an ambiguous original operation. Batch previews additionally bind current
+duplicate observations and must follow their existing recomputation rules.
+
 Batch IDs/digests retain the same command set across failures. Possible-duplicate
 observations contribute to the batch hash; its own stable accepted targets do not
 become new duplicates on replay. A stale UPDATE warning does not hide a successful
@@ -60,6 +110,10 @@ format2 create; they never silently downgrade to legacy metadata. Write work is
 bounded to approximately50s from request start inside the60s HTTP response budget,
 so a slow accepted prefix can return PARTIAL/UNKNOWN and unsubmitted suffix.
 Real auth expiry and caller cancellation remain separate hard fences.
+If an authorized APPLY expires in flight, only UNKNOWN and the original
+caller-input-derived recovery identities survive the HTTP wrapper, alongside the
+authentication error metadata. No revision, receipt, Item, batch review or
+duplicate information is returned after expiry. Empty summaries are intentional.
 
 ## Phase2 additive field adapters — locally verified, not consumer E2E
 
@@ -94,7 +148,6 @@ by this generic schedule tool. All modes retain Core CAS/receipt/confirmation.
 The independent live-QA verifier now checks P5 typed endpoint/service/check-in
 fields and civil tuples; unsupported P2 commands fail closed. Local new-field
 tests are not a new Supabase or iPad acceptance receipt.
-
 
 Batch outputs add `review_basis=CURRENT_VISIBLE_COLLECTION_AND_UPDATE_DETAILS`
 and `review[]` with operation_id, typed proposed_change, nullable update_base and

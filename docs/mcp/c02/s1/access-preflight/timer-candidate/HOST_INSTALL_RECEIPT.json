@@ -1,0 +1,20 @@
+{
+  "status": "MCP_C02_DEFAULT_CLOSED_TIMER_FILES_INSTALLED_VERIFIED",
+  "observedAt": "2026-11-03T04:11:27.965726+00:00",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "host": "178.105.151.143",
+  "packageCommit": "fb7818a1",
+  "sourceManifest": "docs/mcp/c02/s1/access-preflight/timer-candidate/INSTALL_PACKAGE.json",
+  "installedFiles": 8,
+  "privateDirectoryMode": "0700",
+  "fileMode": "0600",
+  "timerLauncherSHA256": "46201b36642bb43291679e80b36c3b2901b7bc3812d650d7b18787056aea89c0",
+  "configCasSHA256": "d5f9fe28a86eeca307308e2401c7e323c989924972bc87b52f2fbb194eb3b010",
+  "currentContainerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+  "currentImage": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+  "health": "healthy",
+  "systemdUnits": "ABSENT",
+  "issuerArmed": false,
+  "qaSessionStarted": false,
+  "consumerApplyAuthorized": false
+}

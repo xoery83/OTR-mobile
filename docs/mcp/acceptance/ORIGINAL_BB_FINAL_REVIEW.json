@@ -1,0 +1,22 @@
+{
+  "status": "NO_BLOCKER_FINITE_QA_ORIGINAL_EDIT_RECOVERY",
+  "reviewer": "mcp_independent_review",
+  "consumerManifest19FilesVerified": true,
+  "sameOriginalOperationSingleNewlyAuthorizedApply": true,
+  "formalAppliedRevision": 2,
+  "independentUniqueItemAndReceiptAndActorCasHashes": "PASS",
+  "consumerProjectionVersusNormalBackend": "RECURSIVE_MATCH_NOT_FULL_BACKEND_OBJECT_EQUALITY",
+  "nativeAutomaticDayExactItemDetailsColdAndOwnClose": "PASS",
+  "continuousLatencyOrPrivateRealtimeQualified": false,
+  "safePostRevoke401MetadataRetainedBeforeRemoval": true,
+  "soleRevokeCausalityIsolated": false,
+  "completeCloseBeforeHardDeadline": true,
+  "historicalWOrBFailureDiagnosedByThisSuccess": false,
+  "consumerNewExpiryUnknownRenderingQualified": false,
+  "consumerDuplicateReplayTestScheduled": false,
+  "consumerCrossAccountWriteTestInThisWindow": false,
+  "readOnlyReviewerActions": true,
+  "credentialsOrPrivateSidebarFound": false,
+  "consentScreenshotRecreated": false,
+  "testsRerunByReviewer": false
+}

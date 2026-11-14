@@ -38,7 +38,10 @@ export function isImportOriginalPreviewAvailable() {
 }
 // Called only with the repository's scoped, verified original, never a caller-provided URI.
 export async function previewImportOriginal(
-  original: { document: ImportDocument; bytes: Uint8Array },
+  original: {
+    document: Pick<ImportDocument, "sha256" | "byteCount" | "originalFilename">;
+    bytes: Uint8Array;
+  },
   isCurrent: () => boolean,
   displayName = original.document.originalFilename ?? "",
 ): Promise<void> {

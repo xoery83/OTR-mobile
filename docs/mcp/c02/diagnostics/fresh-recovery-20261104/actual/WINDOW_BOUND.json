@@ -1,0 +1,11 @@
+{
+  "status": "C02_WINDOW_BOUND_NOT_ACTIVATED",
+  "directory": "/private/tmp/otr-auth-mcp-slice1-b0b7c1c04f18432eb255112f5449c5c0",
+  "startsAt": "2026-11-04T04:38:06.366Z",
+  "expiresAt": "2026-11-04T05:08:06.366Z",
+  "issuerPlanSHA256": "d40c31edbad398e9cabfeb64cbbf6ffe20b1fad50c413b49679568df6944993c",
+  "executionGateSHA256": "413ea28dcd503cb7643039524a5a54df428fbfe4b5e838b62ce2bbcc6688a182",
+  "protectedActions": 0,
+  "confirmationsEmpty": true,
+  "resetAllowed": false
+}

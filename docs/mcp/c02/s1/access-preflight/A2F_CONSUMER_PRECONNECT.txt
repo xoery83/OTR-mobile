@@ -1,0 +1,39 @@
+插件设置
+OTR DEV QA
+OTR DEV QA
+OTR DEV QA
+查看详情
+卸载
+已连接的账户
+L账
+Leon 的 OTR DEV QA 账户
+Primary
+需要更新身份验证
+重新连接
+连接另一个账户
+关于
+关联日期
+2026年10月31日
+开发者
+Leon Lee
+版本
+dev mode
+URL
+https://api-dev.xoery.art/mcp
+支持的授权方式
+OAuth
+使用的授权方式
+OAuth
+版本 ID
+asdk_app_v_6ae59a2086b08191a0c881c5c129b609
+应用 ID
+asdk_app_6ae59a2086a481918a9d9bef984507ef
+审核状态
+DEVELOPMENT
+管理应用
+应用名称
+编辑
+应用描述
+编辑
+删除应用
+删除应用

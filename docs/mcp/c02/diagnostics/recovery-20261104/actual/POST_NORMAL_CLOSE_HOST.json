@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-11-04T02:31:04.278374+00:00",
+  "containerId": "6ff91d045a19da4cd5ba1136f1d6e41ddfee978fc285f17620e21ec00069f5ba",
+  "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "healthy": "healthy",
+  "configSHA256": "db384a682e77d83b3b6aad4f0d0c6d1c81464050686bb5d51e7f043017100c68",
+  "timers": {
+    "normal": "Result=success\nId=otr-mcp-c02-623a2797978a4e05ac85c7ec5a83e15b-normal.timer\nActiveState=inactive\n\nResult=success\nExecMainStatus=0\nId=otr-mcp-c02-623a2797978a4e05ac85c7ec5a83e15b-normal.service\nActiveState=inactive\n",
+    "hard": "Result=success\nId=otr-mcp-c02-623a2797978a4e05ac85c7ec5a83e15b-hard.timer\nActiveState=active\n\nResult=success\nExecMainStatus=0\nId=otr-mcp-c02-623a2797978a4e05ac85c7ec5a83e15b-hard.service\nActiveState=inactive\n"
+  },
+  "lockAvailable": true,
+  "rootFiles": [
+    "c02-close.py",
+    "close-current.json",
+    "universal_runtime_close.py"
+  ]
+}

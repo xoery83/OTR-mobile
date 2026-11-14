@@ -1,0 +1,119 @@
+{
+  "receipt": {
+    "status": "SANITIZED_REQUEST_TRACE_PRESERVED",
+    "records": 14,
+    "sha256": "aaea29dbdb572aa7c09ccc53ebb4ef7c8647690b7a37058bc242e974fc280357"
+  },
+  "trace": {
+    "windowId": "b08a466d29f348a896176c563646f417",
+    "candidateId": "5c62e6f3c6e931859ef319f6bf675bb4e6d2f7b79f74eefa6c21bc530882c4f0",
+    "since": "2026-11-03T21:09:39.542000+00:00",
+    "scope": "ACCEPTED_LOGGER_RECORDS_ONLY_NOT_ALL_HTTP",
+    "tailLimit": 200,
+    "tailMayBeTruncated": true,
+    "records": [
+      {
+        "timestamp": "2026-11-03T21:20:03.471942214Z",
+        "requestId": "52292b89-b281-4708-b490-007e9333f799",
+        "status": 200,
+        "durationMs": 2003,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-03T21:20:09.265143693Z",
+        "requestId": "7ed3f2c5-0747-4fde-b2d7-989ffa356ea9",
+        "status": 200,
+        "durationMs": 1406,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-03T21:20:09.282227500Z",
+        "requestId": "cce9f2af-c45f-437d-9bbf-ae718f8cb8de",
+        "status": 200,
+        "durationMs": 1381,
+        "tool": "get_otr_operating_guide"
+      },
+      {
+        "timestamp": "2026-11-03T21:20:19.508094412Z",
+        "requestId": "38472827-ecfb-417c-af51-bd70ab35cf0a",
+        "status": 200,
+        "durationMs": 3734,
+        "tool": "list_trips"
+      },
+      {
+        "timestamp": "2026-11-03T21:20:19.557386051Z",
+        "requestId": "72526236-7677-42a0-8ccd-ccfa57040f58",
+        "status": 200,
+        "durationMs": 3638,
+        "tool": "get_trip"
+      },
+      {
+        "timestamp": "2026-11-03T21:20:25.006514612Z",
+        "requestId": "f74068a3-1b95-4178-b581-749765a3cc71",
+        "status": 200,
+        "durationMs": 9268
+      },
+      {
+        "timestamp": "2026-11-03T21:20:32.119223036Z",
+        "requestId": "ac6e1197-d4cc-4a6e-994d-220ff47d4c24",
+        "status": 401,
+        "durationMs": 16137,
+        "tool": "list_trip_items",
+        "errorCode": "AUTH_REQUIRED"
+      },
+      {
+        "timestamp": "2026-11-03T21:20:32.405455153Z",
+        "requestId": "e4d8b8ed-37a5-4cb7-919a-36cc72adb0b0",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-03T21:20:50.332013780Z",
+        "requestId": "6b2afe33-3084-4df5-9b6c-5f56ecc96b69",
+        "status": 200,
+        "durationMs": 21708
+      },
+      {
+        "timestamp": "2026-11-03T21:20:53.452918901Z",
+        "requestId": "a5478dc2-7fe1-4001-8420-476012558149",
+        "status": 200,
+        "durationMs": 17115,
+        "tool": "list_trip_items",
+        "errorCode": "BACKEND_UNAVAILABLE"
+      },
+      {
+        "timestamp": "2026-11-03T21:21:24.348759560Z",
+        "requestId": "aa5d3fc5-239b-40fd-addc-ae5854692be7",
+        "status": 200,
+        "durationMs": 18161,
+        "tool": "list_trip_items"
+      },
+      {
+        "timestamp": "2026-11-03T21:21:35.202560988Z",
+        "requestId": "cef02867-8d33-4080-902e-f2d83e766fdc",
+        "status": 401,
+        "durationMs": 1543
+      },
+      {
+        "timestamp": "2026-11-03T21:21:35.490759330Z",
+        "requestId": "a1eb15cb-7c6c-4ca9-9318-42a976b1c642",
+        "status": 401,
+        "durationMs": 1
+      },
+      {
+        "timestamp": "2026-11-03T21:21:38.788995428Z",
+        "requestId": "0dc0344f-5d09-492d-82a2-9fef9f707ad4",
+        "status": 200,
+        "durationMs": 1434,
+        "tool": "create_trip_item",
+        "responseProof": {
+          "version": "otr.mcp.response-proof/1",
+          "kind": "PREVIEW",
+          "inputSHA256": "d0092f662a03971a1ca24b0ed07961f50572a46abd112347242f62d72bf589f7",
+          "outputSHA256": "ff5d986caccc96d946588865d90672ed0b90c3f3b12fba7185b60038a1434c0f",
+          "previewDigest": "58c72759ffa84e8100d510e5d42a744195d8a04c9478980f3c031cdfdc59f4dc"
+        }
+      }
+    ]
+  }
+}

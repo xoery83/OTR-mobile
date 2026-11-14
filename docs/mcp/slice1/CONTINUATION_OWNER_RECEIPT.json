@@ -1,0 +1,12 @@
+{
+  "status": "OWNER_APPROVED_FRESH_FINITE_QA_NOT_NOTES_APPLY",
+  "gateSHA256": "ef7c8ba62833e3dbffd479af395dff4d7211b7036cb2b54dcc3c0704b8244aff",
+  "originalGateSHA256": "530937ac86ad3f5fd6825677b405f7405d9d693ae4bd9787ea82ace57892c801",
+  "ownerReply": "同意",
+  "replyContext": "批准本次有限续测，并同步 Auth/Root；Claude先行，每轮最多30分钟，实际Notes另行确认",
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "recordedAt": "2026-11-01T17:26:42.283990+00:00",
+  "activation": false,
+  "notesConfirmation": false,
+  "deadline": null
+}

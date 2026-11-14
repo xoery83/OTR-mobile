@@ -1,0 +1,35 @@
+{
+  "windowId": "eed8fa4b93044f31a5d03244bea1051b",
+  "candidateId": "87d378c77ffe000420e2de2fbb48eb7a79a854119d92ebb06d203759901326f2",
+  "since": "2026-11-03T21:45:14.740000+00:00",
+  "scope": "ACCEPTED_LOGGER_RECORDS_ONLY_NOT_ALL_HTTP",
+  "tailLimit": 200,
+  "tailMayBeTruncated": false,
+  "records": [
+    {
+      "timestamp": "2026-11-03T22:01:19.029115563Z",
+      "requestId": "c6f333f2-ed17-457c-b6ab-b08e78e3dbda",
+      "status": 401,
+      "durationMs": 59
+    },
+    {
+      "timestamp": "2026-11-03T22:01:19.310960458Z",
+      "requestId": "173d4d10-f65d-4d9b-9a9b-631c6c309006",
+      "status": 401,
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2026-11-03T22:01:44.415820122Z",
+      "requestId": "f0c61a57-5ff5-4bb6-9a11-a69fb7c9e021",
+      "status": 200,
+      "durationMs": 23126,
+      "tool": "create_trip_item"
+    },
+    {
+      "timestamp": "2026-11-03T22:02:17.326748694Z",
+      "requestId": "da9c60ad-51c4-40b1-94b8-9b59d5d5e41b",
+      "status": 200,
+      "durationMs": 25730
+    }
+  ]
+}

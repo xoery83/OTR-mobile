@@ -1,0 +1,56 @@
+{
+  "status": "CLOSED_BLOCKED_CUA_AUTOMATIC_REVIEW_INFRASTRUCTURE_CONSUMER_NOT_STARTED",
+  "windowId": "a2f8c128-ba79-4de4-bcf3-c98d324ffc63",
+  "gateSHA256": "d0f576f6356bf70cd2388c9c934e38ec4563addbc0ca7a8e7b970e8bfd0c19c6",
+  "actualT": "2026-11-03T07:50:13.502Z",
+  "originalNormalClose": "2026-11-03T08:18:13.502Z",
+  "originalHardClose": "2026-11-03T08:20:13.502Z",
+  "actualDefaultRestored": "2026-11-03T08:01:52Z",
+  "actualIssuerDenied": "2026-11-03T08:02:08.051671+00:00",
+  "timerReset": false,
+  "localSoftware": {
+    "candidate": "2b71f8c5",
+    "independentReview": "4877dd1a_NO_BLOCKER",
+    "independentNewC02Tests": "16PASS",
+    "frozenHostOfflineSdk": "PASS_NO_DEV_NETWORK"
+  },
+  "hosted": "MINIMUM_LOADER_DEPLOYMENT_AND_EMPTY_RUNTIME_QUALIFIED_AND_CLOSED",
+  "normalQaSession": "PASS_OWN_SESSION_AND_LOGOUT_REFRESH_REJECTION",
+  "browserAutomation": "TWO_READONLY_ORIGIN_AUTO_REVIEW_TIMEOUTS_NO_DECISION_NOT_SAFETY_DENIAL",
+  "consumer": {
+    "reconnect": "NOT_RUN",
+    "otp": "NOT_RUN",
+    "consent": "NOT_RUN",
+    "toolRefresh": "NOT_RUN",
+    "guideTripP3Reads": "NOT_RUN",
+    "createPreview": "NOT_RUN",
+    "apply": "NOT_RUN_UNAUTHORIZED",
+    "newBusinessOperation": null,
+    "newRevision": null,
+    "supabaseBusinessReadback": "NOT_RUN_NO_SUBMISSION",
+    "native": "NOT_RUN_NO_SUBMISSION"
+  },
+  "cleanup": {
+    "selected835Grant": "ABSENT_INDEPENDENTLY_VERIFIED_WITH_LIVE_ROUTE",
+    "ownSession": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "qaLock": "RELEASED",
+    "default": "INDEPENDENT_HEALTHY_FINITE_SELECTORS_ABSENT",
+    "issuer": "INDEPENDENT_DENY_ALL_VERIFIED",
+    "console": "ROOT_ACTUAL_UI_VERIFIED_OAUTH_OFF_SITEURL_LOCALHOST3000_DCR_UNCHANGED",
+    "ownTimers": "ALL4_INACTIVE",
+    "sharedWriter": "RELEASED"
+  },
+  "logger": {
+    "acceptedRecords": 0,
+    "limitation": "Not all HTTP. Empty accepted logger records is not proof of zero HTTP."
+  },
+  "evidence": {
+    "A2F_FINAL_DEFAULT_CLOSED.json": "48f173567a7b932a254b315069a7b1b7b35a59f9a32a3a8d953e5dfc23b76278",
+    "A2F_TIMERS_DISARMED.json": "9d29ba06e5de930554182c227dda780116efa389044be19ea065c76c2cf3519b",
+    "A2F_ISSUER_CLOSED.json": "694dedc12039329eaace98df33eeee62e362867a615b02cfd0a86325cac3b95f",
+    "A2F_ISSUER_CLOSED_READBACK.json": "e4f5645d804a1bd8b005a9d652dc062fba13cdc1a92a40de6b93c68bd2d10e5f",
+    "A2F_MCP_REQUEST_TRACE.json": "f4892102d78899b4f61febc907b2ea34840fe6fee6a4bbb3f01a6f826f705107"
+  },
+  "rootCauseBoundaries": "Pre-OTP localKeychain sandbox failure recovered only after proofOTP/AuthAPI/Session0. Current CUA timeout does not establish ChatGPT refresh/Auth/backend failure. Prior679c root cause remains unproven.",
+  "next": "Check browser automation read-only origin observation works before a separately approved unused finite window. This closed a2f/T_D cannot restart; no business or historical UNKNOWN replay."
+}

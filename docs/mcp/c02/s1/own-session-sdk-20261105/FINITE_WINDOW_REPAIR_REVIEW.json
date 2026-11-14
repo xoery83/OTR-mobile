@@ -1,0 +1,47 @@
+{
+  "verdict": "NO_BLOCKER_LOCAL_FINITE_WINDOW_REPAIR",
+  "reviewer": "/root/fresh_gate_review",
+  "recordedAt": "2026-11-05T00:54:27.419556+00:00",
+  "candidateCommit": "be598084c769fd5134a3c92f76be74d9679a100c",
+  "repairReceiptSHA256": "9000468bf0db1ec72747109c6a8d1fa17e53f53eab64c749adbba23ef4eb68a3",
+  "originalReviewSHA256": "dc10938803c2627a4af83ba6728460c632185adc728bd49a91bd7e6cef163719",
+  "packageSHA256": "b7fdde4f04eb135131366edd9584cb3500b3ba7072b1c7806b7bfe8de4ff5d1b",
+  "candidateSHA256": "9a0b78e59bdf1823a98f268ca759e24e01c2d18546498a69d73d5c0e149c3a13",
+  "gateSHA256": "0a4fdc188d708fd42be384081f8b8ca9c02e0a601673696829799804aaa4ef0f",
+  "scopeSHA256": "7f86d8d643f298a90f0130bc578a13ec1ffacfd4111cc84298221fa8b0cb71b4",
+  "resolvedFinding": "Immutable qualified normalClose now bounds network wait/response/body/SDK result and actual FIFO delivery, not only pre-dispatch Session checks.",
+  "actualIndependentChecks": [
+    "Connected runtime diff reviewed: RequestBoundary min10000/remaining normalClose plus current callback; post-await checks after ownerRead/setSession/details/approval/handoff",
+    "Original normalClose is supplied through SDK handoff to actual control sendOwnCallback; safe preview exposes same notAfter for reader qualification",
+    "Writer/reader enforce same notAfter on initial admission, each wait, actualwrite/read and URLreturn; postwrite expiry is failure/UNKNOWN not an unsent claim",
+    "Only original single consentPOST budget remains; attemptedPOST crossing cutoff cannot return success/callback or authorize retry",
+    "Five focused regression tests run independently PASS: slowGET cutoff, POST cutoff UNKNOWN/nohandoff/POST1, Abort-ignoring transport bounded, delayed-reader writer cutoff, actualread-aftercutoff noURLreturn",
+    "19source pins/input/threeUNBOUND+oldsourceReject/EMPTY/Tnull/launchdisabled checker PASS",
+    "Gate and Scope byte-identical to original reviewedSDK candidate; all candidate source hashes match",
+    "Root2c1b087 scope interpretation hash matches and remains prior-target scope-only, repaired package explicitly still needs delta qualification"
+  ],
+  "independentTestsRun": 5,
+  "prior17RerunByReviewer": false,
+  "author22AndScopedTypecheck": "Author evidence only, not relabeled independent22/typecheck",
+  "liveReadiness": false,
+  "platformExecutionApproval": false,
+  "SaveApproved": false,
+  "clockStarted": false,
+  "remainingActivationConditions": [
+    "Exact repaired-source Root2 scope/current qualification; originalc1b087 is not runtime authority",
+    "Actual human source/context mapping and independently verified mechanical threeguard source binding, without fabricated SDK-specific human text",
+    "Explicit reviewed activation delta removing unconditional SDK_SOURCE_CANDIDATE_NOT_LIVE_READY and repinning actual derivedsource/SDK/Auth dependencies only after current platform/resource/close/livewaiter readiness",
+    "Actual Root2release/hash-verified immutableSDK_WINDOW_RELEASE and private callback consumer delivery/E2E remain required"
+  ],
+  "notExecuted": [
+    "Keychain",
+    "mailAPI",
+    "Auth",
+    "OTP",
+    "Browser",
+    "Hosted",
+    "Real OAuth approval"
+  ],
+  "historicalFullGateRerun": false,
+  "packageMutation": false
+}

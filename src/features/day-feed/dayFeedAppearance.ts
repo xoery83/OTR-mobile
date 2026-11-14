@@ -21,3 +21,15 @@ export function dayFeedPhaseColor(date: string, today: string | null, colors: Ui
         ? colors.surface
         : colors.dayFuture;
 }
+
+export function dayFeedPreviousColor(
+  date: string,
+  displayedDates: readonly string[],
+  today: string | null,
+  colors: UiColors,
+) {
+  const index = displayedDates.indexOf(date);
+  return index > 0
+    ? dayFeedPhaseColor(displayedDates[index - 1], today, colors)
+    : colors.tripIntroduction;
+}

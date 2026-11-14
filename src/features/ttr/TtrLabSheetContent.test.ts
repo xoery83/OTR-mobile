@@ -270,3 +270,5 @@ it("UNKNOWN zero geometry keeps mode choice eligible, explicit SAME_LOCATION dis
   f.render();
   expect(f.button("Walking").disabled).toBe(true);
 });
+
+vi.mock("expo-symbols", () => ({ SymbolView: "i" }));

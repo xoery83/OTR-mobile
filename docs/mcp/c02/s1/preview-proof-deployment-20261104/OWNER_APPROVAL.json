@@ -1,0 +1,14 @@
+{
+  "sourceThreadId": "01a18663-48af-7b80-9fac-408bfa98e2fb",
+  "source": "Direct human user message in MCP chat; Root2 must read original before protected execution",
+  "observedAt": "2026-11-03T20:12:20.169349+00:00",
+  "ownerText": "批准 df0ee056 / 包 80d85682… 的默认关闭软件部署及必要回滚，同步 Root2 执行。不包含 OAuth、新窗口或保存授权，保存前把核对后的具体预览给我确认。",
+  "packageCommit": "df0ee056",
+  "packageSHA256Prefix": "80d85682",
+  "scope": "Default-closed software deployment and necessary rollback only",
+  "oauth": false,
+  "newWindow": false,
+  "save": false,
+  "handoff": "First send automatic approval review timed out; permitted single retry delivered successfully",
+  "recipientThreadId": "01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232"
+}

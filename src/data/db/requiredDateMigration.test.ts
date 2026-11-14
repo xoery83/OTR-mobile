@@ -57,7 +57,7 @@ it("normal registry upgrades64→65 without changing old payload/history and reo
       .all();
     const payload = sql.prepare("SELECT * FROM local_capture_payloads").get();
     await runMigrations(db);
-    expect(await getSchemaVersion(db)).toBe(65);
+    expect(await getSchemaVersion(db)).toBe(79);
     expect(
       sql
         .prepare("SELECT * FROM schema_migrations WHERE id<=64 ORDER BY id")

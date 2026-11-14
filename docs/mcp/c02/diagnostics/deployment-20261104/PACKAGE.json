@@ -1,0 +1,39 @@
+{
+  "request_id": "MCP-C02-S1-DIAGNOSTIC-DEPLOY-20261104-001",
+  "source_request_id": "MCP-C02-S1-CORE-TRACE-20261104-001",
+  "status": "PREBUILT_PAIRED_SOFTWARE_HOSTED_QUALIFIED_AWAITING_REVIEW_AND_OWNER",
+  "source_main": "7c1301c6a2ac7bdfe22e3c00f31f747db2810977",
+  "host_source": "978f02009544188b844870331aa1aa81b1b5d82b:mcp/c02Host.ts",
+  "artifacts": {
+    "c02-host.mjs": "cffee00c11190fade908fedc02a00c5e9f3762878cff1f7a66f933f7f1f09e92",
+    "server-capture.mjs": "6a2297667e6919d3f9da294e9e2dae2d4c7db707fa2aaf363d38c1947e456ff0",
+    "c02-close.py": "e877ac52f26ec765a24ad920fbb71297fe5ffd7db995bb5f186c2b5c2567262f",
+    "c02-close.test.py": "76fb5bacfe66d4d648ae0b4d4a882eee9bba55e560c0082629da435c56c0ac8b"
+  },
+  "artifact_directory": "/private/tmp/otr-mcp-c02-diagnostic-bundle-20261104",
+  "source_review": "../WRITE_STAGE_REVIEW.json",
+  "current_host_preimage": "22ba62b13070fcc67a29d60e311aa415383d0522dd81cf6bb8e7592594f3f569 / image0e7586fc; fresh runtime config CAS required",
+  "image": "sha256:c826636ed6578c8a6a0f224de61e1f14e134830e4c4d680a1a907a1592cfc22f",
+  "local_checks": [
+    "Actual bundled createC02ConfiguredHost() returns null without config",
+    "6 bundled close collector tests PASS",
+    "Existing source qualification67Backend+19C02+6collector and types/lint/build retained"
+  ],
+  "deployment_scope": [
+    "Only paired Capture/Host binaries and qualified close collector tooling",
+    "Default closed; all existing runtime configuration/mounts preserved by fresh CAS",
+    "Retain current software default rollback container and exact config",
+    "Smoke and independent readback; close path check; release short resource lock"
+  ],
+  "authority": "NOT_APPROVED_FOR_DEPLOYMENT; no OAuth/Issuer activation, finite window, Consent or Apply authorized",
+  "unknown": "a8c1e142-19c4-4d53-9d8e-fae4ad3ff616 remains UNKNOWN; no blind replay/new ID",
+  "root2_return_requirements": [
+    "Fresh current CID/image/config/mount hashes and source compatibility",
+    "Any actual resource conflict and return trigger",
+    "Pinned default-closed prebuilt image and rollback/close qualification",
+    "Existing lawful deployment authority or exact missing authorization"
+  ],
+  "next": "Complete independent package review and Root2 qualification; then ask Owner only for missing precise software deployment authorization",
+  "plan_sha256": "691b49b74eef67aa6971c65a661369b3cf93e8b4fbf190d88f125594914c6999",
+  "gate_sha256": "202d3b3578f40ff2bddb44199c31f24f03fd8f8124393c56bfe2af4472051747"
+}

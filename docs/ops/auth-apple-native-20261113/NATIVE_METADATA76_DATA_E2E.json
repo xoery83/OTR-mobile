@@ -1,0 +1,38 @@
+{
+  "status": "NATIVE_DATA_COLD_READBACK_PASS_UI_POLISH_PENDING",
+  "clientSource": "864e4453",
+  "backendSource": "f650ce2bec7f7e4cb790b48f360c65bcead15085",
+  "image": "sha256:f8862b0a70f797479fc6ec5e938f87b78a265bf626119d4dfe311ad5e97fdfa4",
+  "bundleId": "art.xoery.otr",
+  "teamId": "3K49Z2Q5X7",
+  "sqliteVersion": 76,
+  "sameOriginalAccount": "f155d314-2ee4-4dae-a3ac-0fca5464e58e",
+  "originalTrip": "faa0ea2b-9729-49b6-8ab7-db924df05e4d",
+  "adoptionReplay": false,
+  "personOperation": "22875a73-5ea2-43a5-9446-e3572cae5813",
+  "personId": "7313cc83-d4c4-4fff-9f64-260970051f97",
+  "personState": "unlinked; no Account inferred or invitation accepted",
+  "metadataOperation": "0164a1da-bd3c-4a8b-9126-31c6fcfc3673",
+  "metadataRevision": "0 -> 1",
+  "metadataOnlyFieldChanged": "name",
+  "nativeCold": {
+    "appleReauthorization": false,
+    "tripName": "Apple Guest QA 20261113 Verified",
+    "personCount": 1,
+    "originalP1Name": "Apple Guest Walk",
+    "schedulePath": "Cold relaunch -> original Trip -> Schedule -> shown 2026-11-14 -> original P1 23:24"
+  },
+  "remaining": [
+    "Top Edit and readonly notice UI consistency patch under review",
+    "Formal Invite is not evidenced by Add Traveler; current Native contract is synthetic preview"
+  ],
+  "privateArtifactHashes": {
+    "otr-apple-metadata76-packaged-guard.json": "20c52edd4beaeac093d8eb4c812d8c1530d6bd74e47081431713890e43040868",
+    "otr-apple-metadata76-open-recovered.json": "be0a19bb75280e379c3c02e104d736ee954f4761840dc3e7617396fd625e8f61",
+    "otr-apple-metadata76-add-result.json": "022d693e00b03afee5a5103bc1ce8e5bc822dd831c4c20d4be23772fbf7ba378",
+    "otr-apple-metadata76-details-result.json": "651ace58b2615f8b2a07c139c650ed44a727a07deb0ecafaf6241fb95a1983f2",
+    "otr-apple-metadata76-cold-open.json": "a380cb2e78fafc9394177bf476fc74a1b22937d8feabe7e2317771c3c69b62dd",
+    "otr-apple-metadata76-cold-trip.json": "100d41209bb9873b331f60e8aaeff0e6ba566a45f0d55dbec0e6946e3ec8c905",
+    "otr-apple-metadata76-day-selected.json": "653c33e79a59f1bdf5142a2ae7fc5d56ee766e26457fb4ae1ae04ac38ee936bc"
+  }
+}

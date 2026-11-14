@@ -1,0 +1,94 @@
+{
+  "status": "CLOSED_CONSUMER_OAUTH_PASS_TOOL_REFRESH_BLOCKED_NO_PREVIEW_OR_APPLY",
+  "recorded_at": "2026-11-03T05:28:53.630508+00:00",
+  "windowId": "679c81a463474879884992440106c9d1",
+  "fresh_chat": "https://chatgpt.com/c/6ae96915-3554-83ec-ae14-d06b25c700c6",
+  "consumer": {
+    "ordinary_task_sends": 1,
+    "synthetic_files": [
+      "confirmation.txt",
+      "follow-up.txt"
+    ],
+    "developer_docs_or_tool_names_supplied": false,
+    "cached_catalog": {
+      "read": 7,
+      "write": 1,
+      "write_names": [
+        "update_trip_item"
+      ]
+    },
+    "refresh_before_reconnect": "FAILED_CANNOT_UPDATE_APP",
+    "browser_otp_requests": 1,
+    "otp_verify": "PASS_NORMAL_LOGIN",
+    "consent_first_click": "AUTO_REVIEW_REJECTED_EDIT_SCOPE_NOT_EXPLICIT",
+    "additional_direct_owner_approval": {
+      "question_call_id": "call_a771682195cc4b41a3f5a726d0df2e15",
+      "answer": "批准该 OAuth Scope 授予；仍不批准保存",
+      "scope": "Current679c QAReadWriteOAuthScope only; no ApplySave"
+    },
+    "consent_after_approval": "PASS_UI_RETURNED_PRIMARY_NOW_CONNECTED",
+    "refresh_after_reconnect": "FAILED_CANNOT_UPDATE_APP",
+    "original_chat_result": "UNABLE_TO_LOAD_RESPONSE",
+    "actual_guide_or_trip_readback": "NOT_VERIFIED",
+    "formal_create_preview": "NOT_OBTAINED",
+    "canonical_apply": 0,
+    "business_operation_ids": []
+  },
+  "own_grant_cleanup": {
+    "normal_delete_status": 204,
+    "disposition": "ACKNOWLEDGED",
+    "independent_get_selected835_absent": true
+  },
+  "own_control_cleanup": {
+    "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "clientId": "83504d3f-59d4-43fd-99b1-bebc54c40f7d",
+    "secretsRecorded": false,
+    "phase": "NORMAL_CONTROL_SESSION_CLEANUP_PASS",
+    "observedAt": "2026-11-03T05:05:54.738Z",
+    "status": 204,
+    "disposition": "ACKNOWLEDGED",
+    "result": {
+      "status": "PASS",
+      "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "tripId": "eb3a3e70-fe4d-4cff-81f8-9945bc804f28",
+      "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+      "runId": "7884fc2d-1bf4-4120-9d76-15f97b79b9fe",
+      "journal": "/private/tmp/otr-hosted-otp-qa/registered-native04/run-AG8eM1/run.json"
+    }
+  },
+  "own_journal": {
+    "runId": "7884fc2d-1bf4-4120-9d76-15f97b79b9fe",
+    "otpRequestAttempts": 1,
+    "ownSessionCleanup": "PASS_LOCAL_SCOPE_REFRESH_REVOKED",
+    "actionCompleted": true,
+    "status": "PASS"
+  },
+  "qa_lock_released": true,
+  "browser_normal_session_cleanup": "Existing Consent UI awaits repository.close/local signOut before navigation; successful callback observed. No separate browser refresh-rejection probe; do not conflate with control-session proof.",
+  "root_close": {
+    "issuer_deny_all_verified": "2026-11-03T05:09:14.139Z",
+    "default_restored": "2026-11-03T05:09:32.614Z",
+    "containerId": "3def29127f2244685a1c934421f07f34b9a7c872fd72ae7c301f6134e65de430",
+    "image": "sha256:fbc245d5ac9831346b98b1a2f63c71b0cee8c4e56e38c194024fdc5e8e62a377",
+    "healthy": true,
+    "finiteConfigAbsent": true,
+    "timers": "DISARMED",
+    "console": {
+      "oauth": "OFF",
+      "siteURL": "http://localhost:3000",
+      "DCR": "OFF_RETAINED"
+    },
+    "shared_writer": "RELEASED",
+    "evidence_basis": "Root explicit close report; raw final receipt requested"
+  },
+  "diagnostic_limit": "Root confirmed candidate6f8 and Docker json log removed with no saved MCP_QA_REQUEST stdout. Original records unrecoverable. Earlier pathname-based zero counts withdrawn; actual final tools/list response UNKNOWN. React418 concurrent evidence only.",
+  "mcp_owned_issue": "Task sent before fresh catalog qualification; corrected in CONSUMER_DISCOVERY_RECOVERY.md. Node/disarm runtime failures fixed with independent source reviews.",
+  "secrets_or_otp_in_artifacts": false,
+  "historical_unknown_retried": false,
+  "source_only_log_repair": {
+    "status": "LOCAL_REVIEW_PASS_NOT_DEPLOYED",
+    "closeSHA256": "e2f45d0492a455d60edfcc87283049a4f096033a6d149dfcf777ed1debb52c81",
+    "behavior": "Tail200 current-candidate accepted logger summaries before original restore; no payload/Token/URL;private0600 exclusive artifact;5sec bound; failure still restores",
+    "limits": "Cannot recover679c or prove zero HTTP requests. Not a general event journal."
+  }
+}

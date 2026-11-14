@@ -1,0 +1,9 @@
+{
+  "bundleIdentifier": "art.xoery.otr",
+  "result": "PROCESS_COLD_RELAUNCH_PASS",
+  "previousPid": 74426,
+  "newPid": 74439,
+  "sessionUiReadback": "OWNER_CONFIRMED_STILL_SIGNED_IN_SAME_ACCOUNT_WITHOUT_REAUTH",
+  "ownerFirstLogin": "SUCCESS_REPORTED_IN_THIS_CHAT",
+  "hideMyEmail": "OWNER_CONFIRMED_SELECTED"
+}

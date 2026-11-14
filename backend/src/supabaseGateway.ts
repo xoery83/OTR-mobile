@@ -2685,7 +2685,13 @@ function buildLedgerExpenseCreateResponse(
     deletedAt: null,
     createdAt: now,
     updatedAt: now,
-    participants: input.participants,
+    // Unnamed People remain identified by their real member ID, never an invented name.
+    participants: input.participants.map((participant) => ({
+      ...participant,
+      displayNameSnapshot: participant.displayNameSnapshot.trim()
+        ? participant.displayNameSnapshot
+        : participant.memberId,
+    })),
     splits: input.splits,
     valuation,
     paymentRecords: [],
@@ -4073,7 +4079,11 @@ export function resolutionEnvelope(
   };
 }
 
-function typedExpenseError(message?: string) {
+function typedExpenseError(
+  error: { message: string; code?: string } | null | undefined,
+  stage: string,
+) {
+  const message = error?.message;
   if (!message) return;
   for (const code of [
     "REVISION_CONFLICT",
@@ -4104,7 +4114,18 @@ function typedExpenseError(message?: string) {
       "The typed command or covered conflict scope is invalid.",
     );
   }
-  mapFinancialEvidenceError(message);
+  try {
+    mapFinancialEvidenceError(message);
+  } catch (failure) {
+    if (failure instanceof BackendError) throw failure;
+    // Keep only an allowlisted code for request-correlated diagnostics, never DB text or values.
+    const databaseCode = /^(?:[A-Z0-9]{5}|PGRST[0-9]{3})$/.test(error?.code ?? "")
+      ? error!.code
+      : null;
+    throw new Error("Supabase Dev financial evidence operation failed.", {
+      cause: { stage, databaseCode },
+    });
+  }
 }
 
 export async function readExpenseConflictChain(
@@ -4230,7 +4251,7 @@ export async function executeExpenseCommand(
     reason_value: input.auditReason,
     resolution_value: resolution,
   });
-  typedExpenseError(replay.error?.message);
+  typedExpenseError(replay.error, "expense_replay");
   if (replay.data) {
     if (replay.data.error)
       throw new BackendError(
@@ -4294,7 +4315,7 @@ export async function executeExpenseCommand(
           receiptRevision: envelope.causalBaseReceipt?.canonicalRevision ?? null,
         }),
       );
-    typedExpenseError(causal.error?.message);
+    typedExpenseError(causal.error, "expense_causal_base");
     const serverBase = (causal.data as LedgerExpenseDto | null) ?? historical;
     const stale =
       (serverBase?.revision ?? envelope.observedServerRevision) !== current.revision;
@@ -4515,7 +4536,7 @@ export async function executeExpenseCommand(
     rate_snapshot_value: rateSnapshot,
     resolution_value: resolution,
   });
-  typedExpenseError(result.error?.message);
+  typedExpenseError(result.error, "expense_execute");
   if (result.data?.error)
     throw new BackendError(
       409,

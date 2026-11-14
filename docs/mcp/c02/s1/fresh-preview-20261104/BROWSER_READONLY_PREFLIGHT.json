@@ -1,0 +1,15 @@
+{
+  "status": "PASS_EXISTING_CHATGPT_QA_PAGE_READONLY",
+  "browser": "Chrome Person1 extension",
+  "browserId": "1",
+  "tabId": "1962067522",
+  "qaUrl": "https://chatgpt.com/c/6aea3362-3100-83ec-99a8-adaf738f4a26",
+  "evidence": "cua.getTab successful AXWebArea and composer visible after refreshed browser-ID discovery; no page interaction",
+  "oldBrowserId4": "Unavailable after power recovery; not an Auth/Gateway error",
+  "newFreshChat": "NOT_RUN",
+  "oauthConsent": "NOT_RUN",
+  "toolRefreshGuideTripRead": "NOT_RUN",
+  "pageMessagesAreHistoricalNotCurrentAuthority": true,
+  "privateSidebarOrRawConversationPersisted": false,
+  "authorityActivated": false
+}

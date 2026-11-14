@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "device": "00008103-00113914020B401E",
+  "bundle": "com.xoery.otrmobile.ipadqa",
+  "build": 132,
+  "tripId": "cc44a705-6f43-41e0-a2f9-16f334b2a6b2",
+  "itemId": "11fdaec9-3305-4db0-a146-be78823fcf74",
+  "path": "normal exact-ID p3-detail route after open --relaunch",
+  "checkin": "2026-12-12",
+  "checkout": "2026-12-13",
+  "participants": "Only me",
+  "evidence": "consumer-cold-detail-state.json",
+  "edit": "UNKNOWN; no retry; current UI retains accepted create dates",
+  "observedAt": "2026-11-01T02:11:30.499267+00:00",
+  "scope": "read-only; no login/session reset, network toggle or item mutation"
+}

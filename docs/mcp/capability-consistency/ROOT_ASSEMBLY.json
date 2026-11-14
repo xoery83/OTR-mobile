@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_EXACT_WRAPPER_SDK_ONLY_READY_NOT_DEPLOYED",
+  "commit": "ac44e091",
+  "sourceCount": 51,
+  "changedSDKInputs": [
+    "mcp/guide.ts",
+    "mcp/server.ts"
+  ],
+  "otherSDKInputsPreserved": 49,
+  "wrapperSHA256": "833734b830542680724a5bcd6a0cfb73fb262080ac2fca14f3c11bf790c0891f",
+  "oldSDK_SHA256": "45ff3aee01cc1213a1f78d2dcb2bff2d7d1029ca3ea3508f96824ee92aa7c2f6",
+  "sdkSHA256": "6fda006774c4b43d0fd339f5b2099c0815d3fe6a442cfc782370999d63b78fb4",
+  "oldRuntimeSHA256": "416c7a22c564f0bb5891908a137a2b75ddeedbe25ceca70a14750a0262713c94",
+  "oldRuntimeByteExactRebuild": true,
+  "runtimeSHA256": "26421003533f9a84431e5844cff2ffbbb1620b2dcf83b972b664de111784a010",
+  "wrapperBuildGraphPreserved": true,
+  "wrapperBuildInputCount": 48,
+  "baselineCaptureSHA256": "fa90e74706a907de045480cb5c9a9bb56b7e210008434f6edba6fb3f75b885c1",
+  "captureRebuilt": false,
+  "p3PrebuiltImageChanged": false,
+  "deployment": false,
+  "activation": false,
+  "newAccess": false,
+  "providerCalls": 0
+}
