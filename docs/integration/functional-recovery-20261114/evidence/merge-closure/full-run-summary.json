@@ -1,0 +1,50 @@
+{
+  "candidate": "08ad06c9d7391027a27798695e4027ab7f38e491",
+  "command": "vitest run --maxWorkers=2",
+  "localSocketsAllowed": true,
+  "files": 905,
+  "passed": 11964,
+  "failed": 24,
+  "pending": 162,
+  "failedFiles": [
+    {
+      "file": "backend/src/universalMixedBTaskReservation.test.ts",
+      "message": "ENOENT: no such file or directory, open '/Users/xoery/Project/otr-mobile-import/lane-c-imp-c01-txt-shortest-20261105/docs/ops/lane-c-imp-c01-txt-shortest-20261105/C01_B_QA158_OWNING_INPUTS_20261106.json'",
+      "failedTests": []
+    },
+    {
+      "file": "src/features/day-feed/render.test.ts",
+      "message": "",
+      "failedTests": [
+        "composes actual production P1/P2/NOW without any supplemental fixture fields",
+        "P1 Browse, Focus, Immersive and close dispatch the correct depth",
+        "NOW ticks never set Focus and explicit collapse remains deselected",
+        "F1 A1/A3/TC13: mixed historical P1/P2 keeps order, identities and planned state",
+        "F1 A1/A2/B7: Browse is compact and P1/P2 Focus retains the subtle theme outline",
+        "F1 A3/B5: P1/P2 rails share width for normal and enlarged text",
+        "F1 B7: long multilingual title keeps full identity and unbounded Focus in both themes",
+        "Immersive dismissal restores nonzero scroll and keeps manual Focus/date across NOW ticks and enrichment",
+        "switching Focus between P1/P2 never leaves two active Focus rows",
+        "Android restores the captured offset even without a native Modal dismissal event",
+        "DL1 uses production NOW/P1 and retains Trip/date/Focus across Immersive and nonzero scroll return",
+        "DL1 controls switch bounded dates and Trips using the same P2 renderer in either theme",
+        "DL2 source selection uses one Feed, retains fixture context and withholds prior Account data immediately",
+        "DL4 Stay renderer uses shared Focus/Immersive, typed details and nonzero scroll return; missing renderer falls back",
+        "G2 Flexible empty header opens Immersive directly; Choice and Item share Focus and scroll return",
+        "dispatches current synthetic TTR intent to owning Sheet Content and keeps Trip/date on close",
+        "suspends Choice Focus, blocks background interaction, replaces snapshots without remounting and restores Focus/scroll",
+        "accepts rapid revisions and rejects stale callbacks across Account/Trip/date/generation and A\u2192B\u2192A",
+        "consumes host prop replacements, preserves Item Focus through My/Group and clears lost Item access without resurrection",
+        "same-day Rental Return retains its own Focus/Immersive endpoint and nonzero scroll return",
+        "production renderer chain opens both same-day roles into one Rental detail without granting unavailable actions",
+        "normal P1 first body tap visibly focuses, richer details opens and closes into the same focused scroll",
+        "P1 displays known estimated minute and named place without presenting a resolved rail",
+        "accepted Sparse Flight stays a Flight in Browse, Focus and Immersive without guessed airport/time facts"
+      ]
+    }
+  ],
+  "mcp": {
+    "passed": 203,
+    "failed": 0
+  }
+}

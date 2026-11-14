@@ -1,0 +1,10 @@
+{
+  "candidate": "08ad06c9d7391027a27798695e4027ab7f38e491",
+  "requestSHA256": "1cda374cdb8f8886212a5a63568ac84f305e31441deccf6d8b61905f96386695",
+  "status": "ALL_FIXED_INPUTS_MATCH",
+  "hostPreimageReadOnly": true,
+  "stageExecuted": false,
+  "releaseExecuted": false,
+  "copiedExistingOperationalDriver": true,
+  "driverProductSourceModified": false
+}

@@ -1,0 +1,35 @@
+{
+  "status": "ISOLATED_CANONICAL_IDENTITY_FIX_PASS",
+  "network": "none",
+  "devWrites": 0,
+  "originalWireSHA256": "b621dda8276925a29b12286a0645f8d0eb1e9664eef2e93c87472e5555b7c585",
+  "originalWireUnchanged": true,
+  "originalIdempotencyKeyUnchanged": true,
+  "originalIntentDisplayNameSnapshot": "",
+  "preparedFallback": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+  "canonicalOnlyFieldChanged": "entity.participants[0].displayNameSnapshot",
+  "firstDisposition": "APPLIED",
+  "sameWireSecondExecuteSameReceipt": true,
+  "sameWireReplaySameReceipt": true,
+  "expenseCount": 1,
+  "typedReceiptCount": 1,
+  "amountAndSplitsUnchanged": true,
+  "receipt": {
+    "commandId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+    "expenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+    "commandType": "CREATE",
+    "disposition": "APPLIED",
+    "operationId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+    "idempotencyKey": "ledger-idempotency_mwfnz7vm_umzru4w06b",
+    "intentSequence": 1,
+    "canonicalRevision": 1
+  },
+  "actualFunctionSHA256": {
+    "ledger_create_expense_4a_pre_settlement_participation": "287b6157f5a873ce27416ee162a6b8c1d3ad1c73266655cb7406dbb0d19db7e6",
+    "ledger_create_expense_4a_without_economic_date": "5c97f133d94e4e2a559742783b55130668f534c736f744482eb2e0f4e1b9af1c",
+    "ledger_create_expense_4a": "f2477cef8a2ac18f789ad12444dee53919524e3a55c798f68fef346d51021660",
+    "ledger_replay_expense_v2": "61feb1f746955d663c62f3797bc051c346e4e45504ce793813226c86531d753e",
+    "ledger_execute_expense_v2": "40c467397d76f6cc2c7b79ca88a7e77f0ede0103e8cf9a83e947fe980ae57146"
+  },
+  "ownedFixtureRemoved": true
+}

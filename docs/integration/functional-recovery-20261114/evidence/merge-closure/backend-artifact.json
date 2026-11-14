@@ -1,0 +1,14 @@
+{
+  "source": "08ad06c9d7391027a27798695e4027ab7f38e491",
+  "image": "sha256:427428016a5736ebb9f374d5f86772e7675e6ce0020290ee452e516490db1bdc",
+  "architecture": "amd64",
+  "runtimeBase": "sha256:f8862b0a70f797479fc6ec5e938f87b78a265bf626119d4dfe311ad5e97fdfa4",
+  "serverSHA256": "81007f5b4751a003525c4496dad31abe7fb3e8a363806b668664baed83c3b3af",
+  "captureSHA256": "19a4f3e39be14ad0d8e344549631bdd4708be69e3782b376a3ab1d5096f39909",
+  "bundlesUnchangedSince34aa0d9c": true,
+  "isolatedHealth": 200,
+  "network": "none",
+  "realCredentials": false,
+  "smokeContainerRemoved": true,
+  "devDeployed": false
+}

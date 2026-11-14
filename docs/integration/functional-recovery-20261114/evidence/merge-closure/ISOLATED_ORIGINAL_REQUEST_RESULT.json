@@ -1,0 +1,218 @@
+{
+  "status": "ISOLATED_ORIGINAL_WIRE_REPRODUCED",
+  "network": "none",
+  "devWrites": 0,
+  "originalWireSHA256": "b621dda8276925a29b12286a0645f8d0eb1e9664eef2e93c87472e5555b7c585",
+  "serverExpenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+  "actualFunctionSHA256": {
+    "ledger_create_expense_4a_pre_settlement_participation": "287b6157f5a873ce27416ee162a6b8c1d3ad1c73266655cb7406dbb0d19db7e6",
+    "ledger_create_expense_4a_without_economic_date": "5c97f133d94e4e2a559742783b55130668f534c736f744482eb2e0f4e1b9af1c",
+    "ledger_create_expense_4a": "f2477cef8a2ac18f789ad12444dee53919524e3a55c798f68fef346d51021660",
+    "ledger_replay_expense_v2": "61feb1f746955d663c62f3797bc051c346e4e45504ce793813226c86531d753e",
+    "ledger_execute_expense_v2": "40c467397d76f6cc2c7b79ca88a7e77f0ede0103e8cf9a83e947fe980ae57146"
+  },
+  "results": [
+    {
+      "case": "ORIGINAL_EMPTY_NAME_DATE_ONLY",
+      "returnCode": 3,
+      "sqlState": "23514",
+      "error": "new row for relation \"expense_participants\" violates check constraint \"expense_participants_display_name_snapshot_check\"",
+      "context": "ERROR:  23514: new row for relation \"expense_participants\" violates check constraint \"expense_participants_display_name_snapshot_check\"\nDETAIL:  Failing row contains (c02ea242-33b4-577e-a325-def35524fec6, 285ffde2-a74c-4876-993e-b763cb457632, 320d4936-4a7c-4767-b655-0a447fcc4e06, , null, 0, 2026-11-14 01:44:55.469894+00).\nCONTEXT:  SQL statement \"insert into public.expense_participants (\n    expense_id, journey_id, member_id, display_name_snapshot,\n    household_id_snapshot, display_order\n  )\n  select\n    (entity ->> 'id')::uuid,\n    target_journey,\n    (participant.value ->> 'memberId')::uuid,\n    participant.value ->> 'displayNameSnapshot',\n    nullif(participant.value ->> 'householdIdSnapshot', '')::uuid,\n    participant.ordinality::integer - 1\n  from jsonb_array_elements(entity -> 'participants') with ordinality as participant(value, ordinality)\"\nPL/pgSQL function ledger_create_expense_4a_pre_settlement_participation(uuid,uuid,text,text,jsonb) line 72 at SQL statement\nPL/pgSQL function ledger_create_expense_4a_without_economic_date(uuid,uuid,text,text,jsonb) line 16 at assignment\nPL/pgSQL function ledger_create_expense_4a(uuid,uuid,text,text,jsonb) line 7 at assignment\nPL/pgSQL function ledger_execute_expense_v2(uuid,uuid,uuid,jsonb,text,bigint,jsonb,text,jsonb,jsonb,jsonb) line 158 at assignment\nSCHEMA NAME:  public\nTABLE NAME:  expense_participants\nCONSTRAINT NAME:  expense_participants_display_name_snapshot_check\nLOCATION:  ExecConstraints, execMain.c:2033\n",
+      "successResponse": null
+    },
+    {
+      "case": "ISOLATED_NONEMPTY_NAME_DATE_ONLY",
+      "returnCode": 0,
+      "sqlState": null,
+      "error": null,
+      "context": null,
+      "successResponse": {
+        "entity": {
+          "id": "c02ea242-33b4-577e-a325-def35524fec6",
+          "title": "Recovery Synthetic Expense",
+          "splits": [
+            {
+              "method": "EQUAL_PERSON",
+              "memberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+              "weightUnits": null,
+              "originalMinor": 100,
+              "percentageUnits": null,
+              "settlementMinor": 100,
+              "roundingAdjustmentMinor": 0
+            }
+          ],
+          "category": "other",
+          "original": {
+            "minor": 100,
+            "scale": 2,
+            "currency": "NZD"
+          },
+          "revision": 1,
+          "createdAt": "2026-11-14T01:42:44.530Z",
+          "deletedAt": null,
+          "journeyId": "285ffde2-a74c-4876-993e-b763cb457632",
+          "updatedAt": "2026-11-14T01:42:44.530Z",
+          "valuation": {
+            "id": "ab6ec271-19d3-476e-90a2-fd15f98ade9d",
+            "policy": "SAME_CURRENCY",
+            "reason": null,
+            "original": {
+              "minor": 100,
+              "scale": 2,
+              "currency": "NZD"
+            },
+            "settlement": {
+              "minor": 100,
+              "scale": 2,
+              "currency": "NZD"
+            },
+            "rateSnapshotId": null,
+            "paymentRecordId": null
+          },
+          "occurredAt": "2026-11-14",
+          "auditEvents": [
+            {
+              "id": "5e747616-6456-4a29-9459-3fa6307d48f5",
+              "reason": null,
+              "revision": 1,
+              "createdAt": "2026-11-14T01:42:44.530Z",
+              "eventType": "CREATED",
+              "expenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+              "actorUserId": "00000000-0000-4000-8000-000000000001",
+              "actorMemberId": null,
+              "changedGroups": [
+                "FINANCIAL_CORE",
+                "DESCRIPTIVE"
+              ]
+            }
+          ],
+          "description": null,
+          "economicDate": "2026-11-14",
+          "participants": [
+            {
+              "memberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+              "displayNameSnapshot": "Synthetic Owner",
+              "householdIdSnapshot": null
+            }
+          ],
+          "payerMemberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+          "businessStatus": "ACCEPTED",
+          "paymentRecords": [],
+          "creatorMemberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+          "settlementParticipation": "INCLUDED"
+        },
+        "receipt": {
+          "commandId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+          "expenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+          "commandType": "CREATE",
+          "disposition": "APPLIED",
+          "operationId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+          "idempotencyKey": "ledger-idempotency_mwfnz7vm_umzru4w06b",
+          "intentSequence": 1,
+          "canonicalRevision": 1
+        },
+        "revision": 1,
+        "serverId": "c02ea242-33b4-577e-a325-def35524fec6",
+        "updatedAt": "2026-11-14T01:42:44.530Z",
+        "idempotentReplay": false
+      }
+    },
+    {
+      "case": "ISOLATED_NONEMPTY_NAME_ISO",
+      "returnCode": 0,
+      "sqlState": null,
+      "error": null,
+      "context": null,
+      "successResponse": {
+        "entity": {
+          "id": "c02ea242-33b4-577e-a325-def35524fec6",
+          "title": "Recovery Synthetic Expense",
+          "splits": [
+            {
+              "method": "EQUAL_PERSON",
+              "memberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+              "weightUnits": null,
+              "originalMinor": 100,
+              "percentageUnits": null,
+              "settlementMinor": 100,
+              "roundingAdjustmentMinor": 0
+            }
+          ],
+          "category": "other",
+          "original": {
+            "minor": 100,
+            "scale": 2,
+            "currency": "NZD"
+          },
+          "revision": 1,
+          "createdAt": "2026-11-14T01:42:44.530Z",
+          "deletedAt": null,
+          "journeyId": "285ffde2-a74c-4876-993e-b763cb457632",
+          "updatedAt": "2026-11-14T01:42:44.530Z",
+          "valuation": {
+            "id": "ab6ec271-19d3-476e-90a2-fd15f98ade9d",
+            "policy": "SAME_CURRENCY",
+            "reason": null,
+            "original": {
+              "minor": 100,
+              "scale": 2,
+              "currency": "NZD"
+            },
+            "settlement": {
+              "minor": 100,
+              "scale": 2,
+              "currency": "NZD"
+            },
+            "rateSnapshotId": null,
+            "paymentRecordId": null
+          },
+          "occurredAt": "2026-11-14T00:00:00.000Z",
+          "auditEvents": [
+            {
+              "id": "5e747616-6456-4a29-9459-3fa6307d48f5",
+              "reason": null,
+              "revision": 1,
+              "createdAt": "2026-11-14T01:42:44.530Z",
+              "eventType": "CREATED",
+              "expenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+              "actorUserId": "00000000-0000-4000-8000-000000000001",
+              "actorMemberId": null,
+              "changedGroups": [
+                "FINANCIAL_CORE",
+                "DESCRIPTIVE"
+              ]
+            }
+          ],
+          "description": null,
+          "economicDate": "2026-11-14",
+          "participants": [
+            {
+              "memberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+              "displayNameSnapshot": "Synthetic Owner",
+              "householdIdSnapshot": null
+            }
+          ],
+          "payerMemberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+          "businessStatus": "ACCEPTED",
+          "paymentRecords": [],
+          "creatorMemberId": "320d4936-4a7c-4767-b655-0a447fcc4e06",
+          "settlementParticipation": "INCLUDED"
+        },
+        "receipt": {
+          "commandId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+          "expenseId": "c02ea242-33b4-577e-a325-def35524fec6",
+          "commandType": "CREATE",
+          "disposition": "APPLIED",
+          "operationId": "ledger-operation_mwfnz7vm_g0z2dtlug3",
+          "idempotencyKey": "ledger-idempotency_mwfnz7vm_umzru4w06b",
+          "intentSequence": 1,
+          "canonicalRevision": 1
+        },
+        "revision": 1,
+        "serverId": "c02ea242-33b4-577e-a325-def35524fec6",
+        "updatedAt": "2026-11-14T01:42:44.530Z",
+        "idempotentReplay": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "testedCandidate": "08ad06c9d7391027a27798695e4027ab7f38e491",
+  "nativeBuildSource": "08ad06c9d7391027a27798695e4027ab7f38e491",
+  "productFilesCompared": 1014,
+  "productMismatches": [],
+  "nativeBuildSucceeded": true,
+  "binarySHA256": "4991ed71ee6205339a2ba547c0443bab22a8eb59421cc49a7f8cf1e85c1abbb6",
+  "bundleSHA256": "449ad1b1cb468becfe5e81dede96d5f27e938ffcada28773c512af9d4d994919",
+  "installedInPlace": true,
+  "dataContainer": "C6CFCC26-50FA-46FB-A973-9734995B6D3C",
+  "privateFiles": 9,
+  "privateFilesUnchanged": true,
+  "mergePush": false,
+  "protectedSharedDevOperation": false,
+  "productionChanged": false,
+  "providerCalls": 0
+}

@@ -1,0 +1,27 @@
+{
+  "executionId": "49144d1ea43f472981c156c5d52722f6",
+  "project": "tuqigdxrvrerfewsxqgm",
+  "candidateImage": "sha256:427428016a5736ebb9f374d5f86772e7675e6ce0020290ee452e516490db1bdc",
+  "sourceCommit": "08ad06c9d7391027a27798695e4027ab7f38e491",
+  "effects": {
+    "sqlWrites": 0,
+    "providerCalls": 0,
+    "businessWindowOpened": false
+  },
+  "sqlOrder": [],
+  "archive": {
+    "path": "/private/tmp/otr-main-recovery-release-20261114/candidate-image.tar.gz",
+    "bytes": 211126284,
+    "sha256": "26876e66a1377a16ab9ee80580044957c6bb6b711fe06c94b2fbcaaa1ae44d0a"
+  },
+  "artifactPins": {
+    "release.py": {
+      "path": "/private/tmp/otr-main-recovery-release-20261114/packet/release.py",
+      "sha256": "2f86448b19244ffb4923a0a3c793be94a48c8f3f0d1dafefe1cbb293960340be"
+    },
+    "deploy-plan.json": {
+      "path": "/private/tmp/otr-main-recovery-release-20261114/packet/deploy-plan.json",
+      "sha256": "403d0bc319abeb8da3b157f04fafd8e9b0c52588e2d324e7e9235a11dd6535c6"
+    }
+  }
+}

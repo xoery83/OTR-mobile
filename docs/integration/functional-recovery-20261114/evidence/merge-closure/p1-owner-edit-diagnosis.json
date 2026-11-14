@@ -1,0 +1,21 @@
+{
+  "actor": "00000000-0000-4000-8000-000000000001",
+  "trip": "bdc65c02-2526-4990-9331-9c5359c73ec9",
+  "item": "03d37648-13b7-8619-9835-4326733dcca3",
+  "family": "P1",
+  "ownerSameAsActor": true,
+  "revision": 2,
+  "visibility": "PRIVATE",
+  "localCreateIntentOrReceiptFound": false,
+  "observedBefore": "Details readable; edit disabled",
+  "coreContract": "coreCanManage + assert baseVector revision; SET_ITEM_TEXT normal MANUAL supported",
+  "rootCause": "manualPlanRepository.freshAcceptedItem omitted P1",
+  "patch": "same existing fresh accepted eligibility + P1 Source temporal protection",
+  "sqlOrPermissionChange": false,
+  "originalItemSaveExecuted": false,
+  "observedAfter": "Edit button enabled; editor opens original fields; cancel returns to same Day Feed",
+  "afterTitle": "Phase A Workshop",
+  "afterRevision": 2,
+  "itemPendingIntentsAfterCancel": 0,
+  "sourceCommit": "08ad06c9d7391027a27798695e4027ab7f38e491"
+}

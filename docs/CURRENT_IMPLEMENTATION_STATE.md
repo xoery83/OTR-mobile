@@ -4,7 +4,7 @@
 
 **Full Functional Recovery IN PROGRESS / Main Merge and Push HOLD.** Owner withdrew the four-lane GO after discovering missing Native configuration and functional regressions. Test Suite PASS must not be treated as Product Functional Integrity PASS. Do not merge or push until recovery evidence supports GO and Owner approves.
 
-Active worktree `/Users/xoery/Project/otr-mobile-import/integration-four-lane-20261114`, branch `codex/four-lane-integration-20261114`. Integrated base `5a5ca447`; product recovery checkpoints `8297ab8e`, `95345e4d`, latest product `5c28077e`, fixture maintenance `8bd49f26`. Main last independently observed `ec282ce6`; old local main `5648818e` is stale. No Main merge/push or Production operation in this stage.
+Active worktree `/Users/xoery/Project/otr-mobile-import/integration-four-lane-20261114`, branch `codex/four-lane-integration-20261114`. Integrated base `5a5ca447`; product recovery checkpoints `8297ab8e`, `95345e4d`, latest candidate `08ad06c9`, including product fixes `65b0cf65` and test-port maintenance `34aa0d9c`. Main last independently observed `ec282ce6`; old local main `5648818e` is stale. No Main merge/push or Production operation in this stage.
 
 ## Restored and actually checked
 
@@ -19,17 +19,17 @@ Active worktree `/Users/xoery/Project/otr-mobile-import/integration-four-lane-20
 
 ## Actual remaining runtime defect
 
-Normal synthetic NZD1 Expense `ledger-operation_mwfnz7vm_g0z2dtlug3` returned503/BACKEND_UNAVAILABLE (request `1984cc0a-d2b0-4cfb-ad66-de31c3325e64`). Original local row/operation retained; no new operation or manual resubmit. Root2's independent PG read found no Expense/receipt at that instant, **not proof of retry safety**. Existing deployed Backend is healthy `f8862b0a` / source `f650ce2b`. Its generic error path discarded the original exception, and the bounded log window has no original error. Direct Actor/member/settings/replay-function prerequisites exist.
+Expense503 root cause is now proven in isolated PostgreSQL using the frozen original request and actual DEV function definitions: empty canonical participant display snapshot violates `expense_participants_display_name_snapshot_check` (23514). Both owning Person/Profile names are absent; date-only occurredAt is accepted. `65b0cf65` falls back only the prepared canonical display snapshot to the real stable member ID; original payload/key/money/splits are unchanged. Isolated first APPLIED plus same-key execute/replay preserve one Expense/Receipt. **Shared DEV remains unchanged; live Receipt/readback/cold closure requires one specific DEV deployment/recovery authorization.** Do not recreate the Expense or original operation.
 
-Minimal source diagnostic patch in `888a1b4b` retains only allowlisted RPC stage/database code, correlated by existing requestId; no raw DB text/values/token, no permission or HTTP contract change.84 relevant checks pass. **Backend patch not deployed in this audit**; no invented SQL root cause, no blind replay. Current runtime defect remains unresolved.
+Original operation `ledger-operation_mwfnz7vm_g0z2dtlug3`, key `ledger-idempotency_mwfnz7vm_umzru4w06b`, derived Expense `c02ea242-33b4-577e-a325-def35524fec6`. Candidate amd64 image `sha256:427428016a5736ebb9f374d5f86772e7675e6ce0020290ee452e516490db1bdc`; rollback `f8862b0a…` / source f650ce2b. Exact request/recovery bounds in Consolidated Merge Gate Report. No SQL migration required.
 
-## Test health — explicit limits
+Old Trip actual Actor/Owner/Parent/core read are valid. Same-scope metadata qualification was being cleared on every refresh; candidate retains it only for identical Actor/Trip/generation, clears on real failure, and distinguishes loading. Full Native original Trip editor, Currency and Cover selectors reopened successfully; canceled without data mutation.
 
-Initial905 files:11993 tests,11616PASS/216FAIL/161 original Pending. Original216 clustered into173 infrastructure,31 historical assertion/fixture,2 product bugs,10 pending investigation; every failed case remains in `failure-root-causes.json`.
+## Test health — final source candidate 08ad06c9
 
-Latest **per-file merged evidence**, not a new single-run full PASS:11912PASS/34FAIL/161Pending;4 files still fail during import. Original216:182 now pass,34 remain (old Day Feed rendering harness32, architecture boundary2). No tests/assertions deleted, no new skip or enlarged timeout.10 new failures under full parallel load passed with the same timeout at lower concurrency. Native presentation port maintenance reopened75 assertions; do not count their mocks as actual Native/Provider verification.
+Same-SHA full run: **11964 PASS / 24 FAIL / 162 existing conditional Pending**, 905 files (903 passed /2 failed). The24 assertions are exactly reproducible on current Main using the same FlatList test harness; no new candidate failure. One failed file is an absent pinned external QA158 fixture (no assertions executed), not a PASS. Three other original import failures now load. 162 includes161 prior Pending plus one already-declared PG fixture condition now visible after its import fix; zero new skips, deleted checks or enlarged timeouts.
 
-MCP separate config384PASS. UI guard/scoped lint pass. Whole-repo typecheck remains exactly3 pre-existing issues (universalContinuationRuntime.ts658/660; browser/auth-consent/main.tsx react-dom/client declaration), no new errors. Full Native build succeeds. These facts do not establish whole-product integrity.
+MCP explicit selector203PASS/0FAIL. Architecture5PASS. UI guard/scoped lint PASS. Typecheck exactly3 independently confirmed Main baseline errors (universalContinuationRuntime.ts658/660 and browser react-dom/client declaration), zero new errors. Full Native Release and both Backend bundles build successfully. Latest actual results and limits in Consolidated Merge Gate Report. No whole-product PASS or Main GO is implied.
 
 ## Evidence and compatibility
 
@@ -41,9 +41,7 @@ Still deferred: Invite/Claim full Native, private profile cloud editor, Version/
 
 ## Next execution
 
-Continue the original recovery candidate: close remaining Node native/historical fixture problems without weakening assertions; verify accepted roles/CRUD/cold/offline/cross-module paths with real evidence. Preserve actual Expense uncertainty; use owning diagnostics and existing legal deployment boundary before any controlled further runtime work. Apple/full OAuth and unavailable multi-identity/device conditions stay explicitly BLOCKED.
-
-No Production, SQL/RLS/ACL/GRANT expansion, original B1/QA179 Analyze/Save, paid Provider call, data clearing, automatic Main merge/push or new framework. Do not repeat the423-branch inventory or stable B1 E2E.
+Finish current same-candidate full test classification and consolidated report. Main HOLD until real Expense P0 is closed via one authorized standard DEV deploy/reconciliation, formal original Receipt, independent PG readback and cold recovery. No broad re-audit, old QA recovery or new framework. Original missing immutable QA158 fixture is an evidence gap; do not fabricate its hash/contents or skip its test. Apple full login remains externally blocked.
 
 ## Latest runtime / Owner Header correction
 
@@ -51,4 +49,10 @@ P3/P4/P5/P6 NEW now independently PG APPLIED/rev1 on the same synthetic Trip; P5
 
 Owner correctly found Day Header/background regression for undated Trips. The startDate condition suppressed canonical header/gradient. `5c28077e` reuses the same header with nullable start: real month/date, no invented Trip ordinal; dated Trip behavior unchanged. FullNative Release rebuilt and inplace installed, both paths actually viewed. New data container85802C81…; original9private hashes retained.
 
-Current failure categories refined173 infrastructure/31 historical fixtures/2 confirmed product/10 pending;182 of216 fixed,34 remain. Latestmerged11912PASS/34FAIL/161existingPending,4import failures. This is NOT whole-suite/ProductPASS. Full test/restriction/product matrices stay in recovery directory; Expense503 and unexecuted roles/CRUD remain real work. Main HOLD.
+Original216 failure clustering is retained in the historical evidence; final same-candidate counts above supersede per-file aggregates. Expense live closure remains pending protected deployment authorization. Main HOLD.
+
+## Current bounded closure — 08ad06c9
+
+Source/product `65b0cf65`, test-port-only `34aa0d9c`, then accepted P1 consumer `08ad06c9`. Full Xcode Release rebuilt from matching product source (1014 files, zero mismatches), inplace installed with nine private files byte-identical. New data containerC6CFCC26…; Session/SQLite/Queue preserved. Original Trip negative Day fix verified Native: Nov2/3 show `11月 02/03`, Day1/2 remain, B/C/D tap cycle and D cold persistence pass; restored A. No Trip/Item dates changed. Root operations ports remove actual UI runtime layer violations; AST boundary targeted5PASS. Stale P5 CREATE protection and fresh-read recovery targeted19PASS; original first refusal message still unproven. Final full-run/known-baseline results are recorded in `docs/integration/functional-recovery-20261114/CONSOLIDATED_MERGE_GATE_REPORT.md`; do not substitute earlier per-file aggregates for that run. No Main merge/push or DEV/Production mutation.
+
+Accepted P1 on another device exposed a pre-existing client-only restriction: freshAcceptedItem omitted P1 despite Core already allowing same-Creator MANUAL Edit. 08ad06c9 adds P1 to that existing path and to the existing Source temporal protection. 75 owning checks pass, including no-history certified same-Owner text edit, stale refusal and temporal proof preservation/no-write refusal. Full Native original Phase A Workshop Edit now opens with original fields; Cancel keeps title/rev2 unchanged and zero Item intents. No Core/SQL/ACL change.
