@@ -153,6 +153,18 @@ export const en = {
   "documents.all": "All",
   "documents.offline": "Offline",
   "documents.fileInfo": "File information",
+  "documents.sameImportResults": "Results from this Import",
+  "documents.resultsExplanation":
+    "These results are identified by this Batch’s original operations and receipts, separately from document links.",
+  "documents.resultsUnavailable":
+    "Saved results could not be verified here. Existing document links remain available.",
+  "documents.noVerifiedResults":
+    "No saved results are currently verified for this Batch.",
+  "documents.resultPending": "Not fully verified yet",
+  "documents.resultCreated": "Created",
+  "documents.resultLinked": "Linked",
+  "documents.resultUpdated": "Updated",
+
   "documents.activityTab": "Activity",
   "documents.searchFilters": "Search filters",
   "documents.privacyFilter": "Privacy",
@@ -3588,6 +3600,16 @@ export const zhHans: Record<MessageKey, string> = {
   "documents.all": "全部",
   "documents.offline": "离线",
   "documents.fileInfo": "文件信息",
+  "documents.sameImportResults": "此次导入的结果",
+  "documents.resultsExplanation":
+    "这些结果根据本批次原操作和正式回执识别，与文档关联分开显示。",
+  "documents.resultsUnavailable": "此处暂无法核实已保存结果，已有文档关联仍可查看。",
+  "documents.noVerifiedResults": "当前尚无可核实的本批次已保存结果。",
+  "documents.resultPending": "尚未完整核实",
+  "documents.resultCreated": "已新建",
+  "documents.resultLinked": "已关联",
+  "documents.resultUpdated": "已更新",
+
   "documents.activityTab": "导入活动",
   "documents.searchFilters": "搜索筛选",
   "documents.privacyFilter": "可见范围",

@@ -14,6 +14,8 @@ const h = vi.hoisted(() => ({
   read: vi.fn(),
   jobs: [] as CaptureJobReadModel[],
   retained: vi.fn(),
+  task: vi.fn(),
+  pending: vi.fn(),
 }));
 vi.mock("../auth/accountGeneration", () => ({
   getAccountGeneration: () => h.generation,
@@ -31,13 +33,25 @@ vi.mock("../repositories/tripCoreV2Repository", () => ({
       tripId,
     }),
     acceptedSnapshot: async () => h.snapshot,
+    pending: h.pending,
+    retainedReceipt: async () => null,
   }),
+}));
+vi.mock("../api/universalImportTransport", () => ({
+  createUniversalImportTransport: () => ({ localFirstCapability: h.task }),
+}));
+vi.mock("./universalV3Activity", async (original) => ({
+  ...(await original<typeof import("./universalV3Activity")>()),
+  readV3UnknownCandidates: async () => new Set<string>(),
 }));
 vi.mock("./defaultImportDocuments", () => ({
   getDefaultImportDocumentsRepository: async () => ({ read: h.retained }),
 }));
 vi.mock("./defaultCaptureSubmission", () => ({
-  getDefaultCaptureSubmissionRepository: async () => ({ list: async () => h.jobs }),
+  getDefaultCaptureSubmissionRepository: async () => ({
+    list: async () => h.jobs,
+    reopen: async (id: string) => h.jobs.find((job) => job.batch.jobId === id),
+  }),
 }));
 vi.mock("expo-crypto", () => ({ randomUUID }));
 vi.mock("expo-file-system", () => ({
@@ -82,6 +96,14 @@ beforeEach(() => {
   h.files.clear();
   h.jobs = [];
   h.retained.mockReset();
+  h.task
+    .mockReset()
+    .mockResolvedValue({
+      localFirst: true,
+      existing: { state: "REVIEW_READY", candidates: [] },
+    });
+  h.pending.mockReset().mockResolvedValue([]);
+  vi.stubEnv("EXPO_PUBLIC_OTR_API_BASE_URL", "https://otr.test.invalid");
   h.read.mockReset();
   const graph = emptyCoreGraph();
   graph.itinerary_events.push({
@@ -340,4 +362,49 @@ it("includes a same-Batch retained original without a Core Item or Document, usi
       .otherOriginals,
   ).toEqual([]);
   expect(h.read).not.toHaveBeenCalled();
+});
+
+it("reads same-Batch results through the existing GET and formal Receipt projection, without a dispatch/save path", async () => {
+  const jobId = randomUUID(),
+    batchId = randomUUID();
+  h.jobs = [
+    {
+      batch: { jobId, batchId, accountId: account, context: { tripPrior: { id: trip } } },
+    },
+  ] as CaptureJobReadModel[];
+  const scoped = await localItemImportOriginals(trip, undefined, 4);
+  expect(await scoped.batchResults(jobId, batchId)).toEqual({
+    state: "REVIEW_READY",
+    items: [],
+  });
+  expect(h.task).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ accountId: account, tripId: trip }),
+    batchId,
+  );
+  h.task.mockResolvedValue({ localFirst: true, existing: { state: "OUTCOME_UNKNOWN" } });
+  expect(await scoped.batchResults(jobId, batchId)).toEqual({
+    state: "OUTCOME_UNKNOWN",
+    items: [],
+  });
+  expect(h.pending).not.toHaveBeenCalled();
+  expect(h.read).not.toHaveBeenCalled();
+});
+it("refuses mismatched Batch identity before querying task results and rejects an Account change during GET", async () => {
+  const jobId = randomUUID(),
+    batchId = randomUUID();
+  h.jobs = [
+    {
+      batch: { jobId, batchId, accountId: account, context: { tripPrior: { id: trip } } },
+    },
+  ] as CaptureJobReadModel[];
+  const scoped = await localItemImportOriginals(trip, undefined, 4);
+  await expect(scoped.batchResults(jobId, randomUUID())).rejects.toThrow(
+    "DOCUMENTS_SCOPE_MISMATCH",
+  );
+  expect(h.task).not.toHaveBeenCalled();
+  h.task.mockImplementationOnce(async () => {
+    h.generation++;
+    return { localFirst: false };
+  });
+  await expect(scoped.batchResults(jobId, batchId)).rejects.toThrow("Account changed");
 });

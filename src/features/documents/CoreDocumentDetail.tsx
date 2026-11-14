@@ -13,6 +13,11 @@ import { ImportDocumentsPanel } from "./ImportDocumentsPanel";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
 import { documentFormat, documentFormatLabel } from "./documentListPresentation";
 
+const resultActionKey = {
+  created: "documents.resultCreated",
+  linked: "documents.resultLinked",
+  updated: "documents.resultUpdated",
+} as const;
 type Reader = Awaited<ReturnType<typeof localItemImportOriginals>>;
 type Batch = Awaited<ReturnType<Reader["batches"]>>[number];
 type Item = Awaited<ReturnType<Reader["relationships"]>>[number];
@@ -52,6 +57,10 @@ export function CoreDocumentDetail({
   const batch = "batch" in page ? page.batch : null;
   const capture = "capture" in page ? page.capture : null;
   const [batchError, setBatchError] = useState(false);
+  const [results, setResults] = useState<Awaited<
+    ReturnType<Reader["batchResults"]>
+  > | null>(null);
+  const [resultError, setResultError] = useState(false);
   useFocusEffect(
     useCallback(() => {
       if (capture) return;
@@ -60,6 +69,8 @@ export function CoreDocumentDetail({
       setItems([]);
       setBatches([]);
       setBatchError(false);
+      setResults(null);
+      setResultError(false);
       setError(false);
       setLoading(true);
       setText(null);
@@ -85,6 +96,15 @@ export function CoreDocumentDetail({
         if (valid()) {
           setItems([...linked.values()]);
           setBatches(imports);
+          setLoading(false);
+        }
+        if (batch) {
+          try {
+            const observed = await reader.batchResults(batch.jobId, batch.batchId);
+            if (valid()) setResults(observed);
+          } catch {
+            if (valid()) setResultError(true);
+          }
         }
       })()
         .catch(() => {
@@ -232,6 +252,46 @@ export function CoreDocumentDetail({
             />
           </>
         )}
+        {batch ? (
+          <>
+            <UiText style={styles.heading}>{t("documents.sameImportResults")}</UiText>
+            <UiText style={styles.meta}>{t("documents.resultsExplanation")}</UiText>
+            {resultError || (results && results.state !== "REVIEW_READY") ? (
+              <UiText style={styles.meta}>{t("documents.resultsUnavailable")}</UiText>
+            ) : !results ? (
+              <UiText style={styles.meta}>{t("common.loading")}</UiText>
+            ) : !results.items.length ? (
+              <UiText style={styles.meta}>{t("documents.noVerifiedResults")}</UiText>
+            ) : (
+              results.items.map((result) => (
+                <View key={result.itemId} style={styles.item}>
+                  <UiText>{result.title}</UiText>
+                  <UiText style={styles.meta}>
+                    {t(
+                      result.state === "complete" && result.action
+                        ? resultActionKey[result.action]
+                        : "documents.resultPending",
+                    )}
+                  </UiText>
+                  {/^P[1-6]$/.test(result.family) ? (
+                    <UiButton
+                      variant="text"
+                      label={t("documents.openItem")}
+                      onPress={() => {
+                        if (current.current())
+                          router.push({
+                            pathname:
+                              `/p${result.family.slice(1)}-detail` as "/p1-detail",
+                            params: { tripId, itemId: result.itemId },
+                          });
+                      }}
+                    />
+                  ) : null}
+                </View>
+              ))
+            )}
+          </>
+        ) : null}
         <UiText style={styles.heading}>
           {t(document ? "documents.directItems" : "documents.batchItems")}
         </UiText>

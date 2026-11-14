@@ -263,6 +263,74 @@ export async function localItemImportOriginals(
       }
       return result;
     },
+    async batchResults(jobId: string, batchId: string) {
+      await assertAccountRequestContext(scope, requireAdoptedUserId);
+      const { getDefaultCaptureSubmissionRepository } =
+        await import("./defaultCaptureSubmission");
+      const model = await (
+        await getDefaultCaptureSubmissionRepository()
+      ).reopen(jobId, scope);
+      if (
+        model.batch.accountId !== scope.accountId ||
+        model.batch.batchId !== batchId ||
+        model.batch.context.tripPrior?.id !== scope.tripId
+      )
+        throw Error("DOCUMENTS_SCOPE_MISMATCH");
+      const baseUrl = process.env.EXPO_PUBLIC_OTR_API_BASE_URL;
+      if (!baseUrl) throw Error("DOCUMENTS_RESULTS_UNAVAILABLE");
+      const { createUniversalImportTransport } =
+        await import("../api/universalImportTransport");
+      const transport = createUniversalImportTransport(requireAdoptedUserId, { baseUrl });
+      const capability = await transport.localFirstCapability(scope, batchId);
+      await assertAccountRequestContext(scope, requireAdoptedUserId);
+      const execution = capability.localFirst ? capability.existing : null;
+      const { projectUniversalV3Results, readV3UnknownCandidates } =
+        await import("./universalV3Activity");
+      if (execution?.state !== "REVIEW_READY")
+        return { state: execution?.state ?? "UNAVAILABLE", items: [] };
+      const { universalP1Identity } =
+        await import("../../domain/trip/universalImportIdentity");
+      const operations: import("./universalV3Activity").V3ResultOperation[] = [];
+      for (const candidate of execution.candidates) {
+        for (const kind of ["item", "link", "flight-details"]) {
+          const operationId = universalP1Identity(
+            candidate.candidateId,
+            "local-first",
+            kind,
+          );
+          const retained = (await repository.pending(scope, operationId)).find(
+            (row) => row.command.operationId === operationId,
+          );
+          if (retained?.command.target.kind === "ITEM")
+            operations.push({
+              candidateId: candidate.candidateId,
+              documentIds: candidate.documentIds,
+              command: retained.command,
+              receipt: await repository.retainedReceipt(scope, retained.command),
+            });
+        }
+      }
+      const unknown = await readV3UnknownCandidates(
+        model,
+        execution.candidates.map((candidate) => candidate.candidateId),
+      );
+      const snapshot = await repository.acceptedSnapshot(scope);
+      await assertAccountRequestContext(scope, requireAdoptedUserId);
+      if (
+        !snapshot ||
+        snapshot.actor.accountId !== scope.accountId ||
+        snapshot.actor.tripId !== scope.tripId
+      )
+        throw Error("DOCUMENTS_SCOPE_MISMATCH");
+      return {
+        state: execution.state,
+        items: projectUniversalV3Results(
+          snapshot,
+          operations,
+          Object.fromEntries([...unknown].map((id) => [id, "OUTCOME_UNKNOWN" as const])),
+        ),
+      };
+    },
     async original(id: string) {
       const document = (await documents()).find((entry) => entry.id === id);
       if (!document) return null;
