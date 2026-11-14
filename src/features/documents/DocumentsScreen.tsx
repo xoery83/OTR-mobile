@@ -860,7 +860,6 @@ function DocumentDirectory({
                 accessibilityLabel={entry.title}
                 onPress={() => {
                   if (active()) {
-                    onScrollOffset(0, -10, true);
                     openDetail(entry);
                   }
                 }}
@@ -927,7 +926,6 @@ function DocumentDirectory({
                 style={styles.more}
                 onPress={() => {
                   if (active()) {
-                    onScrollOffset(0, -10, true);
                     openDetail(entry, true);
                   }
                 }}
