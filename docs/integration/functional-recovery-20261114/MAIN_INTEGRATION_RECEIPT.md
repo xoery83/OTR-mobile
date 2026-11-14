@@ -6,7 +6,7 @@
 - Fetched GitHub Main: `ec282ce65858f9a9857011b225ed08fce8c8d360`; exact merge base, zero Main-only commits, 342 candidate-only commits through `503eb17d718842bf02deff6b578cbe5bea62cc89`.
 - Local restore tag: `main-pre-four-lane-20261114` at the former Main. Original dirty `/Users/xoery/Project/otr-mobile` left untouched.
 - Non-fast-forward merge commit: `532b32aa68c86c6cb0dea69fa82404b77a3a42f8`; independent worktree `/Users/xoery/Project/otr-mobile-import/main-final-merge-20261114`.
-- Merge tree exactly equals `503eb17d`; differences from accepted `08ad06c9` are documentation/evidence only. No source/configuration merge resolution or incremental product retest required. Final receipt commit is documentation-only; remote push must be independently verified before reporting PASS.
+- Merge tree exactly equals `503eb17d`; differences from accepted `08ad06c9` are documentation/evidence only. No source/configuration merge resolution or incremental product retest required. Final receipt commit is documentation-only; normal non-force push completed `ec282ce6..20775143`; independent `git ls-remote` confirmed `207751439cf144cfbf9097384ddd7461abc0e665`. Worktree clean; accepted source and four-lane ancestry verified. This subsequent status receipt changes documentation only.
 
 ## Coverage and compatibility
 
