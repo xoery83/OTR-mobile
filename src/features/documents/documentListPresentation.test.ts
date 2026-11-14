@@ -103,6 +103,8 @@ it("combines actual privacy, storage, recorded source and date facts with keywor
 
 it("collapses on a small real upward scroll and ignores layout/inset offset resets", () => {
   expect(documentChromeAfterScroll(false, 9, 9, true)).toBe(true);
+  expect(documentChromeAfterScroll(false, 160, 0, false)).toBe(true);
+  expect(documentChromeAfterScroll(false, 6, 0, false)).toBe(false);
   expect(documentChromeAfterScroll(true, 0, 0, false)).toBe(true);
   expect(documentChromeAfterScroll(true, 0, 0, true)).toBe(true);
   expect(documentChromeAfterScroll(true, -9, -9, true)).toBe(false);

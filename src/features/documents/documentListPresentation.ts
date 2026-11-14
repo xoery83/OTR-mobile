@@ -185,13 +185,14 @@ export function filterDocumentSearch(
   });
 }
 
-// Layout/inset changes must not reopen chrome during the same upward gesture.
+// Positive scroll/restored offsets collapse chrome; inset resets alone never reopen it.
 export function documentChromeAfterScroll(
   collapsed: boolean,
   offset: number,
   distance: number,
   dragging: boolean,
 ) {
+  if (offset > 6) return true;
   if (!dragging) return collapsed;
   if (distance > 6) return true;
   if (distance < -6 && offset <= 0) return false;
