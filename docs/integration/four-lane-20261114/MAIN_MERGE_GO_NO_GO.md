@@ -1,5 +1,7 @@
 # MAIN_MERGE_GO_NO_GO
 
+> Superseded checkpoint: Owner subsequently accepted Recovery source08ad06c9 and authorized final Main Merge/Push. See `../functional-recovery-20261114/MAIN_INTEGRATION_RECEIPT.md`. The HOLD below is retained as historical evidence, not the current disposition.
+
 **HOLD — Owner 暂停 Main Merge/Push；原 GO 已撤回，等待完整原生 App 与实际回归修复验证。**
 
 2026-11-14：实际截图发现 Apple 原生构建缺失、云端 Trip 编辑/币种/Cover 接线、Day Feed 背景过渡和 Ledger 重复按钮问题。此前只读页面可达检查不足以证明这些能力完整。以下为原候选历史证据，不构成当前 GO。
