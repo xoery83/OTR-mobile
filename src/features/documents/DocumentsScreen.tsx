@@ -204,8 +204,10 @@ function DocumentsWorkspace({
           ),
         }}
       />
-      {!searchOnly ? <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar /> : null}
-      {!searchOnly && tab !== "ACTIVITY" ? (
+      {!searchOnly && !collapsed ? (
+        <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar />
+      ) : null}
+      {!searchOnly && !collapsed && tab !== "ACTIVITY" ? (
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Button
             icon="magnifyingglass"

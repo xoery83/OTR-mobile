@@ -10,6 +10,10 @@ Slice5 implementation is submitted for Owner review, product `90d42294`. Two bou
 
 All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
 
+## Documents UX correction in progress
+
+Owner requested top-right full-screen search, filter-only scrolling and original-opening diagnosis plus full blueprint comparison. Product cc706aa1 implements reused full-screen search and exact-content local original re-selection. Native Release rebuilt/in-place installed; normal directory and full-screen query verified. Targeted87 checks and UI guard175 pass, lint passes, only3 Main type errors. Original iPhone B1 bytes are absent by Local-First design; no private data copied. Actual Files restoration completion and final filter-only scroll transition remain NOT_VERIFIED because DeviceHub gestures did not complete those actions; do not mark full UX PASS. See docs/ops/documents-ux-correction-20261114/README.md and gap matrix. No Provider, Save, SQL, Main push or Slice6. AUTH-C04 runs independently in its Auth branch with Root1/Core and Native read-only interfaces; no shared Backend/SQL/Sync mutation without MC coordination and separate authorization.
+
 ## Restored and actually checked
 
 - Full Expo/CocoaPods/Xcode **Release Native build**, not a JS replacement in the old shell. DEV includes Apple entitlement/module plus existing Google/Places/file/SQLite native modules. Existing iPhone Bundle and simulator application identifier retained. Full build/staging comparison:1159 non-test product files, no mismatch; actual binary/bundle hashes in recovery manifest.
