@@ -9,5 +9,15 @@
   "report": "04d6c2f3ef156d0a3a8425a76ecd657a0bc1f2ed",
   "remoteTreeMatches": true,
   "providerCalls": 0,
-  "deployment": false
+  "deployment": false,
+  "missionControl": {
+    "url": "https://otr-mission-control.xoery83.chatgpt.site",
+    "siteSource": "d5e7d85db8f848394cb06b52eadddb873ce44577",
+    "deployment": "appgdep_6af827591ac081919b13861c60daa086",
+    "state": "succeeded",
+    "publishedAt": "2026-11-14T09:18:32.669198+00:00",
+    "statusTests": "4/4 PASS",
+    "historicalLinkChecker": "BLOCKED: absent /private/tmp/otr-native-focused-main-20261101; not treated as PASS",
+    "browserQA": "NOT_RUN; native Sites success verified publication"
+  }
 }
