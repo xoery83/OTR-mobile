@@ -1,7 +1,9 @@
+// Directory Native widgets have their own Slice6 render/interaction suite.
 import { beforeEach, expect, it, vi } from "vitest";
 import { CaptureActivity } from "./CaptureActivity";
 import { announceCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
+vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
 
 // Native diagnostic controls are outside this UI lifecycle suite.
 vi.mock("./CaptureCustodyDevAction", () => ({ CaptureCustodyDevAction: () => null }));
@@ -50,10 +52,12 @@ vi.mock("react-native", () => ({
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/controls", () => ({ UiButton: "button", UiSection: "section" }));
-function render(current = () => true) {
+function render(current = () => true, focused = true, directory?: any) {
   ui.cursor = 0;
   return CaptureActivity({
     isCurrent: current,
+    focused,
+    directory,
     onOpenJob: ui.open,
     onHide: ui.hide,
     onReturn: ui.back,
@@ -245,3 +249,48 @@ it.each(["close", "scope"] as const)(
     expect(render(current).jobs).toEqual([]);
   },
 );
+
+it("reentry refreshes a read interrupted by blur without remaining Loading", async () => {
+  let settle!: (rows: CaptureJobReadModel[]) => void;
+  ui.list.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+  );
+  render();
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(ui.list).toHaveBeenCalledOnce());
+  ui.cleanup?.();
+  render(() => false, false);
+  ui.effect!();
+  settle(page(1, "obsolete"));
+  ui.list.mockResolvedValueOnce(page(1, "current"));
+  render(() => true, true);
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(render().jobs[0]?.batch.jobId).toBe("current-0"));
+  expect(render().loading).toBe(false);
+});
+
+it("directory return refresh preserves the already loaded second page and its reading depth", async () => {
+  const directory = {};
+  const first = page(20);
+  const second = page(20, "older");
+  ui.list.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
+  render(() => true, true, directory);
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() => expect(render().jobs).toHaveLength(20));
+  render(() => true, true, directory).onMore();
+  await vi.waitFor(() => expect(render().jobs).toHaveLength(40));
+  ui.cleanup?.();
+  render(() => false, false, directory);
+  ui.effect!();
+  ui.list.mockResolvedValueOnce([...first, ...second]);
+  render(() => true, true, directory);
+  ui.cleanup = ui.effect!() ?? null;
+  await vi.waitFor(() =>
+    expect(ui.list).toHaveBeenLastCalledWith({ limit: 40, before: undefined }),
+  );
+  await vi.waitFor(() => expect(render().loading).toBe(false));
+  expect(render().jobs).toHaveLength(40);
+});

@@ -1,3 +1,4 @@
+import { ImportActivityList, type ActivityDirectory } from "./ImportActivityList";
 import type { V3ActivityProgress } from "@/data/operations/universalActivityReader";
 import type { UniversalTaskActivity } from "@/data/api/universalImportContracts";
 import { CaptureCustodyDevAction } from "./CaptureCustodyDevAction";
@@ -49,12 +50,16 @@ export function CaptureActivity({
   onReturn,
   onHide,
   expectedAccountId,
+  directory,
+  focused = true,
 }: {
   isCurrent: () => boolean;
   onOpenJob: (jobId: string) => void;
   onReturn: () => void;
   onHide: () => void;
   expectedAccountId?: string;
+  directory?: ActivityDirectory;
+  focused?: boolean;
 }) {
   const [taskActivities, setTaskActivities] = useState<
     Record<string, UniversalTaskActivity>
@@ -92,11 +97,22 @@ export function CaptureActivity({
     try {
       const api = await import("@/data/operations/defaultCaptureSubmission");
       if (!current()) return;
-      const last = older ? jobs.at(-1)?.batch : undefined;
-      const page = await api.listDefaultCaptureJobs({
-        limit: pageSize,
-        before: last ? { createdAt: last.createdAt, batchId: last.batchId } : undefined,
-      });
+      // Refresh only the already-loaded directory depth; returning must not discard older pages.
+      const depth =
+        !older && directory ? Math.max(pageSize, inventory.current.length) : pageSize;
+      const page: CaptureJobReadModel[] = [];
+      let last = older ? jobs.at(-1)?.batch : undefined;
+      while (page.length < depth) {
+        const limit = Math.min(100, depth - page.length);
+        const rows = await api.listDefaultCaptureJobs({
+          limit,
+          before: last ? { createdAt: last.createdAt, batchId: last.batchId } : undefined,
+        });
+        if (!current()) return;
+        page.push(...rows);
+        if (rows.length < limit) break;
+        last = rows.at(-1)?.batch;
+      }
       if (!current()) return;
       const next = older ? [...jobs, ...page] : page;
       inventory.current = next;
@@ -122,7 +138,7 @@ export function CaptureActivity({
           if (current()) setTaskActivities(observations);
         })
         .catch(() => {});
-      setHasMore(page.length === pageSize);
+      setHasMore(page.length === depth);
     } catch {
       if (current()) setError(true);
     } finally {
@@ -142,6 +158,7 @@ export function CaptureActivity({
     refresh.current = () => void load(false, true);
   });
   useEffect(() => {
+    if (!focused) return;
     active.current = true;
     const unsubscribe = subscribeCaptureProcessingActivity((accountId) => {
       if (!expectedAccountId || accountId === expectedAccountId) refresh.current();
@@ -160,9 +177,10 @@ export function CaptureActivity({
     };
     // Host remounts on Account/context/focus changes; locale and theme keep the list.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [focused]);
   return (
     <CaptureActivityList
+      directory={directory}
       isCurrent={() => active.current && isCurrent()}
       expectedAccountId={expectedAccountId}
       v3Activities={v3Activities}
@@ -183,6 +201,7 @@ export function CaptureActivity({
 }
 
 export function CaptureActivityList({
+  directory,
   taskActivities = {},
   v3Activities = {},
   jobs,
@@ -197,6 +216,7 @@ export function CaptureActivityList({
   expectedAccountId,
   isCurrent = () => false,
 }: {
+  directory?: ActivityDirectory;
   isCurrent?: () => boolean;
   taskActivities?: Readonly<Record<string, UniversalTaskActivity>>;
   v3Activities?: Readonly<Record<string, V3ActivityProgress>>;
@@ -224,6 +244,23 @@ export function CaptureActivityList({
       })
     : jobs;
   const scopedError = error || visibleJobs.length !== jobs.length;
+  if (directory)
+    return (
+      <ImportActivityList
+        jobs={visibleJobs}
+        v3={v3Activities}
+        tasks={taskActivities}
+        directory={directory}
+        loading={loading}
+        error={scopedError}
+        hasMore={hasMore}
+        onMore={onMore}
+        onRefresh={onRefresh}
+        onOpen={(id) => {
+          if (isCurrent()) onOpenJob(id);
+        }}
+      />
+    );
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"

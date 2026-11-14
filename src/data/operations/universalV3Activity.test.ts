@@ -2,8 +2,11 @@ import { projectUniversalV3Results, type V3ResultOperation } from "./universalV3
 import { emptyCoreGraph } from "../../domain/trip/tripCoreV2Mutation";
 import type { CoreAcceptedSnapshot } from "../repositories/tripCoreV2Repository";
 import { expect, it, vi } from "vitest";
-import { projectUniversalV3Activity as project } from "./universalV3Activity";
+import { projectUniversalV3Activity as project , projectImportActivityRow , projectPlannedV3Activity, projectV3ActivityFacts } from "./universalV3Activity";
 import type { UniversalV3ExecutionStatus } from "../api/universalV3Contracts";
+
+import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
+
 const ready = {
   state: "REVIEW_READY",
   taskId: "task-a",
@@ -285,4 +288,84 @@ it("UX-C2 partial receipt observations cannot complete a whole Batch; failed lat
     project(ready, { a: "VERIFIED", b: "ITEM_VERIFIED_RELATION_PENDING" }).state,
   ).toBe("association");
   expect(project(ready, { a: "VERIFIED", b: "VERIFIED" }, true).state).toBe("uncertain");
+});
+const batchRow = {
+  batch: {
+    batchId: "b",
+    jobId: "j",
+    createdAt: "2026-11-14T00:00:00Z",
+    inputs: [
+      { acquisitionSource: "files" },
+      { acquisitionSource: "photos" },
+      { acquisitionSource: "magic_input" },
+    ],
+  },
+  inputs: [],
+  allInputsAccepted: true,
+} as unknown as CaptureJobReadModel;
+it("Activity counts one Batch and matches each recorded constituent source", () => {
+  const row = projectImportActivityRow(batchRow, {
+    state: "complete",
+    saved: 3,
+    resultCount: 1,
+  });
+  expect(row.sources).toEqual(["FILES", "PHOTOS", "TEXT"]);
+  expect(row.resultCount).toBe(1);
+  expect(row.status).toBe("COMPLETED");
+  expect(projectImportActivityRow(batchRow, { state: "empty", saved: 0 }).status).toBe(
+    "COMPLETED",
+  );
+});
+it("Activity keeps UNKNOWN and development confirmation out of failure or semantic Review", () => {
+  for (const state of ["uncertain", "confirmation", "waiting"] as const)
+    expect(projectImportActivityRow(batchRow, { state, saved: 0 }).status).toBe(
+      "WAITING",
+    );
+  expect(projectImportActivityRow(batchRow).phase).toBe("uncertain");
+  expect(
+    projectImportActivityRow(batchRow, { state: "attention", saved: 0 }).status,
+  ).toBe("REVIEW");
+  expect(
+    projectImportActivityRow(batchRow, { state: "attention", saved: 0, failedCount: 1 })
+      .status,
+  ).toBe("FAILED");
+  expect(
+    projectImportActivityRow(batchRow, { state: "association", saved: 1 }).status,
+  ).toBe("PROCESSING");
+});
+it("uses existing owning Review and ABSTAIN plans before classifying development confirmation", () => {
+  const candidate = ready.candidates[0];
+  const row = {
+    candidate,
+    members: [candidate.candidateId],
+    disposition: "REVIEW" as const,
+    reason: "missing" as const,
+  };
+  expect(projectPlannedV3Activity(ready, { a: "UNCONFIRMED" }, [row]).state).toBe(
+    "attention",
+  );
+  expect(projectPlannedV3Activity(ready, { a: "VERIFIED" }, [row]).state).toBe(
+    "complete",
+  );
+  expect(
+    projectPlannedV3Activity(ready, {}, [{ ...row, disposition: "ABSTAIN" }]).state,
+  ).toBe("empty");
+  expect(projectPlannedV3Activity(ready, { a: "OUTCOME_UNKNOWN" }, [row]).state).toBe(
+    "uncertain",
+  );
+});
+it("counts an original rejected NEW without an existing Item, but excludes another actor receipt", () => {
+  const f = resultFixture();
+  const rejected = f.operation("a", "not-created", "CREATE_ITEM", ["d1"], "REJECTED");
+  expect(projectV3ActivityFacts(f.snapshot, [rejected], {}).failedCount).toBe(1);
+  expect(projectV3ActivityFacts(f.snapshot, [rejected], {}).resultCount).toBe(0);
+  rejected.receipt!.actorAccountId = "other";
+  expect(projectV3ActivityFacts(f.snapshot, [rejected], {}).failedCount).toBe(0);
+});
+it("clipboard uses the recorded Paste source rather than pretending it was selected from Photos", () => {
+  const pasted = {
+    ...batchRow,
+    batch: { ...batchRow.batch, inputs: [{ acquisitionSource: "clipboard" }] },
+  } as CaptureJobReadModel;
+  expect(projectImportActivityRow(pasted).sources).toEqual(["TEXT"]);
 });

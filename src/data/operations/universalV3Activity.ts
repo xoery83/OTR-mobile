@@ -232,3 +232,110 @@ export function projectUniversalV3Results(
       a.itemId.localeCompare(b.itemId),
   );
 }
+
+// Presentation of existing Batch facts; no persisted execution state or retry authority.
+export function projectImportActivityRow(
+  job: import("@/domain/capture/captureSubmission").CaptureJobReadModel,
+  progress?: ReturnType<typeof projectUniversalV3Activity> & {
+    resultCount?: number;
+    failedCount?: number;
+    updatedAt?: string;
+  },
+  task?: import("@/data/api/universalImportContracts").UniversalTaskActivity,
+) {
+  const sources = [
+    ...new Set(
+      job.batch.inputs.map((input) =>
+        input.acquisitionSource === "files"
+          ? ("FILES" as const)
+          : input.acquisitionSource === "magic_input" ||
+              input.acquisitionSource === "clipboard"
+            ? ("TEXT" as const)
+            : ("PHOTOS" as const),
+      ),
+    ),
+  ];
+  let status: "PROCESSING" | "WAITING" | "REVIEW" | "COMPLETED" | "FAILED" = "WAITING";
+  let phase: ReturnType<typeof projectUniversalV3Activity>["state"] | "failed" =
+    job.allInputsAccepted ? "uncertain" : "waiting";
+  if (progress) {
+    phase = progress.state;
+    if (progress.failedCount) {
+      status = "FAILED";
+      phase = "failed";
+    } else if (phase === "complete" || phase === "empty") status = "COMPLETED";
+    else if (phase === "attention") status = "REVIEW";
+    else if (["analyzing", "applying", "association", "checking"].includes(phase))
+      status = "PROCESSING";
+  } else if (task) {
+    if (task.state === "FAILED") {
+      status = "FAILED";
+      phase = "failed";
+    } else if (task.state === "PROCESSING") {
+      status = "PROCESSING";
+      phase = "analyzing";
+    } else if (task.state === "RESULTS_READY") {
+      status = "PROCESSING";
+      phase = "checking";
+    } else if (task.state === "UNKNOWN" || task.state === "STALE") phase = "uncertain";
+  } else if (job.inputs.some((input) => input.state === "FAILED")) {
+    status = "FAILED";
+    phase = "failed";
+  }
+  return {
+    batchId: job.batch.batchId,
+    jobId: job.batch.jobId,
+    sources,
+    status,
+    phase,
+    resultCount: progress?.resultCount,
+    at: progress?.updatedAt ?? task?.updatedAt ?? job.batch.createdAt,
+  };
+}
+
+// Existing owning plan separates semantic decisions and ABSTAIN from development confirmation.
+export function projectPlannedV3Activity(
+  execution: Extract<UniversalV3ExecutionStatus, { state: "REVIEW_READY" }>,
+  saves: Readonly<Record<string, V3SaveObservation>>,
+  plan: readonly import("./universalV3Review").V3AdmissionRow[],
+) {
+  const active = plan.filter((row) => row.disposition !== "ABSTAIN");
+  const observations: Record<string, V3SaveObservation> = {};
+  for (const row of active) {
+    const state = saves[row.candidate.candidateId];
+    observations[row.candidate.candidateId] = row.members.some(
+      (id) => saves[id] === "OUTCOME_UNKNOWN",
+    )
+      ? "OUTCOME_UNKNOWN"
+      : row.disposition === "REVIEW" && state === "UNCONFIRMED"
+        ? "REVIEW_REQUIRED"
+        : state;
+  }
+  return projectUniversalV3Activity(
+    { ...execution, candidates: active.map((row) => row.candidate) },
+    observations,
+  );
+}
+
+export function projectV3ActivityFacts(
+  snapshot: import("../repositories/tripCoreV2Repository").CoreAcceptedSnapshot,
+  operations: readonly V3ResultOperation[],
+  observations: Readonly<Record<string, V3SaveObservation>>,
+) {
+  const scoped = operations.filter(
+    (row) =>
+      row.command.tripId === snapshot.actor.tripId &&
+      row.command.target.kind === "ITEM" &&
+      row.receipt?.tripId === snapshot.actor.tripId &&
+      row.receipt.actorAccountId === snapshot.actor.accountId &&
+      row.receipt.operationId === row.command.operationId,
+  );
+  const outcomes = projectUniversalV3Results(snapshot, scoped, observations);
+  const rejected = scoped.filter((row) => row.receipt?.outcome === "REJECTED");
+  const times = scoped.flatMap((row) => (row.receipt ? [row.receipt.committedAt] : []));
+  return {
+    resultCount: outcomes.filter((row) => row.state === "complete").length,
+    failedCount: new Set(rejected.map((row) => row.command.target.id)).size,
+    ...(times.length ? { updatedAt: times.sort().at(-1) } : {}),
+  };
+}

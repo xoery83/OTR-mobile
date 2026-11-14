@@ -35,6 +35,7 @@ import {
   listCaptureTripPriors,
 } from "@/features/capture/captureTripPrior";
 import { useTripView } from "@/features/day-feed/TripViewContext";
+import type { ActivityView } from "@/features/capture/ImportActivityList";
 import { CaptureActivity } from "@/features/capture/CaptureActivity";
 import { NavigationContextTitle } from "@/components/navigationChrome";
 import { AppIcon } from "@/components/AppIcon";
@@ -113,7 +114,7 @@ function DocumentsWorkspace({
     colors = useUiTheme();
   const params = useLocalSearchParams<{
     tripId?: string;
-    scope?: "TRIP" | "PERSONAL_INBOX";
+    scope?: "TRIP" | "PERSONAL_INBOX" | "ACTIVITY";
   }>();
   const { workingTrip, switchTrip } = useTripView();
   const tripId =
@@ -128,12 +129,20 @@ function DocumentsWorkspace({
   const [accountId, setAccountId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
   const [tab, setTab] = useState<Tab>(
-    params.scope === "PERSONAL_INBOX"
-      ? "PERSONAL_INBOX"
-      : tripId
-        ? "TRIP"
-        : "PERSONAL_INBOX",
+    params.scope === "ACTIVITY"
+      ? "ACTIVITY"
+      : params.scope === "PERSONAL_INBOX"
+        ? "PERSONAL_INBOX"
+        : tripId
+          ? "TRIP"
+          : "PERSONAL_INBOX",
   );
+  const [activityTripNames, setActivityTripNames] = useState<Record<string, string>>({});
+  const [activityVisited, setActivityVisited] = useState(params.scope === "ACTIVITY");
+  const activityView = useRef<ActivityView>({ source: "ALL", status: "ALL", offset: 0 });
+  const activityChooser = useRef<(() => void) | null>(null);
+  const [activityStatus, setActivityStatus] = useState<ActivityView["status"]>("ALL");
+  const [activitySource, setActivitySource] = useState<ActivityView["source"]>("ALL");
   const pager = useRef<PagerView>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [tripName, setTripName] = useState<string | null>(null);
@@ -153,6 +162,13 @@ function DocumentsWorkspace({
           const id = session?.identity?.userId ?? null;
           setAccountId(id);
           setChecked(true);
+          if (id) {
+            const priors = await listCaptureTripPriors({ accountId: id, generation });
+            if (alive && active())
+              setActivityTripNames(
+                Object.fromEntries(priors.map((trip) => [trip.id, trip.name])),
+              );
+          }
           if (id && tripId) {
             const prior = await readCaptureTripPrior(tripId, {
               accountId: id,
@@ -184,29 +200,41 @@ function DocumentsWorkspace({
       if (active()) setChooseError(true);
     }
   };
-  const openJob = (jobId: string) => {
-    if (active())
-      router.push({
-        pathname: "/capture",
-        params: { jobId, ...(tripId ? { tripId } : {}) },
-      });
-  };
   return (
-    <SafeAreaView edges={collapsed && !searchOnly ? ["top"] : []} style={styles.body}>
+    <SafeAreaView
+      edges={collapsed && !searchOnly && tab !== "ACTIVITY" ? ["top"] : []}
+      style={styles.body}
+    >
       <Stack.Screen
         options={{
-          headerShown: searchOnly || !collapsed,
+          headerShown: searchOnly || !collapsed || tab === "ACTIVITY",
           headerBackVisible: searchOnly,
           title: t(searchOnly ? "documents.searchTitle" : "tripHome.documents"),
           headerTitle: () => (
             <NavigationContextTitle
-              title={t(searchOnly ? "documents.searchTitle" : "tripHome.documents")}
+              title={t(
+                searchOnly
+                  ? "documents.searchTitle"
+                  : tab === "ACTIVITY" && collapsed
+                    ? "documents.activityTab"
+                    : "tripHome.documents",
+              )}
             />
           ),
         }}
       />
-      {!searchOnly && !collapsed ? (
+      {!searchOnly && (!collapsed || tab === "ACTIVITY") ? (
         <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar />
+      ) : null}
+      {!searchOnly && tab === "ACTIVITY" && collapsed ? (
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Button
+            onPress={() => activityChooser.current?.()}
+            accessibilityLabel={t("activity.sourceFilter")}
+          >
+            {t(`activity.source.${activitySource}`)}
+          </Stack.Toolbar.Button>
+        </Stack.Toolbar>
       ) : null}
       {!searchOnly && !collapsed && tab !== "ACTIVITY" ? (
         <Stack.Toolbar placement="right">
@@ -237,7 +265,8 @@ function DocumentsWorkspace({
               accessibilityState={{ selected: tab === name }}
               onPress={() => {
                 setTab(name);
-                setCollapsed(false);
+                if (name === "ACTIVITY") setActivityVisited(true);
+                setCollapsed(name === "ACTIVITY" && activityView.current.offset > 6);
                 pager.current?.setPage(index);
               }}
               style={[styles.tab, tab === name && styles.selectedTab]}
@@ -288,17 +317,41 @@ function DocumentsWorkspace({
           initialPage={tabs.indexOf(tab)}
           onPageSelected={(event) => {
             setTab(tabs[event.nativeEvent.position]);
-            setCollapsed(false);
+            if (tabs[event.nativeEvent.position] === "ACTIVITY") setActivityVisited(true);
+            setCollapsed(
+              tabs[event.nativeEvent.position] === "ACTIVITY" &&
+                activityView.current.offset > 6,
+            );
           }}
         >
           {tabs.map((name) => (
             <View key={name} style={styles.body} collapsable={false}>
               {name === "ACTIVITY" ? (
-                tab === name ? (
+                activityVisited ? (
                   <CaptureActivity
+                    focused={focused && tab === name}
+                    directory={{
+                      tripNames: activityTripNames,
+                      source: activitySource,
+                      status: activityStatus,
+                      onFilter: (source, status) => {
+                        setActivitySource(source);
+                        setActivityStatus(status);
+                      },
+                      view: activityView,
+                      chooser: activityChooser,
+                      collapsed,
+                      onSourceChange: setActivitySource,
+                      onScroll: (offset) => {
+                        if (tab === "ACTIVITY") setCollapsed(offset > 6);
+                      },
+                    }}
                     expectedAccountId={accountId}
                     isCurrent={active}
-                    onOpenJob={openJob}
+                    onOpenJob={(jobId) => {
+                      if (active())
+                        router.push({ pathname: "/capture", params: { jobId } });
+                    }}
                     onHide={() => router.back()}
                     onReturn={() => {
                       setTab("TRIP");
