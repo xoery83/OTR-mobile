@@ -16,6 +16,8 @@ Product `0302d534` (parent `dd9304de`) adds standalone native Document Detail, r
 
 Status **PARTIAL / Merge NO_GO**: actual filter-only scroll transition remains unverified because DeviceHub coordinate input reports noWindowsAvailable; helper PASS is not Native PASS. Final Native export/multi-page directory evidence remains missing. Older dd9304 actual A→Batch→B→Back and Item→Back are explicitly versioned, not promoted to0302 runtime PASS. Rename/Sharing/Add-Move/SafeRemove owning-command gaps remain independently unavailable. Evidence: `docs/ops/documents-slice5-completion-20261114/README.md`; updated Blueprint matrix remains authoritative. No Main merge/push or Slice6.
 
+Local-only follow-up product `1342ee57`: Document row and File Information are separate accessible buttons (no nested swallowing). Scoped41/3, lint/UI guard177 pass. Full iPhone Release rebuilt with original Xcode signing; normal Account/Chinese/Trip restored after diagnosing an incorrect unsigned build.1169 staged source files match; original9 private hashes and9Docs/14links/13completed queue retained. Actual toolbar/gesture validation remains DeviceHub ENVIRONMENT BLOCKED, not UI PASS; no parallel local metadata writer invented. See completion report follow-up. iPad retains0302, not claimed1342 runtime. Cloud Sync excluded; formal Rename/Sharing/Add-Move/SafeRemove still need owning commands, independently of storage.
+
 AUTH-C04 uses independent Auth/Root1/Native writers; Root1 isolated Reader candidate5868350 is not DEV installed or Golden Slice PASS. No shared Backend/SQL/Sync mutation without separate authorization.
 
 ## Restored and actually checked

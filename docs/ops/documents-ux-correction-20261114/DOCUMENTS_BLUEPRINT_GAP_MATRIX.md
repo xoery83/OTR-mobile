@@ -1,6 +1,6 @@
 # Documents Blueprint vs Current App — 14 November 2026
 
-Scope: Slice5 branch, current product0302d534. Updated completion evidence: `../documents-slice5-completion-20261114/README.md`. This is a factual gap register, not approval to implement adjacent scope. No Main push, Provider request, Core Save or SQL change.
+Scope: Slice5 branch, current product1342ee57 (iPhone; iPad retains0302d534). Updated completion evidence: `../documents-slice5-completion-20261114/README.md`. This is a factual gap register, not approval to implement adjacent scope. No Main push, Provider request, Core Save or SQL change.
 
 ## Authoritative sources
 
@@ -29,7 +29,7 @@ Full text reviewed from `/Users/xoery/Downloads/Document Module Design V1`: Docu
 | Safe remove / cleanup | No destructive action added | Custody and retained-operation semantics need owning implementation; never delete sole original or unresolved-operation evidence. |
 | Cloud original state/download | LOCAL_ONLY / NOT_UPLOADED honored | Explicit later Owner deferral of Document Cloud Sync; intentional scope, not decoder failure. |
 | Search scopes / facets / text | Authorized local scopes, filename, retained small TEXT, format/privacy/source/date/offline facets | Relation facets now use readable direct Item counts; local TEXT capped64KiB; unsynced remote catalogs not searched. Read adapter/UI gap, not write-permission issue. |
-| Incremental directory browsing | Repository stable cursor now consumed incrementally,30 records per page | Targeted35-row30+5 cursor check PASS; near-end native interaction not verified. |
+| Incremental directory browsing | Repository stable cursor now consumed incrementally,30 records per page | Targeted35-row30+5 cursor check PASS; near-end native interaction remains DeviceHub ENVIRONMENT BLOCKED. |
 | Loading / empty / denied / unavailable | Loading, empty, denied, offline unknown and read failure projections present | Targeted distinctions PASS; missing-owner recovery uses normal Files exact-content validation. |
 | Activity / Updates / AI sessions | Existing Capture Activity reused | Full source filters, counts, cross-module Activity/Updates navigation remain Slice6. Not reported as completed Slice5. |
 | Dynamic Type / dark / keyboard / VoiceOver | Prior holding-device dark/large-text corrections validated; new screen reuses Foundation | Final new layout needs actual verification; complete VoiceOver and multi-account Native runtime matrix unverified, isolated account guards pass. |
