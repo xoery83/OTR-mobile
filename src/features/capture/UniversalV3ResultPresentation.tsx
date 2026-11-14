@@ -29,6 +29,7 @@ export function UniversalV3ResultPresentation({
   onOpenItem,
   onOpenDocument,
   onReview,
+  onUpdates,
   onDay,
   onDone,
   onReconcile,
@@ -48,6 +49,7 @@ export function UniversalV3ResultPresentation({
   onOpenItem?: OpenAcceptedImportItem;
   onOpenDocument?(itemId: string, documentId: string): void;
   onReview?(): void;
+  onUpdates?(): void;
   onDay?(): void;
   onDone?(): void;
   onReconcile(): void;
@@ -296,6 +298,15 @@ export function UniversalV3ResultPresentation({
               </View>
             );
           })}
+          {onUpdates ? (
+            <UiButton
+              label={t("updates.relatedActivity")}
+              variant="text"
+              onPress={() => {
+                if (isCurrent()) onUpdates();
+              }}
+            />
+          ) : null}
           {reviewCount > 0 && onReview ? (
             <UiButton
               variant="secondary"

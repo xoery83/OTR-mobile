@@ -348,7 +348,14 @@ export function createUpdatesInboxRepository(
     async markAllRead(
       rawFilter: UpdatesFilter,
       context: AccountRequestContext,
-      options: { presentationText?: UpdatesPresentationText } = {},
+      options: {
+        presentationText?: UpdatesPresentationText;
+        batchId?: string;
+        notifications?: readonly Pick<
+          CaptureUpdateCard,
+          "notificationId" | "materialVersion"
+        >[];
+      } = {},
     ) {
       const filter = updatesFilterSchema.parse(rawFilter);
       return scoped(context, async () => {
@@ -363,7 +370,16 @@ export function createUpdatesInboxRepository(
               unavailableCount++;
               continue;
             }
-            if (matchesUpdatesFilter(card, filter, options.presentationText))
+            if (
+              (!options.batchId || card.batchId === options.batchId) &&
+              (!options.notifications ||
+                options.notifications.some(
+                  (row) =>
+                    row.notificationId === card.notificationId &&
+                    row.materialVersion === card.materialVersion,
+                )) &&
+              matchesUpdatesFilter(card, filter, options.presentationText)
+            )
               marked += await mark(context, card);
           }
           if (page.length < 100) break;

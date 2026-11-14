@@ -141,3 +141,5 @@ it("UX-C2 Processing uses Close without cancelling work; recognized Results keep
   h.buttons.get(t("common.close")).onPress();
   expect(close).toHaveBeenCalledOnce();
 });
+
+vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));

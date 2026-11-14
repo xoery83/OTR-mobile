@@ -61,7 +61,8 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("expo-router", () => ({
-  router: { push: s.push },
+  router: { push: s.push, setParams: vi.fn() },
+  useLocalSearchParams: () => ({}),
   useFocusEffect: (callback: () => any) => {
     const i = s.cursor++;
     if (s.slots[i]?.callback !== callback) {
@@ -204,7 +205,15 @@ it("query/category/unread Mark All passes the exact current filter and never res
       currentTripId: s.trip.tripId,
     },
     data.context,
-    { presentationText: expect.any(Function) },
+    {
+      presentationText: expect.any(Function),
+      notifications: expect.arrayContaining([
+        expect.objectContaining({
+          notificationId: expect.any(String),
+          materialVersion: expect.any(Number),
+        }),
+      ]),
+    },
   );
   expect(await data.submissions.reopen(data.request.jobId)).toEqual(before);
   expect(button(render(), t("updates.markAll")).disabled).toBe(true);

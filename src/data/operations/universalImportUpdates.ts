@@ -1,3 +1,4 @@
+import type { V3ActivityProgress } from "./universalActivityReader";
 import {
   captureAccountRequestContext,
   assertAccountRequestContext,
@@ -16,9 +17,12 @@ export type UniversalImportUpdate = Readonly<{
   tripId: string;
   batchId: string;
   jobId: string;
-  state: "RESULTS_READY" | "FAILED" | "UNKNOWN" | "STALE";
+  state: "RESULTS_READY" | "FAILED" | "UNKNOWN" | "STALE" | "WAITING" | "PROCESSING";
+  activity?: V3ActivityProgress;
+  attention?: "REVIEW" | "FAILURE";
+  unread?: boolean;
   updatedAt: string;
-  rowRevision: number;
+  rowRevision?: number;
   savedItemCount?: number;
   sourceDisplayName?: string;
   submittedText?: boolean;
@@ -37,6 +41,8 @@ export function projectUniversalImportUpdates(
   jobs: readonly CaptureJobReadModel[],
   observations: Readonly<Record<string, UniversalTaskActivity>>,
   saved: Readonly<Record<string, SavedOutcome>> = {},
+  v3: Readonly<Record<string, V3ActivityProgress>> = {},
+  readVersions: Readonly<Record<string, string | null>> = {},
 ): UniversalImportUpdate[] {
   const updates = new Map<string, UniversalImportUpdate>();
   for (const job of jobs) {
@@ -49,6 +55,45 @@ export function projectUniversalImportUpdates(
       (tripId && prior !== tripId)
     )
       continue;
+    const progress = v3[batch.batchId];
+    if (progress) {
+      const state = progress.failedCount
+        ? "FAILED"
+        : progress.state === "uncertain"
+          ? "UNKNOWN"
+          : ["analyzing", "checking", "applying", "association"].includes(progress.state)
+            ? "PROCESSING"
+            : ["complete", "empty", "attention", "confirmation"].includes(progress.state)
+              ? "RESULTS_READY"
+              : "WAITING";
+      const card: UniversalImportUpdate = {
+        id: `universal-import:${batch.batchId}`,
+        accountId,
+        tripId: prior,
+        batchId: batch.batchId,
+        jobId: batch.jobId,
+        state,
+        activity: progress,
+        updatedAt: progress.updatedAt ?? batch.createdAt,
+        ...(progress.failedCount
+          ? { attention: "FAILURE" as const }
+          : progress.state === "attention"
+            ? { attention: "REVIEW" as const }
+            : {}),
+        ...(progress.resultCount !== undefined
+          ? { savedItemCount: progress.resultCount }
+          : {}),
+        ...(batch.inputs?.length === 1 && batch.inputs[0].originalFilename
+          ? { sourceDisplayName: batch.inputs[0].originalFilename }
+          : {}),
+        submittedAt: batch.createdAt,
+      };
+      updates.set(batch.batchId, {
+        ...card,
+        unread: readVersions[batch.batchId] !== importUpdateReadVersion(card),
+      });
+      continue;
+    }
     const parsed = universalTaskActivitySchema.safeParse(observations[batch.batchId]);
     if (!parsed.success) continue;
     const { state, updatedAt, rowRevision } = parsed.data;
@@ -79,6 +124,7 @@ export function projectUniversalImportUpdates(
       state,
       updatedAt,
       rowRevision,
+      ...(state === "FAILED" ? { attention: "FAILURE" as const } : {}),
       ...(batch.inputs?.length === 1 && batch.inputs[0].originalFilename?.trim()
         ? { sourceDisplayName: batch.inputs[0].originalFilename }
         : {}),
@@ -98,10 +144,15 @@ export function projectUniversalImportUpdates(
         : {}),
     });
   }
-  return [...updates.values()].sort(
-    (a, b) =>
-      Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id),
-  );
+  return [...updates.values()]
+    .map((card) => ({
+      ...card,
+      unread: readVersions[card.batchId] !== importUpdateReadVersion(card),
+    }))
+    .sort(
+      (a, b) =>
+        Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id),
+    );
 }
 
 export async function readDefaultUniversalImportUpdates(
@@ -109,6 +160,7 @@ export async function readDefaultUniversalImportUpdates(
   isCurrent: () => boolean,
   onObservation: (cards: UniversalImportUpdate[], context: AccountRequestContext) => void,
   onLocalIntake?: (jobs: CaptureJobReadModel[], context: AccountRequestContext) => void,
+  target?: { batchId: string; jobId: string },
 ) {
   const { requireActiveUserId } = await import("../auth/authRepository");
   const context = await captureAccountRequestContext("", requireActiveUserId);
@@ -121,14 +173,31 @@ export async function readDefaultUniversalImportUpdates(
       return false;
     }
   };
-  const { listDefaultCaptureJobs } = await import("./defaultCaptureSubmission");
+  const { listDefaultCaptureJobs, reopenDefaultCaptureJob } =
+    await import("./defaultCaptureSubmission");
   if (!current()) return;
-  const jobs = (await listDefaultCaptureJobs({ limit: 20 })).filter(
+  const inventory = target
+    ? [await reopenDefaultCaptureJob(target.jobId)]
+    : await listDefaultCaptureJobs({ limit: 20 });
+  if (
+    target &&
+    (inventory[0]?.batch.batchId !== target.batchId ||
+      inventory[0]?.batch.jobId !== target.jobId)
+  )
+    throw Error("UPDATES_SOURCE_UNAVAILABLE");
+  const jobs = inventory.filter(
     (job) =>
       job.batch.accountId === context.accountId &&
       (!tripId || (job.batch.context.tripPrior?.id ?? job.assignedTripId) === tripId),
   );
   await assertAccountRequestContext(context, requireActiveUserId);
+  if (!current()) return;
+  const { readImportUpdateVersions } =
+    await import("../repositories/importUpdateReadStateRepository");
+  const readVersions = await readImportUpdateVersions(
+    context,
+    jobs.map((job) => job.batch.batchId),
+  );
   if (!current()) return;
   onLocalIntake?.(
     jobs.filter((job) => job.batch.context.tripPrior?.id ?? job.assignedTripId),
@@ -138,6 +207,7 @@ export async function readDefaultUniversalImportUpdates(
   const { readDefaultUniversalActivities } = await import("./universalActivityReader");
   const observations: Record<string, UniversalTaskActivity> = {};
   const saved: Record<string, SavedOutcome> = {};
+  const v3: Record<string, V3ActivityProgress> = {};
   const emit = () => {
     if (current())
       onObservation(
@@ -147,6 +217,8 @@ export async function readDefaultUniversalImportUpdates(
           jobs,
           observations,
           saved,
+          v3,
+          readVersions,
         ),
         context,
       );
@@ -203,11 +275,25 @@ export async function readDefaultUniversalImportUpdates(
       });
       observe(accepted);
     },
+    (batchId, progress) => {
+      if (current()) {
+        v3[batchId] = progress;
+        emit();
+      }
+    },
   );
   await assertAccountRequestContext(context, requireActiveUserId);
   if (current())
     onObservation(
-      projectUniversalImportUpdates(context.accountId, tripId, jobs, observations, saved),
+      projectUniversalImportUpdates(
+        context.accountId,
+        tripId,
+        jobs,
+        observations,
+        saved,
+        v3,
+        readVersions,
+      ),
       context,
     );
 }
@@ -230,4 +316,25 @@ export async function reopenDefaultUniversalImportUpdate(
   )
     throw Error("UPDATES_SOURCE_UNAVAILABLE");
   return job;
+}
+
+export function importUpdateReadVersion(card: UniversalImportUpdate) {
+  return JSON.stringify([
+    card.activity?.state ?? card.state,
+    card.attention ?? null,
+    card.savedItemCount ?? null,
+    card.updatedAt,
+    card.rowRevision ?? null,
+  ]);
+}
+export async function markDefaultUniversalImportUpdateRead(
+  context: AccountRequestContext,
+  card: UniversalImportUpdate,
+) {
+  const { requireActiveUserId } = await import("../auth/authRepository");
+  await assertAccountRequestContext(context, requireActiveUserId);
+  if (card.accountId !== context.accountId) throw Error("UPDATES_SOURCE_UNAVAILABLE");
+  const { markImportUpdateVersionRead } =
+    await import("../repositories/importUpdateReadStateRepository");
+  await markImportUpdateVersionRead(context, card.batchId, importUpdateReadVersion(card));
 }

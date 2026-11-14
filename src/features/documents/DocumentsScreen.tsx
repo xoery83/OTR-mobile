@@ -163,7 +163,10 @@ function DocumentsWorkspace({
           setAccountId(id);
           setChecked(true);
           if (id) {
-            const priors = await listCaptureTripPriors({ accountId: id, generation });
+            const priors = await listCaptureTripPriors(
+              { accountId: id, generation },
+              { refresh: false },
+            );
             if (alive && active())
               setActivityTripNames(
                 Object.fromEntries(priors.map((trip) => [trip.id, trip.name])),
@@ -350,7 +353,7 @@ function DocumentsWorkspace({
                     isCurrent={active}
                     onOpenJob={(jobId) => {
                       if (active())
-                        router.push({ pathname: "/capture", params: { jobId } });
+                        router.push({ pathname: "/import-plans", params: { jobId } });
                     }}
                     onHide={() => router.back()}
                     onReturn={() => {

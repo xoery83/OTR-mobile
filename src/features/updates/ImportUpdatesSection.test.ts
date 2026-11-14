@@ -18,12 +18,12 @@ vi.mock("react", async (original) => ({
     return [
       initial === null
         ? {
-            scope: "1:trip",
+            scope: "1:trip:ALL",
             cards: fixture.cards,
             localJobs: fixture.localJobs,
             context: {},
           }
-        : slot === 1
+        : slot === 2
           ? fixture.loading
           : initial,
       vi.fn(),
@@ -49,6 +49,8 @@ vi.mock("@/data/operations/universalImportUpdates", () => ({
   readDefaultUniversalImportUpdates: () => {
     throw Error("UNEXPECTED_IO");
   },
+  importUpdateReadVersion: (card: any) => JSON.stringify([card.state, card.updatedAt]),
+  markDefaultUniversalImportUpdateRead: vi.fn(),
   reopenDefaultUniversalImportUpdate: () => {
     throw Error("UNEXPECTED_IO");
   },
@@ -113,6 +115,7 @@ it("renders a reopenable local record without fabricating Task state and replace
         inputs: [{ originalFilename: "lantern.txt" }],
       },
       counts: { selected: 1 },
+      allInputsAccepted: true,
       availableActions: { canReopen: true },
     },
   ];

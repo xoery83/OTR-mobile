@@ -9,7 +9,7 @@ import {
 } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { AppIcon } from "@/components/AppIcon";
 import {
   getAccountGeneration,
@@ -54,6 +54,28 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const { workingTrip } = useTripView();
+  const params = useLocalSearchParams<{
+    activityId?: string;
+    activityJobId?: string;
+    activityTripId?: string;
+    originGeneration?: string;
+  }>();
+  const activityId =
+    params.originGeneration === String(generation) &&
+    typeof params.activityId === "string"
+      ? params.activityId
+      : undefined;
+  const importMark = useRef<(() => Promise<void>) | null>(null);
+  const [importUnread, setImportUnread] = useState(0);
+  const [importCount, setImportCount] = useState<number | null>(null);
+  const bindImportRead = useCallback(
+    (count: number, mark: () => Promise<void>, total?: number | null) => {
+      importMark.current = mark;
+      setImportUnread(count);
+      setImportCount(total ?? null);
+    },
+    [],
+  );
   const [category, setCategory] = useState<UpdatesFilter["category"]>("ALL");
   const [unreadOnly, setUnreadOnly] = useState(false),
     [query, setQuery] = useState("");
@@ -62,9 +84,21 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       category,
       unreadOnly,
       query,
-      currentTripId: workingTrip?.generation === generation ? workingTrip.tripId : null,
+      currentTripId: activityId
+        ? params.activityTripId || null
+        : workingTrip?.generation === generation
+          ? workingTrip.tripId
+          : null,
     }),
-    [category, unreadOnly, query, workingTrip, generation],
+    [
+      category,
+      unreadOnly,
+      query,
+      workingTrip,
+      generation,
+      activityId,
+      params.activityTripId,
+    ],
   );
   const presentationText = useMemo(() => {
     const title = translate("updates.needsInput", { count: "{count}" }, locale);
@@ -216,12 +250,28 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         },
       });
     });
+  const intakeCards =
+    page?.cards.filter((card) => !activityId || card.batchId === activityId) ?? [];
   const unread =
-    page?.cards.filter((card) => card.unread && card.sourceState !== "UNAVAILABLE")
+    intakeCards.filter((card) => card.unread && card.sourceState !== "UNAVAILABLE")
       .length ?? 0;
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.root}>
       <View style={styles.filters}>
+        {activityId ? (
+          <UiButton
+            label={t("updates.batchScope")}
+            variant="text"
+            onPress={() =>
+              router.setParams({
+                activityId: undefined,
+                activityJobId: undefined,
+                activityTripId: undefined,
+                originGeneration: undefined,
+              })
+            }
+          />
+        ) : null}
         <ScrollView
           keyboardShouldPersistTaps="handled"
           horizontal
@@ -259,7 +309,16 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         <ImportUpdatesSection
           filter={filter}
           generation={generation}
-          onOpen={(jobId, originGeneration) => {
+          batchId={activityId}
+          jobId={
+            typeof params.activityJobId === "string" ? params.activityJobId : undefined
+          }
+          onActivity={() => {
+            if (active.current && generation === getAccountGeneration())
+              router.push({ pathname: "/documents", params: { scope: "ACTIVITY" } });
+          }}
+          onReadControls={bindImportRead}
+          onOpen={(jobId, originGeneration, destination) => {
             if (
               !active.current ||
               intent.current !== renderedIntent ||
@@ -268,7 +327,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             )
               return;
             router.push({
-              pathname: "/capture",
+              pathname: destination === "REVIEW" ? "/import-review" : "/import-plans",
               params: {
                 jobId,
                 origin: "UPDATES",
@@ -288,7 +347,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             {t("updates.unavailable")}
           </UiText>
         ) : null}
-        {!loading && !failed && !page?.cards.length ? (
+        {!loading && !failed && !intakeCards.length && importCount === 0 ? (
           <UiText style={styles.secondary}>
             {t(
               query
@@ -301,7 +360,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             )}
           </UiText>
         ) : null}
-        {page?.cards.map((card) => (
+        {intakeCards.map((card) => (
           <Pressable
             key={card.notificationId}
             accessibilityRole="button"
@@ -350,11 +409,17 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         <UiButton
           label={t("updates.markAll")}
           variant="secondary"
-          disabled={loading || busy || !unread || failed}
+          disabled={loading || busy || (!unread && !importUnread) || failed}
           onPress={() =>
             void operate(async (reader) => {
+              await importMark.current?.();
               await reader.repository.markAllRead(filter, reader.context, {
                 presentationText,
+                ...(activityId ? { batchId: activityId } : {}),
+                notifications: intakeCards.map(({ notificationId, materialVersion }) => ({
+                  notificationId,
+                  materialVersion,
+                })),
               });
             })
           }

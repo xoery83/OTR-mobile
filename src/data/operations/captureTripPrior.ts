@@ -22,11 +22,17 @@ export async function readCaptureTripPrior(tripId: string, scope: AccountScope) 
   return remote ? { id: remote.id, name: remote.name } : null;
 }
 
-export async function listCaptureTripPriors(scope: AccountScope) {
+export async function listCaptureTripPriors(
+  scope: AccountScope,
+  options: { refresh?: boolean } = {},
+) {
   await assertAccountRequestContext(scope, requireActiveUserId);
   const trips = await (await readLocalTripRepository()).listTrips();
   await assertAccountRequestContext(scope, requireActiveUserId);
-  if (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true") {
+  if (
+    options.refresh !== false &&
+    process.env.EXPO_PUBLIC_OTR_UNIVERSAL_CONTINUOUS_ENABLED === "true"
+  ) {
     try {
       await refreshTripDiscoveryCache();
     } catch (error) {

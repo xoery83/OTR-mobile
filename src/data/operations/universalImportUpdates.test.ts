@@ -6,9 +6,14 @@ import {
   projectUniversalImportUpdates,
   readDefaultUniversalImportUpdates,
   reopenDefaultUniversalImportUpdate,
+  importUpdateReadVersion,
 } from "./universalImportUpdates";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
+vi.mock("expo-secure-store", () => ({
+  getItemAsync: async () => null,
+  setItemAsync: async () => {},
+}));
 const source = vi.hoisted(() => ({
   account: "",
   list: vi.fn(),
@@ -74,7 +79,7 @@ it("one stable Batch event changes in place on newer state and does not invent S
     state: "RESULTS_READY",
     jobId: f.job.batch.jobId,
   });
-  expect(first[0]).not.toHaveProperty("unread");
+  expect(first[0]).toHaveProperty("unread", true);
   expect(first[0]).not.toHaveProperty("saved");
   const next = projectUniversalImportUpdates(f.accountId, f.tripId, [f.job], {
     [f.batchId]: { ...f.activity, state: "STALE", rowRevision: 4 },
@@ -235,7 +240,7 @@ it("projects completed Source saves into the same Batch event, never cross-accou
     { ...completed, updatedAt: "invalid" },
   ])
     expect(read(altered)[0]).not.toHaveProperty("savedItemCount");
-  expect(read(completed)[0]).not.toHaveProperty("unread");
+  expect(read(completed)[0]).toHaveProperty("unread", true);
 });
 
 it("only completed Source receipts upgrade the same observed Batch, with stable server time", async () => {
@@ -467,4 +472,115 @@ it("does not start Task hydration when the local snapshot callback closes its vi
   );
   expect(source.read).not.toHaveBeenCalled();
   expect(observed).not.toHaveBeenCalled();
+});
+
+it("V3 Updated feed distinguishes completed, ABSTAIN, Review, failure, waiting and UNKNOWN on one Batch ID", () => {
+  const f = fixture();
+  for (const state of [
+    "complete",
+    "empty",
+    "attention",
+    "confirmation",
+    "waiting",
+    "uncertain",
+    "association",
+  ] as const) {
+    const rows = projectUniversalImportUpdates(
+      f.accountId,
+      f.tripId,
+      [f.job, f.job],
+      {},
+      {},
+      {
+        [f.job.batch.batchId]: {
+          state,
+          saved: 0,
+          resultCount: state === "complete" ? 1 : 0,
+        },
+      },
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].attention).toBe(state === "attention" ? "REVIEW" : undefined);
+    expect(rows[0].state).toBe(
+      state === "uncertain"
+        ? "UNKNOWN"
+        : state === "association"
+          ? "PROCESSING"
+          : state === "waiting"
+            ? "WAITING"
+            : "RESULTS_READY",
+    );
+  }
+  const failed = projectUniversalImportUpdates(
+    f.accountId,
+    f.tripId,
+    [f.job],
+    {},
+    {},
+    { [f.job.batch.batchId]: { state: "attention", saved: 0, failedCount: 1 } },
+  );
+  expect(failed[0].attention).toBe("FAILURE");
+  expect(failed[0].state).toBe("FAILED");
+});
+
+it("marking the observed material read never resolves Review and later material becomes unread", () => {
+  const f = fixture();
+  const activity = { state: "attention", saved: 0 } as const;
+  const first = projectUniversalImportUpdates(
+    f.accountId,
+    f.tripId,
+    [f.job],
+    {},
+    {},
+    { [f.job.batch.batchId]: activity },
+  );
+  const read = projectUniversalImportUpdates(
+    f.accountId,
+    f.tripId,
+    [f.job],
+    {},
+    {},
+    { [f.job.batch.batchId]: activity },
+    { [f.job.batch.batchId]: importUpdateReadVersion(first[0]) },
+  );
+  expect(read[0]).toMatchObject({ unread: false, attention: "REVIEW", activity });
+  const changed = projectUniversalImportUpdates(
+    f.accountId,
+    f.tripId,
+    [f.job],
+    {},
+    {},
+    { [f.job.batch.batchId]: { state: "complete", saved: 1, resultCount: 1 } },
+    { [f.job.batch.batchId]: importUpdateReadVersion(first[0]) },
+  );
+  expect(changed[0].unread).toBe(true);
+  expect(changed[0].attention).toBeUndefined();
+});
+
+it("a Results-linked older Batch uses exact original Job lookup, never only the newest twenty", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  f.job.batch.createdAt = "2026-10-01T00:00:00Z";
+  source.reopen.mockResolvedValue(f.job);
+  source.list.mockRejectedValue(new Error("UNEXPECTED_HISTORY_SCAN"));
+  source.read.mockImplementation(async (_jobs, _current, _legacy, _result, v3) => {
+    v3(f.batchId, { state: "complete", saved: 3, resultCount: 1 });
+  });
+  const observe = vi.fn();
+  await readDefaultUniversalImportUpdates(f.tripId, () => true, observe, undefined, {
+    batchId: f.batchId,
+    jobId: f.job.batch.jobId,
+  });
+  expect(source.list).not.toHaveBeenCalled();
+  expect(source.reopen).toHaveBeenCalledWith(f.job.batch.jobId);
+  expect(observe.mock.calls.at(-1)?.[0]).toMatchObject([
+    { batchId: f.batchId, savedItemCount: 1 },
+  ]);
+  expect(observe.mock.calls.at(-1)?.[0][0].attention).toBeUndefined();
+  await expect(
+    readDefaultUniversalImportUpdates(f.tripId, () => true, observe, undefined, {
+      batchId: randomUUID(),
+      jobId: f.job.batch.jobId,
+    }),
+  ).rejects.toThrow("UPDATES_SOURCE_UNAVAILABLE");
 });
