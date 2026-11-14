@@ -142,6 +142,7 @@ export function createImportDocumentsRepository(
           .object({ recordedAt: z.iso.datetime(), captureId: captureIdSchema })
           .parse(options.before);
       await authorize(context, scope);
+      // shortcut: search retains text up to 64 KiB; use an owning local index if larger text search is required.
       const rows = await db.getAllAsync(
         `${options.includeText ? select.replace("SELECT c.id", "SELECT CASE WHEN c.kind='TEXT' AND p.byte_count<=65536 AND typeof(p.bytes)='blob' THEN CAST(p.bytes AS TEXT) ELSE NULL END AS retainedText,c.id") : select} WHERE c.account_id=? AND ${scopedWhere(scope)}
        ${before ? "AND (c.created_at<? OR (c.created_at=? AND c.id<?))" : ""}

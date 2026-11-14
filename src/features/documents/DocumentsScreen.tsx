@@ -226,7 +226,7 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
         <UiText style={styles.message}>{t("common.loading")}</UiText>
       ) : !accountId ? (
         <View style={styles.content}>
-          <UiText>{t("documents.signIn")}</UiText>
+          <UiText style={styles.title}>{t("documents.signIn")}</UiText>
           <UiButton
             label={t("navigation.signIn")}
             onPress={() => router.push("/account")}
@@ -319,7 +319,7 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
             contentContainerStyle={styles.content}
           >
             {chooseError ? (
-              <UiText accessibilityRole="alert">
+              <UiText style={styles.title} accessibilityRole="alert">
                 {t("importDocuments.unavailable")}
               </UiText>
             ) : (
@@ -688,7 +688,7 @@ function DocumentDirectory({
             ))}
             {(["from", "to"] as const).map((key) => (
               <View key={key} style={styles.content}>
-                <UiText>
+                <UiText style={styles.title}>
                   {t(key === "from" ? "documents.dateFrom" : "documents.dateTo")}
                 </UiText>
                 <UiDatePicker
@@ -757,7 +757,9 @@ function DocumentDirectory({
           <UiText style={styles.message}>{t("importDocuments.loading")}</UiText>
         ) : error ? (
           <View style={styles.content}>
-            <UiText accessibilityRole="alert">{t("importDocuments.unavailable")}</UiText>
+            <UiText style={styles.title} accessibilityRole="alert">
+              {t("importDocuments.unavailable")}
+            </UiText>
             <UiButton
               variant="text"
               label={t("capture.activityRefresh")}

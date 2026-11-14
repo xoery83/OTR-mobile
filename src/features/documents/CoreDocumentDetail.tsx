@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { UiButton, UiText } from "@/ui/controls";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
@@ -40,6 +40,8 @@ export function CoreDocumentDetail({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  // Native button labels need fresh measurement after a hot Dynamic Type change.
+  const { fontScale } = useWindowDimensions();
   const [pages, setPages] = useState<Page[]>([{ document: entry }]);
   const page = pages.at(-1)!;
   const [items, setItems] = useState<Item[]>([]),
@@ -147,7 +149,7 @@ export function CoreDocumentDetail({
   }
   if (capture)
     return (
-      <View style={styles.body}>
+      <View key={fontScale} style={styles.body}>
         <UiButton variant="text" label={t("common.back")} onPress={back} />
         <ImportDocumentsPanel
           accountId={capture.accountId}
@@ -168,7 +170,7 @@ export function CoreDocumentDetail({
       </View>
     );
   return (
-    <View style={styles.body}>
+    <View key={fontScale} style={styles.body}>
       <UiButton variant="text" label={t("common.back")} onPress={back} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -196,7 +198,9 @@ export function CoreDocumentDetail({
             </UiText>
             <UiText style={styles.meta}>{t("documents.localOnly")}</UiText>
             {batchError ? (
-              <UiText accessibilityRole="alert">{t("documents.batchUnavailable")}</UiText>
+              <UiText style={styles.title} accessibilityRole="alert">
+                {t("documents.batchUnavailable")}
+              </UiText>
             ) : null}
             {batches.map((batch) => (
               <UiButton
@@ -265,7 +269,7 @@ export function CoreDocumentDetail({
             ) : (
               results.items.map((result) => (
                 <View key={result.itemId} style={styles.item}>
-                  <UiText>{result.title}</UiText>
+                  <UiText style={styles.title}>{result.title}</UiText>
                   <UiText style={styles.meta}>
                     {t(
                       result.state === "complete" && result.action
@@ -299,9 +303,9 @@ export function CoreDocumentDetail({
           <UiText style={styles.meta}>{t("documents.batchItemsExplanation")}</UiText>
         ) : null}
         {loading ? (
-          <UiText>{t("common.loading")}</UiText>
+          <UiText style={styles.title}>{t("common.loading")}</UiText>
         ) : error ? (
-          <UiText accessibilityRole="alert">
+          <UiText style={styles.title} accessibilityRole="alert">
             {t("importDocuments.itemLinksUnavailable")}
           </UiText>
         ) : !items.length ? (
@@ -309,7 +313,9 @@ export function CoreDocumentDetail({
         ) : (
           items.map((item) => (
             <View key={item.id} style={styles.item}>
-              <UiText>{item.title || t("documents.untitledItem")}</UiText>
+              <UiText style={styles.title}>
+                {item.title || t("documents.untitledItem")}
+              </UiText>
               {/^P[1-6]$/.test(item.family) ? (
                 <UiButton
                   variant="text"
@@ -334,11 +340,15 @@ export function CoreDocumentDetail({
               onPress={() => void openOriginal()}
             />
             {originalError ? (
-              <UiText accessibilityRole="alert">
+              <UiText style={styles.title} accessibilityRole="alert">
                 {t("importDocuments.originalUnavailable")}
               </UiText>
             ) : null}
-            {text !== null ? <UiText selectable>{text}</UiText> : null}
+            {text !== null ? (
+              <UiText style={styles.title} selectable>
+                {text}
+              </UiText>
+            ) : null}
           </>
         ) : null}
       </ScrollView>
