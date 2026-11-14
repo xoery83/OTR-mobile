@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import {
   documentFormat,
+  documentReadFailure,
   documentChromeAfterScroll,
   searchDocumentRows,
   mergeDocumentRows,
@@ -62,7 +63,15 @@ it("does not show retained Capture and formal Document as two originals after Sa
     byteCount: 50,
   };
   const captured = { ...accepted, id: "capture", origin: "CAPTURE" as const };
-  expect(mergeDocumentRows([accepted], [captured])).toEqual([accepted]);
+  expect(mergeDocumentRows([accepted], [captured])).toEqual([
+    {
+      ...accepted,
+      captureId: "capture",
+      acquiredAt: null,
+      source: undefined,
+      retainedText: undefined,
+    },
+  ]);
   expect(mergeDocumentRows([accepted], [{ ...captured, byteCount: 51 }])).toHaveLength(2);
 });
 
@@ -98,4 +107,28 @@ it("collapses on a small real upward scroll and ignores layout/inset offset rese
   expect(documentChromeAfterScroll(true, 0, 0, true)).toBe(true);
   expect(documentChromeAfterScroll(true, -9, -9, true)).toBe(false);
   expect(documentChromeAfterScroll(true, 30, -15, true)).toBe(true);
+});
+
+it("relation facets use authorized direct link counts and exclude unknown legacy links", () => {
+  const unknown = row("historical", "text/plain");
+  const zero = { ...row("zero", "text/plain"), linkedItemCount: 0 };
+  const one = { ...row("one", "text/plain"), linkedItemCount: 1 };
+  const two = { ...row("two", "text/plain"), linkedItemCount: 2 };
+  expect(
+    filterDocumentSearch([unknown, zero, one, two], { relation: "UNLINKED" }),
+  ).toEqual([zero]);
+  expect(filterDocumentSearch([unknown, zero, one, two], { relation: "LINKED" })).toEqual(
+    [one, two],
+  );
+  expect(
+    filterDocumentSearch([unknown, zero, one, two], { relation: "MULTIPLE" }),
+  ).toEqual([two]);
+});
+it("does not report a denied, unavailable offline or failed read as an empty directory", () => {
+  expect(documentReadFailure(Error("DOCUMENTS_TRIP_ACCESS"), true)).toBe("DENIED");
+  expect(documentReadFailure(Error("DOCUMENTS_LOCAL_STATE_UNKNOWN"), false)).toBe(
+    "OFFLINE_UNKNOWN",
+  );
+  expect(documentReadFailure(Error("IO_ERROR"), true)).toBe("OFFLINE_UNKNOWN");
+  expect(documentReadFailure(Error("IO_ERROR"), false)).toBe("FAILED");
 });

@@ -3,6 +3,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { ImportDocumentsPanel } from "./ImportDocumentsPanel";
 import { ImportDocumentsList, ImportDocumentDetail } from "./ImportDocuments";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
+vi.mock("@/ui/controls", () => ({ UiText: () => null }));
+vi.mock("./CoreDocumentDetail", () => ({ DocumentActions: () => null }));
 const h = vi.hoisted(() => ({
   slots: [] as unknown[],
   cursor: 0,

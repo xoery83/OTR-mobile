@@ -287,12 +287,22 @@ it("projects actual direct links once, independently of file availability and Ba
   Object.assign(h.snapshot!.graph.itinerary_events[0], {
     title: "Existing stay",
     experience_family: "P3",
+    start_local_date: "2026-11-14",
+    start_local_time: "16:30:00",
+    authored_label: "Harbour Hotel",
   });
   h.snapshot!.graph.trip_item_document_links.push({
     ...h.snapshot!.graph.trip_item_document_links[0],
   });
   expect(await scoped.relationships(id)).toEqual([
-    { id: item, title: "Existing stay", family: "P3" },
+    {
+      id: item,
+      title: "Existing stay",
+      family: "P3",
+      date: "2026-11-14",
+      time: "16:30:00",
+      place: "Harbour Hotel",
+    },
   ]);
   h.snapshot!.graph.itinerary_events[0].hidden_at = "2026-11-14";
   expect(await scoped.relationships(id)).toEqual([]);
@@ -471,4 +481,13 @@ it("wrong bytes or a different Account cannot restore/replace a Document origina
     scoped.restoreOriginalFromUri(id, "file:///other-account"),
   ).rejects.toThrow();
   expect(h.files.size).toBe(0);
+});
+
+it("projects only readable direct Item counts and does not infer Batch support", async () => {
+  const scoped = await localItemImportOriginals(trip, undefined, 4);
+  expect((await scoped.metadata())[0].linkedItemCount).toBe(1);
+  h.snapshot!.graph.itinerary_events[0].visibility = "PRIVATE";
+  expect((await scoped.metadata())[0].linkedItemCount).toBe(0);
+  h.snapshot = null;
+  await expect(scoped.metadata()).rejects.toThrow("DOCUMENTS_LOCAL_STATE_UNKNOWN");
 });

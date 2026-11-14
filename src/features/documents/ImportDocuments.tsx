@@ -4,8 +4,10 @@ import type {
   ImportDocument,
   ImportDocumentScope,
 } from "@/data/repositories/importDocumentsRepository";
+import { AppIcon } from "@/components/AppIcon";
+import { documentSourceLabel } from "./documentListPresentation";
 import { UiButton, UiSection, UiText } from "@/ui/controls";
-import { t, formatUiDate } from "@/ui/locale";
+import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -26,8 +28,7 @@ const documentFormat = (document: ImportDocument) =>
   document.kind === "FILE"
     ? document.declaredContentType === "application/pdf"
       ? t("attachment.pdf")
-      : document.declaredContentType === "image/png" ||
-          document.declaredContentType === "image/jpeg"
+      : document.declaredContentType?.startsWith("image/")
         ? t("importDocuments.format.IMAGE")
         : document.declaredContentType === "text/plain"
           ? t("importDocuments.format.TEXT")
@@ -195,7 +196,34 @@ export function ImportDocumentDetail({
           t(document.kind === "TEXT" ? "capture.ai.submittedText" : "capture.unnamed")
         }
       >
-        <UiText style={s.meta}>{documentFormat(document)}</UiText>
+        <View style={s.identity}>
+          <AppIcon
+            name={
+              document.kind === "TEXT" || document.declaredContentType === "text/plain"
+                ? "text.alignleft"
+                : document.declaredContentType === "application/pdf"
+                  ? "doc.richtext"
+                  : document.declaredContentType?.startsWith("image/")
+                    ? "photo"
+                    : "doc"
+            }
+            size={24}
+            color={s.meta.color}
+          />
+          <UiText style={s.meta}>
+            {documentFormat(document)}
+            {document.byteCount
+              ? ` · ${t("documents.byteSize", { count: formatUiNumber(document.byteCount) })}`
+              : ""}
+          </UiText>
+        </View>
+        {document.acquisitionSource ? (
+          <UiText style={s.meta}>
+            {t("documents.sourceMetadata", {
+              source: t(documentSourceLabel[document.acquisitionSource]),
+            })}
+          </UiText>
+        ) : null}
         <UiText style={s.meta}>{recordedTime(document.recordedAt)}</UiText>
         <UiText style={s.meta}>{t("importDocuments.private")}</UiText>
         <UiText style={s.meta}>
@@ -259,6 +287,7 @@ const styles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flexGrow: 0, flexShrink: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.card },
+    identity: { flexDirection: "row", alignItems: "center", gap: visual.space.card },
     title: { color: colors.textPrimary, ...visual.type.row },
     copy: { color: colors.textPrimary, ...visual.type.row },
     meta: { color: colors.textSecondary, ...visual.type.meta },

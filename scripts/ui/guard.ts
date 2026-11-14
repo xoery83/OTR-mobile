@@ -286,6 +286,7 @@ export function newUiDebt(
 export const representativeRoots = [
   "app/documents.tsx",
   "app/document-search.tsx",
+  "app/document-detail.tsx",
   "src/features/documents/ImportDocuments.tsx",
   "app/(tabs)/capture.tsx",
   "app/search.tsx",

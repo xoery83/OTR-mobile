@@ -1,118 +1,126 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
-import { router, useFocusEffect } from "expo-router";
+import { useCallback, useRef, useState, useLayoutEffect } from "react";
+import {
+  ActionSheetIOS,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { Stack, router, useFocusEffect } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { UiButton, UiText } from "@/ui/controls";
+import { AppIcon } from "@/components/AppIcon";
+import { SheetHeader } from "@/components/SheetHeader";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import { visual } from "@/ui/visual";
 import type { UiColors } from "@/ui/palette";
 import { localItemImportOriginals } from "@/data/operations/localItemImportOriginals";
-import type { DocumentListEntry } from "./documentListPresentation";
-import { ImportDocumentsPanel } from "./ImportDocumentsPanel";
-import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
-import { documentFormat, documentFormatLabel } from "./documentListPresentation";
+import {
+  documentFormat,
+  documentFormatLabel,
+  documentSourceLabel as sourceKeys,
+  type DocumentListEntry,
+} from "./documentListPresentation";
 
-const resultActionKey = {
+type Reader = Awaited<ReturnType<typeof localItemImportOriginals>>;
+type Batch = Awaited<ReturnType<Reader["batches"]>>[number];
+type Item = Awaited<ReturnType<Reader["relationships"]>>[number];
+type Results = Awaited<ReturnType<Reader["batchResults"]>>;
+const actionKey = {
   created: "documents.resultCreated",
   linked: "documents.resultLinked",
   updated: "documents.resultUpdated",
 } as const;
-type Reader = Awaited<ReturnType<typeof localItemImportOriginals>>;
-type Batch = Awaited<ReturnType<Reader["batches"]>>[number];
-type Item = Awaited<ReturnType<Reader["relationships"]>>[number];
-type Page =
-  { document: DocumentListEntry } | { batch: Batch } | { capture: ImportDocument };
+const formatIcons = {
+  PDF: "doc.richtext",
+  IMAGE: "photo",
+  TEXT: "text.alignleft",
+  FILE: "doc",
+} as const;
+const itemIcons = {
+  P1: "calendar",
+  P2: "airplane",
+  P3: "bed.double",
+  P4: "car",
+  P5: "tram",
+  P6: "mappin.and.ellipse",
+} as const;
 export function CoreDocumentDetail({
   entry,
   tripId,
   generation,
   isCurrent,
-  onBack,
-  onOpenJob,
+  batchJobId,
+  batchId,
+  informationInitially = false,
 }: {
   entry: DocumentListEntry;
   tripId: string;
   generation: number;
   isCurrent(): boolean;
-  onBack(): void;
-  onOpenJob(id: string): void;
+  batchJobId?: string;
+  batchId?: string;
+  informationInitially?: boolean;
 }) {
   useUiLocale();
-  const styles = useThemedStyles(createStyles);
-  // Native button labels need fresh measurement after a hot Dynamic Type change.
-  const { fontScale } = useWindowDimensions();
-  const [pages, setPages] = useState<Page[]>([{ document: entry }]);
-  const page = pages.at(-1)!;
-  const [items, setItems] = useState<Item[]>([]),
-    [batches, setBatches] = useState<Batch[]>([]);
-  const [loading, setLoading] = useState(true),
-    [error, setError] = useState(false);
-  const [text, setText] = useState<string | null>(null),
-    [originalError, setOriginalError] = useState(false);
-  const [opening, setOpening] = useState(false);
-  const [available, setAvailable] = useState(entry.localAvailable);
-  const [restoreError, setRestoreError] = useState(false);
+  const styles = useThemedStyles(createStyles),
+    colors = useUiTheme();
   const current = useRef(isCurrent);
-  useEffect(() => {
+  useLayoutEffect(() => {
     current.current = isCurrent;
   }, [isCurrent]);
-  const document = "document" in page ? page.document : null;
-  const batch = "batch" in page ? page.batch : null;
-  const capture = "capture" in page ? page.capture : null;
-  const [batchError, setBatchError] = useState(false);
-  const [results, setResults] = useState<Awaited<
-    ReturnType<Reader["batchResults"]>
-  > | null>(null);
-  const [resultError, setResultError] = useState(false);
+  const [items, setItems] = useState<Item[]>([]),
+    [batches, setBatches] = useState<Batch[]>([]);
+  const [outcomes, setOutcomes] = useState<{ batch: Batch; result: Results | null }[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true),
+    [error, setError] = useState(false),
+    [batchError, setBatchError] = useState(false);
+  const [available, setAvailable] = useState(entry.localAvailable),
+    [opening, setOpening] = useState(false);
+  const [originalError, setOriginalError] = useState(false),
+    [restoreError, setRestoreError] = useState(false);
+  const [text, setText] = useState<string | null>(null);
   useFocusEffect(
     useCallback(() => {
-      if (capture) return;
       let alive = true;
       const valid = () => alive && current.current();
-      setItems([]);
-      setBatches([]);
-      setBatchError(false);
-      setResults(null);
-      setResultError(false);
-      setError(false);
       setLoading(true);
-      setText(null);
-      setOriginalError(false);
+      setError(false);
+      setBatchError(false);
+      setOutcomes([]);
       void (async () => {
         const reader = await localItemImportOriginals(tripId, undefined, generation);
-        const docs = await reader.metadata();
-        if (valid() && document)
-          setAvailable(
-            docs.find((row) => row.id === document.id)?.localAvailable === true,
-          );
-        const ids = document
-          ? [document.id]
-          : (batch?.documents ?? []).map((row) => row.id);
-        if (ids.some((id) => !docs.some((row) => row.id === id)))
-          throw Error("DOCUMENT_ACCESS_CHANGED");
+        const doc = (await reader.metadata()).find((row) => row.id === entry.id);
+        if (!doc) throw Error("DOCUMENT_ACCESS_CHANGED");
+        const history = await reader.batches(entry.id).catch(() => {
+          if (valid()) setBatchError(true);
+          return [];
+        });
+        const selected = batchJobId
+          ? history.filter((row) => row.jobId === batchJobId && row.batchId === batchId)
+          : history;
+        if (batchJobId && selected.length !== 1) throw Error("DOCUMENT_ACCESS_CHANGED");
         const linked = new Map<string, Item>();
-        for (const id of ids)
+        for (const id of batchJobId
+          ? selected[0].documents.map((row) => row.id)
+          : [entry.id])
           for (const item of await reader.relationships(id)) linked.set(item.id, item);
-        let imports: Batch[] = [];
-        if (document)
-          try {
-            imports = await reader.batches(document.id);
-          } catch {
-            if (valid()) setBatchError(true);
-          }
-        if (valid()) {
-          setItems([...linked.values()]);
-          setBatches(imports);
-          setLoading(false);
-        }
-        if (batch) {
-          try {
-            const observed = await reader.batchResults(batch.jobId, batch.batchId);
-            if (valid()) setResults(observed);
-          } catch {
-            if (valid()) setResultError(true);
-          }
+        if (!valid()) return;
+        setAvailable(doc.localAvailable);
+        setItems([...linked.values()]);
+        setBatches(selected);
+        setLoading(false);
+        for (const batch of selected) {
+          const result = await reader
+            .batchResults(batch.jobId, batch.batchId)
+            .catch(() => null);
+          if (!valid()) return;
+          setOutcomes((rows) => [...rows, { batch, result }]);
         }
       })()
         .catch(() => {
@@ -124,41 +132,50 @@ export function CoreDocumentDetail({
       return () => {
         alive = false;
       };
-    }, [tripId, generation, document, batch, capture]),
+    }, [entry.id, tripId, generation, batchJobId, batchId]),
   );
-  const back = () => {
-    if (!current.current()) return;
-    if (pages.length > 1) setPages(pages.slice(0, -1));
-    else onBack();
+  const openDocument = (document: { id: string }, origin = "CORE") => {
+    if (current.current())
+      router.push({
+        pathname: "/document-detail",
+        params: { tripId, documentId: document.id, origin },
+      });
   };
-  async function openOriginal(locate = false) {
-    if (!document || opening || !current.current()) return;
+  const openItem = (id: string, family: string) => {
+    if (current.current() && /^P[1-6]$/.test(family))
+      router.push({
+        pathname: `/p${family.slice(1)}-detail` as "/p1-detail",
+        params: { tripId, itemId: id },
+      });
+  };
+  async function openOriginal(locate = false, exporting = false) {
+    if (opening || !current.current()) return;
     setOpening(true);
     setOriginalError(false);
-    setText(null);
     setRestoreError(false);
+    setText(null);
     let restoring = locate;
     try {
       const reader = await localItemImportOriginals(tripId, undefined, generation);
       if (locate) {
-        const { pickCaptureMaterial } = await import("@/native/capturePicker");
-        const selected = await pickCaptureMaterial("files", () => current.current());
+        const selected = await (
+          await import("@/native/capturePicker")
+        ).pickCaptureMaterial("files", () => current.current());
         if (!current.current() || !selected.length) return;
         if (selected.length !== 1) throw Error("IMPORT_ORIGINAL_MISMATCH");
-        await reader.restoreOriginalFromUri(document.id, selected[0].temporaryUri);
+        await reader.restoreOriginalFromUri(entry.id, selected[0].temporaryUri);
         if (!current.current()) return;
         setAvailable(true);
         restoring = false;
       }
-      const original = await reader.original(document.id);
+      const original = await reader.original(entry.id);
       if (!current.current()) return;
       if (!original) throw Error("IMPORT_ORIGINAL_UNAVAILABLE");
-      if (original.document.mediaType === "text/plain")
+      const native = await import("@/native/importOriginalPreview");
+      if (exporting) await native.shareImportOriginal(original, () => current.current());
+      else if (original.document.mediaType === "text/plain")
         setText(new TextDecoder("utf-8", { fatal: true }).decode(original.bytes));
-      else {
-        const { previewImportOriginal } = await import("@/native/importOriginalPreview");
-        await previewImportOriginal(original, () => current.current());
-      }
+      else await native.previewImportOriginal(original, () => current.current());
     } catch {
       if (current.current()) {
         setOriginalError(true);
@@ -168,193 +185,227 @@ export function CoreDocumentDetail({
       if (current.current()) setOpening(false);
     }
   }
-  if (capture)
-    return (
-      <View key={fontScale} style={styles.body}>
-        <UiButton variant="text" label={t("common.back")} onPress={back} />
-        <ImportDocumentsPanel
-          accountId={capture.accountId}
-          tripId={capture.tripId}
-          scope={capture.tripId ? "TRIP" : "PERSONAL_INBOX"}
-          captureId={capture.captureId}
-          showHistoricalLinks={false}
-          isCurrent={() => current.current()}
-          onOpenDocument={() => {}}
-          onOpenActivity={(jobId) => {
-            if (!current.current()) return;
-            const parent = pages.at(-2);
-            if (parent && "batch" in parent && parent.batch.jobId === jobId)
-              setPages(pages.slice(0, -1));
-            else onOpenJob(jobId);
-          }}
+  const at = (date: string) =>
+    formatUiDate(new Date(date), { dateStyle: "medium", timeStyle: "short" });
+  const summary = (
+    <View style={styles.summary}>
+      <View style={styles.identity}>
+        <AppIcon
+          name={formatIcons[documentFormat(entry)]}
+          size={30}
+          color={colors.textSecondary}
         />
+        <View style={styles.copy}>
+          <UiText style={styles.title}>{entry.title}</UiText>
+          <UiText style={styles.meta}>
+            {t(documentFormatLabel[documentFormat(entry)])}
+            {entry.byteCount
+              ? ` · ${t("documents.byteSize", { count: formatUiNumber(entry.byteCount) })}`
+              : ""}
+          </UiText>
+        </View>
       </View>
-    );
+      {entry.source ? (
+        <UiText style={styles.meta}>
+          {t("documents.sourceMetadata", { source: t(sourceKeys[entry.source]) })}
+        </UiText>
+      ) : null}
+      {entry.acquiredAt ? (
+        <UiText style={styles.meta}>
+          {t("documents.acquiredAt", { date: at(entry.acquiredAt) })}
+        </UiText>
+      ) : null}
+      {entry.recordedAt ? (
+        <UiText style={styles.meta}>
+          {t("documents.recordedAt", { date: at(entry.recordedAt) })}
+        </UiText>
+      ) : null}
+      <UiText style={styles.meta}>
+        {t(
+          entry.visibility === "GROUP"
+            ? "documents.sharedTrip"
+            : entry.visibility === "SELECTED_PERSONS"
+              ? "documents.sharedPeople"
+              : "importDocuments.private",
+        )}
+      </UiText>
+      <UiText style={styles.meta}>
+        {t(available ? "documents.originalLocal" : "documents.originalUnavailable")}
+      </UiText>
+      <UiText style={styles.meta}>{t("documents.localOnly")}</UiText>
+    </View>
+  );
   return (
-    <View key={fontScale} style={styles.body}>
-      <UiButton variant="text" label={t("common.back")} onPress={back} />
+    <View style={styles.body}>
+      <DocumentActions
+        available={available && entry.canOpenOriginal !== false}
+        informationInitially={informationInitially}
+        onExport={() => void openOriginal(false, true)}
+        isCurrent={() => current.current()}
+      >
+        {summary}
+      </DocumentActions>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
       >
-        <UiText style={styles.title}>
-          {document?.title ?? t("documents.importBatch")}
-        </UiText>
-        {document ? (
-          <>
-            <UiText style={styles.meta}>
-              {t(documentFormatLabel[documentFormat(document)])}
-              {document.byteCount
-                ? ` · ${t("documents.byteSize", { count: formatUiNumber(document.byteCount) })}`
-                : ""}
-            </UiText>
-            <UiText style={styles.meta}>
-              {t(
-                document.visibility === "GROUP"
-                  ? "documents.sharedTrip"
-                  : document.visibility === "SELECTED_PERSONS"
-                    ? "documents.sharedPeople"
-                    : "importDocuments.private",
-              )}
-            </UiText>
-            <UiText style={styles.meta}>{t("documents.localOnly")}</UiText>
-            {batchError ? (
-              <UiText style={styles.title} accessibilityRole="alert">
-                {t("documents.batchUnavailable")}
-              </UiText>
-            ) : null}
-            {batches.map((batch) => (
-              <UiButton
-                key={batch.jobId}
-                variant="secondary"
-                label={t("documents.viewBatch", {
-                  date: formatUiDate(new Date(batch.createdAt), {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }),
-                })}
-                onPress={() => {
-                  if (current.current()) setPages([...pages, { batch }]);
-                }}
-              />
-            ))}
-          </>
+        {!batchJobId ? (
+          summary
         ) : (
-          <>
-            <UiText style={styles.meta}>{t("documents.batchExplanation")}</UiText>
-            {(batch?.documents ?? []).map((row) => (
-              <UiButton
-                key={row.id}
-                variant="text"
-                label={row.title}
-                onPress={() => {
-                  if (current.current())
-                    setPages([
-                      ...pages,
-                      { document: { ...row, origin: "CORE", localAvailable: false } },
-                    ]);
-                }}
-              />
-            ))}
-            {(batch?.otherOriginals ?? []).map((original) => (
-              <UiButton
-                key={original.captureId}
-                variant="text"
-                label={original.originalFilename ?? t("capture.ai.submittedText")}
-                onPress={() => {
-                  if (current.current()) setPages([...pages, { capture: original }]);
-                }}
-              />
-            ))}
-            <UiButton
-              variant="secondary"
-              label={t("documents.openActivity")}
-              onPress={() => {
-                if (current.current()) batch && onOpenJob(batch.jobId);
-              }}
-            />
-          </>
+          <UiText style={styles.meta}>{t("documents.batchExplanation")}</UiText>
         )}
-        {batch ? (
-          <>
+        {error ? (
+          <UiText accessibilityRole="alert" style={styles.title}>
+            {t("documents.denied")}
+          </UiText>
+        ) : null}
+        {batchError ? (
+          <UiText style={styles.meta}>{t("documents.batchUnavailable")}</UiText>
+        ) : null}
+        {batches.length ? (
+          <View style={styles.section}>
             <UiText style={styles.heading}>{t("documents.sameImportResults")}</UiText>
             <UiText style={styles.meta}>{t("documents.resultsExplanation")}</UiText>
-            {resultError || (results && results.state !== "REVIEW_READY") ? (
-              <UiText style={styles.meta}>{t("documents.resultsUnavailable")}</UiText>
-            ) : !results ? (
-              <UiText style={styles.meta}>{t("common.loading")}</UiText>
-            ) : !results.items.length ? (
-              <UiText style={styles.meta}>{t("documents.noVerifiedResults")}</UiText>
-            ) : (
-              results.items.map((result) => (
-                <View key={result.itemId} style={styles.item}>
-                  <UiText style={styles.title}>{result.title}</UiText>
-                  <UiText style={styles.meta}>
-                    {t(
-                      result.state === "complete" && result.action
-                        ? resultActionKey[result.action]
-                        : "documents.resultPending",
-                    )}
-                  </UiText>
-                  {/^P[1-6]$/.test(result.family) ? (
+            {batches.map((batch) => {
+              const result = outcomes.find(
+                (row) => row.batch.jobId === batch.jobId,
+              )?.result;
+              return (
+                <View key={batch.jobId} style={styles.section}>
+                  <UiText style={styles.meta}>{at(batch.createdAt)}</UiText>
+                  {result === undefined ? (
+                    <UiText style={styles.meta}>{t("common.loading")}</UiText>
+                  ) : !result || result.state !== "REVIEW_READY" ? (
+                    <UiText style={styles.meta}>
+                      {t("documents.resultsUnavailable")}
+                    </UiText>
+                  ) : !result.items.length ? (
+                    <UiText style={styles.meta}>
+                      {t("documents.noVerifiedResults")}
+                    </UiText>
+                  ) : (
+                    result.items.map((row) => (
+                      <View key={row.itemId} style={styles.row}>
+                        <AppIcon
+                          name={itemIcons[row.family as keyof typeof itemIcons] ?? "doc"}
+                          size={20}
+                          color={colors.textSecondary}
+                        />
+                        <View style={styles.copy}>
+                          <UiText style={styles.title}>{row.title}</UiText>
+                          <UiText style={styles.meta}>
+                            {t(
+                              row.state === "complete" && row.action
+                                ? actionKey[row.action]
+                                : "documents.resultPending",
+                            )}
+                          </UiText>
+                        </View>
+                        <UiButton
+                          variant="text"
+                          label={t("documents.openItem")}
+                          disabled={row.state !== "complete"}
+                          onPress={() => openItem(row.itemId, row.family)}
+                        />
+                      </View>
+                    ))
+                  )}
+                  {!batchJobId ? (
                     <UiButton
                       variant="text"
-                      label={t("documents.openItem")}
+                      label={t("documents.viewBatch", { date: at(batch.createdAt) })}
                       onPress={() => {
                         if (current.current())
                           router.push({
-                            pathname:
-                              `/p${result.family.slice(1)}-detail` as "/p1-detail",
-                            params: { tripId, itemId: result.itemId },
+                            pathname: "/document-detail",
+                            params: {
+                              tripId,
+                              documentId: entry.id,
+                              origin: "CORE",
+                              jobId: batch.jobId,
+                              batchId: batch.batchId,
+                            },
                           });
                       }}
                     />
-                  ) : null}
+                  ) : (
+                    <>
+                      {batch.documents.map((doc) => (
+                        <UiButton
+                          key={doc.id}
+                          variant="text"
+                          label={doc.title}
+                          onPress={() => openDocument(doc)}
+                        />
+                      ))}
+                      {batch.otherOriginals.map((doc) => (
+                        <UiButton
+                          key={doc.captureId}
+                          variant="text"
+                          label={doc.originalFilename ?? t("capture.ai.submittedText")}
+                          onPress={() => openDocument({ id: doc.captureId }, "CAPTURE")}
+                        />
+                      ))}
+                      <UiButton
+                        variant="text"
+                        label={t("documents.openActivity")}
+                        onPress={() => {
+                          if (current.current())
+                            router.push({
+                              pathname: "/capture",
+                              params: { tripId, jobId: batch.jobId },
+                            });
+                        }}
+                      />
+                    </>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
+        {!error ? (
+          <View style={styles.section}>
+            <UiText style={styles.heading}>
+              {t(batchJobId ? "documents.batchItems" : "documents.directItems")}
+            </UiText>
+            {loading ? (
+              <UiText style={styles.meta}>{t("common.loading")}</UiText>
+            ) : !items.length ? (
+              <UiText style={styles.meta}>{t("documents.noDirectItems")}</UiText>
+            ) : (
+              items.map((item) => (
+                <View key={item.id} style={styles.row}>
+                  <AppIcon
+                    name={itemIcons[item.family as keyof typeof itemIcons] ?? "doc"}
+                    size={22}
+                    color={colors.textSecondary}
+                  />
+                  <View style={styles.copy}>
+                    <UiText style={styles.title}>
+                      {item.title || t("documents.untitledItem")}
+                    </UiText>
+                    {item.date || item.time ? (
+                      <UiText style={styles.meta}>
+                        {[item.date, item.time].filter(Boolean).join(" · ")}
+                      </UiText>
+                    ) : null}
+                    {item.place ? (
+                      <UiText style={styles.meta}>{item.place}</UiText>
+                    ) : null}
+                  </View>
+                  <UiButton
+                    variant="text"
+                    label={t("documents.openItem")}
+                    onPress={() => openItem(item.id, item.family)}
+                  />
                 </View>
               ))
             )}
-          </>
+          </View>
         ) : null}
-        <UiText style={styles.heading}>
-          {t(document ? "documents.directItems" : "documents.batchItems")}
-        </UiText>
-        {!document ? (
-          <UiText style={styles.meta}>{t("documents.batchItemsExplanation")}</UiText>
-        ) : null}
-        {loading ? (
-          <UiText style={styles.title}>{t("common.loading")}</UiText>
-        ) : error ? (
-          <UiText style={styles.title} accessibilityRole="alert">
-            {t("importDocuments.itemLinksUnavailable")}
-          </UiText>
-        ) : !items.length ? (
-          <UiText style={styles.meta}>{t("documents.noDirectItems")}</UiText>
-        ) : (
-          items.map((item) => (
-            <View key={item.id} style={styles.item}>
-              <UiText style={styles.title}>
-                {item.title || t("documents.untitledItem")}
-              </UiText>
-              {/^P[1-6]$/.test(item.family) ? (
-                <UiButton
-                  variant="text"
-                  label={t("documents.openItem")}
-                  onPress={() => {
-                    if (current.current())
-                      router.push({
-                        pathname: `/p${item.family.slice(1)}-detail` as "/p1-detail",
-                        params: { tripId, itemId: item.id },
-                      });
-                  }}
-                />
-              ) : null}
-            </View>
-          ))
-        )}
-        {document && document.canOpenOriginal !== false ? (
-          <>
+        {!batchJobId && !error && entry.canOpenOriginal !== false ? (
+          <View style={styles.section}>
             <UiButton
               label={t(
                 available ? "importDocuments.openOriginal" : "documents.locateOriginal",
@@ -364,11 +415,11 @@ export function CoreDocumentDetail({
             />
             {!available ? (
               <UiText style={styles.meta}>
-                {t("documents.originalMissingHelp", { name: document.title })}
+                {t("documents.originalMissingHelp", { name: entry.title })}
               </UiText>
             ) : null}
             {originalError ? (
-              <UiText style={styles.title} accessibilityRole="alert">
+              <UiText style={styles.meta} accessibilityRole="alert">
                 {t(
                   restoreError
                     ? "documents.originalMismatch"
@@ -377,33 +428,129 @@ export function CoreDocumentDetail({
               </UiText>
             ) : null}
             {text !== null ? (
-              <UiText style={styles.title} selectable>
+              <UiText selectable style={styles.title}>
                 {text}
               </UiText>
             ) : null}
-          </>
+          </View>
         ) : null}
       </ScrollView>
     </View>
   );
 }
+
+export function DocumentActions({
+  available,
+  informationInitially = false,
+  onExport,
+  isCurrent,
+  children,
+}: {
+  available: boolean;
+  informationInitially?: boolean;
+  onExport(): void;
+  isCurrent(): boolean;
+  children: import("react").ReactNode;
+}) {
+  const styles = useThemedStyles(createStyles);
+  const [information, setInformation] = useState(informationInitially),
+    [menu, setMenu] = useState(false);
+  const showMenu = () => {
+    if (!isCurrent()) return;
+    if (Platform.OS !== "ios") {
+      setMenu(true);
+      return;
+    }
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [
+          t("documents.fileInfo"),
+          t("documents.export"),
+          t("documents.renameUnavailable"),
+          t("documents.sharingUnavailable"),
+          t("documents.moveUnavailable"),
+          t("documents.removeUnavailable"),
+          t("common.cancel"),
+        ],
+        cancelButtonIndex: 6,
+        disabledButtonIndices: [...(!available ? [1] : []), 2, 3, 4, 5],
+      },
+      (index) => {
+        if (!isCurrent()) return;
+        if (index === 0) setInformation(true);
+        if (index === 1) onExport();
+      },
+    );
+  };
+  return (
+    <>
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          icon="ellipsis"
+          accessibilityLabel={t("documents.more")}
+          onPress={showMenu}
+        />
+      </Stack.Toolbar>
+      <Modal
+        visible={(information || menu) && isCurrent()}
+        presentationStyle="pageSheet"
+        animationType="slide"
+        onRequestClose={() => {
+          setInformation(false);
+          setMenu(false);
+        }}
+      >
+        <SafeAreaView edges={["bottom"]} style={styles.body}>
+          <SheetHeader
+            category="action"
+            title={t("documents.fileInfo")}
+            onLeft={() => {
+              setInformation(false);
+              setMenu(false);
+            }}
+          />
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.content}
+          >
+            {children}
+            {menu ? (
+              <UiButton
+                label={t("documents.export")}
+                disabled={!available}
+                onPress={() => {
+                  setMenu(false);
+                  onExport();
+                }}
+              />
+            ) : null}
+            <UiText style={styles.meta}>{t("documents.owningUnavailable")}</UiText>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+    </>
+  );
+}
+
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
     content: {
       padding: visual.space.page,
-      gap: visual.space.card,
+      gap: visual.space.section,
       paddingBottom: visual.space.section,
     },
+    identity: { flexDirection: "row", alignItems: "center", gap: visual.space.card },
+    copy: { flex: 1, gap: 4 },
+    section: { gap: visual.space.card },
+    summary: { gap: visual.space.heading },
     title: { ...visual.type.row, color: colors.textPrimary },
-    heading: {
-      ...visual.type.row,
-      color: colors.textPrimary,
-      marginTop: visual.space.card,
-    },
+    heading: { ...visual.type.section, color: colors.textPrimary },
     meta: { ...visual.type.meta, color: colors.textSecondary },
-    item: {
-      gap: 4,
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: visual.space.card,
       paddingVertical: visual.space.row,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.separator,

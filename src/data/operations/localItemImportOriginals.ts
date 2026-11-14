@@ -71,6 +71,19 @@ function localItemImportDocuments(
         mediaType,
         byteCount,
         originalFilename: title,
+        linkedItemCount: graph.itinerary_events.filter(
+          (item) =>
+            item.trip_id === scope.tripId &&
+            !item.hidden_at &&
+            coreCanRead(graph, actor, "ITEM", item) &&
+            graph.trip_item_document_links.some(
+              (link) =>
+                link.active === true &&
+                link.trip_id === scope.tripId &&
+                link.document_id === id &&
+                link.item_id === item.id,
+            ),
+        ).length,
         canOpenOriginal: row.owner_account_id === scope.accountId,
         recordedAt: typeof row.created_at === "string" ? row.created_at : null,
         visibility:
@@ -125,6 +138,8 @@ export async function localItemImportOriginals(
       return available;
     },
     async metadata() {
+      if (!(await repository.acceptedSnapshot(scope)))
+        throw Error("DOCUMENTS_LOCAL_STATE_UNKNOWN");
       const rows = await documents(true);
       await assertAccountRequestContext(scope, requireAdoptedUserId);
       return rows.map((row) => ({
@@ -171,6 +186,16 @@ export async function localItemImportOriginals(
           title: typeof item.title === "string" ? item.title : "",
           family:
             typeof item.experience_family === "string" ? item.experience_family : "",
+          date: typeof item.start_local_date === "string" ? item.start_local_date : null,
+          time: typeof item.start_local_time === "string" ? item.start_local_time : null,
+          place:
+            typeof item.authored_label === "string"
+              ? item.authored_label
+              : typeof item.accepted_address === "string"
+                ? item.accepted_address
+                : typeof item.authored_address === "string"
+                  ? item.authored_address
+                  : null,
         }));
     },
     async batches(id: string) {

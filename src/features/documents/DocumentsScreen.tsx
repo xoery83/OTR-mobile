@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useNetworkState } from "expo-network";
 import PagerView from "react-native-pager-view";
 import {
   Stack,
@@ -28,9 +29,7 @@ import {
 } from "@/features/capture/captureTripPrior";
 import { useTripView } from "@/features/day-feed/TripViewContext";
 import { CaptureActivity } from "@/features/capture/CaptureActivity";
-import { CoreDocumentDetail } from "./CoreDocumentDetail";
 import { NavigationContextTitle } from "@/components/navigationChrome";
-import { ImportDocumentsPanel } from "./ImportDocumentsPanel";
 import { AppIcon } from "@/components/AppIcon";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { SheetHeader } from "@/components/SheetHeader";
@@ -45,8 +44,10 @@ import {
   captureDocumentRow,
   documentFormat,
   documentFormatLabel,
+  documentSourceLabel as sourceKey,
   filterDocumentRows,
   documentChromeAfterScroll,
+  documentReadFailure,
   searchDocumentRows,
   mergeDocumentRows,
   filterDocumentSearch,
@@ -70,13 +71,6 @@ const filterKey = {
   TEXT: "importDocuments.format.TEXT",
   OFFLINE: "documents.offline",
   PRIVATE: "importDocuments.private",
-} as const;
-const sourceKey = {
-  files: "documents.sourceFiles",
-  photos: "documents.sourcePhotos",
-  camera: "documents.sourceCamera",
-  magic_input: "documents.sourceText",
-  clipboard: "documents.sourcePaste",
 } as const;
 const icons = {
   PDF: "doc.richtext",
@@ -277,7 +271,6 @@ function DocumentsWorkspace({
           scope={tab === "PERSONAL_INBOX" ? "PERSONAL_INBOX" : "TRIP"}
           visible={focused}
           isCurrent={active}
-          onOpenJob={openJob}
           searchOnly
           onScrollOffset={() => {}}
         />
@@ -336,7 +329,6 @@ function DocumentsWorkspace({
                       scope={name}
                       visible={focused && tab === name}
                       isCurrent={() => active() && tab === name}
-                      onOpenJob={openJob}
                       onScrollOffset={(offset, distance, dragging) => {
                         if (tab === name)
                           setCollapsed((value) =>
@@ -400,7 +392,6 @@ function DocumentDirectory({
   scope,
   isCurrent,
   visible,
-  onOpenJob,
   onScrollOffset,
   searchOnly = false,
 }: {
@@ -410,7 +401,6 @@ function DocumentDirectory({
   scope: "TRIP" | "PERSONAL_INBOX";
   isCurrent(): boolean;
   visible: boolean;
-  onOpenJob(id: string): void;
   onScrollOffset(offset: number, distance: number, dragging: boolean): void;
   searchOnly?: boolean;
 }) {
@@ -418,11 +408,26 @@ function DocumentDirectory({
     colors = useUiTheme();
   const [rows, setRows] = useState<DocumentListEntry[]>([]),
     [loading, setLoading] = useState(true),
-    [error, setError] = useState(false);
+    [error, setError] = useState<"DENIED" | "OFFLINE_UNKNOWN" | "FAILED" | null>(null);
   const [format, setFormat] = useState<DocumentFormat>("ALL"),
     [limit, setLimit] = useState(30),
     [refresh, setRefresh] = useState(0);
-  const [selected, setSelected] = useState<DocumentListEntry | null>(null);
+  const [page, setPage] = useState(0),
+    [hasMore, setHasMore] = useState(false);
+  const network = useNetworkState();
+  const offline = network.isConnected === false || network.isInternetReachable === false;
+  const pages = useRef(
+    new Map<
+      string,
+      {
+        rows: import("@/data/repositories/importDocumentsRepository").ImportDocument[];
+        before?: { recordedAt: string; captureId: string };
+        done: boolean;
+        page: number;
+      }
+    >(),
+  );
+  const pagingKey = useRef("");
   const searching = searchOnly;
   const [query, setQuery] = useState("");
   const [facets, setFacets] = useState<DocumentSearchFilters>({});
@@ -451,7 +456,7 @@ function DocumentDirectory({
       await Promise.resolve();
       if (!valid()) return;
       setLoading(true);
-      setError(false);
+      setError(null);
       const [{ requireActiveUserId }, { getDefaultImportDocumentsRepository }] =
         await Promise.all([
           import("@/data/auth/authRepository"),
@@ -470,31 +475,43 @@ function DocumentDirectory({
           requireActiveUserId,
         );
         if (!valid() || context.accountId !== accountId) return [];
-        const legacy = [] as Awaited<ReturnType<typeof repository.list>>;
-        let before: { recordedAt: string; captureId: string } | undefined;
-        while (valid()) {
-          let page;
+        const cacheKey = `${accountId}:${generation}:${tripId}:${scope}:${searching}:${searchScope}:${refresh}`;
+        if (pagingKey.current !== cacheKey) {
+          pages.current.clear();
+          pagingKey.current = cacheKey;
+        }
+        const key = directoryTrip ?? "PERSONAL_INBOX";
+        const cached = pages.current.get(key) ?? { rows: [], done: false, page: -1 };
+        if (!cached.done && cached.page !== page) {
           try {
-            page = await repository.list(context, directoryScope, {
-              limit: 100,
-              before,
+            const next = await repository.list(context, directoryScope, {
+              limit: 30,
+              before: cached.before,
               includeText: searching,
             });
+            if (!valid()) return [];
+            cached.rows = [
+              ...cached.rows,
+              ...next.filter(
+                (row) => !cached.rows.some((old) => old.captureId === row.captureId),
+              ),
+            ];
+            cached.before = next.at(-1) ?? cached.before;
+            cached.done = next.length < 30;
+            cached.page = page;
           } catch (error) {
-            // Core and the legacy Capture directory retain their independent read authorities.
+            // Accepted Core and private Capture retain independent authorities.
             if (
               directoryTrip &&
               error instanceof Error &&
               error.message === "DOCUMENTS_TRIP_ACCESS"
             )
-              break;
-            throw error;
+              cached.done = true;
+            else throw error;
           }
-          if (!valid()) return [];
-          legacy.push(...page);
-          if (page.length < 100) break;
-          before = page.at(-1)!;
+          pages.current.set(key, cached);
         }
+        const legacy = cached.rows;
         const originals: DocumentListEntry[] = [];
         if (directoryTrip) {
           const { localItemImportOriginals } =
@@ -526,17 +543,19 @@ function DocumentDirectory({
           result.push(...(await readDirectory(trip.id, trip.name)));
         }
       } else result = await readDirectory(directory === "TRIP" ? tripId : null);
-      if (valid())
+      if (valid()) {
+        setHasMore([...pages.current.values()].some((entry) => !entry.done));
         setRows(
           result.sort(
             (a, b) =>
               (b.recordedAt ?? "").localeCompare(a.recordedAt ?? "") ||
-              a.id.localeCompare(b.id),
+              b.id.localeCompare(a.id),
           ),
         );
+      }
     })()
-      .catch(() => {
-        if (valid()) setError(true);
+      .catch((error) => {
+        if (valid()) setError(documentReadFailure(error, offline));
       })
       .finally(() => {
         if (valid()) setLoading(false);
@@ -554,6 +573,8 @@ function DocumentDirectory({
     active,
     searching,
     searchScope,
+    page,
+    offline,
   ]);
   useEffect(
     () => () => {
@@ -561,53 +582,24 @@ function DocumentDirectory({
     },
     [],
   );
-  if (selected) {
-    const selectedTrip = selected.tripId ?? tripId;
-    const back = () => {
-      setSelected(null);
-      setRefresh((value) => value + 1);
-    };
-    return selected.origin === "CORE" && selectedTrip ? (
-      <CoreDocumentDetail
-        key={`${selectedTrip}:${selected.id}`}
-        entry={selected}
-        tripId={selectedTrip}
-        generation={generation}
-        isCurrent={active}
-        onBack={back}
-        onOpenJob={(id) => {
-          if (active())
-            router.push({
-              pathname: "/capture",
-              params: { jobId: id, tripId: selectedTrip },
-            });
-        }}
-      />
-    ) : (
-      <View style={styles.body}>
-        <UiButton variant="text" label={t("common.back")} onPress={back} />
-        <ImportDocumentsPanel
-          accountId={accountId}
-          tripId={selected.tripId === undefined ? tripId : selected.tripId}
-          scope={
-            selected.tripId === undefined
-              ? scope
-              : selected.tripId
-                ? "TRIP"
-                : "PERSONAL_INBOX"
-          }
-          captureId={selected.id}
-          showHistoricalLinks={false}
-          isCurrent={active}
-          onOpenDocument={(id) => {
-            const next = rows.find((row) => row.id === id && row.origin === "CAPTURE");
-            if (next && active()) setSelected(next);
-          }}
-          onOpenActivity={onOpenJob}
-        />
-      </View>
-    );
-  }
+  const openDetail = (entry: DocumentListEntry, information = false) => {
+    if (!active()) return;
+    router.push({
+      pathname: "/document-detail",
+      params: {
+        documentId: entry.id,
+        origin: entry.origin,
+        tripId: entry.tripId === undefined ? (tripId ?? "") : (entry.tripId ?? ""),
+        ...(entry.captureId ? { captureId: entry.captureId } : {}),
+        ...(information ? { information: "true" } : {}),
+      },
+    });
+  };
+  const more = () => {
+    if (!active() || loading) return;
+    setLimit((value) => value + 30);
+    if (hasMore) setPage((value) => value + 1);
+  };
   const groups = searchDocumentRows(
     filterDocumentSearch(filterDocumentRows(rows, format), searching ? facets : {}),
     searching ? query : "",
@@ -724,6 +716,23 @@ function DocumentDirectory({
                 onPress={() => setFacets({ ...facets, source: value })}
               />
             ))}
+            <UiText style={styles.title}>{t("documents.relation")}</UiText>
+            {([undefined, "LINKED", "UNLINKED", "MULTIPLE"] as const).map((relation) => (
+              <UiChoiceChip
+                key={relation ?? "ALL"}
+                selected={facets.relation === relation}
+                label={t(
+                  relation === "LINKED"
+                    ? "documents.linkedFilter"
+                    : relation === "UNLINKED"
+                      ? "documents.unlinkedFilter"
+                      : relation === "MULTIPLE"
+                        ? "documents.multipleFilter"
+                        : "documents.all",
+                )}
+                onPress={() => setFacets({ ...facets, relation })}
+              />
+            ))}
             {(["from", "to"] as const).map((key) => (
               <View key={key} style={styles.content}>
                 <UiText style={styles.title}>
@@ -795,6 +804,13 @@ function DocumentDirectory({
         onScrollToTop={() => onScrollOffset(0, -10, true)}
         onScroll={(event) => {
           scrollOffset.current = event.nativeEvent.contentOffset.y;
+          const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+          if (
+            contentOffset.y > 0 &&
+            contentSize.height - layoutMeasurement.height - contentOffset.y < 180 &&
+            (hasMore || filtered.length > limit)
+          )
+            more();
           onScrollOffset(
             scrollOffset.current,
             dragStart.current === null ? 0 : scrollOffset.current - dragStart.current,
@@ -803,12 +819,18 @@ function DocumentDirectory({
         }}
         scrollEventThrottle={32}
       >
-        {loading ? (
+        {loading && !rows.length ? (
           <UiText style={styles.message}>{t("importDocuments.loading")}</UiText>
         ) : error ? (
           <View style={styles.content}>
             <UiText style={styles.title} accessibilityRole="alert">
-              {t("importDocuments.unavailable")}
+              {t(
+                error === "DENIED"
+                  ? "documents.denied"
+                  : error === "OFFLINE_UNKNOWN"
+                    ? "documents.offlineUnknown"
+                    : "documents.readFailed",
+              )}
             </UiText>
             <UiButton
               variant="text"
@@ -817,7 +839,9 @@ function DocumentDirectory({
             />
           </View>
         ) : !filtered.length ? (
-          <UiText style={styles.message}>{t("importDocuments.empty")}</UiText>
+          <UiText style={styles.message}>
+            {t(hasMore ? "documents.searchPartial" : "importDocuments.empty")}
+          </UiText>
         ) : (
           filtered.slice(0, limit).map((entry) => (
             <Pressable
@@ -828,7 +852,7 @@ function DocumentDirectory({
               onPress={() => {
                 if (active()) {
                   onScrollOffset(0, -10, true);
-                  setSelected(entry);
+                  openDetail(entry);
                 }
               }}
             >
@@ -881,7 +905,7 @@ function DocumentDirectory({
                           variant="text"
                           label={location.tripTitle ?? t("documents.unknownLocation")}
                           onPress={() => {
-                            if (active()) setSelected(location);
+                            if (active()) openDetail(location);
                           }}
                         />
                       ))
@@ -894,7 +918,7 @@ function DocumentDirectory({
                 onPress={() => {
                   if (active()) {
                     onScrollOffset(0, -10, true);
-                    setSelected(entry);
+                    openDetail(entry, true);
                   }
                 }}
               >
@@ -903,12 +927,8 @@ function DocumentDirectory({
             </Pressable>
           ))
         )}
-        {!error && filtered.length > limit ? (
-          <UiButton
-            label={t("capture.activityMore")}
-            variant="text"
-            onPress={() => setLimit(limit + 30)}
-          />
+        {!error && (filtered.length > limit || hasMore) ? (
+          <UiButton label={t("capture.activityMore")} variant="text" onPress={more} />
         ) : null}
       </ScrollView>
     </View>
@@ -948,7 +968,7 @@ const createStyles = (colors: UiColors) =>
     },
     title: { ...visual.type.row, color: colors.textPrimary, flexShrink: 1 },
     meta: { ...visual.type.meta, color: colors.textSecondary },
-    filters: { flexGrow: 0, maxHeight: 64, backgroundColor: colors.surface },
+    filters: { flexGrow: 0, flexShrink: 0, backgroundColor: colors.surface },
     filterContent: { gap: 8, paddingHorizontal: visual.space.page, paddingVertical: 8 },
     list: { paddingBottom: visual.space.section },
     message: { padding: visual.space.page, color: colors.textSecondary },

@@ -190,3 +190,25 @@ it("search opts into bounded retained text and records source/storage without lo
   ).toMatchObject({ retainedText: "abc", localAvailable: true });
   expect(original).not.toHaveBeenCalled();
 });
+
+it("advances a real 30-row cursor across pages without duplicates or reading originals", async () => {
+  const f = fixture(true);
+  for (let n = 0; n < 7; n++) await f.submit(5);
+  const original = vi.fn(f.captures.getForSourceHandoff);
+  const repo = createImportDocumentsRepository(f.db, f.getAccount, {
+    getForSourceHandoff: original,
+  });
+  const context = await captureAccountRequestContext("", f.getAccount);
+  const first = await repo.list(context, "PERSONAL_INBOX", { limit: 30 });
+  const second = await repo.list(context, "PERSONAL_INBOX", {
+    limit: 30,
+    before: first.at(-1),
+  });
+  expect(first).toHaveLength(30);
+  expect(second).toHaveLength(5);
+  expect(new Set([...first, ...second].map((row) => row.captureId)).size).toBe(35);
+  expect(
+    await repo.list(context, "PERSONAL_INBOX", { limit: 30, before: second.at(-1) }),
+  ).toEqual([]);
+  expect(original).not.toHaveBeenCalled();
+});

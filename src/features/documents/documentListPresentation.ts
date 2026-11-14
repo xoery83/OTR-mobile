@@ -8,6 +8,9 @@ export type DocumentListEntry = {
   canOpenOriginal?: boolean;
   source?: "files" | "photos" | "camera" | "magic_input" | "clipboard" | null;
   retainedText?: string | null;
+  captureId?: string;
+  acquiredAt?: string | null;
+  linkedItemCount?: number;
   origin: "CORE" | "CAPTURE";
   title: string;
   mediaType: string | null;
@@ -46,6 +49,8 @@ export function captureDocumentRow(
 ): DocumentListEntry {
   return {
     id: doc.captureId,
+    captureId: doc.captureId,
+    acquiredAt: doc.recordedAt,
     origin: "CAPTURE",
     title: doc.originalFilename ?? fallbackTitle,
     sha256: doc.sha256 ?? undefined,
@@ -119,7 +124,13 @@ export function mergeDocumentRows(
           candidate.mediaType === row.mediaType,
       );
       return original
-        ? { ...row, source: original.source, retainedText: original.retainedText }
+        ? {
+            ...row,
+            captureId: original.id,
+            acquiredAt: original.recordedAt,
+            source: original.source,
+            retainedText: original.retainedText,
+          }
         : row;
     }),
     ...captured.filter(
@@ -139,6 +150,7 @@ export type DocumentSearchFilters = {
   visibility?: DocumentListEntry["visibility"];
   storage?: "LOCAL" | "UNAVAILABLE";
   source?: NonNullable<DocumentListEntry["source"]>;
+  relation?: "LINKED" | "UNLINKED" | "MULTIPLE";
   from?: Date;
   to?: Date;
 };
@@ -149,6 +161,12 @@ export function filterDocumentSearch(
   const day = (date: Date) =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   return rows.filter((row) => {
+    if (filters.relation) {
+      if (row.linkedItemCount === undefined) return false;
+      if (filters.relation === "LINKED" && row.linkedItemCount < 1) return false;
+      if (filters.relation === "UNLINKED" && row.linkedItemCount !== 0) return false;
+      if (filters.relation === "MULTIPLE" && row.linkedItemCount < 2) return false;
+    }
     if (filters.visibility && row.visibility !== filters.visibility) return false;
     if (filters.storage && row.localAvailable !== (filters.storage === "LOCAL"))
       return false;
@@ -179,3 +197,26 @@ export function documentChromeAfterScroll(
   if (distance < -6 && offset <= 0) return false;
   return collapsed;
 }
+
+// Explicit denial is different from a missing offline cache or an unreadable projection.
+export function documentReadFailure(error: unknown, offline: boolean) {
+  const code = error instanceof Error ? error.message : "";
+  if (
+    [
+      "DOCUMENTS_TRIP_ACCESS",
+      "DOCUMENT_ACCESS_CHANGED",
+      "DOCUMENTS_SCOPE_MISMATCH",
+    ].includes(code)
+  )
+    return "DENIED";
+  if (offline || code === "DOCUMENTS_LOCAL_STATE_UNKNOWN") return "OFFLINE_UNKNOWN";
+  return "FAILED";
+}
+
+export const documentSourceLabel = {
+  files: "documents.sourceFiles",
+  photos: "documents.sourcePhotos",
+  camera: "documents.sourceCamera",
+  magic_input: "documents.sourceText",
+  clipboard: "documents.sourcePaste",
+} as const;
