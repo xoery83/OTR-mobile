@@ -109,10 +109,9 @@ export function ImportUpdatesSection({
   );
   const loaded = observed?.scope === scope ? observed : null;
   const open = async (
-    card: Pick<
-      UniversalImportUpdate,
-      "accountId" | "tripId" | "batchId" | "jobId" | "attention"
-    >,
+    card: Pick<UniversalImportUpdate, "accountId" | "batchId" | "jobId" | "attention"> & {
+      tripId: string | null;
+    },
     notice?: UniversalImportUpdate,
   ) => {
     if (!loaded || opening.current === epoch.current || !current(epoch.current)) return;
@@ -208,7 +207,7 @@ export function ImportUpdatesSection({
     otherRows.map((row) => [row.batchId, row]),
   );
   for (const job of localJobs) {
-    const tripId = job.batch.context.tripPrior?.id ?? job.assignedTripId;
+    const tripId = job.batch.context.tripPrior?.id ?? job.assignedTripId ?? null;
     rows.set(job.batch.batchId, {
       at: job.batch.createdAt,
       content: (
@@ -218,13 +217,12 @@ export function ImportUpdatesSection({
           at={job.batch.createdAt}
           isUnread={false}
           onPress={() => {
-            if (tripId)
-              void open({
-                accountId: job.batch.accountId,
-                tripId,
-                batchId: job.batch.batchId,
-                jobId: job.batch.jobId,
-              });
+            void open({
+              accountId: job.batch.accountId,
+              tripId,
+              batchId: job.batch.batchId,
+              jobId: job.batch.jobId,
+            });
           }}
           disabled={busy || !job.availableActions.canReopen}
         />

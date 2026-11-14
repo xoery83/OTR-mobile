@@ -585,3 +585,71 @@ it("a Results-linked older Batch uses exact original Job lookup, never only the 
     }),
   ).rejects.toThrow("UPDATES_SOURCE_UNAVAILABLE");
 });
+
+it("Core read failure removes complete observation coverage while a true Task UNKNOWN remains observed", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  source.list.mockResolvedValue([f.job]);
+  source.read.mockImplementation(async (_jobs, _current, _legacy, _result, v3) => {
+    v3(f.batchId, { state: "checking", saved: 0 });
+    v3(f.batchId, { state: "uncertain", saved: 0, unavailable: true });
+  });
+  const observe = vi.fn();
+  await readDefaultUniversalImportUpdates(f.tripId, () => true, observe);
+  expect(observe.mock.calls.at(-1)?.[2]).toEqual([]);
+  expect(observe.mock.calls.at(-1)?.[0][0].activity.unavailable).toBe(true);
+  source.read.mockImplementation(async (_jobs, _current, _legacy, _result, v3) => {
+    v3(f.batchId, { state: "uncertain", saved: 0 });
+  });
+  await readDefaultUniversalImportUpdates(f.tripId, () => true, observe);
+  expect(observe.mock.calls.at(-1)?.[2]).toEqual([f.batchId]);
+  expect(observe.mock.calls.at(-1)?.[0][0].unread).toBe(false);
+});
+it("complete badge inventory reuses cursor paging and excludes other Trips while retaining personal intake", async () => {
+  const f = fixture();
+  source.account = f.accountId;
+  const jobs = Array.from({ length: 101 }, (_, n) => ({
+    ...f.job,
+    batch: {
+      ...f.job.batch,
+      batchId: randomUUID(),
+      jobId: randomUUID(),
+      createdAt: new Date(Date.UTC(2026, 10, 1, 0, 0, 200 - n)).toISOString(),
+    },
+  }));
+  const personal = {
+    ...jobs[0],
+    batch: { ...jobs[0].batch, context: { tripPrior: null } },
+  };
+  const foreignTrip = {
+    ...jobs[1],
+    batch: { ...jobs[1].batch, context: { tripPrior: { id: randomUUID() } } },
+  };
+  source.list
+    .mockResolvedValueOnce([personal, foreignTrip, ...jobs.slice(2, 100)])
+    .mockResolvedValueOnce([jobs[100]]);
+  source.read.mockResolvedValue({});
+  const local = vi.fn();
+  await readDefaultUniversalImportUpdates(
+    f.tripId,
+    () => true,
+    vi.fn(),
+    local,
+    undefined,
+    true,
+  );
+  expect(source.list.mock.calls[0][0]).toEqual({ limit: 100 });
+  expect(source.list.mock.calls[1][0]).toMatchObject({
+    limit: 100,
+    before: { batchId: jobs[99].batch.batchId, createdAt: jobs[99].batch.createdAt },
+  });
+  expect(local.mock.calls[0][0]).toHaveLength(100);
+  expect(
+    local.mock.calls[0][0].some((j: any) => j.batch.batchId === personal.batch.batchId),
+  ).toBe(true);
+  expect(
+    local.mock.calls[0][0].some(
+      (j: any) => j.batch.batchId === foreignTrip.batch.batchId,
+    ),
+  ).toBe(false);
+});

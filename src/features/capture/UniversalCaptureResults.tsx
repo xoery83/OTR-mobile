@@ -346,6 +346,21 @@ export function UniversalV3Activity({
       onOpenDocument={onOpenDocument}
       onDone={onDone}
       onHistoryChange={onHistoryChange}
+      onAddManually={() => {
+        void Promise.all([
+          import("expo-router"),
+          import("@/data/auth/accountGeneration"),
+        ]).then(([{ router }, { getAccountGeneration }]) => {
+          if (isCurrent())
+            router.push({
+              pathname: "/import-manual",
+              params: {
+                tripId: model.batch.context.tripPrior?.id ?? model.assignedTripId ?? "",
+                originGeneration: String(getAccountGeneration()),
+              },
+            });
+        });
+      }}
       onUpdates={() => {
         void Promise.all([
           import("expo-router"),

@@ -1,4 +1,8 @@
 export const en = {
+  "capture.results.addManually": "Add itinerary item manually",
+  "capture.results.manualUnavailable":
+    "This Trip is unavailable. Return and check your account or Trip access.",
+  "capture.results.manualReminder": "Missing a plan? You can add it yourself.",
   "updates.importOutcome": "{status} · {count} saved",
   "updates.localHistory": "Recent on this device",
   "updates.markRead": "Mark read",
@@ -3531,6 +3535,10 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.results.addManually": "手工添加行程条目",
+  "capture.results.manualUnavailable":
+    "暂时无法访问此旅行。请返回检查当前账户或旅行权限。",
+  "capture.results.manualReminder": "还有未显示的安排？你可以手工添加。",
   "updates.importOutcome": "{status} · 已保存 {count} 项",
   "updates.localHistory": "本机近期记录",
   "updates.markRead": "标为已读",

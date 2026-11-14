@@ -161,9 +161,14 @@ export function projectUniversalImportUpdates(
 export async function readDefaultUniversalImportUpdates(
   tripId: string | null,
   isCurrent: () => boolean,
-  onObservation: (cards: UniversalImportUpdate[], context: AccountRequestContext) => void,
+  onObservation: (
+    cards: UniversalImportUpdate[],
+    context: AccountRequestContext,
+    observedBatchIds?: readonly string[],
+  ) => void,
   onLocalIntake?: (jobs: CaptureJobReadModel[], context: AccountRequestContext) => void,
   target?: { batchId: string; jobId: string },
+  fullHistory = false,
 ) {
   const { requireActiveUserId } = await import("../auth/authRepository");
   const context = await captureAccountRequestContext("", requireActiveUserId);
@@ -181,7 +186,18 @@ export async function readDefaultUniversalImportUpdates(
   if (!current()) return;
   const inventory = target
     ? [await reopenDefaultCaptureJob(target.jobId)]
-    : await listDefaultCaptureJobs({ limit: 20 });
+    : await listDefaultCaptureJobs({ limit: fullHistory ? 100 : 20 });
+  if (fullHistory && !target) {
+    let page = inventory;
+    while (page.length === 100 && current()) {
+      const last = page.at(-1)!.batch;
+      page = await listDefaultCaptureJobs({
+        limit: 100,
+        before: { createdAt: last.createdAt, batchId: last.batchId },
+      });
+      inventory.push(...page);
+    }
+  }
   if (
     target &&
     (inventory[0]?.batch.batchId !== target.batchId ||
@@ -191,7 +207,8 @@ export async function readDefaultUniversalImportUpdates(
   const jobs = inventory.filter(
     (job) =>
       job.batch.accountId === context.accountId &&
-      (!tripId || (job.batch.context.tripPrior?.id ?? job.assignedTripId) === tripId),
+      (!(job.batch.context.tripPrior?.id ?? job.assignedTripId) ||
+        (job.batch.context.tripPrior?.id ?? job.assignedTripId) === tripId),
   );
   await assertAccountRequestContext(context, requireActiveUserId);
   if (!current()) return;
@@ -202,15 +219,13 @@ export async function readDefaultUniversalImportUpdates(
     jobs.map((job) => job.batch.batchId),
   );
   if (!current()) return;
-  onLocalIntake?.(
-    jobs.filter((job) => job.batch.context.tripPrior?.id ?? job.assignedTripId),
-    context,
-  );
+  onLocalIntake?.(jobs, context);
   if (!current()) return;
   const { readDefaultUniversalActivities } = await import("./universalActivityReader");
   const observations: Record<string, UniversalTaskActivity> = {};
   const saved: Record<string, SavedOutcome> = {};
   const v3: Record<string, V3ActivityProgress> = {};
+  const observedIds = new Set<string>();
   const emit = () => {
     if (current())
       onObservation(
@@ -224,6 +239,7 @@ export async function readDefaultUniversalImportUpdates(
           readVersions,
         ),
         context,
+        [...observedIds],
       );
   };
   await readDefaultUniversalActivities(
@@ -232,6 +248,8 @@ export async function readDefaultUniversalImportUpdates(
     (batchId, activity) => {
       if (!current()) return;
       observations[batchId] = activity;
+      if (universalTaskActivitySchema.safeParse(activity).success)
+        observedIds.add(batchId);
       emit();
     },
     async (job, result) => {
@@ -281,6 +299,8 @@ export async function readDefaultUniversalImportUpdates(
     (batchId, progress) => {
       if (current()) {
         v3[batchId] = progress;
+        if (progress.unavailable) observedIds.delete(batchId);
+        else observedIds.add(batchId);
         emit();
       }
     },
@@ -298,12 +318,15 @@ export async function readDefaultUniversalImportUpdates(
         readVersions,
       ),
       context,
+      [...observedIds],
     );
 }
 
 export async function reopenDefaultUniversalImportUpdate(
   context: AccountRequestContext,
-  card: Pick<UniversalImportUpdate, "accountId" | "tripId" | "batchId" | "jobId">,
+  card: Pick<UniversalImportUpdate, "accountId" | "batchId" | "jobId"> & {
+    tripId: string | null;
+  },
 ) {
   const { requireActiveUserId } = await import("../auth/authRepository");
   await assertAccountRequestContext(context, requireActiveUserId);
@@ -315,7 +338,7 @@ export async function reopenDefaultUniversalImportUpdate(
     job.batch.accountId !== context.accountId ||
     job.batch.batchId !== card.batchId ||
     job.batch.jobId !== card.jobId ||
-    (job.batch.context.tripPrior?.id ?? job.assignedTripId) !== card.tripId
+    (job.batch.context.tripPrior?.id ?? job.assignedTripId ?? null) !== card.tripId
   )
     throw Error("UPDATES_SOURCE_UNAVAILABLE");
   return job;

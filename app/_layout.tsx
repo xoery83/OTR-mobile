@@ -137,6 +137,14 @@ export default function RootLayout() {
               }}
             />
             <Stack.Screen
+              name="import-manual"
+              options={{
+                presentation: "modal",
+                gestureEnabled: false,
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
               name="import-updates"
               options={{
                 presentation: "card",

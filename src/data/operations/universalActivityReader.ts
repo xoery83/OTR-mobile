@@ -22,6 +22,7 @@ export type V3ActivityProgress = ReturnType<typeof projectUniversalV3Activity> &
   resultCount?: number;
   failedCount?: number;
   updatedAt?: string;
+  unavailable?: boolean;
 };
 
 // Read-only V3 history. Never use the V2 context endpoint for a V3 Batch.
@@ -67,10 +68,10 @@ export async function readV3Activities(
       }
     } catch {
       if (current() && execution)
-        dependencies.onObservation(
-          job.batch.batchId,
-          projectUniversalV3Activity(execution, {}, true),
-        );
+        dependencies.onObservation(job.batch.batchId, {
+          ...projectUniversalV3Activity(execution, {}, true),
+          unavailable: true,
+        });
       // No observation is safer than calling an unreachable task failed or complete.
     }
   }

@@ -7,6 +7,11 @@ const s = vi.hoisted(() => ({
   generation: 1,
   open: vi.fn(),
   signal: vi.fn(),
+  importCards: [] as any[],
+  versions: {} as Record<string, string>,
+  importRead: vi.fn(),
+  versionRead: vi.fn(),
+  activity: null as null | ((accountId: string) => void),
   appChange: null as null | ((state: string) => void),
 }));
 const same = (a: unknown[], b: unknown[]) =>
@@ -69,6 +74,21 @@ vi.mock("@/data/auth/accountRequestContext", () => ({
 vi.mock("@/data/operations/defaultUpdatesInbox", () => ({
   openDefaultUpdatesInbox: () => s.open(),
 }));
+vi.mock("@/data/operations/universalImportUpdates", () => ({
+  importUpdateReadVersion: (card: any) => `${card.state}:${card.updatedAt}`,
+  readDefaultUniversalImportUpdates: (...args: any[]) => s.importRead(...args),
+}));
+vi.mock("@/data/repositories/importUpdateReadStateRepository", () => ({
+  readImportUpdateVersions: (...args: any[]) => s.versionRead(...args),
+}));
+vi.mock("@/data/operations/captureProcessingActivity", () => ({
+  subscribeCaptureProcessingActivity: (callback: any) => {
+    s.activity = callback;
+    return () => {
+      s.activity = null;
+    };
+  },
+}));
 const SignalHarness = (trip: string | null = "a", path = "/trip", enabled = true) => {
   s.cursor = 0;
   const result = useUpdatesSignal(trip, path, enabled);
@@ -76,7 +96,7 @@ const SignalHarness = (trip: string | null = "a", path = "/trip", enabled = true
   return result;
 };
 const flush = async () => {
-  for (let i = 0; i < 12; i++) await Promise.resolve();
+  for (let i = 0; i < 60; i++) await Promise.resolve();
 };
 const deferred = () => {
   let resolve!: (value: any) => void;
@@ -90,6 +110,13 @@ beforeEach(() => {
   s.slots = [];
   s.effects = [];
   s.generation = 1;
+  s.importCards = [];
+  s.versions = {};
+  s.versionRead.mockReset().mockImplementation(async () => ({ ...s.versions }));
+  s.importRead.mockReset().mockImplementation(async (_trip, current, onCards) => {
+    if (current())
+      onCards(s.importCards, { accountId: "synthetic", generation: s.generation });
+  });
   s.signal
     .mockReset()
     .mockResolvedValue({ coverage: "COMPLETE", unreadActionableCards: 3 });
@@ -188,4 +215,115 @@ it("background clears old positive signal and foreground stays unknown until a f
   pending.resolve({ coverage: "COMPLETE", unreadActionableCards: 0 });
   await flush();
   expect(SignalHarness()).toBe(0);
+});
+
+it("adds real unread Import attention once per Batch, read never resolves, and ordinary poll never refetches Tasks", async () => {
+  s.importCards = [
+    { batchId: "review", attention: "REVIEW", state: "RESULTS_READY", updatedAt: "v1" },
+    { batchId: "review", attention: "REVIEW", state: "RESULTS_READY", updatedAt: "v1" },
+    { batchId: "waiting", state: "WAITING", updatedAt: "v1" },
+  ];
+  s.signal.mockResolvedValue({
+    coverage: "COMPLETE",
+    unreadActionableCards: 1,
+    batchIds: ["review"],
+  });
+  SignalHarness();
+  await flush();
+  expect(SignalHarness()).toBe(1);
+  const calls = s.importRead.mock.calls.length;
+  s.signal.mockResolvedValue({
+    coverage: "COMPLETE",
+    unreadActionableCards: 0,
+    batchIds: [],
+  });
+  s.versions.review = "RESULTS_READY:v1";
+  await vi.advanceTimersByTimeAsync(2000);
+  expect(SignalHarness()).toBe(0);
+  expect(s.importCards[0].attention).toBe("REVIEW");
+  expect(s.importRead).toHaveBeenCalledTimes(calls);
+  s.importCards[0].updatedAt = "v2";
+  s.importCards[1].updatedAt = "v2";
+  s.activity?.("synthetic");
+  await flush();
+  expect(SignalHarness()).toBe(1);
+});
+it("incomplete Import observation stays unknown instead of claiming a complete zero", async () => {
+  s.importRead.mockImplementation(async (_trip, current, _cards, local) => {
+    if (current())
+      local(
+        [
+          {
+            allInputsAccepted: true,
+            batch: { batchId: "not-observed", context: { tripPrior: { id: "a" } } },
+          },
+        ],
+        { accountId: "synthetic", generation: 1 },
+      );
+  });
+  SignalHarness();
+  await flush();
+  expect(SignalHarness()).toBeNull();
+});
+
+it("an activity refresh cannot publish unread from a stale read-version snapshot", async () => {
+  s.signal.mockResolvedValue({
+    coverage: "COMPLETE",
+    unreadActionableCards: 0,
+    batchIds: [],
+  });
+  s.importCards = [
+    { batchId: "a", attention: "REVIEW", state: "RESULTS_READY", updatedAt: "v1" },
+  ];
+  s.versions = { a: "RESULTS_READY:v1", b: "RESULTS_READY:v1" };
+  SignalHarness();
+  await flush();
+  expect(SignalHarness()).toBe(0);
+  const pending = deferred();
+  s.versionRead.mockImplementationOnce(() => pending.promise);
+  await vi.advanceTimersByTimeAsync(2000);
+  s.importCards = [
+    ...s.importCards,
+    { batchId: "b", attention: "REVIEW", state: "RESULTS_READY", updatedAt: "v1" },
+  ];
+  s.activity?.("synthetic");
+  await flush();
+  pending.resolve({ a: "RESULTS_READY:v1" });
+  await flush();
+  expect(SignalHarness()).toBe(0);
+  expect(s.versionRead.mock.calls.at(-1)?.[1]).toEqual(["a", "b"]);
+});
+
+it("known non-notification legacy Waiting does not hide a real unread V3 Review", async () => {
+  s.signal.mockResolvedValue({
+    coverage: "COMPLETE",
+    unreadActionableCards: 0,
+    batchIds: [],
+  });
+  s.importRead.mockImplementation(async (_trip, current, cards, local) => {
+    const context = { accountId: "synthetic", generation: 1 };
+    if (!current()) return;
+    local(
+      ["legacy-waiting", "review"].map((id) => ({
+        allInputsAccepted: true,
+        batch: { batchId: id, context: { tripPrior: { id: "a" } } },
+      })),
+      context,
+    );
+    cards(
+      [
+        {
+          batchId: "review",
+          attention: "REVIEW",
+          state: "RESULTS_READY",
+          updatedAt: "v1",
+        },
+      ],
+      context,
+      ["legacy-waiting", "review"],
+    );
+  });
+  SignalHarness();
+  await flush();
+  expect(SignalHarness()).toBe(1);
 });

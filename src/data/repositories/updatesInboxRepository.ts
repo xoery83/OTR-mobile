@@ -287,6 +287,7 @@ export function createUpdatesInboxRepository(
     ): Promise<{
       coverage: "COMPLETE" | "UNKNOWN";
       unreadActionableCards: number | null;
+      batchIds?: readonly string[];
     }> {
       const filter = updatesFilterSchema.parse({
         category: "NEEDS_ATTENTION",
@@ -299,12 +300,16 @@ export function createUpdatesInboxRepository(
           let before: { createdAt: string; notificationId: string } | undefined;
           let count = 0,
             unknown = false;
+          const batchIds = new Set<string>();
           for (;;) {
             const page = await rows(context, before);
             for (const row of page) {
               const { card } = await qualify(row, context);
               if (card.unread && card.sourceState === "UNAVAILABLE") unknown = true;
-              if (matchesUpdatesFilter(card, filter)) count++;
+              if (matchesUpdatesFilter(card, filter)) {
+                count++;
+                batchIds.add(card.batchId);
+              }
             }
             if (page.length < 100) break;
             const last = page.at(-1)!;
@@ -312,7 +317,11 @@ export function createUpdatesInboxRepository(
           }
           return unknown
             ? { coverage: "UNKNOWN", unreadActionableCards: null }
-            : { coverage: "COMPLETE", unreadActionableCards: count };
+            : {
+                coverage: "COMPLETE",
+                unreadActionableCards: count,
+                batchIds: [...batchIds],
+              };
         });
       } catch {
         await assertAccountRequestContext(context, account);

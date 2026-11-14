@@ -434,7 +434,11 @@ it("actionable signal reads every normal SQLite page, counts Batch aggregates an
   expect(await s.inbox.unreadActionableSignal(context, randomUUID())).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 101,
+    batchIds: expect.any(Array),
   });
+  const signal = await s.inbox.unreadActionableSignal(context, null);
+  expect(signal.batchIds).toHaveLength(101);
+  expect(new Set(signal.batchIds).size).toBe(101);
   expect(writes).not.toHaveBeenCalled();
   const markers = await s.f.db.getAllAsync<{ read_material_version: number }>(
     "SELECT read_material_version FROM updates_capture_intake",
@@ -445,6 +449,7 @@ it("actionable signal reads every normal SQLite page, counts Batch aggregates an
   expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 101,
+    batchIds: expect.any(Array),
   });
 });
 it("signal excludes read, pending and normally recovered cards without resolving or attributing personal notices to Trip prior", async () => {
@@ -483,11 +488,13 @@ it("signal excludes read, pending and normally recovered cards without resolving
   expect(await s.inbox.unreadActionableSignal(context, randomUUID())).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
   expect(await s.submissions.reopen(actionable.jobId)).toEqual(before);
   expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
 });
 it("missing current unread Source or a later page failure is UNKNOWN rather than a complete zero or a partial total", async () => {
@@ -531,6 +538,7 @@ it("signal sees current material versions after ordinary failure changes but sta
   expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 0,
+    batchIds: [],
   });
   await s.submissions.submit(
     request,
@@ -539,11 +547,13 @@ it("signal sees current material versions after ordinary failure changes but sta
   expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
   await s.f.switchTo(randomUUID());
   expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 0,
+    batchIds: [],
   });
   await s.f.switchTo(context.accountId);
   await expect(s.inbox.unreadActionableSignal(context, null)).rejects.toThrow(
@@ -552,6 +562,7 @@ it("signal sees current material versions after ordinary failure changes but sta
   expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
 });
 it("a pending Account transition during source qualification rejects the count instead of completing under old ownership", async () => {
