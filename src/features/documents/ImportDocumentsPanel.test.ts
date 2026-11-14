@@ -81,6 +81,7 @@ function Harness(
   captureId?: string,
   isCurrent = () => true,
   scope: "TRIP" | "PERSONAL_INBOX" = "PERSONAL_INBOX",
+  showHistoricalLinks = true,
 ) {
   h.cursor = 0;
   h.effects = [];
@@ -89,6 +90,7 @@ function Harness(
     tripId: scope === "TRIP" ? "trip-a" : null,
     scope,
     captureId,
+    showHistoricalLinks,
     isCurrent,
     onOpenDocument: vi.fn(),
     onOpenActivity: vi.fn(),
@@ -492,4 +494,12 @@ it("keeps current Documents pagination on the current cursor and deduplicates ro
   );
   expect(Harness().props.documents).toEqual([...first, added]);
   expect(Harness().props.hasMore).toBe(false);
+});
+
+it("new Documents surface can open retained metadata without invoking historical Source link readers", async () => {
+  Harness(doc.captureId, () => true, "TRIP", false);
+  await settle();
+  const view = Harness(doc.captureId, () => true, "TRIP", false);
+  expect(h.associations).not.toHaveBeenCalled();
+  expect(view.props.linksLoading).toBe(false);
 });

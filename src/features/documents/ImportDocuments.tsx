@@ -144,6 +144,7 @@ export function ImportDocumentDetail({
   linkedItems,
   linksUnavailable = false,
   linksLoading = false,
+  localOnly = false,
   onRetryLinks,
   accountId,
   tripId,
@@ -158,6 +159,7 @@ export function ImportDocumentDetail({
   linkedItems?: number | null;
   linksUnavailable?: boolean;
   linksLoading?: boolean;
+  localOnly?: boolean;
   onRetryLinks?(): void;
   accountId: string;
   tripId: string | null;
@@ -196,7 +198,9 @@ export function ImportDocumentDetail({
         <UiText style={s.meta}>{documentFormat(document)}</UiText>
         <UiText style={s.meta}>{recordedTime(document.recordedAt)}</UiText>
         <UiText style={s.meta}>{t("importDocuments.private")}</UiText>
-        <UiText style={s.meta}>{t("importDocuments.custodyExplanation")}</UiText>
+        <UiText style={s.meta}>
+          {t(localOnly ? "documents.localOnly" : "importDocuments.custodyExplanation")}
+        </UiText>
         <UiButton
           label={t("importDocuments.openOriginal")}
           disabled={opening || !canOpenOriginal}

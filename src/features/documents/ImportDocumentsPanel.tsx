@@ -14,6 +14,7 @@ type Props = {
   tripId: string | null;
   scope: ImportDocumentScope;
   captureId?: string;
+  showHistoricalLinks?: boolean;
   isCurrent(): boolean;
   onOpenDocument(captureId: string): void;
   onOpenActivity(jobId: string): void;
@@ -36,7 +37,9 @@ export function ImportDocumentsPanel(props: Props) {
 function ScopedDocuments(props: Props) {
   const [linkedItems, setLinkedItems] = useState<number | null>(null);
   const [linksUnavailable, setLinksUnavailable] = useState(false);
-  const [linksLoading, setLinksLoading] = useState(props.scope === "TRIP");
+  const [linksLoading, setLinksLoading] = useState(
+    props.scope === "TRIP" && props.showHistoricalLinks !== false,
+  );
   const [linksRetry, setLinksRetry] = useState(0);
   const [documents, setDocuments] = useState<ImportDocument[]>([]);
   const inventory = useRef(documents);
@@ -220,7 +223,13 @@ function ScopedDocuments(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
   useEffect(() => {
-    if (!document || props.scope !== "TRIP" || !visible) return;
+    if (
+      !document ||
+      props.scope !== "TRIP" ||
+      !visible ||
+      props.showHistoricalLinks === false
+    )
+      return;
     let canceled = false;
     void (async () => {
       setLinksLoading(true);
@@ -255,6 +264,7 @@ function ScopedDocuments(props: Props) {
     return (
       <ImportDocumentDetail
         document={document}
+        localOnly={props.showHistoricalLinks === false}
         linkedItems={linkedItems}
         linksUnavailable={linksUnavailable}
         linksLoading={linksLoading}

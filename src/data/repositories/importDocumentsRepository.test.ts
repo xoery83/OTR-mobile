@@ -175,3 +175,18 @@ it("same Batch and identical retained bytes do not link a sibling to another inp
   expect(await docs.list(context, "TRIP")).toHaveLength(2);
   expect(await docs.sourceLinks(context, "TRIP", sibling.captureId)).toEqual([]);
 });
+
+it("search opts into bounded retained text and records source/storage without loading original bytes", async () => {
+  const f = fixture(true);
+  await f.submit(1);
+  const original = vi.fn(f.captures.getForSourceHandoff);
+  const docs = createImportDocumentsRepository(f.db, f.getAccount, {
+    getForSourceHandoff: original,
+  });
+  const context = await captureAccountRequestContext("", f.getAccount);
+  expect((await docs.list(context, "PERSONAL_INBOX"))[0].retainedText).toBeUndefined();
+  expect(
+    (await docs.list(context, "PERSONAL_INBOX", { includeText: true }))[0],
+  ).toMatchObject({ retainedText: "abc", localAvailable: true });
+  expect(original).not.toHaveBeenCalled();
+});

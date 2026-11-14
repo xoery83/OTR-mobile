@@ -16,8 +16,8 @@ Authority: B2 Incremental Delivery Plan Slice5; Oct23 Documents Product Delta DO
 
 Normal complete App: Trip Home/Day menu and general menu → Documents; Trip Docs/Inbox plus reuse existing Activity tab. Approved format icons/private badge, compact metadata rows, typed quick filters, normal context/return, generation fencing and independent tab/filter/scroll. Reuse existing accepted Core Reader and Capture repository; metadata remains when local original unavailable; do not load binary on list. No Analyze/Save/SQL.
 
-Provide actual iPhone16 screenshots/operation evidence and iPad minimal adaptation; stop for Owner first-preview feedback before preview2.
+Record actual iPhone16 screenshots/operation evidence and iPad minimal adaptation as the first bounded preview. Continue within the authorized Slice5 scope; final Slice5 acceptance and Main integration remain Owner checkpoints.
 
 ## Preview2 — detail, relationships and search
 
-After preview1 acceptance: information-first detail; explicit original; authorized direct Item links distinct from actual same-import outcomes; real Batch→other originals/back; supported local search and truthful unavailable states. Account/Trip isolation and cold restoration. No Source Proof, Cloud Sync, new Queue/Receipt/Schema or new model calls. Preserve original device data. Slice6 only after Slice5 accepted and merged with Owner approval.
+Second bounded preview: information-first detail; explicit original; authorized direct Item links distinct from actual same-import outcomes; real Batch→other originals/back; supported local search and truthful unavailable states. Account/Trip isolation and cold restoration. No Source Proof, Cloud Sync, new Queue/Receipt/Schema or new model calls. Preserve original device data. Slice6 only after Slice5 accepted and merged with Owner approval.

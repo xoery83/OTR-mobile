@@ -6,7 +6,7 @@ Owner authorized **Import V3 Slice5 Documents only** after completed four-lane M
 
 Bounded gap and two-preview plan: `docs/ops/import-slice5-20261114/PLAN.md`. Preview1 adds normal Documents entry, scoped Trip Docs/Inbox, compact metadata lists and typed filters, reusing Core accepted snapshot and original store plus legacy Capture reader. iPhone has9existing Core Documents and0legacy Capture rows; old list alone would incorrectly look empty. Metadata survives absent original bytes; only explicit open reads/verifies bytes. No Source Proof, new storage/queue/receipt/SQL or Cloud Sync.
 
-Preview1 implementation is in progress; targeted checks and full App Native preview must be recorded before acceptance. Preview2 covers full information-first Detail, direct links versus same-Batch outcomes, real Batch/other originals, search and scoped return. Stop at each bounded Owner preview checkpoint. No DeepSeek or repeated B1 Save needed. Slice6 begins only after Slice5 accepted and merged, on a fresh updated Main branch. No automatic Main merge/push authorized.
+Preview1 is implemented (4804956c/d0a78787): full Native iPhone and auxiliary iPad lists, MIME filters, account/Trip fencing and metadata without local bytes. Preview2 now implements information-first Detail, ACL-checked direct Item links, exact accepted-input→Batch mapping, independently readable other originals, scoped filename/retained-text search and metadata filters. Reuses existing readers and local storage; no SQL/Core/Receipt/Sync contract change. Targeted77 checks currently pass, UI guard174 files and scoped lint pass; only3 unchanged Main TypeScript baseline errors. Final full Native runtime checks/evidence are in progress. No DeepSeek, repeated B1 Save, Main merge/push or Slice6 execution. Stop after Slice5 report for Owner acceptance and Main integration approval.
 
 All Recovery sections below are historical accepted evidence for source08ad06c9, not active Recovery tasks. Expense P0 closed; Settlement intermittent503 remains Beta follow-up. Main Merge GO is not Beta Release GO.
 
@@ -47,7 +47,7 @@ Still deferred: Invite/Claim full Native, private profile cloud editor, Version/
 
 ## Next execution
 
-Finish Slice5 preview1 validation on complete iPhone16 App, retain device/Session/SQLite/originals/Queue, then provide screenshots and operation evidence for Owner. Use existing iPad for minimal adaptation without copying private data. After preview1 acceptance, implement preview2. Do not resume Recovery, activate deferred capabilities or start Slice6.
+Finish Slice5 second-preview Native validation, actual retained iPad Batch/original navigation and private-state preservation checks; provide both bounded previews and final candidate. Do not copy private device data, resume Recovery or start Slice6. Main remains untouched.
 
 ## Latest runtime / Owner Header correction
 

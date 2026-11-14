@@ -27,6 +27,14 @@ const metadataSchema = z.object({
   jobId: z.uuid().nullable(),
   batchId: z.uuid().nullable(),
   inputId: z.uuid().nullable(),
+  acquisitionSource: z
+    .enum(["files", "photos", "camera", "magic_input", "clipboard"])
+    .nullish(),
+  localAvailable: z
+    .union([z.boolean(), z.literal(0), z.literal(1)])
+    .transform(Boolean)
+    .optional(),
+  retainedText: z.string().nullable().optional(),
 });
 export type ImportDocument = z.infer<typeof metadataSchema> & {
   custody: "LOCAL_RECORDED" | "UNAVAILABLE";
@@ -37,7 +45,9 @@ export type ImportDocumentScope = "PERSONAL_INBOX" | "TRIP";
 const select = `SELECT c.id AS captureId,c.account_id AS accountId,c.trip_id AS tripId,
  c.kind,c.original_filename AS originalFilename,c.declared_content_type AS declaredContentType,
  c.created_at AS recordedAt,c.payload_id AS payloadId,p.sha256,p.byte_count AS byteCount,
- h.job_id AS jobId,h.batch_id AS batchId,i.input_id AS inputId
+ h.job_id AS jobId,h.batch_id AS batchId,i.input_id AS inputId,i.acquisition_source AS acquisitionSource,
+ CASE WHEN typeof(p.bytes)='blob' AND length(p.bytes)=p.byte_count AND p.byte_count>0
+ THEN 1 ELSE 0 END AS localAvailable
  FROM local_capture_inbox c
  LEFT JOIN local_capture_payloads p ON p.account_id=c.account_id AND p.id=c.payload_id
  LEFT JOIN capture_submission_inputs i ON i.account_id=c.account_id AND i.input_id=(
@@ -116,6 +126,7 @@ export function createImportDocumentsRepository(
       scope: ImportDocumentScope,
       options: {
         limit?: number;
+        includeText?: boolean;
         before?: { recordedAt: string; captureId: string };
       } = {},
     ) {
@@ -132,7 +143,7 @@ export function createImportDocumentsRepository(
           .parse(options.before);
       await authorize(context, scope);
       const rows = await db.getAllAsync(
-        `${select} WHERE c.account_id=? AND ${scopedWhere(scope)}
+        `${options.includeText ? select.replace("SELECT c.id", "SELECT CASE WHEN c.kind='TEXT' AND p.byte_count<=65536 AND typeof(p.bytes)='blob' THEN CAST(p.bytes AS TEXT) ELSE NULL END AS retainedText,c.id") : select} WHERE c.account_id=? AND ${scopedWhere(scope)}
        ${before ? "AND (c.created_at<? OR (c.created_at=? AND c.id<?))" : ""}
        ORDER BY c.created_at DESC,c.id DESC LIMIT ?`,
         ...params(context, scope),

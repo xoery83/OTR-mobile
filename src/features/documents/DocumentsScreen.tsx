@@ -28,12 +28,14 @@ import {
 } from "@/features/capture/captureTripPrior";
 import { useTripView } from "@/features/day-feed/TripViewContext";
 import { CaptureActivity } from "@/features/capture/CaptureActivity";
+import { CoreDocumentDetail } from "./CoreDocumentDetail";
+import { NavigationContextTitle } from "@/components/navigationChrome";
 import { ImportDocumentsPanel } from "./ImportDocumentsPanel";
 import { AppIcon } from "@/components/AppIcon";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText } from "@/ui/controls";
-import { UiChoiceChip } from "@/ui/forms";
+import { UiChoiceChip, UiTextInput, UiDatePicker } from "@/ui/forms";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -44,6 +46,10 @@ import {
   documentFormat,
   documentFormatLabel,
   filterDocumentRows,
+  searchDocumentRows,
+  mergeDocumentRows,
+  filterDocumentSearch,
+  type DocumentSearchFilters,
   type DocumentListEntry,
   type DocumentFormat,
 } from "./documentListPresentation";
@@ -53,7 +59,7 @@ const tabs: Tab[] = ["TRIP", "PERSONAL_INBOX", "ACTIVITY"];
 const tabKey = {
   TRIP: "importDocuments.trip",
   PERSONAL_INBOX: "importDocuments.inbox",
-  ACTIVITY: "capture.progress.activeImports",
+  ACTIVITY: "documents.activityTab",
 } as const;
 const filters: DocumentFormat[] = ["ALL", "PDF", "IMAGE", "TEXT", "OFFLINE", "PRIVATE"];
 const filterKey = {
@@ -63,6 +69,13 @@ const filterKey = {
   TEXT: "importDocuments.format.TEXT",
   OFFLINE: "documents.offline",
   PRIVATE: "importDocuments.private",
+} as const;
+const sourceKey = {
+  files: "documents.sourceFiles",
+  photos: "documents.sourcePhotos",
+  camera: "documents.sourceCamera",
+  magic_input: "documents.sourceText",
+  clipboard: "documents.sourcePaste",
 } as const;
 const icons = {
   PDF: "doc.richtext",
@@ -97,6 +110,7 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
   const [checked, setChecked] = useState(false);
   const [tab, setTab] = useState<Tab>(tripId ? "TRIP" : "PERSONAL_INBOX");
   const pager = useRef<PagerView>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const [tripName, setTripName] = useState<string | null>(null);
   const [choosing, setChoosing] = useState(false),
     [choices, setChoices] = useState<{ id: string; name: string }[]>([]);
@@ -159,38 +173,55 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
           headerShown: true,
           headerBackVisible: false,
           title: t("tripHome.documents"),
+          headerTitle: () =>
+            collapsed ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => (tab === "TRIP" ? void pickTrip() : setCollapsed(false))}
+              >
+                <NavigationContextTitle
+                  title={t(tabKey[tab])}
+                  subtitle={tab === "TRIP" ? tripName : null}
+                />
+              </Pressable>
+            ) : (
+              <NavigationContextTitle title={t("tripHome.documents")} />
+            ),
         }}
       />
       <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar />
-      <View style={styles.tabs}>
-        {tabs.map((name, index) => (
-          <Pressable
-            key={name}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab === name }}
-            onPress={() => {
-              setTab(name);
-              pager.current?.setPage(index);
-            }}
-            style={[styles.tab, tab === name && styles.selectedTab]}
-          >
-            <AppIcon
-              name={
-                name === "TRIP"
-                  ? "folder"
-                  : name === "PERSONAL_INBOX"
-                    ? "tray"
-                    : "list.bullet"
-              }
-              color={tab === name ? colors.accent : colors.textSecondary}
-              size={20}
-            />
-            <UiText style={[styles.tabText, tab === name && styles.selectedText]}>
-              {t(tabKey[name])}
-            </UiText>
-          </Pressable>
-        ))}
-      </View>
+      {!collapsed ? (
+        <View style={styles.tabs}>
+          {tabs.map((name, index) => (
+            <Pressable
+              key={name}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: tab === name }}
+              onPress={() => {
+                setTab(name);
+                setCollapsed(false);
+                pager.current?.setPage(index);
+              }}
+              style={[styles.tab, tab === name && styles.selectedTab]}
+            >
+              <AppIcon
+                name={
+                  name === "TRIP"
+                    ? "folder"
+                    : name === "PERSONAL_INBOX"
+                      ? "tray"
+                      : "list.bullet"
+                }
+                color={tab === name ? colors.accent : colors.textSecondary}
+                size={20}
+              />
+              <UiText style={[styles.tabText, tab === name && styles.selectedText]}>
+                {t(tabKey[name])}
+              </UiText>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
       {!checked ? (
         <UiText style={styles.message}>{t("common.loading")}</UiText>
       ) : !accountId ? (
@@ -206,7 +237,10 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
           ref={pager}
           style={styles.body}
           initialPage={tabs.indexOf(tab)}
-          onPageSelected={(event) => setTab(tabs[event.nativeEvent.position])}
+          onPageSelected={(event) => {
+            setTab(tabs[event.nativeEvent.position]);
+            setCollapsed(false);
+          }}
         >
           {tabs.map((name) => (
             <View key={name} style={styles.body} collapsable={false}>
@@ -225,7 +259,7 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
                 ) : null
               ) : (
                 <>
-                  {name === "TRIP" ? (
+                  {name === "TRIP" && !collapsed ? (
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={t("documents.chooseTrip")}
@@ -254,6 +288,12 @@ function DocumentsWorkspace({ generation }: { generation: number }) {
                       visible={focused && tab === name}
                       isCurrent={() => active() && tab === name}
                       onOpenJob={openJob}
+                      onScrollOffset={(offset) => {
+                        if (tab === name) {
+                          if (offset > 144) setCollapsed(true);
+                          else if (offset <= 0) setCollapsed(false);
+                        }
+                      }}
                     />
                   )}
                 </>
@@ -312,6 +352,7 @@ function DocumentDirectory({
   isCurrent,
   visible,
   onOpenJob,
+  onScrollOffset,
 }: {
   accountId: string;
   tripId: string | null;
@@ -320,6 +361,7 @@ function DocumentDirectory({
   isCurrent(): boolean;
   visible: boolean;
   onOpenJob(id: string): void;
+  onScrollOffset(offset: number): void;
 }) {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
@@ -330,9 +372,13 @@ function DocumentDirectory({
     [limit, setLimit] = useState(30),
     [refresh, setRefresh] = useState(0);
   const [selected, setSelected] = useState<DocumentListEntry | null>(null);
-  const [text, setText] = useState<string | null>(null),
-    [opening, setOpening] = useState(false),
-    [originalError, setOriginalError] = useState(false);
+  const [searching, setSearching] = useState(false),
+    [query, setQuery] = useState("");
+  const [facets, setFacets] = useState<DocumentSearchFilters>({});
+  const [filtering, setFiltering] = useState(false);
+  const [searchScope, setSearchScope] = useState<"TRIP" | "PERSONAL_INBOX" | "ALL">(
+    scope,
+  );
   const current = useRef(isCurrent);
   useLayoutEffect(() => {
     current.current = isCurrent;
@@ -365,46 +411,72 @@ function DocumentDirectory({
       );
       if (!valid() || context.accountId !== accountId) return;
       const repository = await getDefaultImportDocumentsRepository();
-      const legacy = [] as Awaited<ReturnType<typeof repository.list>>;
-      let before: { recordedAt: string; captureId: string } | undefined;
-      while (valid()) {
-        let page;
-        try {
-          page = await repository.list(context, scope, { limit: 100, before });
-        } catch (error) {
-          // Core read authority is independent of the legacy Ledger-backed Capture directory.
-          if (
-            scope === "TRIP" &&
-            error instanceof Error &&
-            error.message === "DOCUMENTS_TRIP_ACCESS"
-          )
-            break;
-          throw error;
+      const readDirectory = async (directoryTrip: string | null, title?: string) => {
+        const directoryScope = directoryTrip ? "TRIP" : "PERSONAL_INBOX";
+        const context = await captureAccountRequestContext(
+          directoryTrip ?? "",
+          requireActiveUserId,
+        );
+        if (!valid() || context.accountId !== accountId) return [];
+        const legacy = [] as Awaited<ReturnType<typeof repository.list>>;
+        let before: { recordedAt: string; captureId: string } | undefined;
+        while (valid()) {
+          let page;
+          try {
+            page = await repository.list(context, directoryScope, {
+              limit: 100,
+              before,
+              includeText: searching,
+            });
+          } catch (error) {
+            // Core and the legacy Capture directory retain their independent read authorities.
+            if (
+              directoryTrip &&
+              error instanceof Error &&
+              error.message === "DOCUMENTS_TRIP_ACCESS"
+            )
+              break;
+            throw error;
+          }
+          if (!valid()) return [];
+          legacy.push(...page);
+          if (page.length < 100) break;
+          before = page.at(-1)!;
         }
-        if (!valid()) return;
-        legacy.push(...page);
-        if (page.length < 100) break;
-        before = page.at(-1)!;
-      }
-      if (!valid()) return;
-      let originals: DocumentListEntry[] = [];
-      if (tripId) {
-        const { localItemImportOriginals } =
-          await import("@/data/operations/localItemImportOriginals");
-        const reader = await localItemImportOriginals(tripId, undefined, generation);
-        originals = (await reader.metadata()).map((doc) => ({
-          ...doc,
-          origin: "CORE" as const,
-        }));
-      }
+        const originals: DocumentListEntry[] = [];
+        if (directoryTrip) {
+          const { localItemImportOriginals } =
+            await import("@/data/operations/localItemImportOriginals");
+          const reader = await localItemImportOriginals(
+            directoryTrip,
+            undefined,
+            generation,
+          );
+          originals.push(
+            ...(await reader.metadata()).map((doc) => ({
+              ...doc,
+              origin: "CORE" as const,
+            })),
+          );
+        }
+        return mergeDocumentRows(
+          originals,
+          legacy.map((doc) => captureDocumentRow(doc, t("capture.ai.submittedText"))),
+        ).map((row) => ({ ...row, tripId: directoryTrip, tripTitle: title }));
+      };
+      const directory = searching ? searchScope : scope;
+      let result: DocumentListEntry[];
+      if (directory === "ALL") {
+        result = await readDirectory(null);
+        const trips = await listCaptureTripPriors({ accountId, generation });
+        for (const trip of trips) {
+          if (!valid()) return;
+          result.push(...(await readDirectory(trip.id, trip.name)));
+        }
+      } else result = await readDirectory(directory === "TRIP" ? tripId : null);
       if (valid())
         setRows(
-          [
-            ...originals,
-            ...legacy.map((doc) =>
-              captureDocumentRow(doc, t("capture.ai.submittedText")),
-            ),
-          ].sort(
+          result.sort(
             (a, b) =>
               (b.recordedAt ?? "").localeCompare(a.recordedAt ?? "") ||
               a.id.localeCompare(b.id),
@@ -420,93 +492,233 @@ function DocumentDirectory({
     return () => {
       canceled = true;
     };
-  }, [accountId, tripId, generation, scope, visible, refresh, active]);
+  }, [
+    accountId,
+    tripId,
+    generation,
+    scope,
+    visible,
+    refresh,
+    active,
+    searching,
+    searchScope,
+  ]);
   useEffect(
     () => () => {
       alive.current = false;
     },
     [],
   );
-  async function openOriginal(entry: DocumentListEntry) {
-    if (!tripId || !active() || opening) return;
-    setOpening(true);
-    setOriginalError(false);
-    setText(null);
-    try {
-      const { localItemImportOriginals } =
-        await import("@/data/operations/localItemImportOriginals");
-      const reader = await localItemImportOriginals(tripId, undefined, generation);
-      const original = await reader.original(entry.id);
-      if (!active()) return;
-      if (!original) throw Error("IMPORT_ORIGINAL_UNAVAILABLE");
-      if (original.document.mediaType === "text/plain")
-        setText(new TextDecoder("utf-8", { fatal: true }).decode(original.bytes));
-      else {
-        const { previewImportOriginal } = await import("@/native/importOriginalPreview");
-        await previewImportOriginal(original, active);
-      }
-    } catch {
-      if (active()) setOriginalError(true);
-    } finally {
-      if (active()) setOpening(false);
-    }
-  }
-  if (selected)
-    return (
+  if (selected) {
+    const selectedTrip = selected.tripId ?? tripId;
+    const back = () => setSelected(null);
+    return selected.origin === "CORE" && selectedTrip ? (
+      <CoreDocumentDetail
+        key={`${selectedTrip}:${selected.id}`}
+        entry={selected}
+        tripId={selectedTrip}
+        generation={generation}
+        isCurrent={active}
+        onBack={back}
+        onOpenJob={(id) => {
+          if (active())
+            router.push({
+              pathname: "/capture",
+              params: { jobId: id, tripId: selectedTrip },
+            });
+        }}
+      />
+    ) : (
       <View style={styles.body}>
-        <UiButton
-          variant="text"
-          label={t("common.back")}
-          onPress={() => {
-            setSelected(null);
-            setText(null);
-            setOriginalError(false);
+        <UiButton variant="text" label={t("common.back")} onPress={back} />
+        <ImportDocumentsPanel
+          accountId={accountId}
+          tripId={selected.tripId === undefined ? tripId : selected.tripId}
+          scope={
+            selected.tripId === undefined
+              ? scope
+              : selected.tripId
+                ? "TRIP"
+                : "PERSONAL_INBOX"
+          }
+          captureId={selected.id}
+          showHistoricalLinks={false}
+          isCurrent={active}
+          onOpenDocument={(id) => {
+            const next = rows.find((row) => row.id === id && row.origin === "CAPTURE");
+            if (next && active()) setSelected(next);
           }}
+          onOpenActivity={onOpenJob}
         />
-        {selected.origin === "CAPTURE" ? (
-          <ImportDocumentsPanel
-            accountId={accountId}
-            tripId={tripId}
-            scope={scope}
-            captureId={selected.id}
-            isCurrent={active}
-            onOpenDocument={() => {}}
-            onOpenActivity={onOpenJob}
-          />
-        ) : (
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.content}
-          >
-            <UiText style={styles.title}>{selected.title}</UiText>
-            <UiText style={styles.meta}>
-              {t(
-                selected.visibility === "GROUP"
-                  ? "documents.sharedTrip"
-                  : selected.visibility === "SELECTED_PERSONS"
-                    ? "documents.sharedPeople"
-                    : "importDocuments.private",
-              )}
-            </UiText>
-            <UiText style={styles.meta}>{t("documents.localOnly")}</UiText>
-            <UiButton
-              label={t("importDocuments.openOriginal")}
-              disabled={opening}
-              onPress={() => void openOriginal(selected)}
-            />
-            {originalError ? (
-              <UiText accessibilityRole="alert">
-                {t("importDocuments.originalUnavailable")}
-              </UiText>
-            ) : null}
-            {text !== null ? <UiText selectable>{text}</UiText> : null}
-          </ScrollView>
-        )}
       </View>
     );
-  const filtered = filterDocumentRows(rows, format);
+  }
+  const groups = searchDocumentRows(
+    filterDocumentSearch(filterDocumentRows(rows, format), searching ? facets : {}),
+    searching ? query : "",
+  );
+  const filtered = groups.map((group) => group[0]);
   return (
     <View style={styles.body}>
+      <View style={styles.search}>
+        {!searching ? (
+          <UiButton
+            variant="text"
+            label={t("documents.search")}
+            onPress={() => setSearching(true)}
+          />
+        ) : (
+          <>
+            <UiTextInput
+              accessibilityLabel={t("documents.search")}
+              placeholder={t("documents.search")}
+              value={query}
+              onChangeText={setQuery}
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              returnKeyType="search"
+            />
+            <ScrollView
+              horizontal
+              keyboardShouldPersistTaps="handled"
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterContent}
+            >
+              {(["TRIP", "PERSONAL_INBOX", "ALL"] as const)
+                .filter((choice) => choice !== "TRIP" || tripId)
+                .map((choice) => (
+                  <UiChoiceChip
+                    key={choice}
+                    label={t(
+                      choice === "TRIP"
+                        ? "documents.searchTrip"
+                        : choice === "ALL"
+                          ? "documents.searchAll"
+                          : "documents.searchInbox",
+                    )}
+                    selected={searchScope === choice}
+                    onPress={() => {
+                      setSearchScope(choice);
+                      setLimit(30);
+                    }}
+                  />
+                ))}
+            </ScrollView>
+            <UiText style={styles.meta}>{t("documents.searchHint")}</UiText>
+            <UiButton
+              variant="text"
+              label={t("documents.searchFilters")}
+              onPress={() => setFiltering(true)}
+            />
+            <UiButton
+              variant="text"
+              label={t("common.cancel")}
+              onPress={() => {
+                setSearching(false);
+                setQuery("");
+              }}
+            />
+          </>
+        )}
+      </View>
+      <Modal
+        visible={filtering && visible}
+        presentationStyle="pageSheet"
+        animationType="slide"
+        onRequestClose={() => setFiltering(false)}
+      >
+        <SafeAreaView edges={["bottom"]} style={styles.body}>
+          <SheetHeader
+            category="picker"
+            title={t("documents.searchFilters")}
+            onLeft={() => setFiltering(false)}
+          />
+          <ScrollView contentContainerStyle={styles.content}>
+            <UiText style={styles.title}>{t("documents.privacyFilter")}</UiText>
+            {([undefined, "PRIVATE", "GROUP", "SELECTED_PERSONS"] as const).map(
+              (value) => (
+                <UiChoiceChip
+                  key={value ?? "ALL"}
+                  selected={facets.visibility === value}
+                  label={t(
+                    value === "PRIVATE"
+                      ? "importDocuments.private"
+                      : value === "GROUP"
+                        ? "documents.sharedTrip"
+                        : value === "SELECTED_PERSONS"
+                          ? "documents.sharedPeople"
+                          : "documents.all",
+                  )}
+                  onPress={() => setFacets({ ...facets, visibility: value })}
+                />
+              ),
+            )}
+            <UiText style={styles.title}>{t("documents.storageFilter")}</UiText>
+            {([undefined, "LOCAL", "UNAVAILABLE"] as const).map((value) => (
+              <UiChoiceChip
+                key={value ?? "ALL"}
+                selected={facets.storage === value}
+                label={t(
+                  value === "LOCAL"
+                    ? "documents.offline"
+                    : value === "UNAVAILABLE"
+                      ? "documents.unavailableFilter"
+                      : "documents.all",
+                )}
+                onPress={() => setFacets({ ...facets, storage: value })}
+              />
+            ))}
+            <UiText style={styles.title}>{t("documents.sourceFilter")}</UiText>
+            {(
+              [
+                undefined,
+                "files",
+                "photos",
+                "camera",
+                "magic_input",
+                "clipboard",
+              ] as const
+            ).map((value) => (
+              <UiChoiceChip
+                key={value ?? "ALL"}
+                selected={facets.source === value}
+                label={t(value ? sourceKey[value] : "documents.all")}
+                onPress={() => setFacets({ ...facets, source: value })}
+              />
+            ))}
+            {(["from", "to"] as const).map((key) => (
+              <View key={key} style={styles.content}>
+                <UiText>
+                  {t(key === "from" ? "documents.dateFrom" : "documents.dateTo")}
+                </UiText>
+                <UiDatePicker
+                  value={facets[key] ?? new Date()}
+                  mode="date"
+                  display="compact"
+                  onChange={(_, value) => {
+                    if (value) setFacets({ ...facets, [key]: value });
+                  }}
+                />
+                {facets[key] ? (
+                  <UiButton
+                    variant="text"
+                    label={t("documents.clearDate")}
+                    onPress={() => setFacets({ ...facets, [key]: undefined })}
+                  />
+                ) : (
+                  <UiText style={styles.meta}>{t("documents.noDateFilter")}</UiText>
+                )}
+              </View>
+            ))}
+            <UiButton
+              variant="text"
+              label={t("documents.resetFilters")}
+              onPress={() => setFacets({})}
+            />
+            <UiButton label={t("common.done")} onPress={() => setFiltering(false)} />
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
       <ScrollView
         horizontal
         keyboardShouldPersistTaps="handled"
@@ -537,6 +749,7 @@ function DocumentDirectory({
         }
         onScroll={(event) => {
           scrollOffset.current = event.nativeEvent.contentOffset.y;
+          onScrollOffset(scrollOffset.current);
         }}
         scrollEventThrottle={32}
       >
@@ -604,6 +817,20 @@ function DocumentDirectory({
                       : t("documents.dateUnknown"),
                   })}
                 </UiText>
+                {searching && searchScope === "ALL"
+                  ? groups
+                      .find((group) => group[0] === entry)
+                      ?.map((location) => (
+                        <UiButton
+                          key={`${location.origin}:${location.tripId}:${location.id}`}
+                          variant="text"
+                          label={location.tripTitle ?? t("documents.unknownLocation")}
+                          onPress={() => {
+                            if (active()) setSelected(location);
+                          }}
+                        />
+                      ))
+                  : null}
               </View>
               <Pressable
                 accessibilityRole="button"
@@ -632,6 +859,7 @@ function DocumentDirectory({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
+    search: { paddingHorizontal: visual.space.page, paddingVertical: 4, gap: 4 },
     content: { padding: visual.space.page, gap: visual.space.card },
     tabs: {
       flexDirection: "row",
