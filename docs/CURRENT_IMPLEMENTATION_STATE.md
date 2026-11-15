@@ -2,7 +2,7 @@
 
 ## Current checkpoint
 
-Import V3 **Slice6 Activity / Updates** is implemented on independent branch `codex/import-v3-slice6-activity`, worktree `/Users/xoery/Project/otr-mobile-import/import-v3-slice6-activity`. Product candidate **2e75187329b231720406ee20b944c9fb86db1399**, awaiting Owner UX/merge review. No Main merge/push, shared DEV deployment or SQL changes authorized/performed by this slice.
+Import V3 **Slice6 Activity / Updates** is implemented on independent branch `codex/import-v3-slice6-activity`, worktree `/Users/xoery/Project/otr-mobile-import/import-v3-slice6-activity`. Owner accepted the evidenced2e751873/ae787285 functional scope. Final limited Activity UX product **39b22ea4c2ce25444fa67203d3982ec4e7b3a7b8**, awaiting final Main Merge review. Three-line rows, tighter filter spacing and footer-only partial-count guidance; Updates semantics unchanged. Closure report: `docs/ops/import-slice6-20261114/FINAL_UX_DENSITY_CLOSURE.md`.47 targeted tests/5files and independent static Review PASS; actual full iPhone screenshot/source/status filtering PASS. Optional extra DeviceHub scroll gesture returned noWindowsAvailable; not a claimed new scroll PASS. Prior positive Review/multi-account/outage Native gaps remain. No Main merge/push, shared DEV deployment or SQL changes authorized/performed by this slice.
 
 Main baseline `691189669e33d6eb5399f50c11dcbddf901536a6` contains accepted Slice5; recorded ancestor. Old `codex/import-v3-local-first` is reference only. Do not restart four-lane Recovery or continue old Import branch.
 
@@ -18,9 +18,9 @@ Authoritative report: `docs/ops/import-slice6-20261114/FINAL_SLICE6_REPORT.md`; 
 
 ## Validation and environment
 
-Final product tree:221 targeted tests/19files PASS; scoped lint PASS; independent incremental static Review PASS. Three unchanged Main TypeScript errors remain: fixture universalContinuationRuntime658/660 presentationTier and browser react-dom/client typing. No new skips/weakened assertions. Two expanded parent suites initially hit Native import load failures; narrow widget isolation restored all existing assertions.
+Accepted2e baseline:221 targeted tests/19files PASS. Current39 density delta:47 targeted tests/5files PASS; scoped lint/UI guard and independent incremental static Review PASS. Three unchanged Main TypeScript errors remain: fixture universalContinuationRuntime658/660 presentationTier and browser react-dom/client typing. No new skips/weakened assertions. Two expanded parent suites initially hit Native import load failures; narrow widget isolation restored all existing assertions.
 
-Complete signed arm64 Native Release iPhone/iPad builds from same staged source;1673 tracked src/app files match. Final shared JS bundleSHA `e126569271ab352c73b15ba189f532efb1500dd3a58389c68d718799548d163a`. No old-shell substitution.
+Accepted2e baseline complete signed arm64 Native Release iPhone/iPad builds from same staged source;1673 tracked src/app files match. Current39 full iPhone build/installed bundle proof and unchanged data are recorded in the density closure. Final shared JS bundleSHA `e126569271ab352c73b15ba189f532efb1500dd3a58389c68d718799548d163a`. No old-shell substitution.
 
 Primary iPhone16Pro Simulator `89935253-B3B0-4851-ADCA-87AFED548C7E`, bundle `com.xoery.otrmobile.uxc1iphone16`; actual full App normal Trip→Updates→Activity, pagination20→25, filters/return/cold rediscovery, dark hot large text PASS. Original iPad `1B2252F4-4F90-4F93-9223-545269EAA06C`, bundle `com.xoery.otrmobile.b1full20261113`; original7 Batch discovery and Document list retained. Actual native filtered Updates/back/manual chooser verified f159; final2e changes only label measurement/tests. Original14:43 Batch actual formal read on96474 settled Created1/Linked1; later current reads can be UNKNOWN/checking when Backend observation unavailable. No replay or false completion.
 

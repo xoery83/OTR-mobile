@@ -1,5 +1,7 @@
 # Import V3 Slice 6 — final bounded delivery
 
+> Final Owner-authorized Activity density closure: product39b22ea4. See [limited closure and current screenshots](FINAL_UX_DENSITY_CLOSURE.md). The original2e acceptance/evidence below remains versioned and unchanged.
+
 15 November2026 NZDT. Product **2e75187329b231720406ee20b944c9fb86db1399**. Branch `codex/import-v3-slice6-activity`, independent worktree. Main baseline `691189669e33d6eb5399f50c11dcbddf901536a6` is an ancestor. No merge/push/deployment performed.
 
 ## Verdict
