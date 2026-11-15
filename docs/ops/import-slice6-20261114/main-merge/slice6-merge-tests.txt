@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/slice6-main-merge-20261115
+
+
+ Test Files  19 passed (19)
+      Tests  222 passed (222)
+   Start at  20:11:26
+   Duration  4.11s (transform 5.13s, setup 214ms, import 9.27s, tests 8.77s, environment 1ms)
+
