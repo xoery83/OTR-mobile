@@ -48,7 +48,7 @@ export function UiButton({
       ]}
     >
       {icon}
-      <Text
+      <UiText
         style={[
           styles.label,
           size === "tile" && styles.tileLabel,
@@ -57,7 +57,7 @@ export function UiButton({
         ]}
       >
         {label}
-      </Text>
+      </UiText>
     </Pressable>
   );
 }

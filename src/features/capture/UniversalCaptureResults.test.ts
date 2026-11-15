@@ -9,6 +9,8 @@ import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { setUiLocale, t } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
+// Directory native controls have their own owning tests.
+vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
 const state = vi.hoisted(() => ({
   buttons: [] as { label: string; disabled?: boolean; onPress(): void }[],
 }));

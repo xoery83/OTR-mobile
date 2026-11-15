@@ -1,0 +1,19 @@
+{
+  "originalFiles": 9,
+  "mismatches": [],
+  "counts": {
+    "capture_submission_batches": 25,
+    "capture_submission_inputs": 25,
+    "local_capture_inbox": 56,
+    "trip_core_trip_operational_documents": 9,
+    "trip_core_trip_item_document_links": 14,
+    "sync_operations": 13
+  },
+  "queueStates": [
+    [
+      "COMPLETED",
+      13
+    ]
+  ],
+  "installedBundleSha256": "88335a4ab86dfa47ea46ee91364bdc6bddda3559d29d662d9f6d56075e0817a4"
+}

@@ -18,12 +18,12 @@ vi.mock("react", async (original) => ({
     return [
       initial === null
         ? {
-            scope: "1:trip",
+            scope: "1:trip:ALL",
             cards: fixture.cards,
             localJobs: fixture.localJobs,
             context: {},
           }
-        : slot === 1
+        : slot === 2
           ? fixture.loading
           : initial,
       vi.fn(),
@@ -31,7 +31,14 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("expo-router", () => ({ useFocusEffect: vi.fn() }));
-vi.mock("react-native", () => ({ View: "div" }));
+vi.mock("react-native", () => ({
+  View: "div",
+  Pressable: ({ children, disabled, onPress }: any) =>
+    createElement("button", { disabled, onClick: onPress }, children),
+  StyleSheet: { create: (v: unknown) => v, hairlineWidth: 1 },
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
 vi.mock("@/ui/controls", () => ({
   UiSection: "section",
   UiText: "span",
@@ -49,15 +56,25 @@ vi.mock("@/data/operations/universalImportUpdates", () => ({
   readDefaultUniversalImportUpdates: () => {
     throw Error("UNEXPECTED_IO");
   },
+  importUpdateReadVersion: (card: any) => JSON.stringify([card.state, card.updatedAt]),
+  markDefaultUniversalImportUpdateRead: vi.fn(),
   reopenDefaultUniversalImportUpdate: () => {
     throw Error("UNEXPECTED_IO");
   },
 }));
-function render(query = "") {
+function render(
+  query = "",
+  otherRows: {
+    batchId: string;
+    at: string;
+    content: ReturnType<typeof createElement>;
+  }[] = [],
+) {
   fixture.stateSlot = 0;
   return renderToStaticMarkup(
     createElement(ImportUpdatesSection, {
       generation: 1,
+      otherRows,
       filter: {
         category: "ALL",
         unreadOnly: false,
@@ -68,7 +85,7 @@ function render(query = "") {
     }),
   );
 }
-it("renders registered time separately from unchanged event time and searches existing display names", () => {
+it("shows one original notification time in compact rows and searches existing display names", () => {
   fixture.cards = [
     {
       id: "batch",
@@ -80,9 +97,9 @@ it("renders registered time separately from unchanged event time and searches ex
   ];
   const html = render("photo.png");
   expect(html).toContain("photo.png");
-  expect(html).toContain("capture.progress.registered");
+  expect(html.match(/2026-11-01T19:26:26.000Z/g)).toHaveLength(1);
   expect(html).toContain("2026-11-01T19:26:26.000Z");
-  expect(html).toContain("2026-11-01T19:38:42.000Z");
+  expect(html).not.toContain("2026-11-01T19:38:42.000Z");
   expect(render("missing.pdf")).not.toContain("photo.png");
   fixture.cards = [
     {
@@ -107,24 +124,26 @@ it("renders a reopenable local record without fabricating Task state and replace
     {
       batch: {
         accountId: "account",
+        createdAt: "2026-11-01T19:26:26Z",
         batchId: "local",
         jobId: "job",
         context: { tripPrior: { id: "trip" } },
         inputs: [{ originalFilename: "lantern.txt" }],
       },
       counts: { selected: 1 },
+      allInputsAccepted: true,
       availableActions: { canReopen: true },
     },
   ];
   const local = render("lantern.txt");
   expect(local).toContain("lantern.txt");
-  expect(local).toContain("capture.jobView");
+  expect(local).toContain("<button");
   expect(local).toContain("capture.progress.registered");
   expect(local).not.toContain("capture.ai.task.");
   expect(local).not.toContain("common.loading");
-  expect(local).toContain("<button>capture.jobView</button>");
-  expect(local).toContain('<button disabled="">updates.refresh</button>');
-  expect(render("other.pdf")).not.toContain("capture.jobView");
+  expect(local).toContain("2026-11-01T19:26:26.000Z");
+  expect(local).not.toContain("updates.refresh");
+  expect(render("other.pdf")).not.toContain("lantern.txt");
   fixture.cards = [
     {
       id: "batch",
@@ -139,4 +158,35 @@ it("renders a reopenable local record without fabricating Task state and replace
   expect(remote).not.toContain("capture.jobView");
   fixture.localJobs = [];
   fixture.loading = false;
+});
+
+it("keeps one compact chronological row per Batch across original Import and intake records", () => {
+  fixture.cards = [
+    {
+      id: "import-old",
+      batchId: "old",
+      state: "RESULTS_READY",
+      sourceDisplayName: "older-import.pdf",
+      submittedAt: "2026-11-01T19:26:26Z",
+      updatedAt: "2026-11-03T19:26:26Z",
+    },
+  ];
+  fixture.localJobs = [];
+  const html = render("", [
+    {
+      batchId: "new",
+      at: "2026-11-02T19:26:26Z",
+      content: createElement("span", {}, "newer-intake"),
+    },
+    {
+      batchId: "old",
+      at: "2026-11-01T19:26:26Z",
+      content: createElement("span", {}, "duplicate-intake"),
+    },
+  ]);
+  expect(html.indexOf("newer-intake")).toBeLessThan(html.indexOf("older-import.pdf"));
+  expect(html).not.toContain("duplicate-intake");
+  expect(html.match(/older-import.pdf/g)).toHaveLength(1);
+  expect(html).not.toContain("updates.importCoverage");
+  expect(html).not.toContain("updates.refresh");
 });

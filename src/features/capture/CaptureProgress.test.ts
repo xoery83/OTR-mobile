@@ -1,3 +1,4 @@
+// Directory Native widgets have their own Slice6 render/interaction suite.
 import * as mixedQa from "@/data/operations/captureMixedQaManifest";
 import { createElement } from "react";
 import { createRequire } from "node:module";
@@ -15,6 +16,7 @@ import { CaptureProgress } from "./CaptureProgress";
 import { CaptureActivityList, captureActivityTime } from "./CaptureActivity";
 import { t, setUiLocale } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
+vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
   buttons: [] as any[],

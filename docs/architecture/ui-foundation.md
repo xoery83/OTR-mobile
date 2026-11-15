@@ -63,7 +63,9 @@ icons/labels use textSecondary. The diagnostics acceptance fixture requires both
 Dev transport and persisted Debug Mode, even when reached directly.
 
 `UiChoiceChip`'s compact presentation supports quiet named workspace tabs: a
-small neutral label surface within an unchanged 44pt touch target. `UiButton`
+small neutral label surface within an unchanged 44pt touch target. Its native
+text identity refreshes on hot font-size changes, as `UiText` already does, to
+avoid stale intrinsic widths; parent selection and actions remain unchanged. `UiButton`
 offers `size="large"` for equal, prominent empty-workspace choices (88pt minimum);
 the default action size, semantic variants and disabled behavior stay unchanged.
 

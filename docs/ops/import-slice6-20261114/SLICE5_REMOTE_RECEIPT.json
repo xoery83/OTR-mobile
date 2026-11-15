@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-11-14T09:17:48.409339+00:00",
+  "remote": "git@github.com:xoery83/OTR-mobile.git",
+  "ref": "refs/heads/main",
+  "before": "431a893b3ecba5b6eb9c6557bd81bc6e8d4e6cc8",
+  "after": "691189669e33d6eb5399f50c11dcbddf901536a6",
+  "merge": "779fc958ebfbd514cf025eb08b45d08906964d3e",
+  "product": "07c3200b1bccf4cce386b508c162b6e39e4359e4",
+  "report": "04d6c2f3ef156d0a3a8425a76ecd657a0bc1f2ed",
+  "remoteTreeMatches": true,
+  "providerCalls": 0,
+  "deployment": false,
+  "missionControl": {
+    "url": "https://otr-mission-control.xoery83.chatgpt.site",
+    "siteSource": "d5e7d85db8f848394cb06b52eadddb873ce44577",
+    "deployment": "appgdep_6af827591ac081919b13861c60daa086",
+    "state": "succeeded",
+    "publishedAt": "2026-11-14T09:18:32.669198+00:00",
+    "statusTests": "4/4 PASS",
+    "historicalLinkChecker": "BLOCKED: absent /private/tmp/otr-native-focused-main-20261101; not treated as PASS",
+    "browserQA": "NOT_RUN; native Sites success verified publication"
+  }
+}

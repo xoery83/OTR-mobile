@@ -1,0 +1,18 @@
+{
+  "productSha": "2e75187329b231720406ee20b944c9fb86db1399",
+  "trackedSourceFiles": 1673,
+  "mismatches": [],
+  "preparationRemoved": true,
+  "artifacts": {
+    "iphone": {
+      "bundleSha256": "e126569271ab352c73b15ba189f532efb1500dd3a58389c68d718799548d163a",
+      "architecture": "arm64",
+      "fullNativeRelease": true
+    },
+    "ipad": {
+      "bundleSha256": "e126569271ab352c73b15ba189f532efb1500dd3a58389c68d718799548d163a",
+      "architecture": "arm64",
+      "fullNativeRelease": true
+    }
+  }
+}

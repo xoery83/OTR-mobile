@@ -1,0 +1,8 @@
+{
+  "productSha": "39b22ea4c2ce25444fa67203d3982ec4e7b3a7b8",
+  "trackedFiles": 1673,
+  "mismatches": [],
+  "fullNativeRelease": true,
+  "bundleSha256": "88335a4ab86dfa47ea46ee91364bdc6bddda3559d29d662d9f6d56075e0817a4",
+  "onlyPostBuildSourceDifference": "Intl guard comment; no executable source difference"
+}

@@ -29,6 +29,8 @@ export function UniversalV3ResultPresentation({
   onOpenItem,
   onOpenDocument,
   onReview,
+  onUpdates,
+  onAddManually,
   onDay,
   onDone,
   onReconcile,
@@ -48,6 +50,8 @@ export function UniversalV3ResultPresentation({
   onOpenItem?: OpenAcceptedImportItem;
   onOpenDocument?(itemId: string, documentId: string): void;
   onReview?(): void;
+  onUpdates?(): void;
+  onAddManually?(): void;
   onDay?(): void;
   onDone?(): void;
   onReconcile(): void;
@@ -296,6 +300,27 @@ export function UniversalV3ResultPresentation({
               </View>
             );
           })}
+          {onAddManually ? (
+            <View style={styles.manual}>
+              <UiText style={styles.meta}>{t("capture.results.manualReminder")}</UiText>
+              <UiButton
+                label={t("capture.results.addManually")}
+                variant="text"
+                onPress={() => {
+                  if (isCurrent()) onAddManually();
+                }}
+              />
+            </View>
+          ) : null}
+          {onUpdates ? (
+            <UiButton
+              label={t("updates.relatedActivity")}
+              variant="text"
+              onPress={() => {
+                if (isCurrent()) onUpdates();
+              }}
+            />
+          ) : null}
           {reviewCount > 0 && onReview ? (
             <UiButton
               variant="secondary"
@@ -410,6 +435,7 @@ function TimelineRow({
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
+    manual: { gap: visual.space.heading },
     body: { gap: visual.space.row },
     grow: { flex: 1, minWidth: 0 },
     meta: { ...visual.type.meta, color: c.textSecondary },

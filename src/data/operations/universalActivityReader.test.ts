@@ -358,3 +358,23 @@ it("existing Updates callers without V3 observations keep their original lightwe
     vi.unstubAllEnvs();
   }
 });
+
+it("failed Core observation is unavailable coverage rather than a known Task UNKNOWN", async () => {
+  const { readV3Activities } = await import("./universalActivityReader");
+  const f = fixture(),
+    observe = vi.fn();
+  await readV3Activities([f.jobs[0]], {
+    getAccountId: f.getAccountId,
+    isCurrent: f.isCurrent,
+    execution: async () =>
+      ({ state: "REVIEW_READY", candidates: [{ candidateId: "candidate" }] }) as never,
+    saves: async () => {
+      throw Error("CORE_READ_UNAVAILABLE");
+    },
+    onObservation: observe,
+  });
+  expect(observe.mock.calls.at(-1)?.[1]).toMatchObject({
+    state: "uncertain",
+    unavailable: true,
+  });
+});

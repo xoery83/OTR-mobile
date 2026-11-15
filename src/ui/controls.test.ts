@@ -272,3 +272,25 @@ it("renders a field accessory without losing the canonical value or disabled sta
   expect(markup).toContain('aria-disabled="true"');
   expect(markup).toContain("flex-direction:row");
 });
+
+it("refreshes compact chip text measurement on hot font changes without resetting its action or selection", () => {
+  const onPress = vi.fn();
+  const props = { label: "Waiting (25)", selected: true, compact: true, onPress };
+  let observed!: ReturnType<typeof UiChoiceChip>;
+  function Probe() {
+    observed = UiChoiceChip(props);
+    return observed;
+  }
+  state.fontScale = 1;
+  renderToStaticMarkup(createElement(Probe));
+  const before = observed;
+  state.fontScale = 1.353;
+  renderToStaticMarkup(createElement(Probe));
+  const after = observed;
+  expect(after.props.onPress).toBe(onPress);
+  expect(after.props.accessibilityState).toEqual(before.props.accessibilityState);
+  expect(after.props.children.key).not.toBe(before.props.children.key);
+  expect(after.props.children.props.children).toBe("Waiting (25)");
+  expect(after.props.children.props.allowFontScaling).not.toBe(false);
+  state.fontScale = 1;
+});

@@ -148,6 +148,7 @@ export function UiChoiceChip({
   compact?: boolean;
 }) {
   const styles = useThemedStyles(createStyles);
+  const { fontScale } = useWindowDimensions();
 
   return (
     <Pressable
@@ -162,6 +163,8 @@ export function UiChoiceChip({
       ]}
     >
       <Text
+        // shortcut: hot native font changes can retain stale chip width; remove after native measurement is verified.
+        key={fontScale}
         style={[
           styles.choiceChipText,
           compact && styles.compactChipText,

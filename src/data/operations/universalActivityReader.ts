@@ -15,8 +15,15 @@ import {
   projectUniversalV3Activity,
   readV3UnknownCandidates,
   type V3SaveObservation,
+  projectV3ActivityFacts,
+  projectPlannedV3Activity,
 } from "./universalV3Activity";
-export type V3ActivityProgress = ReturnType<typeof projectUniversalV3Activity>;
+export type V3ActivityProgress = ReturnType<typeof projectUniversalV3Activity> & {
+  resultCount?: number;
+  failedCount?: number;
+  updatedAt?: string;
+  unavailable?: boolean;
+};
 
 // Read-only V3 history. Never use the V2 context endpoint for a V3 Batch.
 export async function readV3Activities(
@@ -61,10 +68,10 @@ export async function readV3Activities(
       }
     } catch {
       if (current() && execution)
-        dependencies.onObservation(
-          job.batch.batchId,
-          projectUniversalV3Activity(execution, {}, true),
-        );
+        dependencies.onObservation(job.batch.batchId, {
+          ...projectUniversalV3Activity(execution, {}, true),
+          unavailable: true,
+        });
       // No observation is safer than calling an unreachable task failed or complete.
     }
   }
@@ -172,6 +179,7 @@ export async function readDefaultUniversalActivities(
     onV3Observation
   ) {
     const legacyIds = new Set<string>();
+    const resultFacts = new Map<string, V3ActivityProgress>();
     await readV3Activities(jobs, {
       getAccountId: requireActiveUserId,
       isCurrent,
@@ -200,9 +208,27 @@ export async function readDefaultUniversalActivities(
               ? "OUTCOME_UNKNOWN"
               : observed;
         }
+        if (isCurrent()) {
+          const retained = await owner.resultOperations(result.candidates);
+          if (isCurrent()) {
+            resultFacts.set(job.batch.batchId, {
+              ...projectPlannedV3Activity(
+                result,
+                observations,
+                owner.batch(result.candidates),
+              ),
+              ...projectV3ActivityFacts(
+                retained.snapshot,
+                retained.operations,
+                observations,
+              ),
+            });
+          }
+        }
         return observations;
       },
-      onObservation: (batchId, progress) => onV3Observation?.(batchId, progress),
+      onObservation: (batchId, progress) =>
+        onV3Observation?.(batchId, { ...progress, ...resultFacts.get(batchId) }),
     });
     legacyJobs = jobs.filter((job) => legacyIds.has(job.batch.batchId));
   }

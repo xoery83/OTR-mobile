@@ -434,7 +434,11 @@ it("actionable signal reads every normal SQLite page, counts Batch aggregates an
   expect(await s.inbox.unreadActionableSignal(context, randomUUID())).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 101,
+    batchIds: expect.any(Array),
   });
+  const signal = await s.inbox.unreadActionableSignal(context, null);
+  expect(signal.batchIds).toHaveLength(101);
+  expect(new Set(signal.batchIds).size).toBe(101);
   expect(writes).not.toHaveBeenCalled();
   const markers = await s.f.db.getAllAsync<{ read_material_version: number }>(
     "SELECT read_material_version FROM updates_capture_intake",
@@ -445,6 +449,7 @@ it("actionable signal reads every normal SQLite page, counts Batch aggregates an
   expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 101,
+    batchIds: expect.any(Array),
   });
 });
 it("signal excludes read, pending and normally recovered cards without resolving or attributing personal notices to Trip prior", async () => {
@@ -483,11 +488,13 @@ it("signal excludes read, pending and normally recovered cards without resolving
   expect(await s.inbox.unreadActionableSignal(context, randomUUID())).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
   expect(await s.submissions.reopen(actionable.jobId)).toEqual(before);
   expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
 });
 it("missing current unread Source or a later page failure is UNKNOWN rather than a complete zero or a partial total", async () => {
@@ -531,6 +538,7 @@ it("signal sees current material versions after ordinary failure changes but sta
   expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 0,
+    batchIds: [],
   });
   await s.submissions.submit(
     request,
@@ -539,11 +547,13 @@ it("signal sees current material versions after ordinary failure changes but sta
   expect(await s.inbox.unreadActionableSignal(context, null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
   await s.f.switchTo(randomUUID());
   expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 0,
+    batchIds: [],
   });
   await s.f.switchTo(context.accountId);
   await expect(s.inbox.unreadActionableSignal(context, null)).rejects.toThrow(
@@ -552,6 +562,7 @@ it("signal sees current material versions after ordinary failure changes but sta
   expect(await s.inbox.unreadActionableSignal(await s.context(), null)).toEqual({
     coverage: "COMPLETE",
     unreadActionableCards: 1,
+    batchIds: expect.any(Array),
   });
 });
 it("a pending Account transition during source qualification rejects the count instead of completing under old ownership", async () => {
@@ -574,4 +585,67 @@ it("a pending Account transition during source qualification rejects the count i
       if (lease) endAccountTransition(lease);
     }
   }
+});
+
+it("displayed/batch-scoped Mark Read preserves unseen notices and every owning intake fact", async () => {
+  const s = setup(),
+    first = await s.fail(),
+    second = await s.fail(),
+    context = await s.context();
+  const before = await s.submissions.reopen(first.jobId);
+  const cards = (await s.inbox.list(filter, context)).cards;
+  const selected = cards.find((card) => card.batchId === first.batchId)!;
+  expect(
+    await s.inbox.markAllRead(filter, context, {
+      batchId: first.batchId,
+      notifications: [selected],
+    }),
+  ).toMatchObject({ marked: 1 });
+  const after = (await s.inbox.list(filter, context)).cards;
+  expect(after.find((card) => card.batchId === first.batchId)?.unread).toBe(false);
+  expect(after.find((card) => card.batchId === second.batchId)?.unread).toBe(true);
+  expect(after.every((card) => card.sourceState === "ACTION_REQUIRED")).toBe(true);
+  expect(await s.submissions.reopen(first.jobId)).toEqual(before);
+});
+
+it("Mark displayed does not acknowledge an unseen newer material version", async () => {
+  const s = setup(),
+    request = await s.fail(),
+    context = await s.context();
+  const shown = (await s.inbox.list(filter, context)).cards[0];
+  await s.f.db.runAsync(
+    "UPDATE updates_capture_intake SET material_version=material_version+1 WHERE account_id=? AND notification_id=?",
+    context.accountId,
+    shown.notificationId,
+  );
+  expect(
+    await s.inbox.markAllRead(filter, context, { notifications: [shown] }),
+  ).toMatchObject({ marked: 0 });
+  expect(
+    (await s.inbox.list(filter, context)).cards.find(
+      (row) => row.batchId === request.batchId,
+    )?.unread,
+  ).toBe(true);
+});
+
+it("Mark displayed across a page boundary leaves the twenty-first notice unread", async () => {
+  const s = setup();
+  for (let i = 0; i < 21; i++) await s.fail();
+  const context = await s.context(),
+    first = await s.inbox.list(filter, context);
+  expect(first.cards).toHaveLength(20);
+  expect(first.next).not.toBeNull();
+  const next = await s.inbox.list(filter, context, { before: first.next! });
+  expect(next.cards).toHaveLength(1);
+  expect(
+    await s.inbox.markAllRead(filter, context, { notifications: first.cards }),
+  ).toMatchObject({ marked: 20 });
+  expect(
+    (await s.inbox.list(filter, context, { before: first.next! })).cards[0].unread,
+  ).toBe(true);
+  expect(
+    (await s.inbox.list(filter, context)).cards.every(
+      (card) => card.sourceState === "ACTION_REQUIRED",
+    ),
+  ).toBe(true);
 });

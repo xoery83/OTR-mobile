@@ -61,7 +61,8 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("expo-router", () => ({
-  router: { push: s.push },
+  router: { push: s.push, setParams: vi.fn() },
+  useLocalSearchParams: () => ({}),
   useFocusEffect: (callback: () => any) => {
     const i = s.cursor++;
     if (s.slots[i]?.callback !== callback) {
@@ -77,6 +78,8 @@ vi.mock("react-native", () => ({
   View: "View",
   ScrollView: "Scroll",
   Pressable: "Row",
+  RefreshControl: "RefreshControl",
+  Switch: "Switch",
   StyleSheet: { create: (value: any) => value, hairlineWidth: 1 },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "Safe" }));
@@ -116,8 +119,13 @@ function nodes(node: ReactNode, type: string): any[] {
     ...Children.toArray((node.props as any).children).flatMap((child) =>
       nodes(child, type),
     ),
+    ...((node.props as any).otherRows ?? []).flatMap((row: any) =>
+      nodes(row.content, type),
+    ),
   ];
 }
+const refreshControl = (node: ReactNode) =>
+  nodes(node, "Scroll").find((props) => props.refreshControl)!.refreshControl.props;
 const button = (node: ReactNode, label: string) =>
   nodes(node, "Button").find((props) => props.label === label)!;
 beforeEach(() => {
@@ -182,9 +190,7 @@ it("query/category/unread Mark All passes the exact current filter and never res
     .onPress();
   render();
   await flush();
-  nodes(render(), "Chip")
-    .find((props) => props.label === t("updates.unreadOnly"))!
-    .onPress();
+  nodes(render(), "Switch")[0].onValueChange(true);
   render();
   await flush();
   nodes(render(), "Input")[0].onChangeText("EMPTY_PAYLOAD");
@@ -204,7 +210,15 @@ it("query/category/unread Mark All passes the exact current filter and never res
       currentTripId: s.trip.tripId,
     },
     data.context,
-    { presentationText: expect.any(Function) },
+    {
+      presentationText: expect.any(Function),
+      notifications: expect.arrayContaining([
+        expect.objectContaining({
+          notificationId: expect.any(String),
+          materialVersion: expect.any(Number),
+        }),
+      ]),
+    },
   );
   expect(await data.submissions.reopen(data.request.jobId)).toEqual(before);
   expect(button(render(), t("updates.markAll")).disabled).toBe(true);
@@ -218,7 +232,7 @@ it("card opens the normal same Job with a bounded Updates return origin, preserv
   nodes(render(), "Row")[0].onPress();
   await flush();
   expect(s.push).toHaveBeenCalledWith({
-    pathname: "/capture",
+    pathname: "/import-plans",
     params: {
       jobId: data.request.jobId,
       origin: "UPDATES",
@@ -250,7 +264,7 @@ it("an old A→B→A filter intent cannot navigate after its awaited owning open
   release();
   await flush();
   expect(s.push).not.toHaveBeenCalled();
-  expect(button(render(), t("updates.refresh")).disabled).toBe(false);
+  expect(refreshControl(render()).refreshing).toBe(false);
 });
 it("Account generation drift denies awaited navigation and removes the old account rows", async () => {
   const data = await setup();
@@ -272,9 +286,12 @@ it("zero unread retains a disabled action, and unavailable source never becomes 
   await setup(false);
   const node = render();
   expect(button(node, t("updates.markAll")).disabled).toBe(true);
+  expect(refreshControl(node).onRefresh).toBeTypeOf("function");
   expect(
-    nodes(node, "Text").some((props) => props.children === t("updates.coverage")),
-  ).toBe(true);
+    nodes(node, "Text").some(
+      (props) => props.children === t("capture.ai.task.RESULTS_READY"),
+    ),
+  ).toBe(false);
   for (const locale of ["en", "zh-Hans"] as const) {
     setUiLocale(locale);
     expect(button(render(), t("updates.markAll")).disabled).toBe(true);
@@ -286,7 +303,7 @@ it("failed current owning revalidation disables an unavailable card and exposes 
   vi.spyOn(data.source, "load").mockRejectedValue(
     new Error("current source unavailable"),
   );
-  button(render(), t("updates.refresh")).onPress();
+  refreshControl(render()).onRefresh();
   await flush();
   const node = render();
   expect(nodes(node, "Row")[0].disabled).toBe(true);
@@ -360,13 +377,13 @@ it.each(["en", "zh-Hans"] as const)(
 
 it("reviewer: stale Refresh cannot invalidate the current matching filter or leave it permanently loading", async () => {
   const data = await setup();
-  const oldRefresh = button(render(), t("updates.refresh"));
+  const oldRefresh = refreshControl(render());
   nodes(render(), "Input")[0].onChangeText("EMPTY_PAYLOAD");
   render();
   await flush();
   expect(button(render(), t("updates.markAll")).disabled).toBe(false);
   const list = vi.spyOn(data.repository, "list");
-  oldRefresh.onPress();
+  oldRefresh.onRefresh();
   await flush();
   expect(list).not.toHaveBeenCalled();
   expect(button(render(), t("updates.markAll")).disabled).toBe(false);

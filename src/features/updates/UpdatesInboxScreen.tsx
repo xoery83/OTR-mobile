@@ -7,9 +7,16 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { AppIcon } from "@/components/AppIcon";
 import {
   getAccountGeneration,
@@ -54,6 +61,29 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const { workingTrip } = useTripView();
+  const params = useLocalSearchParams<{
+    activityId?: string;
+    activityJobId?: string;
+    activityTripId?: string;
+    originGeneration?: string;
+  }>();
+  const activityId =
+    params.originGeneration === String(generation) &&
+    typeof params.activityId === "string"
+      ? params.activityId
+      : undefined;
+  const importMark = useRef<(() => Promise<void>) | null>(null);
+  const [importUnread, setImportUnread] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [importCount, setImportCount] = useState<number | null>(null);
+  const bindImportRead = useCallback(
+    (count: number, mark: () => Promise<void>, total?: number | null) => {
+      importMark.current = mark;
+      setImportUnread(count);
+      setImportCount(total ?? null);
+    },
+    [],
+  );
   const [category, setCategory] = useState<UpdatesFilter["category"]>("ALL");
   const [unreadOnly, setUnreadOnly] = useState(false),
     [query, setQuery] = useState("");
@@ -62,9 +92,21 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       category,
       unreadOnly,
       query,
-      currentTripId: workingTrip?.generation === generation ? workingTrip.tripId : null,
+      currentTripId: activityId
+        ? params.activityTripId || null
+        : workingTrip?.generation === generation
+          ? workingTrip.tripId
+          : null,
     }),
-    [category, unreadOnly, query, workingTrip, generation],
+    [
+      category,
+      unreadOnly,
+      query,
+      workingTrip,
+      generation,
+      activityId,
+      params.activityTripId,
+    ],
   );
   const presentationText = useMemo(() => {
     const title = translate("updates.needsInput", { count: "{count}" }, locale);
@@ -208,7 +250,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       if (!current(ticket, owner)) return;
       assertAccountRequestGeneration(reader.context);
       router.push({
-        pathname: "/capture",
+        pathname: "/import-plans",
         params: {
           jobId: target.job.batch.jobId,
           origin: "UPDATES",
@@ -216,12 +258,28 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         },
       });
     });
+  const intakeCards =
+    page?.cards.filter((card) => !activityId || card.batchId === activityId) ?? [];
   const unread =
-    page?.cards.filter((card) => card.unread && card.sourceState !== "UNAVAILABLE")
+    intakeCards.filter((card) => card.unread && card.sourceState !== "UNAVAILABLE")
       .length ?? 0;
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.root}>
       <View style={styles.filters}>
+        {activityId ? (
+          <UiButton
+            label={t("updates.batchScope")}
+            variant="text"
+            onPress={() =>
+              router.setParams({
+                activityId: undefined,
+                activityJobId: undefined,
+                activityTripId: undefined,
+                originGeneration: undefined,
+              })
+            }
+          />
+        ) : null}
         <ScrollView
           keyboardShouldPersistTaps="handled"
           horizontal
@@ -231,17 +289,22 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
           {categories.map((value) => (
             <UiChoiceChip
               key={value}
+              compact
               label={t(`updates.category.${value}`)}
               selected={category === value}
               onPress={() => setCategory(value)}
             />
           ))}
         </ScrollView>
-        <UiChoiceChip
-          label={t("updates.unreadOnly")}
-          selected={unreadOnly}
-          onPress={() => setUnreadOnly((value) => !value)}
-        />
+        <View style={styles.unreadControl}>
+          <UiText style={styles.secondary}>{t("updates.unreadOnly")}</UiText>
+          <Switch
+            accessibilityLabel={t("updates.unreadOnly")}
+            value={unreadOnly}
+            onValueChange={setUnreadOnly}
+            trackColor={{ true: colors.accent }}
+          />
+        </View>
         <UiTextInput
           accessibilityLabel={t("updates.search")}
           placeholder={t("updates.search")}
@@ -255,11 +318,66 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         style={styles.list}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => {
+              void load();
+              setRefreshKey((value) => value + 1);
+            }}
+            tintColor={colors.accent}
+          />
+        }
       >
         <ImportUpdatesSection
           filter={filter}
           generation={generation}
-          onOpen={(jobId, originGeneration) => {
+          batchId={activityId}
+          jobId={
+            typeof params.activityJobId === "string" ? params.activityJobId : undefined
+          }
+          onActivity={() => {
+            if (active.current && generation === getAccountGeneration())
+              router.push({ pathname: "/documents", params: { scope: "ACTIVITY" } });
+          }}
+          refreshKey={refreshKey}
+          otherRows={intakeCards.map((card) => ({
+            batchId: card.batchId,
+            at: card.createdAt,
+            attention: card.sourceState === "ACTION_REQUIRED",
+            content: (
+              <Pressable
+                key={card.notificationId}
+                accessibilityRole="button"
+                accessibilityState={{
+                  disabled: loading || busy || card.sourceState === "UNAVAILABLE",
+                }}
+                disabled={loading || busy || card.sourceState === "UNAVAILABLE"}
+                onPress={() => void open(card)}
+                style={styles.row}
+              >
+                <AppIcon
+                  name="tray"
+                  color={card.unread ? colors.accent : colors.textSecondary}
+                  size={18}
+                />
+                <View style={styles.rowCopy}>
+                  <UiText
+                    style={[styles.summary, card.unread && styles.unread]}
+                    numberOfLines={2}
+                  >
+                    {updatesCardTitle(card)}
+                  </UiText>
+                  <UiText style={styles.secondary}>{t("updates.personalCapture")}</UiText>
+                  <UiText style={styles.secondary}>
+                    {updatesNoticeTime(card.createdAt)}
+                  </UiText>
+                </View>
+              </Pressable>
+            ),
+          }))}
+          onReadControls={bindImportRead}
+          onOpen={(jobId, originGeneration, destination) => {
             if (
               !active.current ||
               intent.current !== renderedIntent ||
@@ -268,7 +386,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             )
               return;
             router.push({
-              pathname: "/capture",
+              pathname: destination === "REVIEW" ? "/import-review" : "/import-plans",
               params: {
                 jobId,
                 origin: "UPDATES",
@@ -277,7 +395,6 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             });
           }}
         />
-        <UiText style={styles.secondary}>{t("updates.coverage")}</UiText>
         {loading ? (
           <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
             {t("common.loading")}
@@ -288,7 +405,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             {t("updates.unavailable")}
           </UiText>
         ) : null}
-        {!loading && !failed && !page?.cards.length ? (
+        {!loading && !failed && !intakeCards.length && importCount === 0 ? (
           <UiText style={styles.secondary}>
             {t(
               query
@@ -301,36 +418,6 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             )}
           </UiText>
         ) : null}
-        {page?.cards.map((card) => (
-          <Pressable
-            key={card.notificationId}
-            accessibilityRole="button"
-            accessibilityState={{
-              disabled: loading || busy || card.sourceState === "UNAVAILABLE",
-            }}
-            disabled={loading || busy || card.sourceState === "UNAVAILABLE"}
-            onPress={() => void open(card)}
-            style={styles.row}
-          >
-            <AppIcon
-              name="tray"
-              color={card.unread ? colors.accent : colors.textSecondary}
-              size={18}
-            />
-            <View style={styles.rowCopy}>
-              <UiText
-                style={[styles.summary, card.unread && styles.unread]}
-                numberOfLines={2}
-              >
-                {updatesCardTitle(card)}
-              </UiText>
-              <UiText style={styles.secondary}>{t("updates.personalCapture")}</UiText>
-              <UiText style={styles.secondary}>
-                {updatesNoticeTime(card.createdAt)}
-              </UiText>
-            </View>
-          </Pressable>
-        ))}
         {page?.next ? (
           <UiButton
             label={t("updates.loadMore")}
@@ -339,22 +426,33 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
             onPress={() => void load(true, page.next!)}
           />
         ) : null}
-        <UiButton
-          label={t("updates.refresh")}
-          variant="text"
-          disabled={loading || busy}
-          onPress={() => void load()}
-        />
+        {failed ? (
+          <UiButton
+            label={t("updates.refresh")}
+            variant="text"
+            disabled={loading || busy}
+            onPress={() => {
+              void load();
+              setRefreshKey((value) => value + 1);
+            }}
+          />
+        ) : null}
       </ScrollView>
       <View style={styles.footer}>
         <UiButton
           label={t("updates.markAll")}
           variant="secondary"
-          disabled={loading || busy || !unread || failed}
+          disabled={loading || busy || (!unread && !importUnread) || failed}
           onPress={() =>
             void operate(async (reader) => {
+              await importMark.current?.();
               await reader.repository.markAllRead(filter, reader.context, {
                 presentationText,
+                ...(activityId ? { batchId: activityId } : {}),
+                notifications: intakeCards.map(({ notificationId, materialVersion }) => ({
+                  notificationId,
+                  materialVersion,
+                })),
               });
             })
           }
@@ -368,6 +466,12 @@ const createStyles = (c: UiColors) =>
     root: { flex: 1, backgroundColor: c.background },
     filters: { padding: visual.space.page, gap: visual.space.heading },
     categories: { gap: visual.space.heading },
+    unreadControl: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      minHeight: 44,
+    },
     list: { flex: 1, backgroundColor: c.background },
     content: { paddingHorizontal: visual.space.page, gap: visual.space.card },
     secondary: { ...visual.type.meta, color: c.textSecondary },

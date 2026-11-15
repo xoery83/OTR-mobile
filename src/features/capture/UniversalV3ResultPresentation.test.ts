@@ -141,3 +141,16 @@ it("UX-C2 Processing uses Close without cancelling work; recognized Results keep
   h.buttons.get(t("common.close")).onPress();
   expect(close).toHaveBeenCalledOnce();
 });
+
+vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
+
+it("manual recovery uses the existing form callback and never changes Batch result counts", () => {
+  const manual = vi.fn();
+  const html = renderToStaticMarkup(
+    createElement(UniversalV3ResultPresentation, { ...base, onAddManually: manual }),
+  );
+  expect(html).toContain(t("capture.results.manualReminder"));
+  h.buttons.get(t("capture.results.addManually")).onPress();
+  expect(manual).toHaveBeenCalledOnce();
+  expect(base.results).toHaveLength(1);
+});

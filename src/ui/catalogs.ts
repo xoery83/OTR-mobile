@@ -1,4 +1,36 @@
 export const en = {
+  "capture.results.addManually": "Add itinerary item manually",
+  "capture.results.manualUnavailable":
+    "This Trip is unavailable. Return and check your account or Trip access.",
+  "capture.results.manualReminder": "Missing a plan? You can add it yourself.",
+  "updates.importOutcome": "{status} · {count} saved",
+  "updates.localHistory": "Recent on this device",
+  "updates.markRead": "Mark read",
+  "updates.batchScope": "This batch · Show all updates",
+  "updates.relatedActivity": "View updates for this batch",
+
+  "activity.source.ALL": "All sources",
+  "activity.source.FILES": "Files",
+  "activity.source.PHOTOS": "Photos / Camera",
+  "activity.source.TEXT": "Text / Paste",
+  "activity.sourceChooser": "Source: {source} ▾",
+  "activity.sourceFilter": "Choose activity source",
+  "activity.status.ALL": "All",
+  "activity.status.PROCESSING": "Processing",
+  "activity.status.WAITING": "Waiting",
+  "activity.status.REVIEW": "Review",
+  "activity.status.COMPLETED": "Completed",
+  "activity.status.FAILED": "Failed",
+  "activity.statusCount": "{status} ({count})",
+  "activity.loadedCounts":
+    "Counts reflect the batches loaded so far. Scroll to load older activity.",
+  "activity.empty": "No import activity matches these filters.",
+  "activity.failed": "Could not finish · open the original recovery",
+  "activity.context": "{source} · {scope}",
+  "activity.tripScope": "Trip",
+  "activity.savedObjects": "Saved objects: {count}",
+  "activity.outcome": "{status} · {count} saved",
+
   "capture.ux.finishedReview": "Processing finished · {count} need review",
   "capture.ux.summary": "{created} created · {linked} linked · {updated} updated",
   "capture.ux.submitted": "Import submitted",
@@ -146,7 +178,7 @@ export const en = {
   "updates.importActivity": "Recent Import activity",
   "updates.importSaved": "Saved items: {count} · Open results",
   "updates.importCoverage":
-    "Open a processing record to check its current results. These records do not have read or unread status.",
+    "Recent local batches. Open Activity for older history. Read status stays on this device and does not resolve a review or retry an operation.",
   "importDocuments.trip": "Trip Documents",
   "importDocuments.inbox": "Personal Inbox",
   "importDocuments.loading": "Loading documents…",
@@ -753,7 +785,7 @@ export const en = {
   "updates.personalCapture": "Personal Inbox · Capture intake",
   "updates.loadMore": "Load more",
   "updates.refresh": "Refresh",
-  "updates.markAll": "Mark All as Read",
+  "updates.markAll": "Mark displayed updates read",
 
   "capture.progress.recordedCounts":
     "Recorded intake: {accepted} accepted · {failed} failed · {pending} pending",
@@ -3504,6 +3536,37 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "capture.results.addManually": "手工添加行程条目",
+  "capture.results.manualUnavailable":
+    "暂时无法访问此旅行。请返回检查当前账户或旅行权限。",
+  "capture.results.manualReminder": "还有未显示的安排？你可以手工添加。",
+  "updates.importOutcome": "{status} · 已保存 {count} 项",
+  "updates.localHistory": "本机近期记录",
+  "updates.markRead": "标为已读",
+  "updates.batchScope": "当前批次 · 查看全部动态",
+  "updates.relatedActivity": "查看此批次的动态",
+
+  "activity.source.ALL": "全部来源",
+  "activity.source.FILES": "文件",
+  "activity.source.PHOTOS": "照片 / 相机",
+  "activity.source.TEXT": "文字 / 粘贴",
+  "activity.sourceChooser": "来源：{source} ▾",
+  "activity.sourceFilter": "选择活动来源",
+  "activity.status.ALL": "全部",
+  "activity.status.PROCESSING": "处理中",
+  "activity.status.WAITING": "等待中",
+  "activity.status.REVIEW": "审核",
+  "activity.status.COMPLETED": "已完成",
+  "activity.status.FAILED": "失败",
+  "activity.statusCount": "{status}（{count}）",
+  "activity.loadedCounts": "数量仅统计已加载的批次。向下滚动可加载更早记录。",
+  "activity.empty": "没有符合筛选条件的导入活动。",
+  "activity.failed": "未能完成 · 打开原操作恢复",
+  "activity.context": "{source} · {scope}",
+  "activity.tripScope": "旅行",
+  "activity.savedObjects": "正式保存对象：{count}",
+  "activity.outcome": "{status} · 已保存 {count} 项",
+
   "capture.ux.finishedReview": "处理结束 · {count} 项待审核",
   "capture.ux.summary": "新增 {created} 项 · 关联 {linked} 项 · 更新 {updated} 项",
   "capture.ux.submitted": "已提交导入",
@@ -3628,7 +3691,8 @@ export const zhHans: Record<MessageKey, string> = {
   "importDocuments.itemLinksUnavailable": "暂时无法核对关联的已保存事项。",
   "updates.importActivity": "近期导入动态",
   "updates.importSaved": "已保存 {count} 项 · 查看结果",
-  "updates.importCoverage": "打开解析记录可查看当前结果。这些记录暂不区分已读和未读。",
+  "updates.importCoverage":
+    "显示本机近期批次，更早记录请打开导入活动。已读状态保存在此设备，不会解决审核事项或重发操作。",
   "importDocuments.trip": "旅行文档",
   "importDocuments.inbox": "个人收件箱",
   "importDocuments.loading": "正在读取文档…",
@@ -4171,7 +4235,7 @@ export const zhHans: Record<MessageKey, string> = {
   "updates.personalCapture": "个人收件箱 · 材料接收",
   "updates.loadMore": "加载更多",
   "updates.refresh": "刷新",
-  "updates.markAll": "全部标为已读",
+  "updates.markAll": "将已显示的动态标为已读",
 
   "capture.progress.recordedCounts":
     "接收记录：已接收{accepted}项 · 失败{failed}项 · 待处理{pending}项",
