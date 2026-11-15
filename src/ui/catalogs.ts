@@ -29,6 +29,7 @@ export const en = {
   "activity.context": "{source} · {scope}",
   "activity.tripScope": "Trip",
   "activity.savedObjects": "Saved objects: {count}",
+  "activity.outcome": "{status} · {count} saved",
 
   "capture.ux.finishedReview": "Processing finished · {count} need review",
   "capture.ux.summary": "{created} created · {linked} linked · {updated} updated",
@@ -3564,6 +3565,7 @@ export const zhHans: Record<MessageKey, string> = {
   "activity.context": "{source} · {scope}",
   "activity.tripScope": "旅行",
   "activity.savedObjects": "正式保存对象：{count}",
+  "activity.outcome": "{status} · 已保存 {count} 项",
 
   "capture.ux.finishedReview": "处理结束 · {count} 项待审核",
   "capture.ux.summary": "新增 {created} 项 · 关联 {linked} 项 · 更新 {updated} 项",

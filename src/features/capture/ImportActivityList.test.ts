@@ -77,9 +77,14 @@ it("renders one row per real Batch, no candidate count, and only loaded truthful
     }),
   );
   expect(html.match(/same.pdf/g)).toHaveLength(1);
-  expect(html).toContain("activity.savedObjects{&quot;count&quot;:1}");
+  expect(html).toContain(
+    "activity.outcome{&quot;status&quot;:&quot;capture.activityStatus.complete&quot;,&quot;count&quot;:1}",
+  );
   expect(html).toContain("capture.activityStatus.uncertain");
   expect(html).toContain("activity.loadedCounts");
+  expect(html.indexOf("activity.loadedCounts")).toBeGreaterThan(
+    html.indexOf("waiting.pdf"),
+  );
   expect(html).not.toContain('"count":5');
   expect(html).not.toContain("Check Processing Status");
 });
@@ -106,4 +111,35 @@ it("restores a selected status and uses the original Job ID when opened", () => 
   expect(html).not.toContain("waiting.pdf");
   inputs.buttons.filter((x) => !x.label)[0].onPress?.();
   expect(open).toHaveBeenCalledWith("review");
+});
+
+it("shows localized acquisition sources and authorized Trip names, not diagnostic input labels", () => {
+  const file = job("file");
+  const photo = job("photo");
+  photo.batch.inputs = [{ acquisitionSource: "camera" }] as any;
+  (file.inputs[0] as any).diagnosticName = "INTERNAL_READER_DIAGNOSTIC";
+  (file.batch.context as any).tripPrior = { id: "trip" };
+  const view = directory();
+  view.source = "FILES";
+  view.tripNames = { trip: "Auckland Weekend" };
+  const html = renderToStaticMarkup(
+    createElement(ImportActivityList, {
+      jobs: [file, photo],
+      v3: {},
+      tasks: {},
+      directory: view,
+      loading: false,
+      error: false,
+      hasMore: false,
+      onMore: vi.fn(),
+      onRefresh: vi.fn(),
+      onOpen: vi.fn(),
+    }),
+  );
+  expect(html).toContain("file.pdf");
+  expect(html).not.toContain("photo.pdf");
+  expect(html).toContain("activity.source.FILES");
+  expect(html).toContain("Auckland Weekend");
+  expect(html).not.toContain("INTERNAL_READER_DIAGNOSTIC");
+  expect(html).not.toContain("activity.loadedCounts");
 });

@@ -172,9 +172,6 @@ export function ImportActivityList({
             ))}
           </ScrollView>
         </View>
-        {hasMore ? (
-          <UiText style={styles.meta}>{t("activity.loadedCounts")}</UiText>
-        ) : null}
         {loading ? (
           <UiText style={styles.message} accessibilityLiveRegion="polite">
             {t("common.loading")}
@@ -210,6 +207,12 @@ export function ImportActivityList({
                   : fact.status === "PROCESSING"
                     ? "arrow.trianglehead.2.clockwise"
                     : "clock";
+          const recordedAt = new Date(fact.at);
+          const state = t(
+            fact.phase === "failed"
+              ? "activity.failed"
+              : `capture.activityStatus.${fact.phase}`,
+          );
           return (
             <Pressable
               key={fact.batchId}
@@ -224,15 +227,29 @@ export function ImportActivityList({
                 </View>
               </View>
               <View style={styles.copy}>
-                <UiText style={styles.title}>{title}</UiText>
-                <UiText style={styles.meta}>
-                  {formatUiDate(new Date(fact.at), {
-                    // ui-foundation-exception: string -- Intl recorded time precision
-                    dateStyle: "medium",
-                    timeStyle: "medium",
-                  })}
-                </UiText>
-                <UiText style={styles.meta}>
+                <View style={styles.heading}>
+                  <UiText style={styles.title} numberOfLines={1}>
+                    {title}
+                  </UiText>
+                  <UiText
+                    style={styles.meta}
+                    accessibilityLabel={formatUiDate(recordedAt, {
+                      // ui-foundation-exception: string -- complete recorded time for accessibility
+                      dateStyle: "medium",
+                      // ui-foundation-exception: string -- Intl recorded time precision, not visible copy
+                      timeStyle: "medium",
+                    })}
+                  >
+                    {formatUiDate(recordedAt, {
+                      // ui-foundation-exception: string -- compact actual recorded time, full timestamp on Batch/accessibility
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </UiText>
+                </View>
+                <UiText style={styles.meta} numberOfLines={1}>
                   {t("activity.context", {
                     source: fact.sources
                       .map((value) => t(`activity.source.${value}`))
@@ -249,22 +266,18 @@ export function ImportActivityList({
                   })}
                 </UiText>
                 <UiText style={styles.summary}>
-                  {t(
-                    fact.phase === "failed"
-                      ? "activity.failed"
-                      : `capture.activityStatus.${fact.phase}`,
-                  )}
+                  {fact.resultCount === undefined
+                    ? state
+                    : t("activity.outcome", { status: state, count: fact.resultCount })}
                 </UiText>
-                {fact.resultCount !== undefined ? (
-                  <UiText style={styles.meta}>
-                    {t("activity.savedObjects", { count: fact.resultCount })}
-                  </UiText>
-                ) : null}
               </View>
               <AppIcon name="chevron.right" color={colors.textSecondary} size={14} />
             </Pressable>
           );
         })}
+        {hasMore ? (
+          <UiText style={styles.footer}>{t("activity.loadedCounts")}</UiText>
+        ) : null}
         {hasMore ? (
           <UiButton
             label={t("capture.activityMore")}
@@ -292,12 +305,13 @@ const createStyles = (colors: UiColors) =>
     chips: {
       paddingHorizontal: visual.space.page,
       gap: visual.space.card,
-      paddingVertical: visual.space.card,
+      paddingVertical: 2,
     },
     row: {
       flexDirection: "row",
       alignItems: "center",
-      padding: visual.space.page,
+      paddingHorizontal: visual.space.page,
+      paddingVertical: 8,
       gap: visual.space.card,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.separator,
@@ -311,10 +325,23 @@ const createStyles = (colors: UiColors) =>
       backgroundColor: colors.background,
       borderRadius: visual.radius.pill,
     },
-    copy: { flex: 1, gap: 4 },
-    title: { color: colors.textPrimary, ...visual.type.row },
+    copy: { flex: 1, gap: 2 },
+    heading: { flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", gap: 4 },
+    title: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 120,
+      color: colors.textPrimary,
+      ...visual.type.row,
+    },
     meta: { color: colors.textSecondary, ...visual.type.meta },
     summary: { color: colors.textPrimary, ...visual.type.meta },
+    footer: {
+      paddingHorizontal: visual.space.page,
+      paddingTop: visual.space.heading,
+      color: colors.textSecondary,
+      ...visual.type.meta,
+    },
     message: {
       padding: visual.space.page,
       color: colors.textSecondary,
