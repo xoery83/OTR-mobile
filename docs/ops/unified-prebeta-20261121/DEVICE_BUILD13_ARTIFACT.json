@@ -1,0 +1,19 @@
+{
+  "sourceSha": "6e0a891cd17059328788aa6d447c351536fdd520",
+  "build": "13",
+  "bundle": "art.xoery.otr",
+  "verifiedTeam": "3K49Z2Q5X7",
+  "verifiedAppleSignIn": [
+    "Default"
+  ],
+  "verifiedApplicationIdentifier": "3K49Z2Q5X7.art.xoery.otr",
+  "keychainGroups": "default application identifier; no explicit override",
+  "normalCloudSyncGateCompiledTrue": true,
+  "metroInputSha256": "52cdc59b9cde38b4a9c6c57f293b0bd81c66e80d834979d51aee6f254b810e77",
+  "metroInputMatchesSimulator": true,
+  "jsSha256": "0e9c08f8ae333af1c37a0f939ad18034640bef9aae62406f969686de02b99bd7",
+  "googleIosClientPresent": true,
+  "sharedDevPresent": true,
+  "signatureVerifiedSeparately": true,
+  "installed": false
+}

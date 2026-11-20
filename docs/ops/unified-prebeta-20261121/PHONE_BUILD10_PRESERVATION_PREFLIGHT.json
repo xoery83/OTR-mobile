@@ -1,0 +1,28 @@
+{
+  "device": "00008140-001C2980269B001C",
+  "bundle": "art.xoery.otr",
+  "installedBuild": "10",
+  "mcpPhoneWindowReleased": true,
+  "normalUiSession": "existing registered Synthetic QA B, masked account header observed",
+  "retainedTrip": "MCP Synthetic Nelson QA 20261031 \u2014 Managed DEV",
+  "observedDates": [
+    "2026-12-10",
+    "2026-12-18"
+  ],
+  "observedPreparationCounts": {
+    "plans": 1,
+    "stays": 2,
+    "activities": 1
+  },
+  "activeUnsavedForm": false,
+  "existingSqliteFilesPresent": true,
+  "databaseCopied": false,
+  "credentialsReadOrCopied": false,
+  "rowLevelDraftCount": "NOT_OBSERVED",
+  "rowLevelPendingQueueCount": "NOT_OBSERVED",
+  "normalDataSyncCheckInvokedOnce": true,
+  "checkResult": "Data check complete / Everything is up to date / 8 seconds",
+  "checkIsNotPureReadOnly": true,
+  "originalMcpRound14Unknown": "unchanged; no explicit retry or replacement Operation",
+  "migrationCompatibility": "additive local table80; existing79 retained; file-backed focused test already passed"
+}
