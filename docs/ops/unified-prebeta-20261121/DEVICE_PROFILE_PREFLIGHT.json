@@ -1,0 +1,14 @@
+{
+  "profileUuid": "5354cae5-c833-48b6-8367-fe00dcbf6b87",
+  "name": "OTR App Attest Development 20261119",
+  "team": [
+    "3K49Z2Q5X7"
+  ],
+  "expires": "2027-11-18T21:34:39",
+  "applicationIdentifier": "3K49Z2Q5X7.art.xoery.otr",
+  "appleSignIn": [
+    "Default"
+  ],
+  "deviceCount": 1,
+  "privateKeyExported": false
+}

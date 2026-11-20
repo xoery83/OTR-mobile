@@ -1,0 +1,49 @@
+{
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundle": "art.xoery.otr",
+  "phase": "BEFORE_INSTALL_APP_NOT_LAUNCHED",
+  "databaseFiles": [
+    {
+      "relativePath": "Documents/SQLite/otr-guest-62648f98-d21a-45af-8a6c-4f42eaf8001f.db",
+      "bytes": 2445312,
+      "sha256": "5fd97aa414012da94d214d8baad4746dcfc178eb24d9173df0c741a9ea2a796c"
+    },
+    {
+      "relativePath": "Documents/SQLite/otr-mobile.db",
+      "bytes": 2748416,
+      "sha256": "07a70f09178740c7fad21967e53cfb540bd75f5037f19041b19828aed51095e1"
+    },
+    {
+      "relativePath": "Library/Caches/art.xoery.otr/Cache.db",
+      "bytes": 49152,
+      "sha256": "ad022d66907239b05cadb1085744579c11f69a5300f8e4da31faeb6c32a78c2c"
+    },
+    {
+      "relativePath": "Library/Caches/art.xoery.otr/Cache.db-shm",
+      "bytes": 32768,
+      "sha256": "121fa0b455519561cebbae30fe59f1077e8893806dfcc42bff580637695d1b32"
+    },
+    {
+      "relativePath": "Library/Caches/art.xoery.otr/Cache.db-wal",
+      "bytes": 1112432,
+      "sha256": "d89aa5ccaef884c4b33869b4a3ad232adae79db3e101a06b67443b8512f17e78"
+    },
+    {
+      "relativePath": "Library/HTTPStorages/art.xoery.otr/httpstorages.sqlite",
+      "bytes": 4096,
+      "sha256": "7752827a20be9384dda4d93c5a4eae3c49e773cdff43a679ab219d6309536a45"
+    },
+    {
+      "relativePath": "Library/HTTPStorages/art.xoery.otr/httpstorages.sqlite-shm",
+      "bytes": 32768,
+      "sha256": "a6929e3f4a3f69e694b4f37e6fdb175bd12d21f5518434a1bfe013d2c47aecb9"
+    },
+    {
+      "relativePath": "Library/HTTPStorages/art.xoery.otr/httpstorages.sqlite-wal",
+      "bytes": 2175392,
+      "sha256": "2837f4247a0d912d59f43071c8fcd6697cbac079562544226f593b882cf3c07c"
+    }
+  ],
+  "credentialsRead": false,
+  "dataCopied": false
+}

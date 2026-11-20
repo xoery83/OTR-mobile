@@ -20,3 +20,7 @@ Private Expo prebuild and Pods install succeeded. Signed simulator/device build,
 ## Exclusions / recovery
 
 No isolated Beta/App Attest registration activation, permanent C04 authority, paid Provider, private Realtime, new Backend environment, Schema/RLS/GRANT or main operation. Existing Session/SQLite/drafts/queues are not copied or reset. Installation rollback must preserve the existing container and original signed artifact; never uninstall to recover. Profile80 is additive and old migrations1–79 are unchanged; do not remove its table to downgrade.
+
+## Owner screenshot correction — Build12
+
+Owner's installed Build11 screenshot was verified against Info.plist SHA506aefc5 and exact JS hash; remote main remained41de4392. Comparison to MCP current7beac08 plus its dirty foreground patch confirmed the metadata-date publication fix was present, but both sources still rendered the remote metadata error before the immersive hero. Reuse the existing TripHomeFrame notice below the hero, preserve alert accessibility and all edit qualification checks, and show a single truthful notice. No Backend or authority change.102 focused workspace tests PASS, scoped lint clean. Build11 remains historical proof; final Build12/device qualification pending. The unfinished Build11 device build was safely interrupted before source edits; it was never installed.

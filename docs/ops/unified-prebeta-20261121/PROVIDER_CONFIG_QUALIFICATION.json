@@ -1,0 +1,11 @@
+{
+  "source": "Auth relay of Root2 fresh restricted Managed configuration projection",
+  "environment": "DEV tuqigdxrvrerfewsxqgm",
+  "googleEnabled": true,
+  "googleExistingWebAudienceAllowlisted": true,
+  "googleNonceCheckEnabled": true,
+  "appleEnabled": true,
+  "appleIosBundleAllowlisted": "art.xoery.otr",
+  "providerSecretOrAudienceChanged": false,
+  "actualLoginVerified": false
+}

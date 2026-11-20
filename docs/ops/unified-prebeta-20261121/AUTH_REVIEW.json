@@ -1,0 +1,19 @@
+{
+  "candidate": "506aefc561082e437e384638e5b3d4ec4efe706f",
+  "reviewerChat": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "result": "NO_BLOCKER",
+  "scope": [
+    "Google registered client and nonce bridge",
+    "Settings Profile account generation isolation",
+    "SQLite80 strict79 preimage and four-column schema",
+    "foreign account Profile retention and empty Guest rejection",
+    "Appearance hydration"
+  ],
+  "readOnly": true,
+  "testsReused": true,
+  "notCovered": [
+    "whole bundle",
+    "MCP Sync independent review",
+    "device or provider login"
+  ]
+}

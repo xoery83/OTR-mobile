@@ -1,0 +1,17 @@
+{
+  "sourceSha": "506aefc561082e437e384638e5b3d4ec4efe706f",
+  "bundle": "art.xoery.otr",
+  "build": "11",
+  "jsSha256": "c6a9b960f91c8237a25ba90b1237e3c1ca61b5d0c19fdc1e21c7dc7726d748b0",
+  "jsBytes": 15657846,
+  "googleIosClientInBundle": true,
+  "googleWebClientInBundle": true,
+  "oldGoogleIosClientInBundle": false,
+  "sharedDevInBundle": true,
+  "callbackSchemes": [
+    "otrmobile",
+    "art.xoery.otr",
+    "com.googleusercontent.apps.580120713844-qgv0ptkgnn80h1f7qlg0nahard5qgmcu"
+  ],
+  "signedVerifyExit": 0
+}

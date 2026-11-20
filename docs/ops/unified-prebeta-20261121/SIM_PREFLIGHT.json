@@ -1,0 +1,11 @@
+{
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundle": "art.xoery.otr",
+  "installed": true,
+  "metadata": {
+    "CFBundleIdentifier": "art.xoery.otr",
+    "CFBundleShortVersionString": "0.1.0",
+    "CFBundleVersion": "1",
+    "ApplicationType": "User"
+  }
+}

@@ -1397,11 +1397,6 @@ function LocalTripContent({
         </Text>
       ) : null}
 
-      {remoteSelected && metadataBaseError ? (
-        <Text accessibilityRole="alert" style={styles.status}>
-          {t("tripMetadata.confirmedBaseUnavailable")}
-        </Text>
-      ) : null}
       {selected ? (
         <>
           <TripHomeFrame
@@ -1725,7 +1720,10 @@ function LocalTripContent({
             title={remoteSelected.name}
             cover={tripCoverSource(displayCover ?? remoteSelected)}
             coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
-            notice={remoteMetadataQualified ? undefined : t(serverParentPeopleEnabled && !metadataBaseError ? "dayFeed.loading" : "tripHome.metadataEditUnavailable")}
+            noticeAccessibilityRole={metadataBaseError ? "alert" : undefined}
+            notice={remoteMetadataQualified ? undefined : t(metadataBaseError
+              ? "tripMetadata.confirmedBaseUnavailable"
+              : serverParentPeopleEnabled ? "dayFeed.loading" : "tripHome.metadataEditUnavailable")}
             metadata={[
               ...(remoteStart && remoteEnd
                 ? [

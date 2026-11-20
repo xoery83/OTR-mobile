@@ -1,0 +1,38 @@
+{
+  "phase": "AFTER_INSTALL_BEFORE_FIRST_LAUNCH",
+  "allDatabaseFilesIdentical": true,
+  "files": [
+    {
+      "relativePath": "Documents/SQLite/otr-guest-62648f98-d21a-45af-8a6c-4f42eaf8001f.db",
+      "retainedIdentical": true
+    },
+    {
+      "relativePath": "Documents/SQLite/otr-mobile.db",
+      "retainedIdentical": true
+    },
+    {
+      "relativePath": "Library/Caches/art.xoery.otr/Cache.db",
+      "retainedIdentical": true
+    },
+    {
+      "relativePath": "Library/Caches/art.xoery.otr/Cache.db-shm",
+      "retainedIdentical": true
+    },
+    {
+      "relativePath": "Library/Caches/art.xoery.otr/Cache.db-wal",
+      "retainedIdentical": true
+    },
+    {
+      "relativePath": "Library/HTTPStorages/art.xoery.otr/httpstorages.sqlite",
+      "retainedIdentical": true
+    },
+    {
+      "relativePath": "Library/HTTPStorages/art.xoery.otr/httpstorages.sqlite-shm",
+      "retainedIdentical": true
+    },
+    {
+      "relativePath": "Library/HTTPStorages/art.xoery.otr/httpstorages.sqlite-wal",
+      "retainedIdentical": true
+    }
+  ]
+}

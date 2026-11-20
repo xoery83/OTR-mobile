@@ -2201,7 +2201,13 @@ it.each(["success", "cover", "revoked", "switched"])(
       return;
     }
     if (mode === "revoked") {
-      expect(render()).toContain("tripHome.metadataEditUnavailable");
+      const html = render();
+      expect(html).toContain("tripMetadata.confirmedBaseUnavailable");
+      const frame = state.nodes.find((node) => node.frame)?.frame;
+      expect(frame.notice).toBe("tripMetadata.confirmedBaseUnavailable");
+      expect(frame.noticeAccessibilityRole).toBe("alert");
+      expect(html.indexOf("Cached name")).toBeLessThan(html.indexOf("tripMetadata.confirmedBaseUnavailable"));
+      expect(html.match(/tripMetadata.confirmedBaseUnavailable/g)).toHaveLength(1);
       expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
       expect(state.parentMetadataSave).not.toHaveBeenCalled();
       return;
