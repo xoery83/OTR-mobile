@@ -1,0 +1,36 @@
+{
+  "at": "2026-11-20T21:10:24.644810+00:00",
+  "readOnly": true,
+  "itemId": "be50008a-5950-491d-a95c-2bfedda7c02f",
+  "operations": [
+    {
+      "id": "1338cbd1-2480-46f5-98c2-9be7db5dcede",
+      "status": "COMPLETED",
+      "error": null,
+      "command": "CREATE_ITEM",
+      "title": null
+    },
+    {
+      "id": "5f7d0785-d519-44da-8852-342af47b806d",
+      "status": "RETRYABLE",
+      "error": "SYNC_FAILED",
+      "command": "SET_ITEM_TEXT",
+      "title": "QA P3 Harbour Hotel - Edit1"
+    }
+  ],
+  "uiAfterSaveAndReopen": "QA P3 Harbour Hotel - Edit1",
+  "uiAfterCancel": "QA P3 Harbour Hotel - Edit1",
+  "cancelledTextNeverSaved": "QA P3 CANCEL ONLY",
+  "sameItemId": true,
+  "independentServerReadback": false,
+  "deviceScenario": "Long-open normal Edit while unrelated original operations remain in server retry; no injected network outage",
+  "certificate": [
+    {
+      "epoch": "10e44448-75eb-4f3f-92f4-ae1a276ce09f",
+      "revision": "5.0",
+      "access_revision": 3,
+      "applied_generation": 4,
+      "manifest_sha256": "75b515028f6c9b16ac8fa761f54fed975f4900ff6f8929a313b44a379fd2aa24"
+    }
+  ]
+}
