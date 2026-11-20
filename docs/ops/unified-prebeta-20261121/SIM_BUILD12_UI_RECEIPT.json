@@ -1,0 +1,12 @@
+{
+  "build": "12",
+  "sourceSha": "dead5960ec1b25763b082e47c905e6fecc58495f",
+  "bundle": "art.xoery.otr",
+  "installedJsSha256": "5ea0ed9f5884685e57ab6af1f6d442d9eb65f1a417ff167aa298301c797e6c65",
+  "sameTripUiObserved": true,
+  "noticeBelowCover": true,
+  "noticeSingleOccurrence": true,
+  "navigationUnobscured": true,
+  "cloudEditStillBlocked": true,
+  "dataReset": false
+}
