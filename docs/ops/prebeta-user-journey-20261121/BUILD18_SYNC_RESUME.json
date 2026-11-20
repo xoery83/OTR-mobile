@@ -1,0 +1,22 @@
+{
+  "build": "18",
+  "source": "10923e373edc050d92fc5313818426e8240d0eea",
+  "js_sha256": "2abd8fc75250f2a3dad790388d2f572bc75a220072db311b6ae6c5c005cac863",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "qa_probe_enabled": false,
+  "queue_diagnostic_tests": 110,
+  "independent_review": "NO_BLOCKER",
+  "typescript": "Three unchanged baseline errors only",
+  "P3_sync": "NOT_PASS",
+  "P3_latest_request": "c3c43694-77c8-434e-8c1a-427d3f7a87cc",
+  "confirmed_hosted_failure": {
+    "source": "Root2 independent LinkedPG and Hosted logs",
+    "observed_utc": "2026-11-20T21:56:38Z",
+    "gateway": "otr_trip_core_v2_gateway",
+    "actual_connection_limit": 2,
+    "required_by_existing_scope": 1,
+    "error": "CORE_CAPABILITY_CLOSED",
+    "restoration": "WAITING_FOR_OPS_OWNERSHIP_AND_SAFE_BASELINE_RESTORE"
+  },
+  "mutation_identity": "Original Operation retained; no replacement IDs"
+}
