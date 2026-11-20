@@ -1,0 +1,21 @@
+{
+  "build": "20",
+  "base_source": "e5dd6d9db7fc3422d44818132ed051690987dc34",
+  "qa_profile": "SYNTHETIC_BACKEND_TRANSPORT_OUTAGE",
+  "patch_sha256": "70f4a756bf78f1a637adbcd0b3535593137fcac047ba9648fe8de5014496b42b",
+  "js_sha256": "c04809a9420be99823e2dfba49f40820e27133a185de96580b10b9599633b83a",
+  "compiled_fetch": "unconditional local network rejection; custom/native fetch not reached",
+  "checks": "bounded/unbounded, flag1 blocks; unset/0/true unchanged",
+  "scope": "Existing Synthetic QA B, original C0, same art.xoery.otr; no Mac network changes",
+  "auth_sdk": "Unchanged; this is Backend transport outage, not total physical offline",
+  "local_boot_cached_trips": "PASS",
+  "create_cold_recovery": "PASS",
+  "cloud_recovery": "NEXT: formal Build19 after independently confirmed RESOURCE_RETURNED",
+  "ordinary_restoration": "Preserved Build19 source6164e295; restore after local test; temporary patch already removed from product source",
+  "create_local_save": "PASS: exactly one Item d1e9d2f9-3f3d-4b17-8814-7e2743dfbf20",
+  "create_operation": "2005a186-3b0c-4c21-a766-c4da3a6b1f9f",
+  "edit_operation": "4aa434fa-f3f6-40dc-830b-c9bb70c00332",
+  "edit_local_save": "PASS",
+  "edit_cold_recovery": "PASS: same item, titleEdit1,Nov23-24,Everyone",
+  "user_assistance": "Owner clicked native calendarDone and FormSave; all other described actions via CUA"
+}

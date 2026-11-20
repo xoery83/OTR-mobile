@@ -1,0 +1,96 @@
+{
+  "count": 1,
+  "operations": [
+    {
+      "id": "2005a186-3b0c-4c21-a766-c4da3a6b1f9f",
+      "entity_id": "d1e9d2f9-3f3d-4b17-8814-7e2743dfbf20",
+      "status": "RETRYABLE",
+      "attempt_count": 1,
+      "last_error_code": "SYNC_FAILED",
+      "last_error_message": "CORE_RECEIPT_READ [network/none]: OTR API read is unavailable.",
+      "command": "CREATE_ITEM",
+      "payload": {
+        "acl": {
+          "people": [],
+          "visibility": "GROUP"
+        },
+        "core": {
+          "description": null,
+          "title": "QA P3 Backend Outage 1121"
+        },
+        "details": {
+          "permitted_checkin_from": null,
+          "permitted_checkin_until": null,
+          "permitted_checkout_by": null,
+          "property_name": null
+        },
+        "family": "P3",
+        "participation": {
+          "mode": "WHOLE_GROUP",
+          "people": [],
+          "selfPersonId": null
+        },
+        "place": {
+          "accepted_address": null,
+          "accepted_address_country": null,
+          "accepted_address_line1": null,
+          "accepted_address_line2": null,
+          "accepted_address_locality": null,
+          "accepted_address_postal_code": null,
+          "accepted_address_region": null,
+          "accepted_latitude": null,
+          "accepted_longitude": null,
+          "accepted_place_id": null,
+          "authored_address": null,
+          "authored_address_country": null,
+          "authored_address_line1": null,
+          "authored_address_line2": null,
+          "authored_address_locality": null,
+          "authored_address_postal_code": null,
+          "authored_address_region": null,
+          "authored_label": null,
+          "authored_text": null,
+          "location_input_revision": null,
+          "spatial_provenance_refs": null
+        },
+        "rooms": [],
+        "schedule": {
+          "end": {
+            "basis": "DERIVED_CIVIL",
+            "civil_resolution": "PENDING",
+            "clock_precision": null,
+            "instant": null,
+            "interpretation_input_sha256": null,
+            "interpretation_key": null,
+            "local_date": "2026-11-24",
+            "local_time": null,
+            "provenance_refs": null,
+            "quality": "UNKNOWN",
+            "resolution_offset_seconds": null,
+            "source_instant": null,
+            "source_instant_precision": null,
+            "supplied_offset_seconds": null,
+            "zone_id": null
+          },
+          "start": {
+            "basis": "DERIVED_CIVIL",
+            "civil_resolution": "PENDING",
+            "clock_precision": null,
+            "instant": null,
+            "interpretation_input_sha256": null,
+            "interpretation_key": null,
+            "local_date": "2026-11-23",
+            "local_time": null,
+            "provenance_refs": null,
+            "quality": "UNKNOWN",
+            "resolution_offset_seconds": null,
+            "source_instant": null,
+            "source_instant_precision": null,
+            "supplied_offset_seconds": null,
+            "zone_id": null
+          }
+        }
+      }
+    }
+  ]
+}
