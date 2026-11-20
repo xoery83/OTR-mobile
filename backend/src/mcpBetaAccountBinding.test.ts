@@ -1,9 +1,67 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
 import { createMcpBetaAccountBinding } from "./mcpBetaAccountBinding";
 import type { AuthenticatedUser, BackendDependencies } from "./app";
 import type { OAuthGrant } from "../../mcp/oauth";
+// Synthetic Layer 1 contract fixture for this binding test.
+const expense = {
+  id: "7f97eb3f-3530-59a8-8454-d9c64fef75b2",
+  journeyId: "654150f2-c0fd-48fc-9309-ad34748e8f57",
+  creatorMemberId: "549dd418-b0e1-4e05-9242-ae54c0ca6122",
+  payerMemberId: "549dd418-b0e1-4e05-9242-ae54c0ca6122",
+  title: "Layer 1 Expense",
+  description: "Preserve description",
+  category: "food",
+  occurredAt: "2026-12-01T09:00:00Z",
+  economicDate: "2026-12-01",
+  original: {
+    minor: 100,
+    currency: "NZD",
+    scale: 2
+  },
+  businessStatus: "DRAFT",
+  settlementParticipation: "INCLUDED",
+  revision: 1,
+  deletedAt: null,
+  createdAt: "2026-11-15T22:08:57.886Z",
+  updatedAt: "2026-11-15T22:08:57.886Z",
+  participants: [
+    {
+      memberId: "549dd418-b0e1-4e05-9242-ae54c0ca6122",
+      displayNameSnapshot: "Layer 1 synthetic 0",
+      householdIdSnapshot: null
+    }
+  ],
+  splits: [
+    {
+      memberId: "549dd418-b0e1-4e05-9242-ae54c0ca6122",
+      method: "EQUAL_PERSON",
+      originalMinor: 100,
+      settlementMinor: null,
+      weightUnits: null,
+      percentageUnits: null,
+      roundingAdjustmentMinor: 0
+    }
+  ],
+  valuation: null,
+  paymentRecords: [],
+  auditEvents: [
+    {
+      id: "5492f697-706e-4742-87bc-63df98aae5b3",
+      expenseId: "7f97eb3f-3530-59a8-8454-d9c64fef75b2",
+      actorUserId: "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      actorMemberId: null,
+      eventType: "CREATED",
+      reason: null,
+      changedGroups: [
+        "FINANCIAL_CORE",
+        "DESCRIPTIVE"
+      ],
+      revision: 1,
+      createdAt: "2026-11-15T22:08:57.886Z"
+    }
+  ]
+};
 function fixture() {
   const grant: OAuthGrant = {
     accountId: randomUUID(),
@@ -18,17 +76,7 @@ function fixture() {
     id: grant.accountId,
     accountClass: "NORMAL_ACCOUNT" as const,
   }));
-  const artifact = JSON.parse(
-    readFileSync(
-      new URL("../../docs/mcp/beta-layer1/EXPENSE_HTTP_PG.json", import.meta.url),
-      "utf8",
-    ),
-  );
-  const sample = artifact.requests.find(
-    (r: any) => r.response?.entity?.id && r.response.entity.journeyId,
-  );
-  const trip = sample.response.entity.journeyId;
-  const expense = sample.response.entity;
+  const trip = expense.journeyId;
   const canReadTrip = vi.fn(async () => false);
   const dependencies = {
     gateway: { validateAccessToken: vi.fn(), canReadTrip },

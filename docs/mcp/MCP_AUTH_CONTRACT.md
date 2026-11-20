@@ -1,5 +1,29 @@
 # MCP Auth Contract — 31 October 2026
 
+## Standing Managed Supabase Consent on Shared DEV
+
+The five-minute challenge is also capped by the initiating access token.
+The finite business Consent period begins at explicit first-party approval.
+The Shared DEV test policy used 600 seconds. The integration policy uses
+3,600 seconds. All policy fields remain pinned by the policy hash, so the
+policy change requires one fresh decision.
+
+Requests require a live resource-bound token, the same account, client,
+OAuth session and policy, an unexpired Consent, and the owning ACL. Normal
+same-session token refresh changes neither the decision nor its deadline.
+Reauthorization that creates a new session, revocation, a changed policy or
+Consent expiry cannot revive prior evidence. A new explicit decision renews
+expired Consent. Existing high-risk confirmation and already-accepted
+Operation and Receipt behavior remain in force.
+
+The existing Core and Consent connection managers each admit one active
+lease with bounded waiting. They use the same narrowly scoped Core gateway
+role. A Core write can hold the first connection while it checks Consent
+before admission on the second. The Shared DEV runtime therefore uses a
+role connection limit of two without expanding any object permissions.
+One bounded retry is available only for capacity error 53300 before the
+Consent transaction begins. A failed or ambiguous commit is never replayed.
+
 Finite Claude QA now has actual fresh Read/Edit Consent, controlled P3 Create
 and original-ID Edit, formal independent receipts/readback and Native cold restore
 PASS. The R recovery Gate is consumed and fully closed before deadline; it does

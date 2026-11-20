@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { createManagedConsentRequest, createManagedOAuthConsent } from "./managedOAuthConsent";
 
 it.each([undefined, 600, 60])("bounds stored consent independently of the runtime (%s seconds)", async (grantTtlSeconds) => {
@@ -116,7 +116,7 @@ it.each(["expired", "active", "revoked", "busy", "busy-at-commit"] as const)(
                 writes.push("archive expired");
               }
               if (sql.includes("SET state=$2")) {
-                expect(args).toEqual([id, "APPROVED"]);
+                expect(args).toEqual([id, "APPROVED", String(pending.consent_expires_ms)]);
                 writes.push("approve");
                 if (previous === "active") throw new Error("23505");
                 return { rows: [{ id }] };
@@ -200,4 +200,57 @@ it.each([
   else
     await expect(binding).rejects.toThrow("MCP_CONSENT_STORE_UNAVAILABLE");
   expect(attempts).toBe(leases);
+});
+it("starts the finite standing Consent at approval and preserves it across same-session token refresh", async () => {
+  const now = Date.now();
+  const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+  try {
+    const native = { issuer: "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1" as const,
+      accountId: "11111111-1111-4111-8111-111111111111",
+      clientId: "22222222-2222-4222-8222-222222222222",
+      sessionId: "33333333-3333-4333-8333-333333333333" };
+    const session = { ...native, expiresAt: now + 30_000 };
+    const policy = {
+      policyId: "unit", policyVersion: "standing", policyHash: "a".repeat(64),
+      expiresAt: Number.MAX_SAFE_INTEGER, grantTtlSeconds: 3600,
+    };
+    const { id, secret } = createManagedConsentRequest();
+    const row = {
+      id, secret_hash: secret, oauth_session: session, native_snapshot: native, policy,
+      state: "PENDING", challenge_expires_ms: session.expiresAt, consent_expires_ms: session.expiresAt,
+    };
+    const adapter = createManagedOAuthConsent({
+      withLease: (work) => work({
+        retire() {},
+        async query(sql, args) {
+          if (sql.includes("AS session_state")) return { rows: [{ session_state: "SESSION_OPEN" }] };
+          if (sql.includes("WHERE id=$1::uuid") && sql.startsWith("SELECT")) return { rows: [row] };
+          if (sql.includes("SET state=$2")) {
+            row.state = args[1];
+            row.consent_expires_ms = Number(args[2]);
+            return { rows: [{ id }] };
+          }
+          if (sql.includes("state='APPROVED' AND consent_expires_at>clock_timestamp()")) {
+            return { rows: row.state === "APPROVED" && args[3] === native.sessionId &&
+              row.consent_expires_ms > Date.now() ? [row] : [] };
+          }
+          return { rows: [] };
+        },
+      }),
+    }, () => policy);
+    const signal = new AbortController().signal;
+    clock.mockReturnValue(now + 5000);
+    await adapter.decideById({ kind: "FIRST_PARTY", accountId: native.accountId }, id, true, signal);
+    expect(row.consent_expires_ms).toBe(now + 5000 + 3_600_000);
+    clock.mockReturnValue(now + 45_000);
+    await expect(adapter.readBinding(session, signal)).resolves.toBeNull();
+    const refreshed = { ...session, expiresAt: now + 7_200_000 };
+    await expect(adapter.readBinding(refreshed, signal)).resolves.toMatchObject({ evidenceId: id });
+    await expect(adapter.readBinding({ ...refreshed,
+      sessionId: "44444444-4444-4444-8444-444444444444" }, signal)).resolves.toBeNull();
+    clock.mockReturnValue(row.consent_expires_ms);
+    await expect(adapter.readBinding(refreshed, signal)).resolves.toBeNull();
+  } finally {
+    clock.mockRestore();
+  }
 });

@@ -116,6 +116,7 @@ export function createManagedOAuthConsent(
       const leaseBusy =
         stage === "lease" && (error as { code?: string } | null)?.code === "53300";
       if (options?.retryBusyLease && leaseBusy) {
+        console.info(JSON.stringify({ event: "mcp_managed_consent_lease_retry", sqlstate: "53300" }));
         await delay(300, undefined, { signal });
         return transaction(signal, work, { ...options, retryBusyLease: false });
       }
@@ -296,10 +297,17 @@ export function createManagedOAuthConsent(
           ],
         );
       }
+      // A current bearer is required on every request. Its expiry bounds the
+      // challenge, while the explicit decision sets the same-session consent lifetime.
+      const ttlSeconds = allow ? saved.policy.grantTtlSeconds : undefined;
+      const consentExpiry = ttlSeconds === undefined
+        ? saved.consent_expires_ms
+        : Math.min(saved.policy.expiresAt, Date.now() + ttlSeconds * 1000);
       const result = await lease.query(
-        `UPDATE public.otr_mcp_managed_consents SET state=$2,decided_at=clock_timestamp()
+        `UPDATE public.otr_mcp_managed_consents SET state=$2,decided_at=clock_timestamp(),
+           consent_expires_at=to_timestamp($3::double precision/1000)
           WHERE id=$1::uuid AND state='PENDING' AND challenge_expires_at>clock_timestamp() RETURNING id`,
-        [original.id, allow ? "APPROVED" : "DENIED"],
+        [original.id, allow ? "APPROVED" : "DENIED", String(consentExpiry)],
       );
       if (result.rows.length !== 1) return failure();
       return {
@@ -355,7 +363,7 @@ export function createManagedOAuthConsent(
           return failure();
         // Public correlation ID is never a bearer credential. First-party authentication is mandatory.
         return { id: saved.id, expiresAt: saved.challenge_expires_ms };
-      });
+      }, { retryBusyLease: true });
     },
     async begin(
       session: VerifiedManagedOAuthSession,
