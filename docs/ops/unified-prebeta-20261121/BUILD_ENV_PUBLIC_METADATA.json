@@ -7,5 +7,8 @@
   "existingPublicKeySha256": "e2337f29000bb3e38e5c0765ec003c8a3805872e3fc50ad11716e6b75c65db1b",
   "source": "existing canonical .env.local public variable only",
   "privateCredentialsCopied": false,
-  "isolatedBeta": false
+  "isolatedBeta": false,
+  "normalAccountCloudSyncEnabled": true,
+  "guestAdoptionClientEnabled": true,
+  "correction": "Build11/12 omitted the already-approved normal Cloud Sync flag; neither was installed on physical phone. Final Build13 must include it."
 }
