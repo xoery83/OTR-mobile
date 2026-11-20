@@ -967,7 +967,8 @@ function SummarySection({
       ) : settlement.isOrganizer && !hasConfirmed ? (
         <UiButton
           variant="text"
-          label={t("settlement.checkReadiness")}
+          label={t(settlement.busy ? "common.loading" : "settlement.checkReadiness")}
+          disabled={settlement.busy}
           onPress={() => void settlement.prepare()}
         />
       ) : null}
