@@ -5,6 +5,27 @@ export async function isKnownGuestSqliteSchema(
   database: Pick<MigrationDatabase, "getFirstAsync">,
   version: number,
 ) {
+  if (version === 81) {
+    if (!(await isKnownGuestSqliteSchema(database, 80))) return false;
+    const registration = await database.getFirstAsync<{ name: string }>(
+      "SELECT name FROM schema_migrations WHERE id=81",
+    );
+    if (registration?.name !== "trip_core_transport_identity") return false;
+    const layout = await database.getFirstAsync<{ n: number }>(`
+      WITH expected(name,type,required,pk) AS (VALUES
+        ('cache_account_id','TEXT',1,1),('mirror_key','TEXT',1,3),
+        ('event_id','TEXT',1,0),('trip_id','TEXT',1,2),
+        ('service_key','TEXT',1,0),('transport_subtype','TEXT',1,0),('attribution','TEXT',1,0),
+        ('operator_namespace','TEXT',0,0),('operator_issuer','TEXT',0,0),
+        ('operator_value','TEXT',0,0),('operator_literal','TEXT',0,0),
+        ('service_number','TEXT',0,0),('service_literal','TEXT',0,0),
+        ('codeshare_operating_key','TEXT',0,0),('identity_state','TEXT',0,0))
+      SELECT COUNT(*) AS n FROM pragma_table_info('trip_core_itinerary_transport_services') AS actual
+      JOIN expected ON actual.name=expected.name AND actual.type=expected.type
+        AND actual."notnull"=expected.required AND actual.pk=expected.pk
+      WHERE (SELECT COUNT(*) FROM pragma_table_info('trip_core_itinerary_transport_services'))=15`);
+    return layout?.n === 15;
+  }
   if (version === 80) {
     if (!(await isKnownGuestSqliteSchema(database, 79))) return false;
     const registration = await database.getFirstAsync<{ name: string }>(

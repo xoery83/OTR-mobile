@@ -1297,6 +1297,7 @@ it("finite Forms batch refuses Rental detail mutation on an actual P3 target", a
 });
 
 it("finite Forms batch adds P5 with transport endpoint commands but refuses them on actual P4", async () => {
+  const { unknownP5Identity } = await import("../../domain/trip/p5Identity");
   const f = fixture(),
     ctx = await f.repo.captureContext(trip),
     id = randomUUID();
@@ -1305,12 +1306,7 @@ it("finite Forms batch adds P5 with transport endpoint commands but refuses them
     service_key: "segment.1",
     transport_subtype: "TRAIN",
     attribution: "UNSPECIFIED",
-    operator_namespace: "NAME",
-    operator_issuer: "",
-    operator_value: "",
-    operator_literal: "",
-    service_number: "",
-    service_literal: "",
+    ...unknownP5Identity(),
     codeshare_operating_key: null,
   };
   const create = {
@@ -3210,4 +3206,224 @@ it("reads an existing immutable receipt locally only for the same original inten
       .run("a".repeat(64), f.command.operationId),
   ).toThrow("CORE_RECEIPT_IMMUTABLE");
   expect(await f.repo.retainedReceipt(f.ctx, f.command)).toEqual(f.receipt.receipt);
+});
+
+it("replays a pinned historical blank P5 only for local display, keeping strict dispatch and original bytes", async () => {
+  const { canonicalCoreJson } = await import("../../domain/trip/tripCoreV2Json");
+  const { coreHashValue } = await import("../../domain/trip/tripCoreV2Read");
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip),
+    bundle = await collection();
+  await f.repo.install(await f.repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  const command = {
+    ...sparse(),
+    command: "CREATE_ITEM",
+    target: { kind: "ITEM", id: randomUUID() },
+    payload: {
+      family: "P5",
+      core: { title: "Synthetic retained train" },
+      endpoints: {
+        origin: { time: coreDateBoundary("2026-12-14"), place: ordinaryPlace() },
+        destination: { time: coreDateBoundary("2026-12-15"), place: ordinaryPlace() },
+      },
+      service: {
+        service_key: "main",
+        transport_subtype: "TRAIN",
+        attribution: "UNSPECIFIED",
+        operator_namespace: "NAME",
+        operator_issuer: "Authored",
+        operator_value: "Rail",
+        operator_literal: "Rail",
+        service_number: "12",
+        service_literal: "12",
+        codeshare_operating_key: null,
+      },
+      ...coreDefaults("member"),
+    },
+  };
+  command.baseVector = [{ ...command.target, revision: null }];
+  for (const key of [
+    "operator_issuer",
+    "operator_value",
+    "operator_literal",
+    "service_number",
+    "service_literal",
+  ] as const)
+    command.payload.service[key] = "";
+  const text = canonicalCoreJson(command as never);
+  const digest = await coreHashValue("otr-trip-core-intent-v2", command, hash);
+  f.sql
+    .prepare(
+      "INSERT INTO trip_core_pending_intents(account_id,trip_id,operation_id,intent_version,canonical_intent_text,intent_sha256,base_vector,queue_operation_id,created_at,state) VALUES(?,?,?,2,?,?,?,?,?,'BLOCKED')",
+    )
+    .run(
+      account,
+      trip,
+      command.operationId,
+      text,
+      digest,
+      canonicalCoreJson(command.baseVector),
+      command.operationId,
+      stamp,
+    );
+  await createSyncOperationRepository(f.database, async () => account).enqueue({
+    id: command.operationId,
+    tripId: trip,
+    entityType: "TRIP_CORE_V2",
+    entityId: command.target.id,
+    operationType: "CORE_V2_COMMAND",
+    idempotencyKey: command.operationId,
+    baseVersion: null,
+    payloadJson: text,
+    status: "DEPENDENCY_BLOCKED",
+    nextAttemptAt: null,
+  });
+  const before = f.sql
+    .prepare("SELECT * FROM sync_operations WHERE id=?")
+    .get(command.operationId);
+  const display = await f.repo.manualReadSnapshot(ctx, actor, true);
+  expect(display.graph.itinerary_events.map((r) => r.id)).toEqual(
+    expect.arrayContaining([item, command.target.id]),
+  );
+  expect(display.graph.itinerary_transport_services[0]).toMatchObject({
+    operator_literal: null,
+    identity_state: { version: 1 },
+  });
+  expect(await f.repo.combinedSnapshot(ctx)).not.toBeNull();
+  expect(
+    f.sql.prepare("SELECT * FROM sync_operations WHERE id=?").get(command.operationId),
+  ).toEqual(before);
+  expect(
+    f.sql
+      .prepare(
+        "SELECT canonical_intent_text,intent_sha256 FROM trip_core_pending_intents WHERE operation_id=?",
+      )
+      .get(command.operationId),
+  ).toEqual({ canonical_intent_text: text, intent_sha256: digest });
+  await expect(f.repo.pending(ctx)).rejects.toThrow("INVALID_TRANSPORT_IDENTITY");
+  await expect(f.repo.enqueue(ctx, command)).rejects.toThrow(
+    "INVALID_TRANSPORT_IDENTITY",
+  );
+  f.sql
+    .prepare("UPDATE sync_operations SET payload_json='{}' WHERE id=?")
+    .run(command.operationId);
+  await expect(f.repo.manualReadSnapshot(ctx, actor, true)).rejects.toThrow(
+    "LOCAL_MANUAL_COMMIT_PIN",
+  );
+});
+
+it("decodes a missing optional identity object on an old service row without inventing a descriptor", async () => {
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip);
+  const read = f.database.getAllAsync.bind(f.database);
+  vi.spyOn(f.database, "getAllAsync").mockImplementation(async (query, ...args) =>
+    query.includes("FROM trip_core_itinerary_transport_services ")
+      ? [{ service_key: "main", operator_literal: "Retained operator" }]
+      : read(query, ...args),
+  );
+  const graph = await f.repo.readGraph(ctx);
+  expect(graph.itinerary_transport_services[0]).toMatchObject({
+    operator_literal: "Retained operator",
+  });
+  expect(graph.itinerary_transport_services[0].identity_state).toBeUndefined();
+});
+
+it.each([false, true])(
+  "round-trips accepted service identity without changing absent descriptors: explicit=%s",
+  async (explicit) => {
+    const { unknownP5Identity } = await import("../../domain/trip/p5Identity");
+    const f = fixture(),
+      ctx = await f.repo.captureContext(trip),
+      id = randomUUID();
+    const endpoint = { time: coreDateBoundary("2026-12-14"), place: ordinaryPlace() };
+    const command = {
+      ...sparse(),
+      command: "CREATE_ITEM",
+      target: { kind: "ITEM", id },
+      baseVector: [{ kind: "ITEM", id, revision: null }],
+      payload: {
+        family: "P5",
+        core: { title: "Synthetic accepted train" },
+        ...coreDefaults("member"),
+        endpoints: { origin: endpoint, destination: endpoint },
+        service: {
+          service_key: "main",
+          transport_subtype: "TRAIN",
+          attribution: "UNSPECIFIED",
+          codeshare_operating_key: null,
+          ...(explicit
+            ? unknownP5Identity()
+            : {
+                operator_namespace: "NAME",
+                operator_issuer: "Authored",
+                operator_value: "Rail",
+                operator_literal: "Rail",
+                service_number: "12",
+                service_literal: "12",
+              }),
+        },
+      },
+    };
+    const graph = applyCoreCommand(emptyCoreGraph(), command, actor, stamp).graph;
+    const bundle = await collection(true, graph);
+    await f.repo.install(
+      await f.repo.beginRefresh(ctx, 1),
+      bundle.manifest,
+      bundle.pages,
+    );
+    const accepted = (await f.repo.acceptedSnapshot(ctx))!;
+    expect(accepted.graph.itinerary_transport_services).toStrictEqual(
+      graph.itinerary_transport_services,
+    );
+    const row = f.sql
+      .prepare(
+        "SELECT identity_state,operator_literal FROM trip_core_itinerary_transport_services",
+      )
+      .get()!;
+    if (explicit) {
+      expect(JSON.parse(row.identity_state as string)).toEqual(
+        unknownP5Identity().identity_state,
+      );
+      expect(row.operator_literal).toBeNull();
+    } else {
+      expect(row.identity_state).toBeNull();
+      expect(accepted.graph.itinerary_transport_services[0]).not.toHaveProperty(
+        "identity_state",
+      );
+      expect(row.operator_literal).toBe("Rail");
+    }
+  },
+);
+
+it("retains explicit null for an optional nullable field and still rejects malformed required JSON", async () => {
+  const { coreTableSchemas } = await import("../../domain/trip/tripCoreV2");
+  const f = fixture(),
+    ctx = await f.repo.captureContext(trip);
+  const read = f.database.getAllAsync.bind(f.database);
+  const nullable = vi
+    .spyOn(
+      coreTableSchemas.itinerary_transport_services.shape.identity_state,
+      "isNullable",
+    )
+    .mockReturnValue(true);
+  const query = vi
+    .spyOn(f.database, "getAllAsync")
+    .mockImplementation(async (sql, ...args) =>
+      sql.includes("FROM trip_core_itinerary_transport_services ")
+        ? [{ identity_state: null }]
+        : read(sql, ...args),
+    );
+  try {
+    expect((await f.repo.readGraph(ctx)).itinerary_transport_services[0]).toHaveProperty(
+      "identity_state",
+      null,
+    );
+  } finally {
+    nullable.mockRestore();
+    query.mockRestore();
+  }
+  const bundle = await collection();
+  await f.repo.install(await f.repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  f.sql.exec("UPDATE trip_core_itinerary_events SET field_state='{'");
+  await expect(f.repo.readGraph(ctx)).rejects.toThrow(SyntaxError);
 });

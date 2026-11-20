@@ -1,0 +1,15 @@
+{
+  "source": "4a64eeb09d8c953a4ba61f10123787f078e4ae85",
+  "build": 21,
+  "bundle": "art.xoery.otr",
+  "jsSha256": "7e823ae14e689d0cf187bfb64ee2acf4e21da914d69629060f37cef373965637",
+  "nativeBuild": "PASS after own dependency/header/module cache recovery",
+  "inPlaceInstall": "PASS",
+  "retainedSyncOperationCount": 26,
+  "session": "same Synthetic B normal Account retained, no login/Guest/reset",
+  "myTrips": "PASS original QA Trip listed",
+  "dayFeed": "BUG new transport identity validation rejects persisted legal premerge P5 pending; whole mixed read unavailable",
+  "mainIntegration": "HOLD until same-path repair and retest",
+  "hosted": "Root2 narrow shared-lease software released12:05:22NZDT; active83db7bb4/imagef8a38412, original2dda retained",
+  "phone": "Build14 unchanged"
+}

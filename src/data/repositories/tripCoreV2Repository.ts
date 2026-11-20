@@ -1,3 +1,7 @@
+import {
+  isLegacyStoredP5Identity,
+  upgradeLegacyP5Identity,
+} from "../../domain/trip/p5Identity";
 import { createUuid } from "../../domain/localId";
 import {
   resolveCoreInstructionParentForSubmit,
@@ -29,6 +33,7 @@ import {
 } from "../../domain/trip/tripCoreV2";
 import {
   validateCoreCommand,
+  coreCommandSchema,
   isNormalImportCoreCommand,
   isReviewedSourceCreate,
 } from "../../domain/trip/tripCoreV2Commands";
@@ -208,23 +213,53 @@ function fieldType(schema: any): string {
   return schema.def.type;
 }
 const encode = (schema: any, value: unknown): SQLite.SQLiteBindValue =>
-  value === null
+  value === undefined && schema.isOptional()
     ? null
-    : fieldType(schema) === "boolean"
-      ? value
-        ? 1
-        : 0
-      : ["object", "record", "array"].includes(fieldType(schema))
-        ? canonicalCoreJson(value as Json)
-        : (value as SQLite.SQLiteBindValue);
+    : value === null
+      ? null
+      : fieldType(schema) === "boolean"
+        ? value
+          ? 1
+          : 0
+        : ["object", "record", "array"].includes(fieldType(schema))
+          ? canonicalCoreJson(value as Json)
+          : (value as SQLite.SQLiteBindValue);
 const decode = (schema: any, value: unknown) =>
-  value === null
-    ? null
-    : fieldType(schema) === "boolean"
-      ? value === 1
-      : ["object", "record", "array"].includes(fieldType(schema))
-        ? JSON.parse(value as string)
-        : value;
+  schema.isOptional() && (value === undefined || (value === null && !schema.isNullable()))
+    ? undefined
+    : value === null
+      ? null
+      : fieldType(schema) === "boolean"
+        ? value === 1
+        : ["object", "record", "array"].includes(fieldType(schema))
+          ? JSON.parse(value as string)
+          : value;
+// Historical local replay keeps the original pinned bytes; only its display copy gains explicit unknowns.
+function readReplayCommand(input: unknown) {
+  try {
+    const command = validateCoreCommand(input);
+    return { original: command, projection: command };
+  } catch (error) {
+    const command = coreCommandSchema.parse(input);
+    const payload = command.payload as Record<string, unknown> | null;
+    const service = payload?.service as Record<string, unknown> | null;
+    if (
+      command.command !== "CREATE_ITEM" ||
+      command.admission.mode !== "MANUAL" ||
+      payload?.family !== "P5" ||
+      !service ||
+      typeof service !== "object" ||
+      "identity_state" in service ||
+      !isLegacyStoredP5Identity(service)
+    )
+      throw error;
+    const projection = validateCoreCommand({
+      ...command,
+      payload: { ...payload, service: upgradeLegacyP5Identity(service) },
+    });
+    return { original: command, projection };
+  }
+}
 export function createTripCoreV2Repository(
   database: CoreDatabase,
   getAccountId: () => Promise<string>,
@@ -280,7 +315,9 @@ export function createTripCoreV2Repository(
       );
       graph[table as CoreTable] = rows.map((row) =>
         Object.fromEntries(
-          Object.entries(schema.shape).map(([key, s]) => [key, decode(s, row[key])]),
+          Object.entries(schema.shape)
+            .map(([key, s]) => [key, decode(s, row[key])])
+            .filter(([, value]) => value !== undefined),
         ),
       );
     }
@@ -1850,7 +1887,13 @@ export function createTripCoreV2Repository(
       throw Error("CORE_RECEIPT_SCOPE_MISMATCH");
     return receipt;
   }
-  async function pending(ctx: AccountRequestContext, retainedOperationId?: string) {
+  const pending = (ctx: AccountRequestContext, retainedOperationId?: string) =>
+    readPending(ctx, retainedOperationId);
+  async function readPending(
+    ctx: AccountRequestContext,
+    retainedOperationId?: string,
+    parse = validateCoreCommand,
+  ) {
     if (retainedOperationId !== undefined) coreUuid.parse(retainedOperationId);
     await assertContext(ctx);
     await scope(ctx);
@@ -1868,7 +1911,7 @@ export function createTripCoreV2Repository(
     await assertContext(ctx);
     return rows.map((r) => ({
       ...r,
-      command: validateCoreCommand(JSON.parse(r.canonical_intent_text)),
+      command: parse(JSON.parse(r.canonical_intent_text)),
     }));
   }
   async function beginRefresh(
@@ -2268,7 +2311,11 @@ export function createTripCoreV2Repository(
         throw new Error("CORE_PERSON_BINDING_MISMATCH");
     }
     const predictedIds = new Set<string>();
-    for (const intent of await pending(ctx)) {
+    for (const intent of await readPending(
+      ctx,
+      undefined,
+      (input) => readReplayCommand(input).original,
+    )) {
       if (
         (committed && !committed.has(intent.command.operationId)) ||
         intent.state === "CONFLICT" ||
@@ -2280,7 +2327,7 @@ export function createTripCoreV2Repository(
       try {
         const predicted = applyCoreCommand(
           graph,
-          intent.command,
+          readReplayCommand(intent.command).projection,
           actor,
           intent.created_at,
           intent.command.admission.mode === "IMPORT",
@@ -2337,7 +2384,7 @@ export function createTripCoreV2Repository(
       receiptSha256?: string;
     }[] = [];
     for (const row of rows) {
-      const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
+      const command = readReplayCommand(JSON.parse(row.canonical_intent_text)).original;
       if (command.admission.mode !== "MANUAL") continue;
       if (
         command.tripId !== ctx.tripId ||

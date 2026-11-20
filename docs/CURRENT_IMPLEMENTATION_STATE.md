@@ -1,106 +1,45 @@
 # Unified Beta delivery — 21 November 2026 NZDT
 
-Owner appointed Native as the sole Beta Delivery Lead. Ordinary approved fixes may merge/push Main after checks and real path verification; protected authority/financial contracts and publication still require their existing gates. Main/Hosted Writer returned by MC. Current remote Main `bedf24dc` includes Managed MCP `c138470d`; its no-commit merge into `codex/native-unified-prebeta-20261121` is undergoing compatibility checks, not yet committed/pushed. Unique backlog and journey matrix: `docs/BETA_PRODUCT_ACCEPTANCE.md`.
+Owner appointed Native as the sole Beta Delivery Lead. Ordinary approved fixes may merge/push Main after checks and real path verification; protected authority/financial contracts and publication still require their existing gates. Main/Hosted Writer returned by MC. Current remote Main `bedf24dc` includes Managed MCP `c138470d`; it is integrated in candidate `4a64eeb0` on `codex/native-unified-prebeta-20261121`, not yet merged/pushed to Main. Unique backlog and journey matrix: `docs/BETA_PRODUCT_ACCEPTANCE.md`.
 
-Current simulator C0 / `art.xoery.otr` remains formal Build19 (`6164e295`), retained SQLite80/Session/history. Phone Build14 untouched. Normal Data & Sync completed a recovery cycle: the controlled-outage P3 original Create `2005a186…` is now COMPLETED under the original Item `d1e9d2f9…`; its Edit `4aa434fa…` remains dependency-blocked. Independent server readback pending; this is not physical-airplane-mode evidence. Original P3 Edit `5f7d0785…` still has capabilities503 and P4 receipt503. See `NORMAL_RECOVERY_FIRST_PROGRESS.json` under the prebeta journey evidence.
+Current simulator C0 / `art.xoery.otr` remains formal Build19 (`6164e295`), retained SQLite80/Session/history. Phone Build14 untouched. Normal Data & Sync completed a recovery cycle: the controlled-outage P3 original Create `2005a186…` is now COMPLETED under the original Item `d1e9d2f9…`; its Edit `4aa434fa…` remains dependency-blocked. Root2 independently verified the sole APPLIED receipt `ec2f276d-ee1a-4ea5-891f-05dfebb09bf3`, one Item/revision1, Nov23–24/no clocks/WHOLE_GROUP. Edit has no receipt. This is not physical-airplane-mode evidence. Original P3 Edit `5f7d0785…` still has capabilities503 and P4 receipt503. See `NORMAL_RECOVERY_FIRST_PROGRESS.json` under the prebeta journey evidence.
 
 Hosted formal `f692ea0d` / container `2dda4a64…` still has separate Core/Consent managers. Root2 restored exact gateway limit1 and returned resources. Approved Main connection reuse must be delivered as software-only compatible artifact: historical MCP deploy also changed Consent policy/TTL and is not reusable unchanged. Root2 request `NATIVE-BETA-SINGLE-LEASE-20261121` preserves existing configuration, TTL600, role1, SQL/Auth and exact rollback. No new Provider/SQL/role scope. After deployment, retry original operations and independently verify fields/no duplicates before Cloud PASS.
 
-Merged compatibility first pass found source typing defects and missing dependency/fixture; five affected suites193PASS after minimal type corrections. Temporary one-shot QA probe is removed from release source; evidence remains. No new user-facing features. Next: finish merged compatibility and independent review → unify simulator source → original P3/P4/P5/P6 recovery/independent readback → Settlement/Import and minimum collaboration safety. Do not repeat retained Build14/16/19 local evidence or return a previously signed-in Account to Guest.
+Merged compatibility first pass found source typing defects and missing dependency/fixture; ten affected suites276PASS, full typecheck/Backend build/UI guard and independent NO_BLOCKER after minimal source typing corrections, pure synthetic missing fixture and React DOM development typings. Temporary one-shot QA probe is removed from release source; evidence remains. No new user-facing features. Next: finish merged compatibility and independent review → unify simulator source → original P3/P4/P5/P6 recovery/independent readback → Settlement/Import and minimum collaboration safety. Do not repeat retained Build14/16/19 local evidence or return a previously signed-in Account to Guest.
 
-# Current continuation — Pre-Beta QA, 21 November 2026 NZDT
 
-Worktree `native-unified-prebeta-20261121`, candidate branch only. Current C0 `art.xoery.otr` Build19, product `6164e295`, installed in place and kept CLOSED pending resource return; original Session/SQLite80/history retained. Phone Build14 untouched; no main merge/push. Build16 (`6dde1bb9`) P6 detail gutter actual device PASS; P1/P3/P4/P5/P6 local Edit and fresh-process restoration PASS. P4 plate QA1121 retained, Create fields unchanged. P2 Sparse Cancel preserves NZ9001, not Cloud. Original Import batch 1 saved, expense NZD24/self12 and Settlement owed12 cold UI retained. Final Settlement readiness and current offline test remain incomplete. Owner clarified that previously logged-in users cannot return to Guest: current B return-to-Guest is NOT_APPLICABLE, not an Auth entry bug. The prior Guest-entry request is withdrawn; fresh Guest only applies to never-logged-in initial state.
+## Active build and environment
 
-P3 original Edit Operation `5f7d0785-d519-44da-8852-342af47b806d`, Item `be50008a-5950-491d-a95c-2bfedda7c02f`, Synthetic Trip `a0bcf637-4d71-4d8b-ba17-a998d8917fe0`: Cloud NOT PASS. Root2 confirmed RECEIPT 503/CORE_CAPABILITY_CLOSED. Build17 bounded normal-session read-only probe returned 404/null, independent Core/legacy receipt counts0; no fallback submit. Build18 normal recovery of original IDs still encountered intermittent 503; no new IDs or permission bypass. Build17 probe flag is OFF in Build18, compiled call absent.
+- One simulator: Forms QA C0 `C0C23E00-5016-4289-B806-92C5484BD5BA`; Bundle `art.xoery.otr`, paid Team `3K49Z2Q5X7`. Normal Shared DEV `https://api-dev.xoery.art`; Managed Supabase `https://tuqigdxrvrerfewsxqgm.supabase.co`.
+- Build21/source4a64eeb0 installed in place; same Session and26operations retained. Actual Day smoke found old P5 pending rejected by new validator. Local read-only replay compatibility and SQLite81 mirror fix have149focused tests/typecheck/lint/independent NO_BLOCKER; Build22/device80→81 is next. Initial dependency restoration also required regenerating own ExpoSQLite headers and invalidating its stale module cache; final Native build succeeded. No reset.
+- Formal Backend is f692 plus reviewed shared-lease repair: active83db7bb4…, imagef8a38412…, paired Gateway7da083fa…; Root2 independently returned resources12:05:22NZDT. Original2dda/25772109 remains rollback. Do not deploy the historical MCP wrapper that also changed Consent policy/TTL600→3600. Keep rollback and original UNKNOWN states.
+- Latest Main baseline bedf24dc; Main Writer returned. Before Main update re-fetch/compare, preserve other commits, never force-push. Candidate branch is temporary, not another long-lived product baseline.
 
-**Determinate shared DEV blocker:** Root2 independently observed Core gateway connection limit2 at21:56:38Z; existing SQL requires exactly1. Root2 traced the1→2 change to current MCP lifecycle window (`CORE_CAPACITY_APPLIED.txt` / `CORE_CAPACITY_LIVE.json`), with separate rawCoreConnection and consentConnection competing for the same role. MC/current Writer acknowledged and is restoring the original container/single-connection baseline, then preparing connection reuse. Native must receive independent restoration/resource release before another business recovery attempt. Do not weaken SQL predicates, change role attributes, or preempt another Writer. Root2 chat `01a1a0c0-bcd7-7cf0-8de0-9b8feb35d232`; MC `01a19a2c-de35-72d2-96b7-e66333286e13` are authorized receipt destinations.
+## Retained current journey evidence
 
-Native diagnostic repair in10923e37 retains bounded CORE_ dependency reasons instead of discarding them; status/dispatch/identity semantics unchanged.110 tests/lint and independent Review NO_BLOCKER; TS retains only three known baseline errors. Prior draft/gutter Review NO_BLOCKER. Evidence: `docs/ops/prebeta-user-journey-20261121/BUILD16_DEVICE_PROGRESS.json`, `P3_CURRENT_READ_ONLY_PROBE.json`, `BUILD18_SYNC_RESUME.json`, `COVERAGE.md`.
+Synthetic B Account `1f3d7935-1bdc-4952-8d7f-0f72077368c1`; independent Trip `a0bcf637-4d71-4d8b-ba17-a998d8917fe0` Native Beta Journey20261121. Preserve all IDs/data.
 
-Root2 independently confirmed at11:06:50NZDT: connlimit1, gateway sessions0, idle transactions0; old dual-connection container exited. MC still holds the exclusive shared service lock for a single-connection temporary candidate, so Native has closed the App to avoid background calls. Root2 was asked to send RESOURCE_RETURNED to this chat after the formal baseline and lock release; that is the resume trigger. Build19 includes the two-line Settlement readiness busy/disabled feedback change (guard/lint PASS, device interaction pending). See BUILD19_RESOURCE_WAIT.json.
+- Trip/Create companion local/normal queue complete. P1–P6 local forms/Details and representative Edit/Cancel/cold recovery retained; P1/P3 Creates have cached APPLIED, independent current service verification separate.
+- P3 original Item `be50008a-5950-491d-a95c-2bfedda7c02f`, Edit `5f7d0785-d519-44da-8852-342af47b806d`: NOT Cloud PASS. P4/P5/P6 original Create/Edit have receipt/dependency failures; retry originals after software alignment. P2 Sparse NZ9001 remains LOCAL_CORE_COMMIT/current formal opt-in closed, not Cloud.
+- Local-First draft fix3d585cbf preserves Account/Actor/roster/authscope/target revision and immutable retry fences; unrelated background refresh no longer expires legitimate drafts. P6 gutter6dde1bb9 actual device PASS. P4 vehicle fields remain Edit-only as Owner requested.
+- Expense serverID `d09e664e-aaa6-5499-8edf-4e9317f5a3da`: QA Harbour lunch NZD24, two equal12 shares; normal queue COMPLETED/SYNCEDrev1, cold UI retained. Independent current server readback pending. Settlement summary paid24/share12/owed12 retained; final readiness/confirmation NOT PASS, no transfer performed. Busy feedback exists; ordinary failure feedback hidden by Debug is the next bounded UI repair.
+- Import local TEXT Batch `cda66d73-934c-41c3-bf33-bc9b656e384c`, Job `174683ae-a738-41b0-9fad-976111aa2ef2`: 1 saved/reopen/cold PASS. No Analyze or paid Provider invoked. Real processing/review/confirmation NOT_VERIFIED in current journey.
+- Controlled Backend transport outage: Item `d1e9d2f9-3f3d-4b17-8814-7e2743dfbf20`, Create2005a186… now SERVER_VERIFIED; Edit4aa434fa… pending. Two actual cold restarts retained draft/item facts while transport unavailable. Original normal client restored; temporary hook removed, no physical-offline claim.
 
-Next: independently confirm safe resource return → normal Data&Sync original-operation recovery → formal Receipt and independent PG fields → Native Details/point/cold recovery. P4/P5/P6 original cloud failures remain separate, same contract. No Provider or protected SQL change by Native.
+## Safety and remaining acceptance
 
-# Current stage — Pre-Beta Forms QA user journey,21November2026NZDT
+Previously signed-in Accounts cannot return to Guest. Current B Guest entry is NOT_APPLICABLE; never reset or logout to manufacture that test. Fresh Guest is only the initial never-signed-in state. Do not copy SQLite/Session/Keychain between devices.
 
-Owner accepted unified Build14/b10178c1 and ordered full C0 journey on the same candidate branch, with no Main merge/push and no MCP phone interruption. New independent QA B Trip a0bcf637…: normal Trip/Person/Reader queue completed; six manual P1–P6 Creates displayed in Day Feed. P1/P3 formal APPLIED receipts cached; independent service readback pending. P4/P5/P6 local saves retained but original Cloud operations have receipt/dependency recovery failures, sent to MC with exact IDs. P2 remains existing LOCAL_CORE_COMMIT/formal opt-in closed, not Cloud PASS. QA Expense2400NZD minor split1200/1200 is SYNCED/revision1; Settlement summary owed1200. Import synthetic TEXT batch cda66d73…/job174683ae… accepted locally, no Analyze/Provider.
+Member Removal UI is P2/TODO, but minimum authorized leave/access revocation is a separate Beta security boundary; 404 or successful subscription is not authoritative revocation proof. Auth/Core own its formal contract. No shared multiplayer Beta PASS until the minimum boundary is qualified. Private Realtime, real paid Enrichment, unsupported fields, Document owning commands and advanced features stay separately scoped; do not treat all historical TODO as mandatory Beta scope.
 
-Native Local-First draft repair is in progress: unrelated Item/background sync incorrectly expired unsent Create/Edit using a global fingerprint. P2/P3/P5 deterministic red cases reproduced. Candidate preserves Actor/Account/generation, full local roster intent and certificate permission scope, same-target revision/facts and immutable retry identities;196affected+17Reader checks PASS. Build15 /3d585cbf installed in place with SQLite80/Session/data retained; six Creates restored. P3 Edit/Reopen/Cancel and P6 Edit/Details passed locally. Subsequent P6 gutter source fix removes duplicate inner horizontal padding;226 activity tests/UI guard/scoped lint passed, device visual retest pending. Owner clarified no extra P4 vehicle inputs in Create; UI expansion withdrawn, Edit unchanged. C0 coordinate control fails noWindowsAvailable; Owner assisted two native buttons, AX/text remain available. MC coordinates minimum tool repair, Guest entry and exact Backend readback. See docs/ops/prebeta-user-journey-20261121/COVERAGE.md and DRAFT_SYNC_FIX.md. No new shared Backend/SQL/Provider/Main operation.
+No Production, real Nelson Trip changes, protected Schema/RLS/GRANT/role/authority or financial semantics changes. No stale Source/Provider Gate reuse. Root2 is Hosted operations Writer; ordinary Native/Backend domain repairs remain Native responsibility. Formal TestFlight/App Store release still Owner-approved.
 
-## Retained unified Build14 acceptance
+## Resume order
 
-# Current Implementation State — Unified iOS acceptance, 21 November 2026 NZDT
+1. Finish Build21 → in-place C0 update → actual launch/session/trip/form/cold smoke; record installed source/environment and retention.
+2. Root2 release complete; after local replay repair, original P3 Edit and P4/P5/P6 receipt/readback/cold recovery, then outage Edit recovery. Never generate replacement operations to hide UNKNOWN.
+3. Fix ordinary Settlement failure feedback, verify readiness through normal UI; independent expense readback; legal Import golden slice and Invite/isolation/leave boundaries.
+4. Verified ordinary fixes → serial Main merge/push → continue next backlog item. Main integration and device/Cloud/Owner acceptance are separate statuses.
 
-Native active worktree: `native-unified-prebeta-20261121`, branch `codex/native-unified-prebeta-20261121`. Product source **b10178c1f2d9cbe20e0ec6473a39ee66dccce06b**, based on remote main **41de43927fd9869673c1ca929e911f58d1f6f96d**. One formal iOS candidate: **art.xoery.otr / paid Team3K49Z2Q5X7 / Build14 / Shared DEV + Managed Supabase**. C0 and physical iPhone installed in place; exact Metro input JS matches. No main merge/push authorized automatically or performed.
-
-Actual Google and Apple native login, account-specific Trip UI and individual process-restart recovery **PASS**, with Owner performing system confirmations. Final normal Data & Sync check **Everything is up to date**,9s. Phone remains on the Owner-selected Apple Account. Original QA B Session/Trip was verified retained before normal Owner account switches. No uninstall, reset or Session/SQLite copying. Draft/queue row-level counts **NOT_OBSERVED**; existing release has no safe census port. No new Manual Cloud Golden Slice or independent server provider-subject readback is claimed.
-
-Included: new Owner-approved Google iOS client for art.xoery.otr (old web audience/nonce retained), Apple integration; normal Settings/Profile route and additive SQLite80 after76–79; MCP foreground discovery/confirmed Home metadata fixes; truthful below-hero remote warning with alert semantics; restored already-approved normal Cloud Sync environment flag. Actual device exposed a second obsolete Google UI bundle guard; fixed and real normal login verified. Historical Build11/12 lack the normal sync flag and are **local UI evidence only**; Build13 retained data/session but lacked Google button; final14 supersedes them.
-
-Independent Auth incremental Reviews **NO_BLOCKER**. Latest20 Google UI/flow tests,49 scope tests,102 affected Home tests and UI guard/scoped lint PASS; final TypeScript status in the packet retains three baseline errors. Never describe source/config PASS as device PASS or the normal Data & Sync screen as new Cloud Mutation L3.
-
-Evidence and resume: `docs/ops/unified-prebeta-20261121/INTEGRATION.md`, `FINAL_NATIVE_ACCEPTANCE.json`, provider UI receipts, signed artifacts metadata. Signed physical archive is ignored at `ios/unified-artifacts/OTR-Unified-Build14-b10178c1-device.zip`; SHA2566a6ae3fb9e75ee1d67d728c9ad4ab1c18d7064136da1692a49189b6ae4d9af62. MC phone window was returned before installation. Owner explicitly authorized the MC destination after the initial rejection; final Build14 receipt successfully dispatched to MC. Independent ACK remains pending. MC_HANDOFF_PENDING.md retains the handoff and dispatch status. No shared Backend, protected SQL, paid Provider, Production or main operation. Frozen isolated Beta/App Attest first-registration, private Realtime and paid Enrichment remain separate and closed. No active Native build/test/Metro task remains.
-
-## Retained accepted main handoff
-
-# Current Implementation State — 15 November2026 NZDT
-
-## MCP Shared DEV closure candidate — 21 November 2026 NZDT
-
-The isolated MCP review branch remains based on GitHub Main `41de4392`.
-It retains formal OIDC, account binding and explicit OTR business Consent.
-A verified pending account can load static tool descriptors. Business
-calls still require live authorization and the approved Consent binding.
-P5 `20261117000100` owns the identity DDL. The Shared DEV forward install
-requires its validated predecessor or exact pre-existing postimage.
-The candidate includes the already qualified Build 14 foreground discovery
-and Trip Home date projection source. Final ChatGPT and physical iPhone
-evidence remains in the Managed DEV final closure preflight packet.
-
-Standing Managed Consent starts its configured finite lifetime at explicit
-approval. A pending challenge is short lived and bounded by its original
-access token. A new access token must independently validate with the issuer
-and match the same OAuth session, account, client and policy. A new session or
-an expired Consent requires a fresh decision. See the Managed section of
-`docs/mcp/MCP_AUTH_CONTRACT.md` for the DEV role capacity and acceptance scope.
-
-## Current checkpoint
-
-Import V3 **Slice6 Activity / Updates** is implemented on independent branch `codex/import-v3-slice6-activity`, worktree `/Users/xoery/Project/otr-mobile-import/import-v3-slice6-activity`. Owner accepted the evidenced2e751873/ae787285 functional scope. Final limited Activity UX product **39b22ea4c2ce25444fa67203d3982ec4e7b3a7b8**, **INTEGRATED — ACCEPTED SLICE SCOPE** via Owner-approved merge6aee5db and normal push from independent `slice6-main-merge-20261115` Worktree. Final remote SHA/verification is recorded in Mission Control and the execution receipt. Three-line rows, tighter filter spacing and footer-only partial-count guidance; Updates semantics unchanged. Closure report: `docs/ops/import-slice6-20261114/FINAL_UX_DENSITY_CLOSURE.md`.47 targeted tests/5files and independent static Review PASS; actual full iPhone screenshot/source/status filtering PASS. Optional extra DeviceHub scroll gesture returned noWindowsAvailable; not a claimed new scroll PASS. Prior positive Review/multi-account/outage Native gaps remain. Main merge/push is now authorized; shared DEV deployment and SQL remain outside scope.
-
-Main baseline `691189669e33d6eb5399f50c11dcbddf901536a6` contains accepted Slice5; recorded ancestor. Old `codex/import-v3-local-first` is reference only. Do not restart four-lane Recovery or continue old Import branch.
-
-## Slice6 delivered
-
-- S6-A: existing Documents third-page Activity lists real Account-fenced Batches, source/status filters, truthful counts and original event time. Existing cursor20 pages and retained presentation state; exact original Batch progress/results/review reopening. Sticky quiet status chips, collapsed chrome, no keyword search.
-- S6-B: same Updates Inbox compact chronological Batch rows; only genuine Review/failure/results material receives appropriate unread state. Read preference is Account/Batch/version metadata in existing SecureStore, independent from resolve. Existing aggregate badge Batch-dedupes Import/Intake attention; unknown read coverage stays unknown. No new remote poll/Queue/notification service.
-- Results opens Batch-filtered native Updates; canonical native Toolbar Back retains original Batch. Real iPad card-over-transparent-Modal input failure fixed by full-screen native Modal, verified by actual filter and Back interaction.
-- Existing manual itinerary forms reused for approved manual recovery; explicit authorized Trip, no invented date, no silent Save or AI result count. Full UPDATE remains outside scope.
-- Original Oct23 Activity ProductDelta/UIBlueprint/reference image and Oct14 Updates Delta fully reread. Compact source/status iconography, single recorded timestamp, quiet actions and Foundation Dynamic Type corrections replace engineering-style cards. UI guard178 PASS/473 unchanged legacy occurrences.
-
-Authoritative report: `docs/ops/import-slice6-20261114/FINAL_SLICE6_REPORT.md`; Blueprint mapping and actual source/versioned screenshots in same directory. Do not infer current Native PASS from older screenshots.
-
-## Validation and environment
-
-Accepted2e baseline:221 targeted tests/19files PASS. Current39 density delta:47 targeted tests/5files PASS; scoped lint/UI guard and independent incremental static Review PASS. Three unchanged Main TypeScript errors remain: fixture universalContinuationRuntime658/660 presentationTier and browser react-dom/client typing. No new skips/weakened assertions. Two expanded parent suites initially hit Native import load failures; narrow widget isolation restored all existing assertions.
-
-Accepted2e baseline complete signed arm64 Native Release iPhone/iPad builds from same staged source;1673 tracked src/app files match. Current39 full iPhone build/installed bundle proof and unchanged data are recorded in the density closure. Final shared JS bundleSHA `e126569271ab352c73b15ba189f532efb1500dd3a58389c68d718799548d163a`. No old-shell substitution.
-
-Primary iPhone16Pro Simulator `89935253-B3B0-4851-ADCA-87AFED548C7E`, bundle `com.xoery.otrmobile.uxc1iphone16`; actual full App normal Trip→Updates→Activity, pagination20→25, filters/return/cold rediscovery, dark hot large text PASS. Original iPad `1B2252F4-4F90-4F93-9223-545269EAA06C`, bundle `com.xoery.otrmobile.b1full20261113`; original7 Batch discovery and Document list retained. Actual native filtered Updates/back/manual chooser verified f159; final2e changes only label measurement/tests. Original14:43 Batch actual formal read on96474 settled Created1/Linked1; later current reads can be UNKNOWN/checking when Backend observation unavailable. No replay or false completion.
-
-Data retained: original9 iPhone/30 iPad file hashes unchanged, Core Documents9/links14, existing queues13/33 COMPLETED. iPad7Batches/13inputs unchanged. Phone25 labelled local Repository Batches prepared without Analyze/Save/Provider:24 accepted inputs, first interrupted original PENDING retained; local captures32→56. Temporary preparation hook removed from final source. Never copy Session/Keychain/SQLite between devices or reset data.
-
-Native positive unresolved Review, forced outage and fresh multi-account/Member matrix not exercised; owning fixture tests cover logic. Physical iPad acceptance not performed. No new DeepSeek calls, no repeated B1/QA179 business writes. Read preference remains device-local, not cross-device sync.
-
-## Accepted prior scope and separate work
-
-Four-lane Main integration and Expense P0 are accepted historical work, not active Recovery tasks. Expense formal DEV Receipt/PG/cold recovery passed; Settlement intermittent503 remains Beta follow-up, not blanket Settlement PASS. Historical24 tests/3 TypeScript errors and QA158 missing input remain documented debt. Main integration is not Beta Release GO.
-
-Slice5 status **INTEGRATED—ACCEPTED SLICE SCOPE**. Documents overall **PARTIAL—OWNING COMMANDS OUTSTANDING**: Rename, Share/MakePrivate, Add/MoveTrip, SafeRemove are real separate owning-command work, not CloudSync deferral. See `docs/ops/documents-slice5-completion-20261114/DOCUMENT_OWNING_CAPABILITY_BACKLOG.md`. Document Cloud Sync, FullUPDATE, HostedMCPConsumer, Version/Realtime, Flexible/TTR and P2formalopt-in remain approved deferred.
-
-AuthC04 continues independently under Auth/Root1/Native Writer ownership. Slice6 owns no Backend/SQL/SQLite/Sync file. Do not overwrite Import/Parent/Ledger composition with old snapshots or appropriate Auth device/session. Main baseline SQLite76–79 unchanged.
-
-## Next approved checkpoint / safety
-
-Slice6 Main integration: Owner approved, merge6aee5db; current delivery closed upon verified normal push and Mission Control/Tracker update. Slice1–6 are complete within separately approved scope. Next stage: Import V3 End-to-End Validation & Beta Completion; overall Beta not Release Ready. No new APNs/email service or producer-less AI/MCP session records. Keep Local-First originals, existing Core/Receipt/Queue/UNKNOWN, Auth/Trip ACL/RLS and generation isolation. Any shared DEV/SQL/Production work requires its real explicit authorization. Ordinary App observations never trigger Analyze or Save.
+Authoritative evidence: `docs/BETA_PRODUCT_ACCEPTANCE.md`, `docs/ops/prebeta-user-journey-20261121/COVERAGE.md`, `MAIN_COMPATIBILITY_REVIEW.json`, `NORMAL_RECOVERY_FIRST_PROGRESS.json`, `qa-outage/`. Earlier Build14/Auth/Sync/Import historical evidence remains in existing ops directories/Git history; do not repeat unrelated accepted slices.

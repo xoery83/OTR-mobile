@@ -1,0 +1,22 @@
+{
+  "state": "LOCAL_READ_TEST_PASS_DEVICE_PENDING",
+  "cause": "Main stricter P5 identity rejected frozen valid legacy Pending and blanked mixed Day read",
+  "scope": "repository read-only replay and local SQLite81 mirror; no Core validator/dispatch/PG authority change",
+  "preserved": [
+    "original Operation/Item/payload bytes/intent SHA",
+    "Account Actor visibility and target pin checks",
+    "strict new write and dispatch validation",
+    "legacy mirror row values and constraints"
+  ],
+  "sqlite81": "local mirror optional descriptor storage, nullable identity columns; transactional data copy and rollback; exact known-schema registration",
+  "validation": {
+    "repositorySuites": 3,
+    "repositoryTests": 143,
+    "migrationAndCompatibilityTests": 6,
+    "actualOriginalC0Sqlite80": "read-only accepted/combined/manual reads PASS, no DB write",
+    "typecheck": "PASS exit0",
+    "scopedLint": "PASS exit0",
+    "independentReview": "beta_hosted_lease_review NO_BLOCKER incl migration and Guest format recognition"
+  },
+  "remaining": "in-place80\u219281 device migration and same Day/P3 recovery; Core legacy cloud compatibility separate Root1 candidate"
+}
