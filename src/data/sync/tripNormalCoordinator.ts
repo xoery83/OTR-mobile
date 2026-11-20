@@ -71,6 +71,11 @@ export function createNativeNormalTripSyncRunner(
     ]);
     const account = await captureAccountScope(requireActiveUserId);
     if (account.accountId !== input.accountId) throw Error("TRIP_SYNC_ACCOUNT_MISMATCH");
+    if (process.env.EXPO_PUBLIC_OTR_P3_RECEIPT_READ_ONLY_QA === "1") {
+      const { runP3ReceiptQaProbe } = await import("./p3ReceiptQaProbe");
+      await runP3ReceiptQaProbe(account);
+      return { status: "closed" as const, runnerCalls: 0 };
+    }
     const database = await readInitializedDatabase();
     await assertAccountRequestContext(account, requireActiveUserId);
     const repository = await readLocalTripRepository();
