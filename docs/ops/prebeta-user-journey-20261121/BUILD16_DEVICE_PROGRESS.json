@@ -18,5 +18,14 @@
   "Ledger_cold": "PASS: QA Harbour lunch totalNZD24/self12",
   "Settlement_summary_cold": "PASS: owed12/paid24/share12;final readiness unresolved",
   "P4_Edit_Save_Details": "PASS: titleEdit1/plateQA1121,pickup-returnNov21-22 09:35/sameQAdepot retained",
-  "P4_P1_P5_latest_edit_cold": "PASS: fresh process MyTrips > sameTrip > Day Feed Edit1 titles and plateQA1121"
+  "P4_P1_P5_latest_edit_cold": "PASS: fresh process MyTrips > sameTrip > Day Feed Edit1 titles and plateQA1121",
+  "independent_review": {
+    "agent": "prebeta_localfirst_review",
+    "result": "NO_BLOCKER",
+    "scope": [
+      "3d585cbf draft authorization/target/immutable retry boundaries",
+      "6dde1bb9 immersive-only gutter"
+    ],
+    "limits": "Static review; reused tests, no new Hosted or offline proof"
+  }
 }
