@@ -1,8 +1,18 @@
+import {
+  mcpProviderCallbackPath,
+  completeProviderPopup,
+  openMcpProviderPopup,
+} from "../../src/data/auth/mcpBrowserProvider";
+import { operationApprovalIdFromUrl } from "../../src/data/auth/mcpOperationApprovalLocation";
+import { McpOperationApproval } from "../../src/features/auth/McpOperationApproval";
+import { createMcpOperationApprovalRepository } from "../../src/data/auth/mcpOperationApprovalRepository";
 import { createRoot } from "react-dom/client";
+import { z } from "zod";
 import { McpOAuthConsent } from "../../src/features/auth/McpOAuthConsent";
 import {
   createMcpOAuthConsentRepository,
   mcpConsentConfigSchema,
+  mcpBetaConsentConfigSchema,
 } from "../../src/data/auth/mcpOAuthConsentRepository";
 import {
   createRequestBoundary,
@@ -18,9 +28,22 @@ async function start() {
   const boundary = createRequestBoundary(10000);
   try {
     const url = new URL(location.href);
+    if (url.pathname === mcpProviderCallbackPath) {
+      completeProviderPopup(window);
+      return;
+    }
+    const operation = url.pathname === "/mcp/approve";
+    const approvalId = operation ? operationApprovalIdFromUrl(url) : undefined;
+    const idKey = "authorization_id";
+    const managedId =
+      !operation && url.pathname === "/oauth/consent" && !url.search
+        ? /^#managed=([a-f0-9-]{36})$/.exec(url.hash)?.[1]
+        : undefined;
     if (
-      url.searchParams.getAll("authorization_id").length !== 1 ||
-      [...url.searchParams.keys()].some((key) => key !== "authorization_id")
+      !operation &&
+      !managedId &&
+      (url.searchParams.getAll(idKey).length !== 1 ||
+        [...url.searchParams.keys()].some((key) => key !== idKey))
     )
       throw Error();
     const response = await boundary.run(() =>
@@ -32,21 +55,45 @@ async function start() {
       }),
     );
     if (!response.ok) throw Error();
-    const config = mcpConsentConfigSchema.parse(
-      await readBoundedJson(response, 16384, boundary),
-    );
+    const raw = await readBoundedJson(response, 16384, boundary);
+    const config =
+      raw && typeof raw === "object" && "authOrigin" in raw
+        ? mcpBetaConsentConfigSchema.parse(raw)
+        : mcpConsentConfigSchema.parse(raw);
+    if (operation) {
+      root.render(
+        <McpOperationApproval
+          repository={createMcpOperationApprovalRepository(
+            mcpBetaConsentConfigSchema.parse(raw),
+            approvalId!,
+          )}
+        />,
+      );
+      return;
+    }
     const repository = createMcpOAuthConsentRepository(
       config,
-      url.searchParams.get("authorization_id")!,
+      managedId ? z.uuid().parse(managedId) : url.searchParams.get(idKey)!,
+      undefined,
+      fetch,
+      !!managedId,
     );
     root.render(
       <McpOAuthConsent
         repository={repository}
+        showUnavailableProviders={Boolean("managedDev" in config && config.managedNativeOAuth && !managedId)}
+        openProvider={() => openMcpProviderPopup(window)}
         navigate={(target) => location.replace(target)}
       />,
     );
   } catch {
-    root.render(<McpOAuthConsent navigate={() => undefined} />);
+    root.render(
+      location.pathname === "/mcp/approve" ? (
+        <McpOperationApproval />
+      ) : (
+        <McpOAuthConsent navigate={() => undefined} />
+      ),
+    );
   } finally {
     boundary.close();
   }

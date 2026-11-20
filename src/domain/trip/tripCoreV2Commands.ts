@@ -1,8 +1,15 @@
+import { validTransportIdentity } from "./p5Identity";
 import { authoredFlightDetailsSchema } from "./authoredFlightDetails";
 import { z } from "zod";
 import { ordinaryOrderPayload } from "./tripCoreOrdinaryOrder";
 import * as f from "./tripCoreV2";
 import { coreBoundarySchema } from "./tripCoreV2Temporal";
+import {
+  authoredPlacePatchSchema,
+  sparseSchedulePatchSchema,
+  sparseFlightPatchSchema,
+  sparseBoundaryPatchSchema,
+} from "./tripCoreSparseFields";
 import {
   flightEndpointSchema,
   flightServicesSchema,
@@ -111,6 +118,61 @@ const operational = z
   )
   .max(3)
   .refine((a) => new Set(a.map((x) => x.role)).size === a.length);
+const sparseEndpointPatch = z
+  .strictObject({
+    time: sparseBoundaryPatchSchema.optional(),
+    place: authoredPlacePatchSchema.optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0);
+const operationalChange = z.discriminatedUnion("operation", [
+  z.strictObject({
+    operation: z.literal("PATCH"),
+    role: operational.element.shape.role,
+    changes: sparseEndpointPatch,
+  }),
+  z.strictObject({ operation: z.literal("ADD"), fact: operational.element }),
+  z.strictObject({
+    operation: z.literal("REMOVE"),
+    role: operational.element.shape.role,
+  }),
+]);
+export const sparseTransportPatchSchema = z
+  .strictObject({
+    endpoints: z
+      .strictObject({
+        origin: sparseEndpointPatch.optional(),
+        destination: sparseEndpointPatch.optional(),
+      })
+      .refine((v) => Object.keys(v).length > 0)
+      .optional(),
+    service: service
+      .partial()
+      .refine((v) => Object.keys(v).length > 0)
+      .optional(),
+    annotations: z
+      .strictObject({
+        origin: annotations
+          .partial()
+          .refine((v) => Object.keys(v).length > 0)
+          .optional(),
+        destination: annotations
+          .partial()
+          .refine((v) => Object.keys(v).length > 0)
+          .optional(),
+      })
+      .refine((v) => Object.keys(v).length > 0)
+      .optional(),
+    operationalChanges: z
+      .array(operationalChange)
+      .max(3)
+      .refine(
+        (rows) =>
+          new Set(rows.map((row) => (row.operation === "ADD" ? row.fact.role : row.role)))
+            .size === rows.length,
+      )
+      .optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0);
 const createBase = {
   core,
   participation: f.coreParticipationSchema,
@@ -142,16 +204,18 @@ const createItem = z.discriminatedUnion("family", [
     details: rental.optional(),
     places: places.optional(),
   }),
-  z.strictObject({
-    ...createBase,
-    family: z.literal("P5"),
-    endpoints,
-    service,
-    annotations: z
-      .strictObject({ origin: annotations, destination: annotations })
-      .optional(),
-    operationalFacts: operational.optional(),
-  }),
+  z
+    .strictObject({
+      ...createBase,
+      family: z.literal("P5"),
+      endpoints,
+      service,
+      annotations: z
+        .strictObject({ origin: annotations, destination: annotations })
+        .optional(),
+      operationalFacts: operational.optional(),
+    })
+    .refine((v) => validTransportIdentity(v.service), "INVALID_TRANSPORT_IDENTITY"),
   z.strictObject({
     ...generic,
     family: z.literal("P6"),
@@ -224,7 +288,10 @@ export const corePayloadSchemas = {
     participation: f.coreParticipationSchema,
     acl: f.coreAclSchema,
   }),
-  SET_AUTHORED_FLIGHT_DETAILS: authoredFlightDetailsSchema,
+  SET_AUTHORED_FLIGHT_DETAILS: z.union([
+    authoredFlightDetailsSchema,
+    z.strictObject({ patch: sparseFlightPatchSchema }),
+  ]),
   QUALIFY_FLIGHT: z.strictObject(fullFlight),
   UPDATE_FLIGHT_FACTS: z.strictObject({
     changes: z
@@ -241,14 +308,23 @@ export const corePayloadSchemas = {
     replacementReason: f.coreText(2000).refine((s) => s.trim().length > 0),
   }),
   SET_ITEM_TEXT: core.partial().refine((v) => Object.keys(v).length > 0),
-  SET_ITEM_SCHEDULE: z.strictObject({ schedule: f.coreScheduleSchema }),
-  SET_ITEM_PLACE: z.strictObject({ place: f.corePlaceSchema }),
+  SET_ITEM_SCHEDULE: z.union([
+    z.strictObject({ schedule: f.coreScheduleSchema }),
+    z.strictObject({ schedulePatch: sparseSchedulePatchSchema }),
+  ]),
+  SET_ITEM_PLACE: z.strictObject({
+    place: z.union([f.corePlaceSchema, authoredPlacePatchSchema]),
+  }),
   SET_ITEM_GROUPING: z.strictObject({
     tripDayId: f.coreUuid.nullable(),
     orderIndex: z.number().int().min(-2147483648).max(2147483647).nullable(),
   }),
   SET_ITEM_PARTICIPATION: z.strictObject({ participation: f.coreParticipationSchema }),
   SET_OBJECT_VISIBILITY: z.strictObject({ acl: f.coreAclSchema }),
+  DELETE_ITEM: z.strictObject({
+    reason: f.coreText(2000).refine((v) => !!v.trim()),
+    ...lifecycle,
+  }),
   SET_ITEM_CATEGORY: z.strictObject({
     family: z.enum(["P1", "P6"]),
     category: f.itinerary_eventsSchema.shape.activity_category,
@@ -260,24 +336,58 @@ export const corePayloadSchemas = {
     z.strictObject({ details: stay, rooms: z.array(room).max(64) }),
     coreSparseStayPayloadSchema,
   ]),
-  SET_RENTAL_DETAILS: z.strictObject({ details: rental, places }),
-  SET_ACTIVITY_DETAILS: z.strictObject({
-    details: activity,
-    entryPlace: f.corePlaceSchema.nullable(),
-  }),
-  SET_TRANSPORT_DETAILS: z
-    .strictObject({
-      endpoints: endpoints.optional(),
-      service: service.optional(),
-      annotations: z
-        .strictObject({
-          origin: annotations.optional(),
-          destination: annotations.optional(),
-        })
-        .optional(),
-      operationalFacts: operational.optional(),
-    })
-    .refine((v) => Object.keys(v).length > 0),
+  SET_RENTAL_DETAILS: z.union([
+    z.strictObject({ details: rental, places }),
+    z
+      .strictObject({
+        details: rental.optional(),
+        places: z
+          .strictObject({
+            pickup: authoredPlacePatchSchema.nullable().optional(),
+            return: authoredPlacePatchSchema.nullable().optional(),
+          })
+          .optional(),
+      })
+      .refine(
+        (v) =>
+          Object.keys(v.details ?? {}).length > 0 ||
+          Object.keys(v.places ?? {}).length > 0,
+      ),
+  ]),
+  SET_ACTIVITY_DETAILS: z.union([
+    z.strictObject({
+      details: activity,
+      entryPlace: f.corePlaceSchema.nullable(),
+    }),
+    z
+      .strictObject({
+        details: activity.optional(),
+        entryPlace: authoredPlacePatchSchema.nullable().optional(),
+      })
+      .refine(
+        (v) => Object.keys(v.details ?? {}).length > 0 || Object.hasOwn(v, "entryPlace"),
+      ),
+  ]),
+  SET_TRANSPORT_DETAILS: z.union([
+    z
+      .strictObject({
+        endpoints: endpoints.optional(),
+        service: service.optional(),
+        annotations: z
+          .strictObject({
+            origin: annotations.optional(),
+            destination: annotations.optional(),
+          })
+          .optional(),
+        operationalFacts: operational.optional(),
+      })
+      .refine(
+        (v) =>
+          Object.keys(v).length > 0 && (!v.service || validTransportIdentity(v.service)),
+        "INVALID_TRANSPORT_IDENTITY",
+      ),
+    z.strictObject({ patch: sparseTransportPatchSchema }),
+  ]),
   CREATE_BOOKING: z.strictObject({
     fields: bookingFields,
     observations: z.array(observation).max(64),
@@ -317,7 +427,8 @@ export const corePayloadSchemas = {
     documents: changeIds,
   }),
   CREATE_DOCUMENT: z.strictObject({
-    fields: z.strictObject(f.trip_operational_documentsSchema.shape)
+    fields: z
+      .strictObject(f.trip_operational_documentsSchema.shape)
       .omit({ ...common, storage_object_key: true, custody_receipt_id: true })
       .extend({ custody: z.enum(["PRIVATE_SOURCE_REFERENCE", "AUTHORIZED_COPY"]) }),
     acl: f.coreAclSchema,
@@ -344,16 +455,32 @@ export const corePayloadSchemas = {
     sensitivity: z.enum(["NORMAL", "SENSITIVE"]),
     acl: f.coreAclSchema,
   }),
-  LINK_EXPENSE: z.strictObject({
-    expenseId: f.coreUuid,
-    targetKind: z.enum(["ITEM", "BOOKING", "DOCUMENT"]),
-    targetId: f.coreUuid,
-  }),
-  UNLINK_EXPENSE: z.strictObject({
-    expenseId: f.coreUuid,
-    targetKind: z.enum(["ITEM", "BOOKING", "DOCUMENT"]),
-    targetId: f.coreUuid,
-  }),
+  LINK_EXPENSE: z.union([
+    z.strictObject({
+      expenseId: f.coreUuid,
+      targetKind: z.enum(["ITEM", "BOOKING", "DOCUMENT"]),
+      targetId: f.coreUuid,
+    }),
+    z.strictObject({
+      expenseId: f.coreUuid,
+      targetKind: z.literal("ITEM"),
+      targetId: f.coreUuid,
+      expectedExpenseRevision: f.coreRevision,
+    }),
+  ]),
+  UNLINK_EXPENSE: z.union([
+    z.strictObject({
+      expenseId: f.coreUuid,
+      targetKind: z.enum(["ITEM", "BOOKING", "DOCUMENT"]),
+      targetId: f.coreUuid,
+    }),
+    z.strictObject({
+      expenseId: f.coreUuid,
+      targetKind: z.literal("ITEM"),
+      targetId: f.coreUuid,
+      expectedExpenseRevision: f.coreRevision,
+    }),
+  ]),
   CANCEL_ARRANGEMENT: z.strictObject({
     scope: z.enum(["ITEM_ONLY", "EXCLUSIVE_ARRANGEMENT", "WHOLE_BOOKING"]),
     affectedItems: ids,
@@ -455,19 +582,40 @@ export function validateCoreCommand(input: unknown): CoreCommand {
   )
     throw new Error("INVALID_BASE_VECTOR");
   const a = q.admission;
+  const p = payload as Record<string, unknown>;
   if (
-    (q.command === "SET_AUTHORED_FLIGHT_DETAILS" || q.command === "CREATE_DOCUMENT_METADATA") &&
-    a.mode !== "MANUAL" && a.mode !== "IMPORT"
+    a.mode !== "MANUAL" &&
+    ("patch" in p ||
+      "schedulePatch" in p ||
+      (q.command === "SET_ITEM_PLACE" && !f.corePlaceSchema.safeParse(p.place).success) ||
+      (q.command === "SET_RENTAL_DETAILS" &&
+        (!p.details ||
+          !p.places ||
+          Object.values(p.places as object).some(
+            (place) => place !== null && !f.corePlaceSchema.safeParse(place).success,
+          ))) ||
+      (q.command === "SET_ACTIVITY_DETAILS" &&
+        (!p.details ||
+          !Object.hasOwn(p, "entryPlace") ||
+          (p.entryPlace !== null && !f.corePlaceSchema.safeParse(p.entryPlace).success))))
+  )
+    throw new Error("SCOPE_NOT_AUTHORIZED");
+  if (
+    (q.command === "SET_AUTHORED_FLIGHT_DETAILS" ||
+      q.command === "CREATE_DOCUMENT_METADATA") &&
+    a.mode !== "MANUAL" &&
+    a.mode !== "IMPORT"
   )
     throw new Error("INVALID_PROVENANCE");
   if (
-    (a.mode === "MANUAL" || a.mode === "IMPORT")
+    a.mode === "MANUAL" || a.mode === "IMPORT"
       ? a.sourceIntentId !== null || a.policyVersion !== null
       : a.sourceIntentId === null ||
         (a.mode === "AUTO_SOURCE" ? a.policyVersion === null : a.policyVersion !== null)
   )
     throw new Error("INVALID_ADMISSION_BINDING");
-  if (a.mode === "IMPORT" && !isNormalImportCoreCommand({ ...q, payload })) throw new Error("SCOPE_NOT_AUTHORIZED");
+  if (a.mode === "IMPORT" && !isNormalImportCoreCommand({ ...q, payload }))
+    throw new Error("SCOPE_NOT_AUTHORIZED");
   if (
     ["QUALIFY_FLIGHT", "REPLACE_FLIGHT_SERVICE", "UPDATE_FLIGHT_FACTS"].includes(
       q.command,
@@ -567,6 +715,13 @@ export function isNormalManualCreate(command: CoreCommand) {
 }
 export function isNormalManualCoreCommand(command: CoreCommand, family?: string) {
   if (command.admission.mode !== "MANUAL") return false;
+  if (command.command === "LINK_EXPENSE" || command.command === "UNLINK_EXPENSE")
+    return (
+      command.target.kind === "EXPENSE_LINK" &&
+      (command.payload as { targetKind: string; expectedExpenseRevision?: number })
+        .targetKind === "ITEM" &&
+      Object.hasOwn(command.payload as object, "expectedExpenseRevision")
+    );
   if (isNormalManualCreate(command) || command.command === "CREATE_DOCUMENT_METADATA")
     return true;
   if (command.command === "RECONCILE_ITEM_DOCUMENTS") {
@@ -582,6 +737,18 @@ export function isNormalManualCoreCommand(command: CoreCommand, family?: string)
   }
   if (command.target.kind !== "ITEM") return false;
   if (command.command === "SET_ITEM_PARTICIPATION") return true;
+  if (
+    ["HIDE_OBJECT", "RESTORE_OBJECT", "DELETE_ITEM", "SET_OBJECT_VISIBILITY"].includes(
+      command.command,
+    )
+  )
+    return true;
+  if (command.command === "SET_ITEM_CATEGORY" || command.command === "SET_ITEM_STATUS")
+    return family === undefined || family === "P1" || family === "P6";
+  if (command.command === "SET_ITEM_GROUPING")
+    return family === undefined || family === "P1";
+  if (family === "P2" && command.command === "SET_ITEM_TEXT")
+    return !Object.hasOwn(command.payload as object, "title");
   if (family === "P2") return command.command === "SET_AUTHORED_FLIGHT_DETAILS";
   if (command.command === "SET_AUTHORED_FLIGHT_DETAILS") return family === undefined;
   if (command.command === "SET_ITEM_TEXT") return true;
@@ -602,13 +769,27 @@ export function isNormalManualCoreCommand(command: CoreCommand, family?: string)
 // Same ordinary ACL and queue. Import may create or add links, never edit an existing Item.
 export function isNormalImportCoreCommand(command: CoreCommand) {
   if (command.admission.mode !== "IMPORT") return false;
-  if (["CREATE_ITEM", "CREATE_SPARSE_FLIGHT", "CREATE_DOCUMENT_METADATA"].includes(command.command))
+  if (
+    ["CREATE_ITEM", "CREATE_SPARSE_FLIGHT", "CREATE_DOCUMENT_METADATA"].includes(
+      command.command,
+    )
+  )
     return command.baseVector.length === 1 && command.baseVector[0].revision === null;
   if (command.command === "SET_AUTHORED_FLIGHT_DETAILS")
-    return command.target.kind === "ITEM" && command.baseVector.length === 1 && command.baseVector[0].revision === 1;
+    return (
+      command.target.kind === "ITEM" &&
+      command.baseVector.length === 1 &&
+      command.baseVector[0].revision === 1
+    );
   if (command.command !== "RECONCILE_ITEM_DOCUMENTS") return false;
   const payload = command.payload as { add: string[]; remove: string[] };
-  return payload.add.length > 0 && payload.add.length <= 5 && payload.remove.length === 0 &&
-    command.baseVector.every(b => b.kind === "ITEM" || b.kind === "DOCUMENT") &&
-    payload.add.every(id => command.baseVector.some(b => b.kind === "DOCUMENT" && b.id === id));
+  return (
+    payload.add.length > 0 &&
+    payload.add.length <= 5 &&
+    payload.remove.length === 0 &&
+    command.baseVector.every((b) => b.kind === "ITEM" || b.kind === "DOCUMENT") &&
+    payload.add.every((id) =>
+      command.baseVector.some((b) => b.kind === "DOCUMENT" && b.id === id),
+    )
+  );
 }

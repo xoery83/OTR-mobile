@@ -216,13 +216,13 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
       isCurrent,
     );
   }
-  async function discover(scope: AccountScope) {
+  async function discover(scope: AccountScope, foreground?: () => boolean) {
     let ids: string[] = [];
     await run(scope, "discovery", async () => {
       ids = await deps.discover(scope);
       await assertAccountRequestContext(scope, deps.account);
       deps.notify(scope, [], true);
-    });
+    }, foreground !== undefined, foreground);
     return ids;
   }
   return {
@@ -239,6 +239,9 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
     async discovery() {
       const scope = await deps.scope();
       if (scope) await discover(scope);
+    },
+    async foregroundDiscovery(scope: AccountScope, isCurrent: () => boolean) {
+      if (isCurrent()) await discover(scope, isCurrent);
     },
     async invalidate(context: AccountRequestContext) {
       await assertAccountRequestContext(context, deps.account);
@@ -427,6 +430,12 @@ async function nativeCoordinator() {
 
 export async function refreshAccountTripReads() {
   await (await nativeCoordinator()).account();
+}
+export async function refreshFocusedTripDiscovery(isActive: () => boolean) {
+  const target = foregroundTrip;
+  if (!target) return;
+  const read = await nativeCoordinator();
+  await read.foregroundDiscovery(target, () => foregroundTrip === target && isActive());
 }
 export async function refreshForegroundTripReads() {
   const read = await nativeCoordinator();

@@ -14,10 +14,12 @@ import {
   type TripMetadataRevisionedSnapshot,
 } from "../../src/domain/trip/tripMetadataV2Contract";
 import { TripMetadataError } from "./tripMetadata";
+import type { ManagedWriteAdmission } from "./managedWriteAdmission";
 export type TripMetadataV2Port = {
   update(
     actor: string,
     request: TripMetadataRevisionedUpdate,
+    admit?: ManagedWriteAdmission,
   ): Promise<TripMetadataRevisionedReceipt>;
   receipt(
     actor: string,
@@ -45,6 +47,7 @@ export async function tripMetadataV2Boundary(
   request: Request,
   actor: string,
   port?: TripMetadataV2Port,
+  managedWriteAdmission?: ManagedWriteAdmission,
 ) {
   if (!port) return failure(503, "TRIP_METADATA_CLOSED");
   if (!["2", "3"].includes(request.headers.get("OTR-Trip-Metadata-Version") ?? ""))
@@ -77,7 +80,7 @@ export async function tripMetadataV2Boundary(
       )
         return failure(400, "TRIP_METADATA_INVALID");
       const result = tripMetadataRevisionedReceiptSchema.parse(
-        await port.update(actor, parsed.data),
+        await port.update(actor, parsed.data, managedWriteAdmission),
       );
       const { actorAccountId, resultMetadataRevision: _revision, ...input } = result;
       if (

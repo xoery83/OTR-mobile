@@ -1,0 +1,67 @@
+{
+  "version": "otr.mcp-beta.plan-enforcement/1.1.1",
+  "scope": "Private Layer3 riskBasedWrites write-tool envelope only; owning business call unchanged",
+  "optionalProperty": "executionPlan",
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "schemaVersion": {
+        "type": "string",
+        "const": "otr.mcp-beta.risk-plan/1.1.0"
+      },
+      "intentId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "steps": {
+        "minItems": 1,
+        "maxItems": 100,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "stage": {
+              "type": "string",
+              "enum": [
+                "READ",
+                "PREVIEW",
+                "APPLY"
+              ]
+            },
+            "dependsOn": {
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "call": {}
+          },
+          "required": [
+            "id",
+            "stage",
+            "dependsOn",
+            "call"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "schemaVersion",
+      "intentId",
+      "steps"
+    ],
+    "additionalProperties": false
+  },
+  "binding": "Current call is exactly one actual Apply step; supplied full plan enters Preview digest; duplicate operations rejected",
+  "highRisk": "No bulk execution authority; declared aggregate targets fenced before first dispatch",
+  "fenceSeconds": 900
+}

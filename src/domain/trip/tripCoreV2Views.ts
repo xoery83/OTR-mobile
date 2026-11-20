@@ -1,3 +1,4 @@
+import { upgradeLegacyP5Identity } from "./p5Identity";
 import {
   coreCanRead,
   type CoreActor,
@@ -25,8 +26,9 @@ const services = (g: CoreGraph, id: string) =>
     .filter((r) => r.event_id === id)
     .sort((a, b) => String(a.service_key).localeCompare(String(b.service_key)))
     .map((r) =>
-      select(r, [
+      select(upgradeLegacyP5Identity(r), [
         "service_key",
+        "identity_state",
         "transport_subtype",
         "attribution",
         "operator_namespace",

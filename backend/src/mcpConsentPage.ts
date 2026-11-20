@@ -1,28 +1,41 @@
+import { mcpProviderCallbackPath } from "@/data/auth/mcpBrowserProvider";
 import {
   mcpConsentConfigSchema,
+  mcpBetaConsentConfigSchema,
+  type McpBetaConsentConfig,
   type McpConsentConfig,
 } from "@/data/auth/mcpOAuthConsentRepository";
 
-// Optional software port only; supplying config requires the exact protected QA Gate.
-export function createMcpConsentPage(config?: McpConsentConfig, javascript?: Uint8Array) {
-  const parsed = config && mcpConsentConfigSchema.parse(config);
+// Explicit policy only: legacy QA retains its gate; isolated Beta supplies its own issuer.
+export function createMcpConsentPage(
+  config?: McpConsentConfig | McpBetaConsentConfig,
+  javascript?: Uint8Array,
+) {
+  const beta =
+    config && "authOrigin" in config ? mcpBetaConsentConfigSchema.parse(config) : null;
+  const parsed = beta ?? (config && mcpConsentConfigSchema.parse(config));
+  const expectedOrigin = beta
+    ? new URL(beta.consentPolicy?.policy.resource ?? beta.authOrigin).origin
+    : "https://api-dev.xoery.art";
   const script = javascript && new Uint8Array(javascript).buffer;
   const paths = new Set([
     "/oauth/consent",
     "/oauth/consent/config",
     "/oauth/consent/app.js",
   ]);
+  if (beta?.browserProviders) paths.add(mcpProviderCallbackPath);
   const headers = {
     "Cache-Control": "private, no-store",
     "Referrer-Policy": "no-referrer",
     "X-Content-Type-Options": "nosniff",
-    "Content-Security-Policy":
-      "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self' https://tuqigdxrvrerfewsxqgm.supabase.co; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+    "Content-Security-Policy": beta && !beta.managedDev
+      ? "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+      : "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self' https://tuqigdxrvrerfewsxqgm.supabase.co; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
   };
   return (request: Request): Response | null => {
     const url = new URL(request.url);
     if (
-      url.host !== "api-dev.xoery.art" ||
+      (beta ? url.origin !== expectedOrigin : url.host !== "api-dev.xoery.art") ||
       !paths.has(url.pathname) ||
       !parsed ||
       !script

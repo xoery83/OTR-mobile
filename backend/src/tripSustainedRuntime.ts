@@ -3,6 +3,7 @@ import type { TripCreatePort } from "./tripCreate";
 import { TripCreateError } from "./tripCreate";
 import type { TripMetadataV2Port } from "./tripMetadataV2";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
+import type { TripLifecyclePort } from "./tripLifecycle";
 // Service composition only. Real ownership, rollout/revocation and command scope are checked by SQL every time.
 // No fixed Trip, QA Actor, temporary window or clock is accepted by this factory.
 export function createSustainedDevTripPorts(
@@ -10,6 +11,7 @@ export function createSustainedDevTripPorts(
     create: TripCreatePort;
     metadata: TripMetadataV2Port;
     core: CoreHttpConnection;
+    lifecycle?: TripLifecyclePort;
   },
   enabled = false,
 ) {
@@ -19,6 +21,14 @@ export function createSustainedDevTripPorts(
     coreUuid.parse(actor);
     if (closed) throw new TripCreateError(503, "TRIP_SUSTAINED_DEV_CLOSED");
   };
+  const guardRead = <Args extends unknown[], Result>(
+    read?: (actor: string, ...args: Args) => Promise<Result>,
+  ) => read && (async (actor: string, ...args: Args) => {
+    guard(actor);
+    const result = await read(actor, ...args);
+    guard(actor);
+    return result;
+  });
   const create: TripCreatePort = {
     ...(ports.create.parentReceipt
       ? {
@@ -30,11 +40,11 @@ export function createSustainedDevTripPorts(
           },
         }
       : {}),
-    async create(actor, request) {
+    async create(actor, request, ...admission) {
       guard(actor);
       if (!("formatVersion" in request) || request.formatVersion !== 2)
         throw new TripCreateError(400, "TRIP_SUSTAINED_V2_REQUIRED");
-      const r = await ports.create.create(actor, request);
+      const r = await ports.create.create(actor, request, ...admission);
       guard(actor);
       return r;
     },
@@ -46,11 +56,11 @@ export function createSustainedDevTripPorts(
     },
   };
   const metadata: TripMetadataV2Port = {
-    async update(actor, request) {
+    async update(actor, request, admit) {
       guard(actor);
       if (request.formatVersion !== 3)
         throw new TripCreateError(400, "TRIP_SUSTAINED_V3_REQUIRED");
-      const r = await ports.metadata.update(actor, request);
+      const r = await ports.metadata.update(actor, request, admit);
       guard(actor);
       return r;
     },
@@ -142,6 +152,11 @@ export function createSustainedDevTripPorts(
     ...(ports.core.read
       ? {
           read: {
+            people: guardRead(ports.core.read.people),
+            items: guardRead(ports.core.read.items),
+            itemSnapshot: guardRead(ports.core.read.itemSnapshot),
+            itemLifecycle: guardRead(ports.core.read.itemLifecycle),
+            betaCapabilityContext: guardRead(ports.core.read.betaCapabilityContext),
             async collection(
               ...args: Parameters<NonNullable<CoreHttpConnection["read"]>["collection"]>
             ) {
@@ -173,9 +188,31 @@ export function createSustainedDevTripPorts(
         }
       : {}),
   };
+  const owningLifecycle = ports.lifecycle;
+  const lifecycle: TripLifecyclePort | undefined = owningLifecycle && {
+    async base(actor, trip) {
+      guard(actor);
+      const result = await owningLifecycle.base(actor, trip);
+      guard(actor);
+      return result;
+    },
+    async apply(actor, request, ...admission) {
+      guard(actor);
+      const result = await owningLifecycle.apply(actor, request, ...admission);
+      guard(actor);
+      return result;
+    },
+    async receipt(actor, trip, operation) {
+      guard(actor);
+      const result = await owningLifecycle.receipt(actor, trip, operation);
+      guard(actor);
+      return result;
+    },
+  };
   return {
     tripCreatePort: create,
     tripMetadataV2Port: metadata,
+    ...(lifecycle ? { tripLifecyclePort: lifecycle } : {}),
     coreConnection: core,
     close() {
       closed = true;

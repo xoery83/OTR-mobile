@@ -1,3 +1,4 @@
+import type { BetaBackend } from "./beta";
 import {
   createMutationTools,
   mutationIdentity,
@@ -124,6 +125,7 @@ function expiredApplyRecovery(accountId: string, name: string, args: unknown) {
 
 // Auth owner verifies issuer/signature/resource/expiry/revocation/client consent before returning this context.
 export type McpAuthorization = {
+  managedConsent?: import("./oauth").ManagedConsentEvidence;
   accountId: string;
   resource: string;
   scopes: readonly string[];
@@ -131,6 +133,7 @@ export type McpAuthorization = {
   read: BackendRead;
   clientId?: string;
   backend?: BackendMutation;
+  betaBackend?: BetaBackend;
 };
 export type McpLogEvent = {
   requestId: string;

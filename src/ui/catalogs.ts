@@ -1,4 +1,5 @@
 export const en = {
+  "mcp.confirmExactChanges": "Approve these exact changes",
   "capture.results.addManually": "Add itinerary item manually",
   "capture.results.manualUnavailable":
     "This Trip is unavailable. Return and check your account or Trip access.",
@@ -143,11 +144,66 @@ export const en = {
   "formAutofill.unsupported": "{field} · Not supported; enter separately when available",
   "formAutofill.use": "Use suggested {field}: {value}",
   "formAutofill.wrongTarget": "This suggestion does not match the item being edited.",
+  "operationApproval.deleteScope":
+    "High-impact operation: delete this entire Trip. The owning Server lifecycle, history and original-file rules remain in force. Approval is limited to this exact Trip and request.",
+  "operationApproval.approveDelete": "Confirm deletion of this entire Trip",
+  "operationApproval.targetId": "Target Trip ID: {id}",
+  "inChatConfirmation.title": "Confirm this operation in chat",
+  "inChatConfirmation.prototype":
+    "Internal confirmation prototype: approving records a diagnostic decision only. It does not save or modify your Trip.",
+  "inChatConfirmation.target": "Trip: {value}",
+  "inChatConfirmation.revision": "Revision: {value}",
+  "inChatConfirmation.scope":
+    "Change scope: Trip name only. Dates and destinations stay unchanged.",
+  "inChatConfirmation.expiry": "Preview expires at {value}",
+  "inChatConfirmation.waiting": "Waiting for a trusted preview from ChatGPT.",
+  "inChatConfirmation.approved":
+    "The server received your approval. Prototype only: no Trip change was submitted.",
+  "inChatConfirmation.declined":
+    "The server received your refusal. No Trip data was changed.",
+  "inChatConfirmation.closed":
+    "Confirmation is unavailable, expired or cancelled. No automatic retry or submission.",
+  "operationApproval.title": "Confirm this operation",
+  "operationApproval.explanation":
+    "Sign in to review this exact operation. Confirming here records approval only. Return to the requesting app to submit the same operation.",
+  "operationApproval.client": "Requested by {client}",
+  "operationApproval.trip": "Trip: {name}",
+  "operationApproval.before": "Current name: {name}",
+  "operationApproval.after": "New name: {name}",
+  "operationApproval.expires": "This confirmation expires at {time}",
+  "operationApproval.approve": "Confirm this exact change",
+  "operationApproval.approved":
+    "This operation is confirmed for a short time. Return to the requesting app to submit the same change. The Trip has not been saved by this page.",
+  "operationApproval.declined":
+    "This operation was declined. No Trip change was submitted.",
+  "operationApproval.expired":
+    "This request has expired or cannot be confirmed. Return to the requesting app to check its status.",
+  "operationApproval.completed":
+    "The original operation was already submitted. This page will not submit it again.",
+  "operationApproval.check": "Check original request status",
+  "operationApproval.unavailable":
+    "The request or result could not be checked. Do not submit again; use Check original request status if available.",
+  "operationApproval.cleanup":
+    "The decision was recorded, but sign-out could not be confirmed. Close this page.",
+  "oauthConsent.betaRequest":
+    "{client} requests access to your authorized Trips, itinerary items and Ledger records.",
+  "oauthConsent.betaScope":
+    "Read authorized Trip and Ledger data. Permitted creation, edits and recoverable actions can run without confirmation for each operation. High-impact changes require separate confirmation. Settlement, Personal Payment and personal Review remain read-only. Original files are unavailable.",
+  "oauthConsent.allowBeta": "Allow OTR Beta access",
   "oauthConsent.title": "Connect OTR",
   "oauthConsent.dev": "DEV QA connection",
   "oauthConsent.explanation":
     "Sign in to review this connection. Your verification code and OTR session are not shared with the connected app.",
   "oauthConsent.email": "Email",
+  "oauthConsent.qaEmailOnly": "This QA account uses an email verification code.",
+  "oauthConsent.linkAccount":
+    "Current OTR account: {accountId}. Confirm below to link a sign-in provider to this account.",
+  "oauthConsent.linkGoogle": "Confirm and link Google",
+  "oauthConsent.linkApple": "Confirm and link Apple",
+  "oauthConsent.googleLinked": "Google linked",
+  "oauthConsent.appleLinked": "Apple linked",
+  "oauthConsent.LINK_UNRESOLVED":
+    "The link could not be confirmed. Keep this request for verification.",
   "oauthConsent.code": "Verification code",
   "oauthConsent.send": "Send verification code",
   "oauthConsent.verify": "Verify and continue",
@@ -160,6 +216,13 @@ export const en = {
     "{client} requests access to your authorized Trips and itinerary items.",
   "oauthConsent.scope":
     "Read tools only. Editing, ledger records and original-file tools are unavailable in this connection.",
+  "oauthConsent.managedScope":
+    "Read authorized Trips, itinerary items and Ledger records. Editing and original-file access are unavailable in this connection.",
+  "oauthConsent.managedRenameScope":
+    "Read authorized Trips, itinerary items and Ledger records. This test connection can only rename the synthetic Trip from “{beforeName}” to “{afterName}”. Other edits and original-file access are unavailable.",
+  "oauthConsent.managedPolicy": "Access policy {policyId}, version {policyVersion}. SHA-256 {policyHash}.",
+  "oauthConsent.managedApproved": "Access approved. Return to ChatGPT and retry the original request.",
+  "oauthConsent.managedDenied": "Access declined.",
   "oauthConsent.writeScope":
     "Read Trips and create or edit itinerary items you have permission to change. Each save requires separate confirmation. Ledger records and original files are unavailable.",
   "oauthConsent.continue": "Continue to connected app",
@@ -309,6 +372,7 @@ export const en = {
 
   "auth.emailTitle": "Sign in or create an account",
   "auth.continueGoogle": "Continue with Google",
+  "auth.continueApple": "Continue with Apple",
   "auth.appleLinkTitle": "Connect Apple Account",
   "auth.appleLinkExplanation": "Connect Apple sign-in to your current OTR account.",
   "auth.appleLinkConfirmation":
@@ -3536,6 +3600,7 @@ export const en = {
 export type MessageKey = keyof typeof en;
 export type UiLocale = "en" | "zh-Hans";
 export const zhHans: Record<MessageKey, string> = {
+  "mcp.confirmExactChanges": "确认这些具体修改",
   "capture.results.addManually": "手工添加行程条目",
   "capture.results.manualUnavailable":
     "暂时无法访问此旅行。请返回检查当前账户或旅行权限。",
@@ -3662,11 +3727,56 @@ export const zhHans: Record<MessageKey, string> = {
   "formAutofill.unsupported": "{field} · 暂不支持，功能开放后请单独填写",
   "formAutofill.use": "使用建议{field}：{value}",
   "formAutofill.wrongTarget": "这条建议与当前编辑的项目不匹配。",
+  "operationApproval.deleteScope":
+    "高影响操作：删除整个旅行。正式服务器生命周期、历史和原始文件规则保持不变。此次批准仅适用于这个旅行和这份请求。",
+  "operationApproval.approveDelete": "确认删除这个完整旅行",
+  "operationApproval.targetId": "目标旅行 ID：{id}",
+  "inChatConfirmation.title": "在对话中确认这次操作",
+  "inChatConfirmation.prototype":
+    "内部确认原型：批准只记录诊断确认，不会保存或修改旅行。",
+  "inChatConfirmation.target": "旅行：{value}",
+  "inChatConfirmation.revision": "版本：{value}",
+  "inChatConfirmation.scope": "修改范围：仅旅行名称。日期和目的地保持不变。",
+  "inChatConfirmation.expiry": "预览将在 {value} 过期",
+  "inChatConfirmation.waiting": "正在等待 ChatGPT 传递可信预览。",
+  "inChatConfirmation.approved": "服务器已收到你的批准。本次仅为原型，尚未提交旅行修改。",
+  "inChatConfirmation.declined": "服务器已收到你的拒绝。未修改旅行数据。",
+  "inChatConfirmation.closed": "确认不可用、已过期或已取消。不会自动重试或提交。",
+  "operationApproval.title": "确认这次操作",
+  "operationApproval.explanation":
+    "登录后核对这次具体操作。在此确认只记录批准；请返回请求应用，通过同一原操作继续提交。",
+  "operationApproval.client": "请求应用：{client}",
+  "operationApproval.trip": "旅行：{name}",
+  "operationApproval.before": "当前名称：{name}",
+  "operationApproval.after": "新名称：{name}",
+  "operationApproval.expires": "此次确认将在 {time} 失效",
+  "operationApproval.approve": "确认这次具体修改",
+  "operationApproval.approved":
+    "此次操作已确认，短时间内有效。请返回请求应用，提交同一修改。本页面尚未保存旅行。",
+  "operationApproval.declined": "已拒绝此次操作，没有提交旅行变更。",
+  "operationApproval.expired": "请求已过期或无法确认。请返回请求应用检查状态。",
+  "operationApproval.completed": "原操作已经提交，本页面不会重复提交。",
+  "operationApproval.check": "检查原请求状态",
+  "operationApproval.unavailable":
+    "暂时无法核实请求或提交结果。请勿重复提交；若可用，请选择“检查原请求状态”。",
+  "operationApproval.cleanup": "决定已记录，但暂时无法确认退出登录，请关闭此页面。",
+  "oauthConsent.betaRequest": "{client} 请求访问你有权查看的旅行、行程事项和账本记录。",
+  "oauthConsent.betaScope":
+    "读取获授权的旅行和账本资料。在已有授权和权限范围内，普通创建、修改及可恢复操作可直接执行，无需逐次确认；高风险修改需要单独确认。结算、个人付款和个人审核保持只读，不提供原始文件访问。",
+  "oauthConsent.allowBeta": "允许 OTR Beta 访问",
   "oauthConsent.title": "连接 OTR",
   "oauthConsent.dev": "DEV QA 测试连接",
   "oauthConsent.explanation":
     "登录后查看连接请求。验证码和 OTR 登录会话不会分享给连接的应用。",
   "oauthConsent.email": "邮箱",
+  "oauthConsent.qaEmailOnly": "此测试账号仅支持邮箱验证码。",
+  "oauthConsent.linkAccount":
+    "当前 OTR 账户：{accountId}。请在下方确认要绑定到此账户的登录方式。",
+  "oauthConsent.linkGoogle": "确认并绑定 Google",
+  "oauthConsent.linkApple": "确认并绑定 Apple",
+  "oauthConsent.googleLinked": "已绑定 Google",
+  "oauthConsent.appleLinked": "已绑定 Apple",
+  "oauthConsent.LINK_UNRESOLVED": "暂时无法确认绑定结果，请保留此请求以供核对。",
   "oauthConsent.code": "验证码",
   "oauthConsent.send": "发送验证码",
   "oauthConsent.verify": "验证并继续",
@@ -3677,6 +3787,11 @@ export const zhHans: Record<MessageKey, string> = {
   "oauthConsent.decline": "拒绝",
   "oauthConsent.request": "{client} 请求读取你有权访问的旅行和行程事项。",
   "oauthConsent.scope": "此连接仅提供读取工具，不提供修改、账本或原始文件工具。",
+  "oauthConsent.managedScope": "读取已获授权的旅行、行程事项和账本记录。此连接不提供修改或原始文件访问。",
+  "oauthConsent.managedRenameScope": "读取已获授权的旅行、行程事项和账本记录。此测试连接仅可将合成旅行从「{beforeName}」改名为「{afterName}」。不提供其他修改或原始文件访问。",
+  "oauthConsent.managedPolicy": "访问政策 {policyId}，版本 {policyVersion}。SHA-256 {policyHash}。",
+  "oauthConsent.managedApproved": "已允许访问。请返回 ChatGPT 重试原请求。",
+  "oauthConsent.managedDenied": "已拒绝访问。",
   "oauthConsent.writeScope":
     "读取旅行，并创建或编辑你有权修改的行程事项。每次保存仍需单独确认。此连接不提供账本记录或原始文件。",
   "oauthConsent.continue": "继续前往连接的应用",
@@ -3811,6 +3926,7 @@ export const zhHans: Record<MessageKey, string> = {
 
   "auth.emailTitle": "登录或创建账户",
   "auth.continueGoogle": "使用 Google 继续",
+  "auth.continueApple": "使用 Apple 继续",
   "auth.appleLinkTitle": "连接 Apple 账户",
   "auth.appleLinkExplanation": "将 Apple 登录连接到当前 OTR 账号。",
   "auth.appleLinkConfirmation": "授权 Apple 登录连接到当前已登录的 OTR 账号？",

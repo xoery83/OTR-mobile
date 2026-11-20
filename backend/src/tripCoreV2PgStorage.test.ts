@@ -12,6 +12,7 @@ import {
   normalP3Commands,
   normalP4Commands,
   normalP2SparseCommands,
+  normalBetaCommands,
 } from "./tripNormalP1Policy";
 import { emptyCoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
 import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
@@ -39,7 +40,11 @@ const command = () => ({
     ...coreDefaults("member"),
   },
 });
-function fixture(principal = "otr_trip_core_v2_gateway", active = true) {
+function fixture(
+  principal = "otr_trip_core_v2_gateway",
+  active = true,
+  gateMode?: Parameters<typeof createCorePgStorage>[3],
+) {
   const queries: { sql: string; params: readonly unknown[] }[] = [],
     retire = vi.fn();
   const lease: CorePgLease = {
@@ -74,7 +79,7 @@ function fixture(principal = "otr_trip_core_v2_gateway", active = true) {
     queries,
     retire,
     lease,
-    storage: createCorePgStorage({ withLease: async (work) => work(lease) }, hash),
+    storage: createCorePgStorage({ withLease: async (work) => work(lease) }, hash, undefined, gateMode),
   };
 }
 const commandScope = () => ({
@@ -82,6 +87,26 @@ const commandScope = () => ({
   tripId: trip,
   operationId: randomUUID(),
   baseVector: [],
+});
+it("reads Managed Consent on the owning Core transaction without taking a second lease", async () => {
+  const f = fixture();
+  const withLease = vi.fn(async <T>(work: (lease: CorePgLease) => Promise<T>) =>
+    work(f.lease));
+  const storage = createCorePgStorage({ withLease }, hash);
+  const scope = { ...commandScope(), operationId: operation, managedMcp: true as const };
+  await storage.withLockedCommand(scope, async (tx) => {
+    expect(await tx.admitManagedWrite!(async (account, request, _body, consent) => {
+      expect(account).toBe(actor);
+      expect(request.operationId).toBe(operation);
+      await consent!.query("SELECT 1");
+      return false;
+    }, validateCoreCommand(command()))).toBe(false);
+  });
+  expect(withLease).toHaveBeenCalledOnce();
+  expect(f.queries.filter(({ sql }) => sql.startsWith("BEGIN"))).toHaveLength(1);
+  expect(f.queries.findIndex(({ sql }) => sql === "SELECT 1")).toBeLessThan(
+    f.queries.findIndex(({ sql }) => sql === "COMMIT"),
+  );
 });
 it("composes two sequential owning commands on exactly one lease and one outer transaction", async () => {
   const f = fixture();
@@ -678,8 +703,8 @@ const authoredDetails = () => ({
     time: coreDateBoundary("2026-12-14"),
   },
 });
-async function manualSparseFixture(change?: string) {
-  const f = fixture(),
+async function manualSparseFixture(change?: string, betaLifecycle?: true) {
+  const f = fixture(undefined, true, betaLifecycle ? { betaLifecycle } : undefined),
     query = f.lease.query;
   const created = validateCoreCommand(command());
   const intent = await coreHashValue("otr-trip-core-intent-v2", created, hash);
@@ -851,6 +876,47 @@ it.each([
   await expect(f.verify(c)).rejects.toThrow("CORE_CAPABILITY_CLOSED");
 });
 
+it("Beta P2 permits description and lifecycle while retaining title and flight-qualification barriers", async () => {
+  const f = await manualSparseFixture("qualified", true),
+    query = f.lease.query;
+  f.lease.query = async (sql, params) =>
+    sql.includes("FROM public.trip_core_activation_gate WHERE singleton")
+      ? {
+          rows: [
+            {
+              runtime_enabled: true,
+              enabled_commands: [...normalBetaCommands],
+              enabled_families: ["P1", "P2", "P3", "P4", "P5", "P6"],
+              enabled_admission_modes: ["MANUAL"],
+            },
+          ],
+        }
+      : query(sql, params);
+  const make = (name: string, payload: unknown) =>
+    validateCoreCommand({
+      ...command(),
+      command: name,
+      payload,
+      baseVector: [{ kind: "ITEM", id, revision: 1 }],
+    });
+  await expect(
+    f.verify(make("SET_ITEM_TEXT", { description: "Updated description" })),
+  ).resolves.toBeUndefined();
+  await expect(
+    f.verify(make("SET_ITEM_TEXT", { title: "Bypass flight literal" })),
+  ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
+  await expect(
+    f.verify(
+      make("HIDE_OBJECT", {
+        scope: "OBJECT_ONLY",
+        affectedIds: [{ kind: "ITEM", id }],
+        graphHash: "a".repeat(64),
+      }),
+    ),
+  ).resolves.toBeUndefined();
+  await expect(f.verify()).rejects.toThrow("MANUAL_FLIGHT_CREATE_RECEIPT_REQUIRED");
+});
+
 it("authored Manual flight receipt uses ordinary visibility without Source receipt authority", async () => {
   const f = await manualSparseFixture();
   const receipt = {
@@ -905,11 +971,15 @@ it("selects manual compatibility before scope only for a sustained manual transa
     (tx) => tx.enabledCommands(),
   );
   const marker = f.queries.findIndex((q) => q.sql.includes("otr.core.manual_compat"));
-  const scope = f.queries.findIndex((q) => q.sql.includes("trip_core_finite_scope_allowed"));
+  const scope = f.queries.findIndex((q) =>
+    q.sql.includes("trip_core_finite_scope_allowed"),
+  );
   expect(marker).toBeGreaterThanOrEqual(0);
   expect(marker).toBeLessThan(scope);
   expect(f.queries[marker].params).toEqual(["MANUAL"]);
-  expect(f.queries.some((q) => q.sql.includes("trip_sustained_import_p1_capabilities"))).toBe(false);
+  expect(
+    f.queries.some((q) => q.sql.includes("trip_sustained_import_p1_capabilities")),
+  ).toBe(false);
 });
 
 it("Slice 3 contract: ordinary Core PG rejects AUTO_SOURCE despite valid ordinary edit capability", async () => {
@@ -954,9 +1024,7 @@ it("Slice 3 contract: ordinary Core PG rejects AUTO_SOURCE despite valid ordinar
       (tx) => tx.verifyAdmission(c, "a".repeat(64), emptyCoreGraph()),
     ),
   ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
-  expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(
-    false,
-  );
+  expect(f.queries.some((q) => /^(INSERT|UPDATE|DELETE)/.test(q.sql))).toBe(false);
 });
 it("notifies a fresh APPLIED command only after COMMIT and lease release, with IDs only", async () => {
   const f = await manualSparseFixture();
@@ -1125,3 +1193,49 @@ it.each(["throw", "reject", "pending"])(
     expect(f.queries.at(-1)?.sql).toBe("COMMIT");
   },
 );
+it("preserves the authored-flight Item-owner boundary before admission or receipt writes", async () => {
+  const graph = emptyCoreGraph();
+  graph.itinerary_events.push({
+    id,
+    trip_id: trip,
+    owner_account_id: randomUUID(),
+    experience_family: "P2",
+    semantic_revision: 1,
+  });
+  const verifyAdmission = vi.fn(),
+    commit = vi.fn();
+  const tx: CoreCommandTransaction = {
+    actor: {
+      accountId: actor,
+      tripId: trip,
+      personId: null,
+      personIds: [],
+      active: true,
+      canManageShared: true,
+    },
+    readReceipt: async () => null,
+    hasLegacyOperation: async () => false,
+    canReadReceipt: async () => true,
+    enabledCommands: async () => ["SET_AUTHORED_FLIGHT_DETAILS"],
+    readLockedGraph: async () => graph,
+    verifyAdmission,
+    lifecycleGraphHash: async () => undefined,
+    commit,
+  };
+  await expect(
+    executeCoreCommandV2(
+      { withLockedCommand: async (_scope, work) => work(tx) },
+      actor,
+      trip,
+      {
+        ...command(),
+        command: "SET_AUTHORED_FLIGHT_DETAILS",
+        baseVector: [{ kind: "ITEM", id, revision: 1 }],
+        payload: { patch: { flightNumberLiteral: "NZ123" } },
+      },
+      hash,
+    ),
+  ).rejects.toThrow("NOT_VISIBLE");
+  expect(verifyAdmission).not.toHaveBeenCalled();
+  expect(commit).not.toHaveBeenCalled();
+});

@@ -1,0 +1,3520 @@
+{
+  "contractVersion": "otr.mcp-beta.contract/1.0.0",
+  "baselineMain": "41de43927fd9869673c1ca929e911f58d1f6f96d",
+  "status": "LAYER1_READY_FOR_INTEGRATION",
+  "counts": {
+    "capabilities": 103,
+    "routes": 42,
+    "dispatch": 64
+  },
+  "frozenRegistrySha256": "00fcc54e77110116311e4e5725d761274cdb82bdff562c337ee47013eec526d0",
+  "requestSchemas": {
+    "path": "BETA_REQUEST_SCHEMAS.json",
+    "sha256": "a241127508e0e6e76c7c969338c0ab808497ab394f350c44e7142d529e680212",
+    "entrypoint": "backend/src/mcpBetaApiSchemas.ts::betaRequestSchemas",
+    "semanticValidators": [
+      "betaRequestSchemas[capabilityId].parse(input)",
+      "validateCoreCommand(Core Envelope): canonical bytes, target, unique/sorted baseVector, original operation identity",
+      "tripBetaCommandContract: finite family/command, MANUAL only, authored-only Place/temporal fields, immutable P2 literal title, duplicate Rooms, sparse owning details",
+      "Existing Source Alias Zod refinements: money/ISO scale, civil tuple/calendar, parent/child roles, original typed Expense intent/envelope and conflict choices",
+      "Path/header/actor/Trip/target/family binding, current ACL, CAS, idempotency and immutable receipt must still be checked by the owning HTTP/Domain port"
+    ]
+  },
+  "responseSchemas": {
+    "path": "BETA_RESPONSE_SCHEMAS.json",
+    "sha256": "03708e21fdf0016df1057a6f1218b564359565f11b147d7e4b0b7e23064727ea",
+    "entrypoint": "backend/src/mcpBetaApiSchemas.ts::betaResponseSchemas"
+  },
+  "sourceAliases": [
+    {
+      "alias": "StructuredTripCreate",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripCreateRequestSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc",
+      "currentSha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "TripCreateResult",
+      "path": "src/domain/trip/tripCreateWireContract.ts",
+      "exportsOrProjection": "tripCreateWireResultSchema",
+      "sha256": "5ff1d98b16baa79eb6237d6a2c5520dcbf15d8f16e464e365afde76e11542633",
+      "currentSha256": "5ff1d98b16baa79eb6237d6a2c5520dcbf15d8f16e464e365afde76e11542633"
+    },
+    {
+      "alias": "StructuredMetadataUpdate",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripMetadataUpdateSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc",
+      "currentSha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "StructuredMetadataReceipt",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripMetadataReceiptSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc",
+      "currentSha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "TripMetadataSnapshot",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripMetadataSnapshotSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc",
+      "currentSha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "CoreEnvelope",
+      "path": "src/domain/trip/tripCoreV2Commands.ts",
+      "exportsOrProjection": "coreCommandSchema + validateCoreCommand",
+      "sha256": "a381f850820322857b9c33127e67ecc58d6c4ba5a0130bf22ce9f2a3793b4830",
+      "currentSha256": "3e5eb8abff8607e2f1dcd3e13d8cf1341488d5bb5a4883c71a3180ce355d5a46"
+    },
+    {
+      "alias": "CoreReceipt",
+      "path": "src/domain/trip/tripCoreV2Receipt.ts",
+      "exportsOrProjection": "coreReceiptSchema",
+      "sha256": "69e941fdd232c26f8ee86087539958e3f7a1a502da8b09bf0798ceae64235187",
+      "currentSha256": "69e941fdd232c26f8ee86087539958e3f7a1a502da8b09bf0798ceae64235187"
+    },
+    {
+      "alias": "CoreReceiptProjection",
+      "path": "src/domain/trip/tripCoreV2Receipt.ts",
+      "exportsOrProjection": "CoreReceiptProjection (type), raw FULL receipt validated by validateCoreReceipt",
+      "sha256": "69e941fdd232c26f8ee86087539958e3f7a1a502da8b09bf0798ceae64235187",
+      "currentSha256": "69e941fdd232c26f8ee86087539958e3f7a1a502da8b09bf0798ceae64235187"
+    },
+    {
+      "alias": "Expense",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerExpenseSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a",
+      "currentSha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "ExpensePage",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerExpenseListResponseSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a",
+      "currentSha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "ExpenseCommand",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseCommandRequestSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d",
+      "currentSha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseMutationResponse",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "ledgerExpenseMutationResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d",
+      "currentSha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpensePaymentRecord",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "createLedgerPaymentRecordRequestSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d",
+      "currentSha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpensePaymentRecordResult",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "ledgerPaymentRecordMutationResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d",
+      "currentSha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseConflictChain",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseConflictChainResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d",
+      "currentSha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseConflictResolution",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseConflictChainResolutionRequestSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d",
+      "currentSha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseConflictResolutionResult",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseConflictChainResolutionResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d",
+      "currentSha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "RateLookupRequest",
+      "path": "src/data/api/ledgerFxContracts.ts",
+      "exportsOrProjection": "ledgerRateLookupRequestSchema",
+      "sha256": "f2e5cf723ac52652044acc6ef15775e5aa4f6d0aaec30ea2b6165c126e0a87d2",
+      "currentSha256": "f2e5cf723ac52652044acc6ef15775e5aa4f6d0aaec30ea2b6165c126e0a87d2"
+    },
+    {
+      "alias": "RateLookupResponse",
+      "path": "src/data/api/ledgerFxContracts.ts",
+      "exportsOrProjection": "ledgerRateLookupResponseSchema",
+      "sha256": "f2e5cf723ac52652044acc6ef15775e5aa4f6d0aaec30ea2b6165c126e0a87d2",
+      "currentSha256": "f2e5cf723ac52652044acc6ef15775e5aa4f6d0aaec30ea2b6165c126e0a87d2"
+    },
+    {
+      "alias": "JourneyCurrencyPreviewRequest",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyPreviewRequestSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c",
+      "currentSha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "JourneyCurrencyPreview",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyPreviewSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c",
+      "currentSha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "JourneyCurrencyCommitRequest",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyCommitRequestSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c",
+      "currentSha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "JourneyCurrencyCommit",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyCommitSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c",
+      "currentSha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "SettlementPreviewRequest",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "settlementPreviewRequestSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "SettlementPreview",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "settlementPreviewSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "FinalizedSettlement",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "finalizedSettlementSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalPayment",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementPaymentSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalPaymentRead",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementPaymentSchema + personalSettlementPaymentFxProjectionSchema (wrapper defined here)",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "LedgerRateQuote",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerRateQuoteSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a",
+      "currentSha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "LedgerAuditEvent",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerAuditEventSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a",
+      "currentSha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "SettlementPayment",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "settlementPaymentSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalPaymentList",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementPaymentListResponseSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalReviewResponse",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementReviewResponseSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e",
+      "currentSha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "BaseTripList",
+      "path": "src/domain/trip/tripDiscoveryContract.ts",
+      "exportsOrProjection": "tripDiscoveryPageSchema",
+      "sha256": "4b72bc683bd2f19ad1f9f12e8c958e928f906a1ae733d77bad57fc31b929da10",
+      "currentSha256": "b9b4a243e78f3a61c3579c7b60fdbc92847d4d14f96df9f8a1ef497061fda8fd"
+    },
+    {
+      "alias": "CoreCollection",
+      "path": "src/domain/trip/tripCoreV2Read.ts",
+      "exportsOrProjection": "coreReadManifestSchema + coreReadPageSchema",
+      "sha256": "8f68a16745ee9f0f8eb085ae495a1462f1697ac06cd256fd8019a71f935e9c12",
+      "currentSha256": "8f68a16745ee9f0f8eb085ae495a1462f1697ac06cd256fd8019a71f935e9c12"
+    },
+    {
+      "alias": "BaseItemSnapshot",
+      "path": "mcp/contract.ts",
+      "exportsOrProjection": "itemEditBaseOutput",
+      "sha256": "8a7b8d1404aeb21af341e0010a205966b368dc9b6b9b12ac6d406c88e1eba63e",
+      "currentSha256": "8a7b8d1404aeb21af341e0010a205966b368dc9b6b9b12ac6d406c88e1eba63e"
+    },
+    {
+      "alias": "CoreRelationRecord",
+      "path": "src/domain/trip/tripCoreV2Read.ts",
+      "exportsOrProjection": "coreReadRecordSchema (kind=RELATION, validated by validateCoreReadCollection)",
+      "sha256": "8f68a16745ee9f0f8eb085ae495a1462f1697ac06cd256fd8019a71f935e9c12",
+      "currentSha256": "8f68a16745ee9f0f8eb085ae495a1462f1697ac06cd256fd8019a71f935e9c12"
+    },
+    {
+      "alias": "CoreRelationRows",
+      "path": "src/domain/trip/tripCoreV2.ts",
+      "exportsOrProjection": "trip_item_participantsSchema + trip_item_visibility_peopleSchema + expense_linksSchema",
+      "sha256": "ae78e4ba51d8d689c669bb1612921bd52f70b6a86352f9cb07add8d9eea880f4",
+      "currentSha256": "ae78e4ba51d8d689c669bb1612921bd52f70b6a86352f9cb07add8d9eea880f4"
+    },
+    {
+      "alias": "LedgerRosterAuthority",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerMemberSchema + ledgerBootstrapResponseSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a",
+      "currentSha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "TripPersonAuthority",
+      "path": "docs/architecture/TRIP_CANONICAL_A1_I1_REPORT.md",
+      "exportsOrProjection": "Section D: canonical TripPerson identity mapping",
+      "sha256": "cfc7c468b85ed6574214c4c3b7fe7e2d9e99850b73cd1c4b11ee3a012c365a38",
+      "currentSha256": "cfc7c468b85ed6574214c4c3b7fe7e2d9e99850b73cd1c4b11ee3a012c365a38"
+    }
+  ],
+  "capabilities": [
+    {
+      "capabilityId": "otr.trip.list",
+      "toolName": "list_trips",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips",
+      "requestSchema": "TripListQuery",
+      "responseSchema": "TripList",
+      "effect": "READ",
+      "commandUnits": [
+        "trip.list"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {},
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.get",
+      "toolName": "get_trip",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/metadata",
+      "requestSchema": "TripMetadataQuery",
+      "responseSchema": "TripMetadataSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "trip.metadata.read"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "OTR-Trip-Metadata-Version": "3"
+      },
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.create",
+      "toolName": "create_trip",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips",
+      "requestSchema": "StructuredTripCreate",
+      "responseSchema": "TripCreateResult",
+      "effect": "WRITE",
+      "commandUnits": [
+        "trip.create"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {},
+      "headers": {
+        "OTR-Trip-Create-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.update",
+      "toolName": "update_trip",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/metadata",
+      "requestSchema": "StructuredMetadataUpdate",
+      "responseSchema": "StructuredMetadataReceipt",
+      "effect": "WRITE",
+      "commandUnits": [
+        "trip.metadata.update"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "OTR-Trip-Metadata-Version": "3",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.archive",
+      "toolName": "archive_trip",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "requestSchema": "TripArchive",
+      "responseSchema": "TripLifecycleReceipt",
+      "effect": "WRITE",
+      "commandUnits": [
+        "trip.lifecycle:ARCHIVE"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.archive",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.archive",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.unarchive",
+      "toolName": "unarchive_trip",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "requestSchema": "TripUnarchive",
+      "responseSchema": "TripLifecycleReceipt",
+      "effect": "WRITE",
+      "commandUnits": [
+        "trip.lifecycle:UNARCHIVE"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.unarchive",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.unarchive",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.delete",
+      "toolName": "delete_trip",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "requestSchema": "TripDelete",
+      "responseSchema": "TripLifecycleReceipt",
+      "effect": "WRITE",
+      "commandUnits": [
+        "trip.lifecycle:DELETE"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.currency.preview",
+      "toolName": "preview_trip_currency",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/preview-readonly",
+      "requestSchema": "JourneyCurrencyPreviewRequest",
+      "responseSchema": "JourneyCurrencyPreview",
+      "effect": "READ",
+      "commandUnits": [
+        "currency.preview"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.currency.preview",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.currency.preview",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.currency.update",
+      "toolName": "update_trip_currency",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/commit",
+      "requestSchema": "JourneyCurrencyCommitRequest",
+      "responseSchema": "JourneyCurrencyCommit",
+      "effect": "WRITE",
+      "commandUnits": [
+        "currency.commit"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header is the new ancillary operation UUID; do not substitute a record localId or the original conflicted commandId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.currency.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.currency.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.list",
+      "toolName": "list_trip_items",
+      "family": "P1",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemListQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.search",
+      "toolName": "search_trip_items",
+      "family": "P1",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemSearchQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.search",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.search",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.get",
+      "toolName": "get_trip_item",
+      "family": "P1",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "requestSchema": "ItemGetQuery",
+      "responseSchema": "ItemSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "itemId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.create",
+      "toolName": "create_trip_item",
+      "family": "P1",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P1Create",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.update",
+      "toolName": "update_trip_item",
+      "family": "P1",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P1Update",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_ITEM_PLACE",
+        "SET_ITEM_CATEGORY",
+        "SET_ITEM_GROUPING",
+        "SET_ITEM_STATUS"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.hide",
+      "toolName": "hide_trip_item",
+      "family": "P1",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemHide",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.hide",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.hide",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.restore",
+      "toolName": "restore_trip_item",
+      "family": "P1",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemRestore",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.restore",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.restore",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.delete",
+      "toolName": "delete_trip_item",
+      "family": "P1",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemDelete",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.visibility",
+      "toolName": "set_trip_item_visibility",
+      "family": "P1",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemVisibility",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.visibility",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.visibility",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p1.participation",
+      "toolName": "set_trip_item_participation",
+      "family": "P1",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemParticipation",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p1.participation",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p1.participation",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.list",
+      "toolName": "list_trip_items",
+      "family": "P2",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemListQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.search",
+      "toolName": "search_trip_items",
+      "family": "P2",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemSearchQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.search",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.search",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.get",
+      "toolName": "get_trip_item",
+      "family": "P2",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "requestSchema": "ItemGetQuery",
+      "responseSchema": "ItemSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "itemId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.create",
+      "toolName": "create_trip_item",
+      "family": "P2",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P2Create",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "CREATE_SPARSE_FLIGHT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.update",
+      "toolName": "update_trip_item",
+      "family": "P2",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P2Update",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_AUTHORED_FLIGHT_DETAILS",
+        "SET_ITEM_TEXT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.hide",
+      "toolName": "hide_trip_item",
+      "family": "P2",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemHide",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.hide",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.hide",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.restore",
+      "toolName": "restore_trip_item",
+      "family": "P2",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemRestore",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.restore",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.restore",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.delete",
+      "toolName": "delete_trip_item",
+      "family": "P2",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemDelete",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.visibility",
+      "toolName": "set_trip_item_visibility",
+      "family": "P2",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemVisibility",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.visibility",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.visibility",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p2.participation",
+      "toolName": "set_trip_item_participation",
+      "family": "P2",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemParticipation",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p2.participation",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p2.participation",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.list",
+      "toolName": "list_trip_items",
+      "family": "P3",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemListQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.search",
+      "toolName": "search_trip_items",
+      "family": "P3",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemSearchQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.search",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.search",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.get",
+      "toolName": "get_trip_item",
+      "family": "P3",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "requestSchema": "ItemGetQuery",
+      "responseSchema": "ItemSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "itemId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.create",
+      "toolName": "create_trip_item",
+      "family": "P3",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P3Create",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.update",
+      "toolName": "update_trip_item",
+      "family": "P3",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P3Update",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_ITEM_PLACE",
+        "SET_STAY_DETAILS"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.hide",
+      "toolName": "hide_trip_item",
+      "family": "P3",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemHide",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.hide",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.hide",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.restore",
+      "toolName": "restore_trip_item",
+      "family": "P3",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemRestore",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.restore",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.restore",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.delete",
+      "toolName": "delete_trip_item",
+      "family": "P3",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemDelete",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.visibility",
+      "toolName": "set_trip_item_visibility",
+      "family": "P3",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemVisibility",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.visibility",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.visibility",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p3.participation",
+      "toolName": "set_trip_item_participation",
+      "family": "P3",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemParticipation",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p3.participation",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p3.participation",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.list",
+      "toolName": "list_trip_items",
+      "family": "P4",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemListQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.search",
+      "toolName": "search_trip_items",
+      "family": "P4",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemSearchQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.search",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.search",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.get",
+      "toolName": "get_trip_item",
+      "family": "P4",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "requestSchema": "ItemGetQuery",
+      "responseSchema": "ItemSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "itemId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.create",
+      "toolName": "create_trip_item",
+      "family": "P4",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P4Create",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.update",
+      "toolName": "update_trip_item",
+      "family": "P4",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P4Update",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_RENTAL_DETAILS"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.hide",
+      "toolName": "hide_trip_item",
+      "family": "P4",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemHide",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.hide",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.hide",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.restore",
+      "toolName": "restore_trip_item",
+      "family": "P4",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemRestore",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.restore",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.restore",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.delete",
+      "toolName": "delete_trip_item",
+      "family": "P4",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemDelete",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.visibility",
+      "toolName": "set_trip_item_visibility",
+      "family": "P4",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemVisibility",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.visibility",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.visibility",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p4.participation",
+      "toolName": "set_trip_item_participation",
+      "family": "P4",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemParticipation",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p4.participation",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p4.participation",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.list",
+      "toolName": "list_trip_items",
+      "family": "P5",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemListQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.search",
+      "toolName": "search_trip_items",
+      "family": "P5",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemSearchQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.search",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.search",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.get",
+      "toolName": "get_trip_item",
+      "family": "P5",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "requestSchema": "ItemGetQuery",
+      "responseSchema": "ItemSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "itemId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.create",
+      "toolName": "create_trip_item",
+      "family": "P5",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P5Create",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.update",
+      "toolName": "update_trip_item",
+      "family": "P5",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P5Update",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_TRANSPORT_DETAILS"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.hide",
+      "toolName": "hide_trip_item",
+      "family": "P5",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemHide",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.hide",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.hide",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.restore",
+      "toolName": "restore_trip_item",
+      "family": "P5",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemRestore",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.restore",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.restore",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.delete",
+      "toolName": "delete_trip_item",
+      "family": "P5",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemDelete",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.visibility",
+      "toolName": "set_trip_item_visibility",
+      "family": "P5",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemVisibility",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.visibility",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.visibility",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p5.participation",
+      "toolName": "set_trip_item_participation",
+      "family": "P5",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemParticipation",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p5.participation",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p5.participation",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.list",
+      "toolName": "list_trip_items",
+      "family": "P6",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemListQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.search",
+      "toolName": "search_trip_items",
+      "family": "P6",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "requestSchema": "ItemSearchQuery",
+      "responseSchema": "ItemPage",
+      "effect": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.search",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.search",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.get",
+      "toolName": "get_trip_item",
+      "family": "P6",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "requestSchema": "ItemGetQuery",
+      "responseSchema": "ItemSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "itemId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.create",
+      "toolName": "create_trip_item",
+      "family": "P6",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P6Create",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.update",
+      "toolName": "update_trip_item",
+      "family": "P6",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "P6Update",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_ITEM_PLACE",
+        "SET_ACTIVITY_DETAILS",
+        "SET_ITEM_CATEGORY",
+        "SET_ITEM_STATUS"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.hide",
+      "toolName": "hide_trip_item",
+      "family": "P6",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemHide",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.hide",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.hide",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.restore",
+      "toolName": "restore_trip_item",
+      "family": "P6",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemRestore",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.restore",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.restore",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.delete",
+      "toolName": "delete_trip_item",
+      "family": "P6",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemDelete",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.visibility",
+      "toolName": "set_trip_item_visibility",
+      "family": "P6",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemVisibility",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.visibility",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.visibility",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.p6.participation",
+      "toolName": "set_trip_item_participation",
+      "family": "P6",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ItemParticipation",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.p6.participation",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.p6.participation",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.people.list",
+      "toolName": "list_trip_people",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/people",
+      "requestSchema": "RosterQuery",
+      "responseSchema": "RosterSnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "people.read"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.people.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.people.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.list",
+      "toolName": "expense_list",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses",
+      "requestSchema": "ExpenseListQuery",
+      "responseSchema": "ExpensePage",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /expenses"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.get",
+      "toolName": "expense_get",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "requestSchema": "Empty",
+      "responseSchema": "Expense",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /expenses/{expenseId}"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.create",
+      "toolName": "expense_create",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses",
+      "requestSchema": "ExpenseCreateCommand",
+      "responseSchema": "ExpenseMutationResponse",
+      "effect": "WRITE",
+      "commandUnits": [
+        "POST /expenses"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.envelope.idempotencyKey; body.envelope.commandId is the original command identity and may differ",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.create",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.create",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.update",
+      "toolName": "expense_update",
+      "family": null,
+      "method": "PUT",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "requestSchema": "ExpenseUpdateCommand",
+      "responseSchema": "ExpenseMutationResponse",
+      "effect": "WRITE",
+      "commandUnits": [
+        "PUT /expenses/{expenseId}"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.envelope.idempotencyKey; body.envelope.commandId is the original command identity and may differ",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.update",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.update",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.delete",
+      "toolName": "expense_delete",
+      "family": null,
+      "method": "DELETE",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "requestSchema": "ExpenseDeleteCommand",
+      "responseSchema": "ExpenseMutationResponse",
+      "effect": "WRITE",
+      "commandUnits": [
+        "DELETE /expenses/{expenseId}"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.envelope.idempotencyKey; body.envelope.commandId is the original command identity and may differ",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.delete",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.delete",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.restore",
+      "toolName": "expense_restore",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/restore",
+      "requestSchema": "ExpenseRestoreCommand",
+      "responseSchema": "ExpenseMutationResponse",
+      "effect": "WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/restore"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.envelope.idempotencyKey; body.envelope.commandId is the original command identity and may differ",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.restore",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.restore",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.valuation",
+      "toolName": "expense_valuation",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/valuations",
+      "requestSchema": "ExpenseValuationCommand",
+      "responseSchema": "ExpenseMutationResponse",
+      "effect": "WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/valuations"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.envelope.idempotencyKey; body.envelope.commandId is the original command identity and may differ",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.valuation",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.valuation",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.payment_record",
+      "toolName": "expense_payment_record",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/payment-records",
+      "requestSchema": "ExpensePaymentRecord",
+      "responseSchema": "ExpensePaymentRecordResult",
+      "effect": "WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/payment-records"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header is the new ancillary operation UUID; do not substitute a record localId or the original conflicted commandId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.payment_record",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.payment_record",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.conflicts",
+      "toolName": "expense_conflicts",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflicts",
+      "requestSchema": "Empty",
+      "responseSchema": "ExpenseConflictChain",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /expenses/{expenseId}/conflicts"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.conflicts",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.conflicts",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.resolve",
+      "toolName": "expense_resolve",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflict-resolution",
+      "requestSchema": "ExpenseConflictResolution",
+      "responseSchema": "ExpenseConflictResolutionResult",
+      "effect": "WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/conflict-resolution"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "expenseId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header is the new ancillary operation UUID; do not substitute a record localId or the original conflicted commandId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.resolve",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.resolve",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.fx.lookup",
+      "toolName": "fx_lookup",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/rate-lookup",
+      "requestSchema": "RateLookupRequest",
+      "responseSchema": "RateLookupResponse",
+      "effect": "READ",
+      "commandUnits": [
+        "POST /ledger/rate-lookup"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.fx.lookup",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.fx.lookup",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.fx.snapshots",
+      "toolName": "fx_snapshots",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/rate-quotes",
+      "requestSchema": "RateQuotesQuery",
+      "responseSchema": "RateQuotes",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /ledger/rate-quotes"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.fx.snapshots",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.fx.snapshots",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.link",
+      "toolName": "expense_link",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ExpenseItemLink",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "LINK_EXPENSE"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.link",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.link",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.expense.unlink",
+      "toolName": "expense_unlink",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "requestSchema": "ExpenseItemUnlink",
+      "responseSchema": "CoreReceiptProjection",
+      "effect": "WRITE",
+      "commandUnits": [
+        "UNLINK_EXPENSE"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2",
+        "Idempotency-Key": "NEW_UUID_BOUND_TO_ORIGINAL_OPERATION_IDENTITY"
+      },
+      "idempotencyBinding": "header = body.operationId",
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.expense.unlink",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.expense.unlink",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.settlement.preview",
+      "toolName": "settlement_preview",
+      "family": null,
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/settlements/preview",
+      "requestSchema": "SettlementPreviewRequest",
+      "responseSchema": "SettlementPreview",
+      "effect": "READ",
+      "commandUnits": [
+        "POST /settlements/preview"
+      ],
+      "inputLocation": "JSON_BODY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.settlement.preview",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.settlement.preview",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.settlement.list",
+      "toolName": "settlement_list",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements",
+      "requestSchema": "SettlementListQuery",
+      "responseSchema": "SettlementPage",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /settlements"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.settlement.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.settlement.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.settlement.get",
+      "toolName": "settlement_get",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}",
+      "requestSchema": "Empty",
+      "responseSchema": "FinalizedSettlement",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /settlements/{settlementId}"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "settlementId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.settlement.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.settlement.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.settlement.history",
+      "toolName": "settlement_history",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/history",
+      "requestSchema": "HistoryQuery",
+      "responseSchema": "SettlementHistoryPage",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /settlements/{settlementId}/history"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "settlementId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.settlement.history",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.settlement.history",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.settlement.payments.read",
+      "toolName": "settlement_payments_read",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/payments",
+      "requestSchema": "HistoryQuery",
+      "responseSchema": "SettlementPaymentPage",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /settlements/{settlementId}/payments"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "settlementId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.settlement.payments.read",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.settlement.payments.read",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.personal_payment.list",
+      "toolName": "personal_payment_list",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments",
+      "requestSchema": "PersonalPaymentListQuery",
+      "responseSchema": "PersonalPaymentList",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /ledger/personal-payments"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.personal_payment.list",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.personal_payment.list",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.personal_payment.get",
+      "toolName": "personal_payment_get",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments/{paymentId}",
+      "requestSchema": "Empty",
+      "responseSchema": "PersonalPaymentRead",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /ledger/personal-payments/{paymentId}"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "paymentId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.personal_payment.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.personal_payment.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.personal_review.read",
+      "toolName": "personal_review_read",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlement-review",
+      "requestSchema": "Empty",
+      "responseSchema": "PersonalReviewResponse",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /settlement-review"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.personal_review.read",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.personal_review.read",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.ledger.history",
+      "toolName": "ledger_history",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/history",
+      "requestSchema": "LedgerHistoryQuery",
+      "responseSchema": "LedgerHistoryPage",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /ledger/history"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.ledger.history",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.ledger.history",
+      "serverAcceptance": "BLOCKED_BY_OWNING_INTERFACE"
+    },
+    {
+      "capabilityId": "otr.ledger.export",
+      "toolName": "ledger_export",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/export",
+      "requestSchema": "LedgerExportQuery",
+      "responseSchema": "LedgerDataExport",
+      "effect": "READ",
+      "commandUnits": [
+        "GET /ledger/export"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.ledger.export",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.ledger.export",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.core.operation.get",
+      "toolName": "get_operation_status",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/operations/{operationId}",
+      "requestSchema": "Empty",
+      "responseSchema": "CoreReceiptOrUnknown",
+      "effect": "READ",
+      "commandUnits": [
+        "core.status"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "operationId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2"
+      },
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.core.operation.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.core.operation.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.operation.get",
+      "toolName": "get_trip_operation",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trip-create-operations/{operationId}",
+      "requestSchema": "Empty",
+      "responseSchema": "TripCreateResultOrUnknown",
+      "effect": "READ",
+      "commandUnits": [
+        "trip.status"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "operationId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "OTR-Trip-Create-Version": "2"
+      },
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.operation.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.operation.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.metadata.operation.get",
+      "toolName": "get_trip_metadata_operation",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trip-metadata-operations/{operationId}",
+      "requestSchema": "Empty",
+      "responseSchema": "StructuredMetadataReceiptOrUnknown",
+      "effect": "READ",
+      "commandUnits": [
+        "metadata.status"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "operationId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "OTR-Trip-Metadata-Version": "3"
+      },
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.metadata.operation.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.metadata.operation.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.ledger.operation.get",
+      "toolName": "get_ledger_operation",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/operations/{operationId}",
+      "requestSchema": "LedgerOperationQuery",
+      "responseSchema": "LedgerOperationStatus",
+      "effect": "READ",
+      "commandUnits": [
+        "ledger.status"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "operationId": {
+          "type": "ORIGINAL_LEDGER_STRING_1_200",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.ledger.operation.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.ledger.operation.get",
+      "serverAcceptance": "BLOCKED_BY_OWNING_INTERFACE"
+    },
+    {
+      "capabilityId": "otr.trip.lifecycle.operation.get",
+      "toolName": "get_trip_lifecycle_operation",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle-operations/{operationId}",
+      "requestSchema": "Empty",
+      "responseSchema": "TripLifecycleReceiptOrUnknown",
+      "effect": "READ",
+      "commandUnits": [
+        "trip.lifecycle.status"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "operationId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.lifecycle.operation.get",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.lifecycle.operation.get",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.permissions.read",
+      "toolName": "get_trip_capabilities",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/capabilities",
+      "requestSchema": "Empty",
+      "responseSchema": "CapabilitySnapshot",
+      "effect": "READ",
+      "commandUnits": [
+        "capabilities"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.permissions.read",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.permissions.read",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.core.collection.read",
+      "toolName": "read_core_snapshot",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/collection",
+      "requestSchema": "CoreCollectionQuery",
+      "responseSchema": "CoreCollection",
+      "effect": "READ",
+      "commandUnits": [
+        "core.collection"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {
+        "X-OTR-Core-Contract-Version": "2"
+      },
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.core.collection.read",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.core.collection.read",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.item.lifecycle.base",
+      "toolName": "get_item_lifecycle_base",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}/lifecycle",
+      "requestSchema": "ItemLifecycleQuery",
+      "responseSchema": "ItemLifecycleBase",
+      "effect": "READ",
+      "commandUnits": [
+        "item.lifecycle.base"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        },
+        "itemId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.item.lifecycle.base",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.item.lifecycle.base",
+      "serverAcceptance": "SERVER_API_PASS"
+    },
+    {
+      "capabilityId": "otr.trip.lifecycle.base",
+      "toolName": "get_trip_lifecycle_base",
+      "family": null,
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "requestSchema": "Empty",
+      "responseSchema": "TripLifecycleBase",
+      "effect": "READ",
+      "commandUnits": [
+        "trip.lifecycle.base"
+      ],
+      "inputLocation": "QUERY",
+      "pathParameters": {
+        "tripId": {
+          "type": "LOWERCASE_UUID",
+          "currentActorTripTargetBindingRequired": true
+        }
+      },
+      "headers": {},
+      "responseSchemaRef": "BETA_RESPONSE_SCHEMAS.json#/definitions/otr.trip.lifecycle.base",
+      "requestSchemaRef": "BETA_REQUEST_SCHEMAS.json#/definitions/otr.trip.lifecycle.base",
+      "serverAcceptance": "SERVER_API_PASS"
+    }
+  ],
+  "dispatch": [
+    {
+      "method": "GET",
+      "path": "/v2/trips",
+      "commandUnit": "trip.list",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/metadata",
+      "commandUnit": "trip.metadata.read",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips",
+      "commandUnit": "trip.create",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/metadata",
+      "commandUnit": "trip.metadata.update",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle:ARCHIVE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle:UNARCHIVE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle:DELETE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/preview-readonly",
+      "commandUnit": "currency.preview",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/commit",
+      "commandUnit": "currency.commit",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "commandUnit": "items.list",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "commandUnit": "items.search",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "commandUnit": "items.get",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "CREATE_ITEM",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_TEXT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_SCHEDULE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_PLACE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_CATEGORY",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_GROUPING",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_STATUS",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "HIDE_OBJECT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "RESTORE_OBJECT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "DELETE_ITEM",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_OBJECT_VISIBILITY",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_PARTICIPATION",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "CREATE_SPARSE_FLIGHT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_AUTHORED_FLIGHT_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_STAY_DETAILS",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_RENTAL_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_TRANSPORT_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ACTIVITY_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/people",
+      "commandUnit": "people.read",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses",
+      "commandUnit": "GET /expenses",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "commandUnit": "GET /expenses/{expenseId}",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses",
+      "commandUnit": "POST /expenses",
+      "category": "EXISTING"
+    },
+    {
+      "method": "PUT",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "commandUnit": "PUT /expenses/{expenseId}",
+      "category": "EXISTING"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "commandUnit": "DELETE /expenses/{expenseId}",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/restore",
+      "commandUnit": "POST /expenses/{expenseId}/restore",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/valuations",
+      "commandUnit": "POST /expenses/{expenseId}/valuations",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/payment-records",
+      "commandUnit": "POST /expenses/{expenseId}/payment-records",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflicts",
+      "commandUnit": "GET /expenses/{expenseId}/conflicts",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflict-resolution",
+      "commandUnit": "POST /expenses/{expenseId}/conflict-resolution",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/rate-lookup",
+      "commandUnit": "POST /ledger/rate-lookup",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/rate-quotes",
+      "commandUnit": "GET /ledger/rate-quotes",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "LINK_EXPENSE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "UNLINK_EXPENSE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/settlements/preview",
+      "commandUnit": "POST /settlements/preview",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements",
+      "commandUnit": "GET /settlements",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}",
+      "commandUnit": "GET /settlements/{settlementId}",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/history",
+      "commandUnit": "GET /settlements/{settlementId}/history",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/payments",
+      "commandUnit": "GET /settlements/{settlementId}/payments",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments",
+      "commandUnit": "GET /ledger/personal-payments",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments/{paymentId}",
+      "commandUnit": "GET /ledger/personal-payments/{paymentId}",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlement-review",
+      "commandUnit": "GET /settlement-review",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/history",
+      "commandUnit": "GET /ledger/history",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/export",
+      "commandUnit": "GET /ledger/export",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/operations/{operationId}",
+      "commandUnit": "core.status",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trip-create-operations/{operationId}",
+      "commandUnit": "trip.status",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trip-metadata-operations/{operationId}",
+      "commandUnit": "metadata.status",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/operations/{operationId}",
+      "commandUnit": "ledger.status",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle-operations/{operationId}",
+      "commandUnit": "trip.lifecycle.status",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/capabilities",
+      "commandUnit": "capabilities",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/collection",
+      "commandUnit": "core.collection",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}/lifecycle",
+      "commandUnit": "item.lifecycle.base",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle.base",
+      "category": "NEW_READER"
+    }
+  ],
+  "approvedSchemaDeltas": [
+    "LEDGER_HISTORY_SCHEMA_DELTA.json"
+  ],
+  "nativeAcceptance": {
+    "status": "SCOPED_NATIVE_AND_SYNC_CONTRACT_EVIDENCE_WITH_EXPLICIT_LIMITS",
+    "matrixLocation": "GAP_CLOSURE_MATRIX.json#/nativeRequirements",
+    "automaticForegroundSamples": 34,
+    "maxObservedCommitToUiUpperBoundMs": 12994.966064453125,
+    "deviceOsNetworkSwitch": "NOT_TESTED_SIMULATOR_CONTROL_UNAVAILABLE",
+    "consumerAcceptance": "NOT_TESTED"
+  },
+  "blockedInterfaces": [
+    {
+      "capabilityId": "otr.ledger.history",
+      "targetKind": "PERSONAL_PAYMENT",
+      "code": "PERSONAL_PAYMENT_AUDIT_SCHEMA_UNAVAILABLE",
+      "evidence": "HISTORY_HTTP_PG.json",
+      "ownerDirection": "Condition8: do not invent a missing formal domain Audit Event Schema"
+    },
+    {
+      "capabilityId": "otr.ledger.operation.get",
+      "branch": "COMPLETED_UNRESOLVED_TYPED_409",
+      "code": "LEDGER_REJECTED_RECEIPT_SCHEMA_UNAVAILABLE",
+      "evidence": "EXPENSE_LIST_HTTP_PG.json",
+      "ownerDirection": "History-only Delta grants no Receipt schema change"
+    }
+  ],
+  "nativeCompatibility": "Native complete setter supersets and old pending payloads retain their original schemas/owning paths. Frozen MCP inputs use only their approved narrow authority. Missing/invisible original lookups remain UNKNOWN recovery observations; they never grant FIRST_SEND."
+}

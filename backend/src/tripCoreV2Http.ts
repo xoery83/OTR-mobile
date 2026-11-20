@@ -4,6 +4,7 @@ import {
   validateCoreMemberRevokeReceipt,
 } from "../../src/domain/trip/tripCoreMemberAccess";
 import type { CoreMemberAccessPort } from "./tripCoreMemberAccess";
+import type { ManagedWriteAdmission } from "./managedWriteAdmission";
 import {
   coreUniversalP1PublishRequestSchema,
   coreUniversalP1PublishResultSchema,
@@ -100,7 +101,11 @@ export type CoreHttpConnection = {
   ): Promise<CoreCandidatePublicationResult>;
   read?: Pick<ReturnType<typeof createCorePgReader>, "collection" | "item"> &
     Partial<
-      Pick<ReturnType<typeof createCorePgReader>, "capabilities" | "authorizedVersion">
+      Pick<
+        ReturnType<typeof createCorePgReader>,
+        "capabilities" | "authorizedVersion" | "items" | "itemSnapshot" |
+        "itemLifecycle" | "people" | "betaCapabilityContext"
+      >
     >;
   commands: CoreCommandStorage;
   source?: CoreSourcePlanStorageV2;
@@ -179,6 +184,7 @@ export async function coreHttpBoundary(
   actor: string,
   canReadTrip: (actor: string, trip: string) => Promise<boolean>,
   connection?: CoreHttpConnection,
+  managedWriteAdmission?: ManagedWriteAdmission,
 ) {
   const url = new URL(request.url),
     match = /^\/v2\/trips\/([^/]+)\/core\/(.+)$/.exec(url.pathname);
@@ -273,6 +279,7 @@ export async function coreHttpBoundary(
         return failure(426, "UNSUPPORTED_CLIENT");
       const q = validateCoreOwningCommand(input);
       if (q.command === "REVOKE_LINKED_MEMBER_ACCESS") {
+        if (managedWriteAdmission) return failure(403, "MCP_WRITE_ADMISSION_CLOSED");
         if (q.tripId !== trip) return failure(404, "NOT_VISIBLE");
         if (!connection?.memberAccess) return failure(503, "CORE_CAPABILITY_CLOSED");
         const result = await connection.memberAccess.execute(actor, trip, q);
@@ -291,6 +298,8 @@ export async function coreHttpBoundary(
           receipt: verified,
         });
       }
+      if (managedWriteAdmission && q.admission.mode !== "MANUAL")
+        return failure(403, "MCP_WRITE_ADMISSION_CLOSED");
       if (q.tripId !== trip) return failure(404, "NOT_VISIBLE");
       if (!connection) return failure(503, "CORE_CAPABILITY_CLOSED");
       const result = await executeCoreCommandV2(
@@ -299,6 +308,8 @@ export async function coreHttpBoundary(
         trip,
         q,
         connection.hash,
+        undefined,
+        managedWriteAdmission,
       );
       return reply(
         200,
@@ -655,6 +666,8 @@ export async function coreHttpBoundary(
       return failure(409, "OWNING_ADMISSION_PENDING");
     if (["CORE_CAPABILITY_CLOSED", "CAPABILITY_CLOSED"].includes(code))
       return failure(503, "CORE_CAPABILITY_CLOSED");
+    if (code === "MCP_WRITE_ADMISSION_DENIED") return failure(401, code);
+    if (code === "MCP_WRITE_ADMISSION_CLOSED") return failure(403, code);
     if (["NOT_VISIBLE", "TRIP_NOT_AUTHORIZED"].includes(code))
       return failure(404, "NOT_VISIBLE");
     if (["OPERATION_REUSE_MISMATCH", "REVISION_CONFLICT", "GRAPH_CHANGED"].includes(code))

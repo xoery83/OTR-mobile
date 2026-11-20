@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import type {
+  McpBrowserProvider,
+  McpProviderInteraction,
+} from "@/data/auth/mcpBrowserProvider";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { UiButton, UiSection } from "@/ui/controls";
 import { UiTextInput } from "@/ui/textInput";
@@ -16,9 +20,13 @@ import {
 export function McpOAuthConsent({
   repository,
   navigate,
+  openProvider,
+  showUnavailableProviders = false,
 }: {
   repository?: ReturnType<typeof createMcpOAuthConsentRepository>;
   navigate(url: string): void;
+  openProvider?(): McpProviderInteraction;
+  showUnavailableProviders?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -27,6 +35,9 @@ export function McpOAuthConsent({
   const [sent, setSent] = useState(false),
     [busy, setBusy] = useState(false);
   const [view, setView] = useState<McpConsentView>();
+  const [linkState, setLinkState] = useState<
+    Partial<Record<McpBrowserProvider, "attempted" | "linked">>
+  >({});
   const [error, setError] = useState<McpConsentError["code"] | undefined>(
     repository ? undefined : "CLOSED",
   );
@@ -45,6 +56,11 @@ export function McpOAuthConsent({
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, [sent]);
+  function reportFailure(failure: unknown) {
+    const code: McpConsentError["code"] =
+      failure instanceof McpConsentError ? failure.code : "UNAVAILABLE";
+    if (active.current) setError(code);
+  }
   async function run(work: () => Promise<void>) {
     if (busy || !repository) return;
     setBusy(true);
@@ -52,9 +68,7 @@ export function McpOAuthConsent({
     try {
       await work();
     } catch (failure) {
-      const code: McpConsentError["code"] =
-        failure instanceof McpConsentError ? failure.code : "UNAVAILABLE";
-      if (active.current) setError(code);
+      reportFailure(failure);
     } finally {
       if (active.current) setBusy(false);
     }
@@ -66,8 +80,24 @@ export function McpOAuthConsent({
       if (active.current) navigate(result.url);
     } else setView(result);
   }
+  function startLink(provider: McpBrowserProvider, accountId: string) {
+    if (!repository || !openProvider || busy || linkState[provider]) return;
+    let interaction: McpProviderInteraction;
+    try {
+      interaction = openProvider();
+    } catch (failure) {
+      reportFailure(failure);
+      return;
+    }
+    setLinkState((state) => ({ ...state, [provider]: "attempted" }));
+    void run(async () => {
+      await repository.linkProvider(provider, accountId, interaction);
+      if (active.current) setLinkState((state) => ({ ...state, [provider]: "linked" }));
+    });
+  }
   const seconds = Math.max(0, Math.ceil((retryAt - now) / 1000));
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const providers = showUnavailableProviders ? ["apple", "google"] as const : repository?.browserProviders;
   return (
     <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
       <View style={styles.content}>
@@ -79,6 +109,32 @@ export function McpOAuthConsent({
           <Text style={styles.body}>{t("oauthConsent.explanation")}</Text>
           {!view && repository ? (
             <>
+              {providers?.map((provider) => (
+                <UiButton
+                  key={provider}
+                  variant="secondary"
+                  label={t(
+                    provider === "google" ? "auth.continueGoogle" : "auth.continueApple",
+                  )}
+                  disabled={busy || !openProvider || showUnavailableProviders}
+                  onPress={() => {
+                    if (busy || !openProvider || showUnavailableProviders) return;
+                    let interaction: McpProviderInteraction;
+                    try {
+                      interaction = openProvider();
+                    } catch (failure) {
+                      reportFailure(failure);
+                      return;
+                    }
+                    void run(async () =>
+                      finish(await repository.signInProvider(provider, interaction)),
+                    );
+                  }}
+                />
+              ))}
+              {showUnavailableProviders ? (
+                <Text style={styles.meta}>{t("oauthConsent.qaEmailOnly")}</Text>
+              ) : null}
               <UiTextInput
                 accessibilityLabel={t("oauthConsent.email")}
                 placeholder={t("oauthConsent.email")}
@@ -112,7 +168,7 @@ export function McpOAuthConsent({
                   onPress={() =>
                     void run(async () => {
                       const result = await repository.verifyCode(email.trim(), code);
-                      if (active.current) setView(result);
+                      if (active.current) await finish(result);
                     })
                   }
                 />
@@ -142,20 +198,63 @@ export function McpOAuthConsent({
           {view?.kind === "CONSENT" ? (
             <>
               <Text style={styles.body}>
-                {t("oauthConsent.request", { client: view.clientName })}
-              </Text>
-              <Text style={styles.body}>
                 {t(
-                  view.businessAccess === "READ_WRITE"
-                    ? "oauthConsent.writeScope"
-                    : "oauthConsent.scope",
+                  view.businessAccess === "BETA_READ_WRITE" ||
+                    view.businessAccess === "MANAGED_READ"
+                    ? "oauthConsent.betaRequest"
+                    : "oauthConsent.request",
+                  { client: view.clientName },
                 )}
               </Text>
+              <Text style={styles.body}>
+                {view.managedRename
+                  ? t("oauthConsent.managedRenameScope", view.managedRename)
+                  : t(
+                      view.businessAccess === "BETA_READ_WRITE"
+                        ? "oauthConsent.betaScope"
+                        : view.businessAccess === "MANAGED_READ"
+                          ? "oauthConsent.managedScope"
+                          : view.businessAccess === "READ_WRITE"
+                            ? "oauthConsent.writeScope"
+                            : "oauthConsent.scope",
+                    )}
+              </Text>
+              {view.managedPolicy ? (
+                <Text style={styles.meta}>
+                  {t("oauthConsent.managedPolicy", view.managedPolicy)}
+                </Text>
+              ) : null}
+              {view.linkableProviders?.length ? (
+                <>
+                  <Text style={styles.body}>
+                    {t("oauthConsent.linkAccount", { accountId: view.accountId })}
+                  </Text>
+                  {view.linkableProviders.map((provider) => (
+                    <UiButton
+                      key={provider}
+                      variant="secondary"
+                      label={t(
+                        linkState[provider] === "linked"
+                          ? provider === "google"
+                            ? "oauthConsent.googleLinked"
+                            : "oauthConsent.appleLinked"
+                          : provider === "google"
+                            ? "oauthConsent.linkGoogle"
+                            : "oauthConsent.linkApple",
+                      )}
+                      disabled={busy || !openProvider || !!linkState[provider]}
+                      onPress={() => startLink(provider, view.accountId)}
+                    />
+                  ))}
+                </>
+              ) : null}
               <UiButton
                 label={t(
-                  view.businessAccess === "READ_WRITE"
-                    ? "oauthConsent.allowWrite"
-                    : "oauthConsent.allow",
+                  view.businessAccess === "BETA_READ_WRITE" || view.managedRename
+                    ? "oauthConsent.allowBeta"
+                    : view.businessAccess === "READ_WRITE"
+                      ? "oauthConsent.allowWrite"
+                      : "oauthConsent.allow",
                 )}
                 disabled={busy}
                 onPress={() =>
@@ -178,6 +277,15 @@ export function McpOAuthConsent({
               disabled={busy}
               onPress={() => void run(async () => finish(view))}
             />
+          ) : null}
+          {view?.kind === "DECIDED" ? (
+            <Text accessibilityLiveRegion="polite" style={styles.body}>
+              {t(
+                view.decision === "APPROVED"
+                  ? "oauthConsent.managedApproved"
+                  : "oauthConsent.managedDenied",
+              )}
+            </Text>
           ) : null}
           {busy ? (
             <Text accessibilityLiveRegion="polite" style={styles.meta}>

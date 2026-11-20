@@ -22,6 +22,7 @@ export function coreActorReadRecords(
   authorizedEvidenceRefs: readonly string[] = [],
   ordinaryOrderVersion?: 1,
   localDocumentMetadata = false,
+  excludedItemIds: ReadonlySet<string> = new Set(),
 ): CoreReadRecord[] {
   const redact = (row: Record<string, unknown>) => {
     const copy = structuredClone(row);
@@ -59,6 +60,8 @@ export function coreActorReadRecords(
     for (const row of graph[table]) {
       if (
         (kind === "ORDER" && ordinaryOrderVersion !== 1) ||
+        (kind === "ITEM" && excludedItemIds.has(row.id as string)) ||
+        (kind === "INSTRUCTION" && excludedItemIds.has(row.event_id as string)) ||
         !coreCanRead(graph, actor, kind as CoreKind, row) ||
         (kind === "DOCUMENT" && !(row.custody === "LOCAL_ONLY"
           ? localDocumentMetadata
@@ -156,6 +159,7 @@ export async function buildCoreActorCollection(
   authorizedEvidenceRefs: readonly string[] = [],
   ordinaryOrderVersion?: 1,
   localDocumentMetadata = false,
+  excludedItemIds: ReadonlySet<string> = new Set(),
 ) {
   if (!actor.active) throw new Error("NOT_VISIBLE");
   const records = coreActorReadRecords(
@@ -166,6 +170,7 @@ export async function buildCoreActorCollection(
     authorizedEvidenceRefs,
     ordinaryOrderVersion,
     localDocumentMetadata,
+    excludedItemIds,
   );
   const sorted = [...bindings].sort((a, b) => a.person_id.localeCompare(b.person_id));
   for (const { revision, ...body } of sorted)

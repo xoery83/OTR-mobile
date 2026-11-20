@@ -1,0 +1,1452 @@
+{
+  "version": "otr.mcp-beta.risk/1.1.0",
+  "ownerDecision": "17 November2026 Risk-Based Write Authorization supersedes universal human confirmation",
+  "frozenRegistrySha256": "00fcc54e77110116311e4e5725d761274cdb82bdff562c337ee47013eec526d0",
+  "capabilityCount": 103,
+  "counts": {
+    "READ": 46,
+    "L1_NORMAL_WRITE": 16,
+    "L2_SENSITIVE_WRITE": 39,
+    "L3_HIGH_IMPACT_WRITE": 2
+  },
+  "rules": {
+    "riskSuppliedByModel": false,
+    "unregisteredOperation": "OUT_OF_SCOPE",
+    "l1l2": "OAUTH_WRITE_SCOPE_ACL_SERVER_VALIDATION_NO_PER_OPERATION_CONFIRM",
+    "l3": "PREVIEW_TRUSTED_CONFIRM_APPLY",
+    "batch": "Whole downstream impact;10+ distinct destructive targets => L3. Supplied executionPlan is bound to actual Apply call and Preview. Declared aggregate targets establish immutable deny-only account/resource fences before dispatch for900s; missing bulk approval stays closed. Rolling cross-call900s guard remains for undeclared decomposition.",
+    "expensePatch": "Participant split, payer or settlement participation changes escalate ordinary update to L2; actual typed patch is inspected",
+    "bulkDestructiveTargetThreshold": 10,
+    "decompositionWindowSeconds": 900,
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1",
+    "declaredPlanFenceSeconds": 900
+  },
+  "capabilities": [
+    {
+      "capabilityId": "otr.trip.list",
+      "method": "GET",
+      "path": "/v2/trips",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "trip.list"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/metadata",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "trip.metadata.read"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.create",
+      "method": "POST",
+      "path": "/v2/trips",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "trip.create"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/metadata",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "trip.metadata.update"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.archive",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "trip.lifecycle:ARCHIVE"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.unarchive",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "trip.lifecycle:UNARCHIVE"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.delete",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "effect": "WRITE",
+      "risk": "L3_HIGH_IMPACT_WRITE",
+      "commandUnits": [
+        "trip.lifecycle:DELETE"
+      ],
+      "reason": "Whole Trip deletion or journey-wide financial currency commit; exact trusted operation approval required",
+      "requiresTrustedConfirmation": true,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.currency.preview",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/preview-readonly",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "currency.preview"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.currency.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/commit",
+      "effect": "WRITE",
+      "risk": "L3_HIGH_IMPACT_WRITE",
+      "commandUnits": [
+        "currency.commit"
+      ],
+      "reason": "Whole Trip deletion or journey-wide financial currency commit; exact trusted operation approval required",
+      "requiresTrustedConfirmation": true,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.search",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.create",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_ITEM_PLACE",
+        "SET_ITEM_CATEGORY",
+        "SET_ITEM_GROUPING",
+        "SET_ITEM_STATUS"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.hide",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p1.restore",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.delete",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p1.visibility",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p1.participation",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.search",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.create",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "CREATE_SPARSE_FLIGHT"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "SET_AUTHORED_FLIGHT_DETAILS",
+        "SET_ITEM_TEXT"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.hide",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p2.restore",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.delete",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p2.visibility",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p2.participation",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.search",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.create",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_ITEM_PLACE",
+        "SET_STAY_DETAILS"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.hide",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p3.restore",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.delete",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p3.visibility",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p3.participation",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.search",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.create",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_RENTAL_DETAILS"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.hide",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p4.restore",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.delete",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p4.visibility",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p4.participation",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.search",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.create",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_TRANSPORT_DETAILS"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.hide",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p5.restore",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.delete",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p5.visibility",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p5.participation",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.list"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.search",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.search"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "items.get"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.create",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "CREATE_ITEM"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.update",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "SET_ITEM_TEXT",
+        "SET_ITEM_SCHEDULE",
+        "SET_ITEM_PLACE",
+        "SET_ACTIVITY_DETAILS",
+        "SET_ITEM_CATEGORY",
+        "SET_ITEM_STATUS"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.hide",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "HIDE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p6.restore",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "RESTORE_OBJECT"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.delete",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "DELETE_ITEM"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "multi-target destructive effect => L3",
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.p6.visibility",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_OBJECT_VISIBILITY"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.p6.participation",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "SET_ITEM_PARTICIPATION"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.people.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/people",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "people.read"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /expenses"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /expenses/{expenseId}"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.create",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "POST /expenses"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.update",
+      "method": "PUT",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "effect": "WRITE",
+      "risk": "L1_NORMAL_WRITE",
+      "commandUnits": [
+        "PUT /expenses/{expenseId}"
+      ],
+      "reason": "Normal create/update; OAuth write scope plus owning ACL, validation and CAS; no per-operation click",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "participantSplit/payer/settlementParticipation changes => L2"
+      ]
+    },
+    {
+      "capabilityId": "otr.expense.delete",
+      "method": "DELETE",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "DELETE /expenses/{expenseId}"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": [
+        "DECLARED_PLAN_TARGET_FENCE"
+      ]
+    },
+    {
+      "capabilityId": "otr.expense.restore",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/restore",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/restore"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.valuation",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/valuations",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/valuations"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.payment_record",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/payment-records",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/payment-records"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.conflicts",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflicts",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /expenses/{expenseId}/conflicts"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.resolve",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflict-resolution",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "POST /expenses/{expenseId}/conflict-resolution"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.fx.lookup",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/rate-lookup",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "POST /ledger/rate-lookup"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.fx.snapshots",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/rate-quotes",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /ledger/rate-quotes"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.link",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "LINK_EXPENSE"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.expense.unlink",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "effect": "WRITE",
+      "risk": "L2_SENSITIVE_WRITE",
+      "commandUnits": [
+        "UNLINK_EXPENSE"
+      ],
+      "reason": "Single-target reversible lifecycle, sharing/participation, financial evidence or linked-data effect; explain side effects before execution",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.settlement.preview",
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/settlements/preview",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "POST /settlements/preview"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.settlement.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /settlements"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.settlement.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /settlements/{settlementId}"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.settlement.history",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/history",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /settlements/{settlementId}/history"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.settlement.payments.read",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/payments",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /settlements/{settlementId}/payments"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.personal_payment.list",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /ledger/personal-payments"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.personal_payment.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments/{paymentId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /ledger/personal-payments/{paymentId}"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.personal_review.read",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlement-review",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /settlement-review"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.ledger.history",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/history",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /ledger/history"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.ledger.export",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/export",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "GET /ledger/export"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.core.operation.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/operations/{operationId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "core.status"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.operation.get",
+      "method": "GET",
+      "path": "/v2/trip-create-operations/{operationId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "trip.status"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.metadata.operation.get",
+      "method": "GET",
+      "path": "/v2/trip-metadata-operations/{operationId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "metadata.status"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.ledger.operation.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/operations/{operationId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "ledger.status"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.lifecycle.operation.get",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle-operations/{operationId}",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "trip.lifecycle.status"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.permissions.read",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/capabilities",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "capabilities"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.core.collection.read",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/collection",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "core.collection"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.item.lifecycle.base",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}/lifecycle",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "item.lifecycle.base"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    },
+    {
+      "capabilityId": "otr.trip.lifecycle.base",
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "effect": "READ",
+      "risk": "READ",
+      "commandUnits": [
+        "trip.lifecycle.base"
+      ],
+      "reason": "Owning read only; no business mutation",
+      "requiresTrustedConfirmation": false,
+      "dynamicEscalation": []
+    }
+  ],
+  "excludedCapabilities": [
+    {
+      "capability": "MEMBER_REMOVAL",
+      "risk": "OUT_OF_SCOPE"
+    },
+    {
+      "capability": "OWNERSHIP_TRANSFER",
+      "risk": "OUT_OF_SCOPE"
+    },
+    {
+      "capability": "SETTLEMENT_FINALIZE",
+      "risk": "OUT_OF_SCOPE"
+    },
+    {
+      "capability": "PERSONAL_PAYMENT_WRITE",
+      "risk": "OUT_OF_SCOPE"
+    },
+    {
+      "capability": "PERSONAL_REVIEW_WRITE",
+      "risk": "OUT_OF_SCOPE"
+    },
+    {
+      "capability": "DOCUMENT_UPLOAD",
+      "risk": "OUT_OF_SCOPE"
+    },
+    {
+      "capability": "BULK_BUSINESS_ENDPOINT",
+      "risk": "OUT_OF_SCOPE"
+    }
+  ]
+}

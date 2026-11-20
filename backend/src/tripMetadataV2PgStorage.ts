@@ -1,3 +1,4 @@
+import { measureSourcePdfPhase } from "./sourcePdfTiming";
 import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
 import {
   tripMetadataRevisionedReceiptSchema,
@@ -7,6 +8,8 @@ import {
 } from "../../src/domain/trip/tripMetadataV2Contract";
 import type { TripMetadataV2Port } from "./tripMetadataV2";
 import { TripMetadataError } from "./tripMetadata";
+import type { ManagedWriteAdmission } from "./managedWriteAdmission";
+import { canonicalCoreJson } from "../../src/domain/trip/tripCoreV2Json";
 type MetadataQuery = (
   sql: string,
   parameters: readonly unknown[],
@@ -14,6 +17,7 @@ type MetadataQuery = (
   trip: string | null,
   operation: string,
   kind: "update" | "receipt" | "snapshot",
+  admission?: { check: ManagedWriteAdmission; input: TripMetadataRevisionedUpdate },
 ) => Promise<
   | ReturnType<typeof tripMetadataRevisionedReceiptSchema.parse>
   | ReturnType<typeof tripMetadataRevisionedSnapshotSchema.parse>
@@ -32,7 +36,7 @@ function classify(e: unknown): never {
 }
 async function queryMetadataOnLease(
   lease: CorePgLease,
-  ...[sql, parameters, actor, trip, operation, kind]: Parameters<MetadataQuery>
+  ...[sql, parameters, actor, trip, operation, kind, admission]: Parameters<MetadataQuery>
 ): ReturnType<MetadataQuery> {
   const scope = async () => {
     const result = await lease.query(
@@ -43,6 +47,29 @@ async function queryMetadataOnLease(
       throw new TripMetadataError(503, "TRIP_METADATA_CLOSED");
   };
   await scope();
+  if (admission && kind === "update") {
+    const input = admission.input;
+    const reads = metadataStorage((...args) => queryMetadataOnLease(lease, ...args));
+    // The snapshot holds shared row locks. Release them before the RPC acquires write locks.
+    await lease.query("SAVEPOINT mcp_metadata_preflight");
+    const snapshot = await reads.snapshot(actor, input.tripId, operation);
+    if (
+      (snapshot.metadataRevision !== input.expectedMetadataRevision ||
+        snapshot.formatVersion !== input.formatVersion ||
+        canonicalCoreJson(snapshot.metadata) !== canonicalCoreJson(input.before)) &&
+      !(await reads.receipt(actor, operation))
+    )
+      throw new TripMetadataError(409, "TRIP_METADATA_CONFLICT");
+    await lease.query("ROLLBACK TO SAVEPOINT mcp_metadata_preflight");
+    await lease.query("RELEASE SAVEPOINT mcp_metadata_preflight");
+    // The external OAuth and Consent recheck can outlast the normal 5-second PG idle limit.
+    await lease.query("SET LOCAL idle_in_transaction_session_timeout='20s'");
+    await measureSourcePdfPhase("metadata_admission", async () => {
+      if (!(await admission.check(actor, input)))
+        throw new TripMetadataError(401, "MCP_WRITE_ADMISSION_DENIED");
+    });
+    await lease.query("SET LOCAL idle_in_transaction_session_timeout TO DEFAULT");
+  }
   const result = (await lease.query(sql, parameters)).rows[0]?.result;
   const checked =
     result === null && kind === "receipt"
@@ -62,7 +89,7 @@ async function queryMetadataOnLease(
 }
 function metadataStorage(query: MetadataQuery): TripMetadataV2Port {
   return {
-    async update(actor, input) {
+    async update(actor, input, admit) {
       return tripMetadataRevisionedReceiptSchema.parse(
         await query(
           "SELECT public.trip_metadata_update_command($1::uuid,$2::uuid,$3::uuid,$4::jsonb) AS result",
@@ -71,6 +98,7 @@ function metadataStorage(query: MetadataQuery): TripMetadataV2Port {
           input.tripId,
           input.operationId,
           "update",
+          admit ? { check: admit, input } : undefined,
         ),
       );
     },
@@ -100,22 +128,35 @@ function metadataStorage(query: MetadataQuery): TripMetadataV2Port {
   };
 }
 export function createTripMetadataV2PgStorage(
-  connection: CorePgConnection,
+  connection: CorePgConnection & {
+    withReadLease?: CorePgConnection["withLease"];
+    withManagedUpdateLease?: CorePgConnection["withLease"];
+  },
 ): TripMetadataV2Port {
   const query: MetadataQuery = async (...args) => {
+    let entered = false;
     try {
-      return await connection.withLease(async (lease) => {
-        await lease.query("BEGIN");
+      const work = async (lease: CorePgLease) => {
+        entered = true;
+        await measureSourcePdfPhase("metadata_begin", () => lease.query("BEGIN"));
         try {
           const result = await queryMetadataOnLease(lease, ...args);
-          await lease.query("COMMIT");
+          await measureSourcePdfPhase("metadata_commit", () => lease.query("COMMIT"));
           return result;
         } catch (e) {
           await lease.query("ROLLBACK").catch(() => lease.retire());
           throw e;
         }
-      });
+      };
+      // Managed writes still recheck current authorization and the exact input after acquiring the lease.
+      if (args[6] && connection.withManagedUpdateLease)
+        return await connection.withManagedUpdateLease(work);
+      return args[5] !== "update" && connection.withReadLease
+        ? await connection.withReadLease(work)
+        : await connection.withLease(work);
     } catch (e) {
+      if (args[6] && !entered && e instanceof Error && e.message === "CORE_CONNECTION_BUSY")
+        throw new TripMetadataError(503, "TRIP_METADATA_LEASE_BUSY");
       classify(e);
     }
   };
@@ -198,8 +239,10 @@ export async function withTripMetadataV2PgStorageOnTransaction<T>(
   };
   const port = metadataStorage(query);
   const bounded: TripMetadataV2Port = Object.freeze({
-    update: (actor: string, input: TripMetadataRevisionedUpdate) =>
-      run(() => port.update(actor, tripMetadataRevisionedUpdateSchema.parse(input))),
+    update: (actor, input, admit) =>
+      run(() =>
+        port.update(actor, tripMetadataRevisionedUpdateSchema.parse(input), admit),
+      ),
     receipt: (...args) => run(() => port.receipt(...args)),
     snapshot: (...args) => run(() => port.snapshot(...args)),
   });

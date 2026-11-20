@@ -1,5 +1,24 @@
 # Current Implementation State — 15 November2026 NZDT
 
+## MCP Shared DEV closure candidate — 21 November 2026 NZDT
+
+The isolated MCP review branch remains based on GitHub Main `41de4392`.
+It retains formal OIDC, account binding and explicit OTR business Consent.
+A verified pending account can load static tool descriptors. Business
+calls still require live authorization and the approved Consent binding.
+P5 `20261117000100` owns the identity DDL. The Shared DEV forward install
+requires its validated predecessor or exact pre-existing postimage.
+The candidate includes the already qualified Build 14 foreground discovery
+and Trip Home date projection source. Final ChatGPT and physical iPhone
+evidence remains in the Managed DEV final closure preflight packet.
+
+Standing Managed Consent starts its configured finite lifetime at explicit
+approval. A pending challenge is short lived and bounded by its original
+access token. A new access token must independently validate with the issuer
+and match the same OAuth session, account, client and policy. A new session or
+an expired Consent requires a fresh decision. See the Managed section of
+`docs/mcp/MCP_AUTH_CONTRACT.md` for the DEV role capacity and acceptance scope.
+
 ## Current checkpoint
 
 Import V3 **Slice6 Activity / Updates** is implemented on independent branch `codex/import-v3-slice6-activity`, worktree `/Users/xoery/Project/otr-mobile-import/import-v3-slice6-activity`. Owner accepted the evidenced2e751873/ae787285 functional scope. Final limited Activity UX product **39b22ea4c2ce25444fa67203d3982ec4e7b3a7b8**, **INTEGRATED — ACCEPTED SLICE SCOPE** via Owner-approved merge6aee5db and normal push from independent `slice6-main-merge-20261115` Worktree. Final remote SHA/verification is recorded in Mission Control and the execution receipt. Three-line rows, tighter filter spacing and footer-only partial-count guidance; Updates semantics unchanged. Closure report: `docs/ops/import-slice6-20261114/FINAL_UX_DENSITY_CLOSURE.md`.47 targeted tests/5files and independent static Review PASS; actual full iPhone screenshot/source/status filtering PASS. Optional extra DeviceHub scroll gesture returned noWindowsAvailable; not a claimed new scroll PASS. Prior positive Review/multi-account/outage Native gaps remain. Main merge/push is now authorized; shared DEV deployment and SQL remain outside scope.

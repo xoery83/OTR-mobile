@@ -35,6 +35,7 @@ import * as Network from "expo-network";
 import { AppState } from "react-native";
 import {
   refreshAccountTripReads,
+  refreshFocusedTripDiscovery,
   refreshForegroundTripReads,
 } from "../sync/tripDownstreamCoordinator";
 
@@ -79,12 +80,21 @@ let syncPaused = false;
 let activeHealthTimer: ReturnType<typeof setInterval> | null = null;
 const ACTIVE_HEALTH_INTERVAL_MS = 15 * 60_000;
 const ACTIVE_TRIP_READ_INTERVAL_MS = 45_000;
+const FOCUSED_DISCOVERY_INTERVAL_MS = 10_000;
 
 export function subscribeOperationalSyncLifecycle() {
   let online: boolean | null = null;
   let liveConnectivity = false;
   let removed = false;
+  let focusedDiscoveryTimer: ReturnType<typeof setInterval> | null = null;
+  const canRefresh = () => !removed && syncActive && syncOnline && !syncPaused;
   const updateActiveTimer = (active: boolean) => {
+    if (focusedDiscoveryTimer) clearInterval(focusedDiscoveryTimer);
+    focusedDiscoveryTimer = active
+      ? setInterval(() => {
+          if (canRefresh()) void refreshFocusedTripDiscovery(canRefresh).catch(() => undefined);
+        }, FOCUSED_DISCOVERY_INTERVAL_MS)
+      : null;
     if (activeHealthTimer) clearInterval(activeHealthTimer);
     let lastHealthAt = Date.now();
     activeHealthTimer = active

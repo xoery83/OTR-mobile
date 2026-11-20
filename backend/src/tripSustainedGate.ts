@@ -1,5 +1,5 @@
 import type { CorePgLease } from "./tripCoreV2PgStorage";
-export type CoreGateMode = { sustainedDev?: true; reviewedP1?: true };
+export type CoreGateMode = { sustainedDev?: true; reviewedP1?: true; betaLifecycle?: true };
 export async function readCoreGate(
   lease: CorePgLease,
   actor: string,
@@ -8,6 +8,7 @@ export async function readCoreGate(
   projection:
     | "runtime_enabled"
     | "runtime_enabled,enabled_commands"
+    | "runtime_enabled,enabled_commands,enabled_families,enabled_admission_modes"
     | "enabled_commands,enabled_families,enabled_admission_modes"
     | "enabled_families,enabled_admission_modes" = "enabled_commands,enabled_families,enabled_admission_modes",
 ) {

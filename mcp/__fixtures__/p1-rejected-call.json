@@ -1,0 +1,65 @@
+{
+  "capabilityId": "otr.p1.create",
+  "toolName": "create_trip_item",
+  "pathParams": {
+    "tripId": "00000000-0000-4000-8000-000000000007"
+  },
+  "query": {},
+  "request": {
+    "contractVersion": 2,
+    "intentVersion": 2,
+    "operationId": "00000000-0000-4000-8000-000000000008",
+    "tripId": "00000000-0000-4000-8000-000000000007",
+    "baseVector": [
+      {
+        "kind": "ITEM",
+        "id": "00000000-0000-4000-8000-000000000009",
+        "revision": null
+      }
+    ],
+    "command": "CREATE_ITEM",
+    "payload": {
+      "core": {
+        "title": "Layer3 P1 Test 01"
+      },
+      "participation": {
+        "mode": "WHOLE_GROUP",
+        "people": [],
+        "selfPersonId": null
+      },
+      "acl": {
+        "visibility": "GROUP",
+        "people": []
+      },
+      "schedule": {
+        "start": {
+          "instant": null,
+          "local_date": null,
+          "local_time": null,
+          "clock_precision": null,
+          "quality": "UNKNOWN",
+          "basis": "DERIVED_CIVIL",
+          "zone_id": null,
+          "supplied_offset_seconds": null,
+          "source_instant": null,
+          "source_instant_precision": null,
+          "civil_resolution": "PENDING",
+          "resolution_offset_seconds": null,
+          "interpretation_key": null,
+          "interpretation_input_sha256": null,
+          "provenance_refs": null
+        }
+      },
+      "family": "P1"
+    },
+    "admission": {
+      "mode": "MANUAL",
+      "sourceIntentId": null,
+      "policyVersion": null
+    },
+    "target": {
+      "kind": "ITEM",
+      "id": "00000000-0000-4000-8000-000000000009"
+    }
+  }
+}

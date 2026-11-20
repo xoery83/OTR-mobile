@@ -6,6 +6,7 @@ type Phase = {
   totalMs: number;
   maxMs: number;
   failures: Partial<Record<"lock_unavailable" | "query_canceled" | "other", number>>;
+  errorCodes?: Record<string, number>;
 };
 type RemoteSample = { operation: string; elapsedMs: number };
 const pgCommandPhases = new Set([
@@ -25,7 +26,37 @@ const remotePhases = new Set([
   "storage_http",
   "provider_http",
 ]);
+const readFailureCodes = new Set([
+  "53300",
+  "42501",
+  "57014",
+  "40001",
+  "40P01",
+  "25P02",
+  "42P01",
+  "42703",
+  "42883",
+  "28P01",
+  "08006",
+  "57P01",
+  "P0001",
+  "55P03",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "ENOTFOUND",
+  "EHOSTUNREACH",
+  "CORE_CONNECTION_BUSY",
+  "CORE_CONNECTION_TIMEOUT",
+  "CORE_CONNECTION_RETIRED",
+  "CORE_PRINCIPAL_UNAVAILABLE",
+  "CORE_TRANSACTION_UNFINISHED",
+  "TRIP_CREATE_RESULT_MISMATCH",
+  "TRIP_CREATE_CLOSED",
+  "TRIP_SUSTAINED_DEV_CLOSED",
+]);
 const timing = new AsyncLocalStorage<{
+  readDiagnostic: boolean;
   phases: Map<string, Phase>;
   pgCommandsByStage: Record<string, number>;
   slowestRemote: RemoteSample[];
@@ -46,7 +77,12 @@ export function recordSourcePdfTiming(
   if (!active) return;
   const { phases, pgCommandsByStage, slowestRemote } = active;
   const elapsed = performance.now() - start;
-  const entry = phases.get(phase) ?? { count: 0, totalMs: 0, maxMs: 0, failures: {} };
+  const entry: Phase = phases.get(phase) ?? {
+    count: 0,
+    totalMs: 0,
+    maxMs: 0,
+    failures: {},
+  };
   entry.count++;
   entry.totalMs += elapsed;
   entry.maxMs = Math.max(entry.maxMs, elapsed);
@@ -60,6 +96,26 @@ export function recordSourcePdfTiming(
           ? "query_canceled"
           : "other";
     entry.failures[kind] = (entry.failures[kind] ?? 0) + 1;
+    if (active.readDiagnostic) {
+      const message = error instanceof Error ? error.message : "";
+      const category =
+        typeof code === "string" && readFailureCodes.has(code)
+          ? code
+          : error instanceof Error && error.name === "ZodError"
+            ? "RESULT_SCHEMA_INVALID"
+            : readFailureCodes.has(message)
+              ? message
+              : [
+                    "Connection terminated due to connection timeout",
+                    "timeout expired",
+                  ].includes(message)
+                ? "CONNECT_TIMEOUT"
+                : message === "Query read timeout"
+                  ? "QUERY_TIMEOUT"
+                  : "OTHER";
+      entry.errorCodes ??= {};
+      entry.errorCodes[category] = (entry.errorCodes[category] ?? 0) + 1;
+    }
   }
   phases.set(phase, entry);
   if (pgCommandPhases.has(phase)) {
@@ -96,7 +152,11 @@ export function measureSourcePdfPhase<T>(
   operation?: string,
 ): Promise<T> {
   const start = sourcePdfTimingStart();
-  if (start === undefined) return work();
+  if (
+    start === undefined ||
+    (phase === "pg_read_result" && !timing.getStore()?.readDiagnostic)
+  )
+    return work();
   return (async () => {
     try {
       const result = await work();
@@ -111,11 +171,30 @@ export function measureSourcePdfPhase<T>(
 
 export async function runSourcePdfTimings<T>(
   requestId: string,
-  action: "dispatch" | "observe-retained" | "advance" | "start-resume" | "material-intake" | "run-wake",
+  action:
+    | "dispatch"
+    | "observe-retained"
+    | "advance"
+    | "start-resume"
+    | "material-intake"
+    | "run-wake"
+    | "core-read"
+    | "metadata-read"
+    | "metadata-write"
+    | "parent-receipt-read",
   work: () => Promise<T>,
 ) {
   return timing.run(
-    { phases: new Map(), pgCommandsByStage: {}, slowestRemote: [] },
+    {
+      phases: new Map(),
+      pgCommandsByStage: {},
+      slowestRemote: [],
+      readDiagnostic:
+        action === "core-read" ||
+        action === "metadata-read" ||
+        action === "metadata-write" ||
+        action === "parent-receipt-read",
+    },
     async () => {
       const start = performance.now();
       let status: number | undefined;
@@ -144,7 +223,9 @@ export async function runSourcePdfTimings<T>(
               status,
               totalMs: Math.round(performance.now() - start),
               phases,
-              ...(action === "start-resume" || action === "material-intake" || action === "run-wake"
+              ...(action === "start-resume" ||
+              action === "material-intake" ||
+              action === "run-wake"
                 ? {
                     pgCommands: Object.values(active.pgCommandsByStage).reduce(
                       (sum, count) => sum + count,

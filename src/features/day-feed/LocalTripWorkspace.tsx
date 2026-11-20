@@ -7,15 +7,13 @@ import {
   readTripDiscoveryReadObservation,
   subscribeTripDiscoveryReadObservation,
   refreshAccountTripReads,
-} from "@/data/operations/tripReadActivity";
+
+  filterNativeTripQaList,
+  nativeTripQaCreateFormat,
+  nativeTripAuthoredCloudTravelers} from "@/data/operations/tripReadActivity";
 import { readGuestTripCurrencyRepository } from "@/data/repositories/guestTripCurrencyRepository";
 import { guestTripDraftSnapshotSchema } from "@/domain/auth/guestTripDraft";
 import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
-import {
-  filterNativeTripQaList,
-  nativeTripQaCreateFormat,
-  nativeTripAuthoredCloudTravelers,
-} from "@/data/operations/tripReadActivity";
 import { canonicalCoreJson, type Json } from "@/domain/trip/tripCoreV2Json";
 import {
   readServerParentMetadataEditBase,
@@ -587,8 +585,15 @@ function LocalTripContent({
               ticket === request.current &&
               base.context.tripId === cached.id &&
               base.context.accountId === qaAccountId
-            )
-              { setRemoteMetadataReady(base); setMetadataBaseError(false); }
+            ) {
+              setRemoteSelected((previous) =>
+                previous?.id === base.context.tripId
+                  ? { ...previous, ...base.snapshot.metadata }
+                  : previous,
+              );
+              setRemoteMetadataReady(base);
+              setMetadataBaseError(false);
+            }
           } catch {
             if (
               alive.current &&
@@ -1392,11 +1397,6 @@ function LocalTripContent({
         </Text>
       ) : null}
 
-      {remoteSelected && metadataBaseError ? (
-        <Text accessibilityRole="alert" style={styles.status}>
-          {t("tripMetadata.confirmedBaseUnavailable")}
-        </Text>
-      ) : null}
       {selected ? (
         <>
           <TripHomeFrame
@@ -1720,7 +1720,10 @@ function LocalTripContent({
             title={remoteSelected.name}
             cover={tripCoverSource(displayCover ?? remoteSelected)}
             coverAssetId={tripCoverId(displayCover ?? remoteSelected)}
-            notice={remoteMetadataQualified ? undefined : t(serverParentPeopleEnabled && !metadataBaseError ? "dayFeed.loading" : "tripHome.metadataEditUnavailable")}
+            noticeAccessibilityRole={metadataBaseError ? "alert" : undefined}
+            notice={remoteMetadataQualified ? undefined : t(metadataBaseError
+              ? "tripMetadata.confirmedBaseUnavailable"
+              : serverParentPeopleEnabled ? "dayFeed.loading" : "tripHome.metadataEditUnavailable")}
             metadata={[
               ...(remoteStart && remoteEnd
                 ? [

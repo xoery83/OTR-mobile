@@ -58,7 +58,11 @@ export function startDevBackend(
     | "selfTripNicknamePort"
     | "tripMetadataPort"
     | "tripMetadataV2Port"
+    | "tripLifecyclePort"
+    | "managedTripLifecycleForGrant"
     | "coreConnection"
+    | "managedNativeConsent"
+    | "managedMcpApprovalConnection"
     | "guestAdoptionRuntime"
     | "documentOriginalReader"
     | "captureMaterialCustody"
@@ -119,9 +123,7 @@ export function startDevBackend(
         JSON.stringify({ level: event.failureClass ? "error" : "info", ...event }),
       ),
   );
-  const mcpReady = loadMcpQaRuntime(process.env,gateway,startOptions.coreConnection).catch(() => { console.info("MCP_QA_RUNTIME_CLOSED");return undefined; });
-  const handle = createDevBackendHandler({
-    mcpHttp: async (request) => (await mcpReady)?.(request) ?? null,
+  const dependencies: BackendDependencies = {
     gateway,
     accountProfileBootstrapPort: createAccountProfileBootstrapPort({
       url: environment.OTR_DEV_SUPABASE_URL,
@@ -135,7 +137,11 @@ export function startDevBackend(
     selfTripNicknamePort: startOptions.selfTripNicknamePort,
     tripMetadataPort: startOptions.tripMetadataPort,
     tripMetadataV2Port: startOptions.tripMetadataV2Port,
+    tripLifecyclePort: startOptions.tripLifecyclePort,
+    managedTripLifecycleForGrant: startOptions.managedTripLifecycleForGrant,
     coreConnection: startOptions.coreConnection,
+    managedNativeConsent: startOptions.managedNativeConsent,
+    managedMcpApprovalConnection: startOptions.managedMcpApprovalConnection,
     guestAdoptionRuntime: startOptions.guestAdoptionRuntime,
     documentOriginalReader: startOptions.documentOriginalReader,
     universalImportPort: startOptions.universalImportPort,
@@ -152,6 +158,13 @@ export function startDevBackend(
     log(event) {
       console.info(JSON.stringify({ level: "info", event: "request", ...event }));
     },
+  };
+  const mcpReady = loadMcpQaRuntime(
+    process.env, gateway, startOptions.coreConnection, undefined, dependencies,
+  ).catch(() => { console.info("MCP_QA_RUNTIME_CLOSED"); return undefined; });
+  const handle = createDevBackendHandler({
+    ...dependencies,
+    mcpHttp: async (request) => (await mcpReady)?.(request) ?? null,
   });
 
   const server = createServer(async (incoming, outgoing) => {
@@ -190,7 +203,11 @@ export function startDevBackend(
       const adoptionLimit = guestAdoptionBodyLimit(
         new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
       );
-      const mcpLimit = mcpIngressBodyLimit(new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,incoming.method ?? "");
+      const mcpLimit = mcpIngressBodyLimit(
+        new URL(incoming.url ?? "/", "http://127.0.0.1").pathname,
+        incoming.method ?? "",
+        !!startOptions.managedNativeConsent && process.env.OTR_DEV_MCP_MANAGED_DEV_CONFIG !== undefined,
+      );
       const retainedUrl = new URL(incoming.url ?? "/", "http://127.0.0.1");
       const retainedPngGet =
         incoming.method === "GET" &&
