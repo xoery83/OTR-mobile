@@ -534,7 +534,7 @@ function TripContent({
           generation === getAccountGeneration() &&
           event.accountId === trip?.scope.accountId &&
           requested &&
-          event.journeyIds.includes(requested)
+          (event.discoveryChanged || event.journeyIds.includes(requested))
         ) {
           setRevision((value) => value + 1);
           void load();

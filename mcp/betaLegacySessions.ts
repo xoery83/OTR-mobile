@@ -28,7 +28,7 @@ export function createBetaLegacySessions() {
   return {
     async handle(
       request: Request,
-      auth: McpAuthorization,
+      auth: Pick<McpAuthorization, "accountId" | "clientId" | "resource" | "expiresAt">,
       build: () => McpServer,
     ): Promise<Response | undefined> {
       const id = request.headers.get("Mcp-Session-Id");

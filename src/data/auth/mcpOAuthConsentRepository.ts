@@ -185,6 +185,7 @@ export function createMcpOAuthConsentRepository(
   let expectedRedirect = beta?.managedDev?.redirectUri;
   let expectedClient = beta?.managedDev?.clientId;
   let presentedWriteAccount: string | undefined;
+  let managedVerifiedEmail: string | undefined;
   const write = beta !== null || legacy?.businessAccess === "READ_WRITE";
   const current = () => {
     if (closed || Date.now() >= config.expiresAt) throw new McpConsentError("CLOSED");
@@ -666,6 +667,7 @@ export function createMcpOAuthConsentRepository(
           throw new McpConsentError("CLOSED");
         presentedWriteAccount = undefined;
         presentedConsent = undefined;
+        managedVerifiedEmail = undefined;
         const { error } = await client.auth.signInWithOtp({
           email: z.email().parse(email),
           options: { shouldCreateUser: false },
@@ -679,15 +681,14 @@ export function createMcpOAuthConsentRepository(
         presentedConsent = undefined;
         if (legacy && email.toLowerCase() !== legacy.qaEmail.toLowerCase())
           throw new McpConsentError("CLOSED");
-        const { error } = await client.auth.verifyOtp({
-          email: z.email().parse(email),
-          token: z
-            .string()
-            .regex(/^\d{8}$/)
-            .parse(code),
-          type: "email",
-        });
-        if (error) otpFailure(error.status);
+        const recipient = z.email().parse(email);
+        const token = z.string().regex(/^\d{8}$/).parse(code);
+        if (recipient !== managedVerifiedEmail) {
+          const { error } = await client.auth.verifyOtp({ email: recipient, token, type: "email" });
+          if (error) otpFailure(error.status);
+          // Retrying an inspection must not resubmit an already consumed OTP.
+          if (managedPin) managedVerifiedEmail = recipient;
+        }
         return presentedDetails(true);
       });
     },

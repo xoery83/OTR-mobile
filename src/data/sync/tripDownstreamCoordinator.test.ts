@@ -177,6 +177,26 @@ it("summary discovery does not download every historical Trip", async () => {
   expect(f.deps.pull).not.toHaveBeenCalled();
 });
 
+it("refreshes focused discovery within the normal cooldown without bypassing failure backoff", async () => {
+  const f = fixture();
+  const scope = await f.deps.scope();
+  await f.read.discovery();
+  f.tick(10_000);
+  await f.read.foregroundDiscovery(scope, () => true);
+  expect(f.deps.discover).toHaveBeenCalledTimes(2);
+  expect(f.deps.notify).toHaveBeenLastCalledWith(scope, [], true);
+  expect(f.deps.pull).not.toHaveBeenCalled();
+
+  f.tick(10_000);
+  f.deps.discover.mockRejectedValueOnce(Error("OFFLINE"));
+  await expect(f.read.foregroundDiscovery(scope, () => true)).rejects.toThrow("OFFLINE");
+  f.tick(10_000);
+  await f.read.foregroundDiscovery(scope, () => true);
+  f.tick(5_000);
+  await f.read.foregroundDiscovery(scope, () => false);
+  expect(f.deps.discover).toHaveBeenCalledTimes(3);
+});
+
 it("a foreground target cannot be rebound to a new Account", async () => {
   const f = fixture();
   const expected = await f.deps.scope();

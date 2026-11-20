@@ -422,6 +422,10 @@ export function managedNativeAuthorization(options: {
         throw error;
       }
     },
+    discoveryIdentity(request: Request) {
+      const session = pending.get(request);
+      return session && { ...session, resource };
+    },
     async unapproved(request: Request, signal: AbortSignal) {
       const session = pending.get(request);
       pending.delete(request);

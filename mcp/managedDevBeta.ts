@@ -150,6 +150,7 @@ export function createManagedDevConfiguredHost(
       resource: managedDevBetaResource,
       authorize: native.authorize,
       unapproved: native.unapproved,
+      discoveryIdentity: native.discoveryIdentity,
       legacyTripRead: true,
       riskBasedWrites: true,
       requireFirstPartyL3: !!standing,

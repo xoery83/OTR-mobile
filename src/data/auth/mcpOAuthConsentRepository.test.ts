@@ -592,6 +592,7 @@ it.each(["APPROVED", "PENDING"] as const)("reads back a Managed decision after a
   const policyHash = "a".repeat(64);
   const challenge = { id: challengeId, accountId: id, state: "PENDING", policy: { policyId: "unit", policyVersion: "1", policyHash } };
   const request = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({}, { status: 403 }))
     .mockResolvedValueOnce(Response.json({}, { status: 503 }))
     .mockResolvedValueOnce(Response.json(challenge))
     .mockResolvedValueOnce(Response.json({}, { status: 403 }))
@@ -610,9 +611,13 @@ it.each(["APPROVED", "PENDING"] as const)("reads back a Managed decision after a
         allow_reuse: false, grant_ttl_seconds: 600 },
     },
   }, challengeId, { auth } as unknown as SupabaseClient, request, true);
-  await expect(repo.load()).resolves.toMatchObject({ kind: "CONSENT" });
+  await expect(repo.verifyCode("unit@example.invalid", "12345678"))
+    .rejects.toMatchObject({ code: "UNAVAILABLE" });
+  await expect(repo.verifyCode("unit@example.invalid", "12345678"))
+    .resolves.toMatchObject({ kind: "CONSENT" });
+  expect(q.auth.verifyOtp).toHaveBeenCalledOnce();
   if (state === "APPROVED") await expect(repo.decide(true)).resolves.toEqual({ kind: "DECIDED", decision: state });
   else await expect(repo.decide(true)).rejects.toMatchObject({ code: "UNAVAILABLE" });
-  expect(request.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).action)).toEqual(["inspect", "inspect", "decide", "inspect"]);
+  expect(request.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).action)).toEqual(["inspect", "inspect", "inspect", "decide", "inspect"]);
   await repo.close();
 });

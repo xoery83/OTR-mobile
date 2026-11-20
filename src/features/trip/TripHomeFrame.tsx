@@ -27,6 +27,7 @@ export function TripHomeFrame({
   widgets = [],
   modules,
   notice,
+  noticeAccessibilityRole,
   onHeroHeight,
   onEdit,
   canChooseCover = false,
@@ -41,6 +42,7 @@ export function TripHomeFrame({
   widgets?: readonly TripHomeWidget[];
   modules?: ReactNode;
   notice?: string;
+  noticeAccessibilityRole?: "alert";
   onHeroHeight?: (height: number) => void;
   onEdit?: () => void;
   canChooseCover?: boolean;
@@ -103,7 +105,7 @@ export function TripHomeFrame({
           ))}
         </Pressable>
       </TripCoverVisual>
-      {notice ? <UiText style={styles.notice}>{notice}</UiText> : null}
+      {notice ? <UiText accessibilityRole={noticeAccessibilityRole} style={styles.notice}>{notice}</UiText> : null}
       <View style={styles.workspace}>
         <TripHomeWidgetHost widgets={widgets} />
       </View>

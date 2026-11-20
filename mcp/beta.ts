@@ -214,12 +214,19 @@ export function adaptLegacyTripRead(bytes: Uint8Array): Uint8Array {
   return Buffer.from(JSON.stringify({ ...rpc, params: { ...rpc.params, arguments: { call } } }));
 }
 
+type DiscoveryIdentity = Pick<McpAuthorization, "accountId" | "clientId" | "resource" | "expiresAt">;
+const discoveryRequest = z.object({
+  jsonrpc: z.literal("2.0"),
+  method: z.enum(["initialize", "notifications/initialized", "ping", "tools/list"]),
+});
+
 export function createBetaMcpHandler(
   options: McpOptions & {
     evidence?: (event: BetaEvidence) => void;
     acceptanceCaptureReady?: (event: BetaEvidence) => boolean;
     preserveCompletedWriteReceipt?: boolean;
     legacyTripRead?: boolean;
+    discoveryIdentity?: (request: Request) => DiscoveryIdentity | undefined;
     unapproved?: (request: Request, signal: AbortSignal) => Promise<Response | null>;
     riskBasedWrites?: boolean;
     requireFirstPartyL3?: boolean;
@@ -1115,18 +1122,20 @@ export function createBetaMcpHandler(
     let server: McpServer | undefined;
     let retainedBoundary = false;
     try {
-      const auth = await boundary.run(async () => options.authorize?.(request));
-      if (
-        !auth ||
-        auth.resource !== options.resource ||
-        !auth.clientId ||
-        auth.expiresAt <= Date.now() ||
-        !auth.scopes.includes("otr.trips.read")
-      )
-        return (
-          (await options.unapproved?.(request, boundary.signal)) ??
-          reply(401, "AUTH_REQUIRED")
-        );
+      const verified = await boundary.run(async () => options.authorize?.(request));
+      const auth = verified &&
+        verified.resource === options.resource &&
+        verified.clientId &&
+        verified.expiresAt > Date.now() &&
+        verified.scopes.includes("otr.trips.read") ? verified : undefined;
+      const discovery = !auth && request.method === "POST" ? options.discoveryIdentity?.(request) : undefined;
+      const transportIdentity = auth ?? (
+        discovery?.resource === options.resource && discovery.clientId && discovery.expiresAt > Date.now() &&
+        discoveryRequest.safeParse(await readBoundedJson(new Response(request.clone().body), 16384, boundary)
+          .catch(() => undefined)).success ? discovery : undefined
+      );
+      if (!transportIdentity)
+        return (await options.unapproved?.(request, boundary.signal)) ?? reply(401, "AUTH_REQUIRED");
       const bytes =
         request.method === "POST"
           ? await readBoundedBytes(request, 1048576, boundary)
@@ -1140,8 +1149,8 @@ export function createBetaMcpHandler(
         ...(wireBytes ? { body: Buffer.from(wireBytes) } : {}),
         signal: boundary.signal,
       });
-      return await requestScope.run({ auth, boundary }, async () => {
-        if (options.evidence && bytes) {
+      const dispatch = async () => {
+        if (auth && options.evidence && bytes) {
           try {
             const rpc = JSON.parse(new TextDecoder().decode(bytes));
             const meta = rpc?.params?._meta;
@@ -1177,7 +1186,7 @@ export function createBetaMcpHandler(
             /* malformed negotiation evidence cannot change request handling */
           }
         }
-        const legacyResponse = await legacy.handle(wireRequest, auth, buildServer);
+        const legacyResponse = await legacy.handle(wireRequest, transportIdentity, buildServer);
         if (legacyResponse) {
           retainedBoundary = true;
           const reader = legacyResponse.body?.getReader();
@@ -1229,7 +1238,9 @@ export function createBetaMcpHandler(
             Vary: "Authorization",
           },
         });
-      });
+      };
+      // A verified pending session can load descriptors. It has no business-call context.
+      return await (auth ? requestScope.run({ auth, boundary }, dispatch) : dispatch());
     } catch {
       return reply(boundary.signal.aborted ? 504 : 503, "MCP_REQUEST_UNAVAILABLE");
     } finally {

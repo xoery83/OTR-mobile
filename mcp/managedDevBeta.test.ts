@@ -316,7 +316,11 @@ it("uses the same signed native session for live user and private Consent and st
   const call = (bearer = token, method = "tools/call") =>
     new Request(managedDevBetaResource, {
       method: "POST",
-      headers: { Authorization: `Bearer ${bearer}` },
+      headers: {
+        Authorization: `Bearer ${bearer}`,
+        Accept: "application/json, text/event-stream",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ jsonrpc: "2.0", id: 4, method }),
     });
   const invalid = call("invalid");
@@ -338,15 +342,28 @@ it("uses the same signed native session for live user and private Consent and st
     resource: managedDevBetaResource,
     authorize: native.authorize,
     unapproved: native.unapproved,
+    discoveryIdentity: native.discoveryIdentity,
   });
   const discoveryResponse = await handleDiscovery(call(token, "tools/list"));
   expect(discoveryResponse.status).toBe(200);
-  expect(await discoveryResponse.json()).toMatchObject({
-    jsonrpc: "2.0",
-    id: 4,
-    error: { code: -32001, message: "OTR_CONSENT_REQUIRED" },
+  const discoveryWire = await discoveryResponse.text();
+  const discovery = JSON.parse(discoveryResponse.headers.get("content-type")?.includes("text/event-stream")
+    ? discoveryWire.split("\n").find((line) => line.startsWith("data:"))!.slice(5)
+    : discoveryWire);
+  expect(discovery.result.tools).toEqual(expect.arrayContaining([
+    expect.objectContaining({ name: "get_trip" }),
+  ]));
+  expect(await (await handleDiscovery(call("invalid", "tools/list"))).json())
+    .toEqual({ error: { code: "AUTH_REQUIRED" } });
+  expect(adapter.getOrCreateChallenge).not.toHaveBeenCalled();
+  const mixed = new Request(managedDevBetaResource, {
+    method: "POST",
+    headers: call().headers,
+    body: JSON.stringify([{ jsonrpc: "2.0", id: 1, method: "tools/list" },
+      { jsonrpc: "2.0", id: 2, method: "tools/call" }]),
   });
-  const pending = call(token, "initialize");
+  expect((await handleDiscovery(mixed)).status).toBe(401);
+  const pending = call(token, "tools/call");
   expect(await native.authorize(pending)).toBeNull();
   const link = await native.unapproved(pending, pending.signal);
   const { error } = await link!.json();
