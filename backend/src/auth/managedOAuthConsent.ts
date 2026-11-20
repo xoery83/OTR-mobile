@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import { setTimeout as delay } from "node:timers/promises";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
+import type { ManagedConsentQuery } from "../managedWriteAdmission";
 const verifiedManagedOAuthSessionSchema = z.strictObject({
   issuer: z.literal("https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1"),
   accountId: z.uuid(),
@@ -90,6 +91,7 @@ export function createManagedOAuthConsent(
     signal.throwIfAborted();
     try {
       return await connection.withLease(async (lease) => {
+        signal.throwIfAborted();
         stage = "begin";
         await lease.query(options?.readOnly ? "BEGIN READ ONLY" : "BEGIN", []);
         try {
@@ -444,11 +446,16 @@ export function createManagedOAuthConsent(
         return { sessionId, state: "REVOKED" as const };
       });
     },
-    async readBinding(session: VerifiedManagedOAuthSession, signal: AbortSignal) {
+    async readBinding(
+      session: VerifiedManagedOAuthSession,
+      signal: AbortSignal,
+      consentQuery?: ManagedConsentQuery,
+    ) {
       try {
         session = verifiedManagedOAuthSessionSchema.parse(session);
         const current = policy();
-        return await transaction(signal, async (lease) => {
+        const readApproval = async (lease: ManagedConsentQuery) => {
+          signal.throwIfAborted();
           const result = await lease.query(
             select +
               ` WHERE oauth_session->>'issuer'=$1
@@ -467,6 +474,7 @@ export function createManagedOAuthConsent(
               current.policyHash,
             ],
           );
+          signal.throwIfAborted();
           if (result.rows.length !== 1) return failure();
           const saved = rowSchema.parse(result.rows[0]);
           const native = checkSession(saved, session);
@@ -478,7 +486,11 @@ export function createManagedOAuthConsent(
             expiresAt: saved.consent_expires_ms,
           };
           return binding.expiresAt > Date.now() ? binding : null;
-        }, { readOnly: true, retryBusyLease: true });
+        };
+        // Core already owns a transaction on this role's sole connection.
+        return consentQuery
+          ? await readApproval(consentQuery)
+          : await transaction(signal, readApproval, { readOnly: true, retryBusyLease: true });
       } catch (error) {
         if (error instanceof ManagedConsentRejected || error instanceof z.ZodError) return null;
         throw error;

@@ -159,10 +159,8 @@ export async function loadDevTripCreateRuntime(
       managedConfig !== undefined && config.mcpApprovalPg
         ? createMcpOperationApprovalPgConnection(config.mcpApprovalPg)
         : undefined;
-    const consentConnection =
-      managedConfig === undefined ? undefined : createCorePgConnection(config.corePg);
     let managedNativeConsent;
-    if (managedConfig !== undefined && consentConnection) {
+    if (managedConfig !== undefined) {
       try {
         const { consentPolicy, expiresAt } = JSON.parse(managedConfig);
         const policy = {
@@ -172,8 +170,7 @@ export async function loadDevTripCreateRuntime(
           expiresAt: expiresAt === null ? Number.MAX_SAFE_INTEGER : expiresAt,
           ...(expiresAt === null ? { grantTtlSeconds: consentPolicy.policy.grant_ttl_seconds } : {}),
         };
-        // A separate lease avoids waiting on the owning Core transaction during admission.
-        managedNativeConsent = createManagedOAuthConsent(consentConnection, () => policy);
+        managedNativeConsent = createManagedOAuthConsent(rawCoreConnection, () => policy);
       } catch {
         console.info("MCP_MANAGED_CONSENT_CLOSED");
       }
@@ -276,7 +273,7 @@ export async function loadDevTripCreateRuntime(
       tripPersonCloudCreatePort,
       async close() {
         closed = true;
-        await consentConnection?.close();
+        await rawCoreConnection.close();
         await managedMcpApprovalConnection?.close();
         sustained.close();
       },

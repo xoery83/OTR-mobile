@@ -45,6 +45,7 @@ export type CoreCommandTransaction = {
   admissionAudit?(): Promise<
     Pick<CoreReceipt["audit"], "evidenceRefs" | "authorizationRefs">
   >;
+  admitManagedWrite?(admit: ManagedWriteAdmission, command: CoreCommand): Promise<boolean>;
   commit(
     mutation: CoreMutation | null,
     receipt: CoreReceipt,
@@ -354,8 +355,12 @@ export async function executeCoreCommandV2(
         ...body,
         receiptSha256: await coreHashValue("otr-trip-core-receipt-v2", body, hash),
       });
-      if (managedWriteAdmission && !(await managedWriteAdmission(actorAccountId, command)))
-        throw Error("MCP_WRITE_ADMISSION_DENIED");
+      if (managedWriteAdmission) {
+        const admitted = tx.admitManagedWrite
+          ? await tx.admitManagedWrite(managedWriteAdmission, command)
+          : await managedWriteAdmission(actorAccountId, command);
+        if (!admitted) throw Error("MCP_WRITE_ADMISSION_DENIED");
+      }
       const domainReceiptId = await tx.commit(mutation, receipt, canonicalIntent);
       return (await tx.canReadReceipt(receipt))
         ? { projection: "FULL", domainReceiptId, receipt }

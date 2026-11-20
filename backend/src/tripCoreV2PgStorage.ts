@@ -523,6 +523,12 @@ function createCorePgStorageOnLease(
         verified: { command: CoreCommand; intentSha256: string } | undefined;
       const tx: CoreCommandTransaction = {
         actor,
+        ...(scope.managedMcp ? {
+          async admitManagedWrite(admit, command) {
+            await assertCorePgPrincipal(lease);
+            return admit(actor.accountId, command, undefined, { query: lease.query });
+          },
+        } : {}),
         async authoritativeClock() {
           const clock = (
             await lease.query("SELECT to_jsonb(transaction_timestamp()) AS instant")

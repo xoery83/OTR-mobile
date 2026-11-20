@@ -16,11 +16,11 @@ Consent expiry cannot revive prior evidence. A new explicit decision renews
 expired Consent. Existing high-risk confirmation and already-accepted
 Operation and Receipt behavior remain in force.
 
-The existing Core and Consent connection managers each admit one active
-lease with bounded waiting. They use the same narrowly scoped Core gateway
-role. A Core write can hold the first connection while it checks Consent
-before admission on the second. The Shared DEV runtime therefore uses a
-role connection limit of two without expanding any object permissions.
+Core and Consent use one connection manager with bounded waiting, under the
+existing Core gateway role's single-connection limit. When Core owns the
+transaction, the final Consent check reads through that transaction's existing
+gateway lease while it revalidates the provider token. The current Core
+admission position and existing object privileges remain in effect.
 One bounded retry is available only for capacity error 53300 before the
 Consent transaction begins. A failed or ambiguous commit is never replayed.
 

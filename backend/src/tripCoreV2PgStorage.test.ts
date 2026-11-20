@@ -88,6 +88,26 @@ const commandScope = () => ({
   operationId: randomUUID(),
   baseVector: [],
 });
+it("reads Managed Consent on the owning Core transaction without taking a second lease", async () => {
+  const f = fixture();
+  const withLease = vi.fn(async <T>(work: (lease: CorePgLease) => Promise<T>) =>
+    work(f.lease));
+  const storage = createCorePgStorage({ withLease }, hash);
+  const scope = { ...commandScope(), operationId: operation, managedMcp: true as const };
+  await storage.withLockedCommand(scope, async (tx) => {
+    expect(await tx.admitManagedWrite!(async (account, request, _body, consent) => {
+      expect(account).toBe(actor);
+      expect(request.operationId).toBe(operation);
+      await consent!.query("SELECT 1");
+      return false;
+    }, validateCoreCommand(command()))).toBe(false);
+  });
+  expect(withLease).toHaveBeenCalledOnce();
+  expect(f.queries.filter(({ sql }) => sql.startsWith("BEGIN"))).toHaveLength(1);
+  expect(f.queries.findIndex(({ sql }) => sql === "SELECT 1")).toBeLessThan(
+    f.queries.findIndex(({ sql }) => sql === "COMMIT"),
+  );
+});
 it("composes two sequential owning commands on exactly one lease and one outer transaction", async () => {
   const f = fixture();
   const connection = {

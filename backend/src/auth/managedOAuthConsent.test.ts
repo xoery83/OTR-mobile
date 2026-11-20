@@ -219,10 +219,9 @@ it("starts the finite standing Consent at approval and preserves it across same-
       id, secret_hash: secret, oauth_session: session, native_snapshot: native, policy,
       state: "PENDING", challenge_expires_ms: session.expiresAt, consent_expires_ms: session.expiresAt,
     };
-    const adapter = createManagedOAuthConsent({
-      withLease: (work) => work({
+    const lease = {
         retire() {},
-        async query(sql, args) {
+        async query(sql: string, args: readonly string[] = []) {
           if (sql.includes("AS session_state")) return { rows: [{ session_state: "SESSION_OPEN" }] };
           if (sql.includes("WHERE id=$1::uuid") && sql.startsWith("SELECT")) return { rows: [row] };
           if (sql.includes("SET state=$2")) {
@@ -236,8 +235,9 @@ it("starts the finite standing Consent at approval and preserves it across same-
           }
           return { rows: [] };
         },
-      }),
-    }, () => policy);
+    };
+    const withLease = vi.fn(async <T>(work: (port: typeof lease) => Promise<T>) => work(lease));
+    const adapter = createManagedOAuthConsent({ withLease }, () => policy);
     const signal = new AbortController().signal;
     clock.mockReturnValue(now + 5000);
     await adapter.decideById({ kind: "FIRST_PARTY", accountId: native.accountId }, id, true, signal);
@@ -246,6 +246,9 @@ it("starts the finite standing Consent at approval and preserves it across same-
     await expect(adapter.readBinding(session, signal)).resolves.toBeNull();
     const refreshed = { ...session, expiresAt: now + 7_200_000 };
     await expect(adapter.readBinding(refreshed, signal)).resolves.toMatchObject({ evidenceId: id });
+    const previousLeases = withLease.mock.calls.length;
+    await expect(adapter.readBinding(refreshed, signal, lease)).resolves.toMatchObject({ evidenceId: id });
+    expect(withLease).toHaveBeenCalledTimes(previousLeases);
     await expect(adapter.readBinding({ ...refreshed,
       sessionId: "44444444-4444-4444-8444-444444444444" }, signal)).resolves.toBeNull();
     clock.mockReturnValue(row.consent_expires_ms);

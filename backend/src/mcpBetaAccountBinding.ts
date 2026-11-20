@@ -9,11 +9,13 @@ import type { BetaBackend } from "../../mcp/beta";
 import registry from "../../docs/mcp/beta-contract-v1/CAPABILITY_REGISTRY_V1.json";
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import type { ManagedConsentQuery } from "./managedWriteAdmission";
 
 export type BetaPrincipalVerifier = (
   grant: OAuthGrant,
   signal: AbortSignal,
   evidence: Readonly<{ accessToken: string }>,
+  consentQuery?: ManagedConsentQuery,
 ) => Promise<AuthenticatedUser | null>;
 // Runs inside Backend after signature/audience/consent verification, not an upstream bearer proxy.
 class McpPrincipalRejected extends Error {}
@@ -46,10 +48,10 @@ export function createMcpBetaAccountBinding(
     const grant = Object.freeze({ ...input, scopes: Object.freeze([...input.scopes]) });
     const evidence = Object.freeze({ ...inputEvidence });
     const origin = new URL(grant.resource).origin;
-    const current = async (signal: AbortSignal) => {
+    const current = async (signal: AbortSignal, consentQuery?: ManagedConsentQuery) => {
       signal.throwIfAborted();
       if (grant.expiresAt <= Date.now()) throw new McpPrincipalRejected();
-      const account = await verifyPrincipal(grant, signal, evidence);
+      const account = await verifyPrincipal(grant, signal, evidence, consentQuery);
       signal.throwIfAborted();
       if (
         !account ||
@@ -141,6 +143,7 @@ export function createMcpBetaAccountBinding(
               actor: string,
               actual: Readonly<{ operationId: string; tripId: string }>,
               wireBody?: unknown,
+              consentQuery?: ManagedConsentQuery,
             ) =>
               !!operationId &&
               intent !== null &&
@@ -149,7 +152,7 @@ export function createMcpBetaAccountBinding(
               actor === grant.accountId &&
               canonicalCoreJson((wireBody ?? actual) as Json) === intent &&
               writeAllowed() &&
-              !!(await current(combined).catch(() => null)) &&
+              !!(await current(combined, consentQuery).catch(() => null)) &&
               writeAllowed()
           : undefined;
         const managedMetadataWrite = managedWriteAdmission !== undefined &&

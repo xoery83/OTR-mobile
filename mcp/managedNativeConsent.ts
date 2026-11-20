@@ -6,6 +6,7 @@ import {
   isNormalAccount,
 } from "../backend/src/authAccountQualification";
 import { createMcpBetaAccountBinding } from "../backend/src/mcpBetaAccountBinding";
+import type { ManagedConsentQuery } from "../backend/src/managedWriteAdmission";
 import { createRequestBoundary, readBoundedJson } from "../src/data/api/requestBoundary";
 import { isMcpOidcScopeSet, type McpConsentPolicyPin } from "../src/data/auth/mcpOAuthConsentContract";
 import {
@@ -29,7 +30,7 @@ export type ManagedNativeConsent = {
     session: Session,
     signal: AbortSignal,
   ): Promise<{ id: string; expiresAt: number }>;
-  readBinding(session: Session, signal: AbortSignal): Promise<unknown>;
+  readBinding(session: Session, signal: AbortSignal, consentQuery?: ManagedConsentQuery): Promise<unknown>;
   inspectById(principal: FirstParty, id: string, signal: AbortSignal): Promise<unknown>;
   decideById(
     principal: FirstParty,
@@ -168,8 +169,8 @@ export function managedNativeAuthorization(options: {
       boundary.close();
     }
   };
-  const approved = async (session: Session, signal: AbortSignal) => {
-    const found = binding.safeParse(await options.consent.readBinding(session, signal));
+  const approved = async (session: Session, signal: AbortSignal, consentQuery?: ManagedConsentQuery) => {
+    const found = binding.safeParse(await options.consent.readBinding(session, signal, consentQuery));
     signal.throwIfAborted();
     if (!found.success) return null;
     const b = found.data;
@@ -394,7 +395,7 @@ export function managedNativeAuthorization(options: {
         let ingressAccount: typeof verifiedAccount | null = verifiedAccount;
         const bind = createMcpBetaAccountBinding(
           options.dependencies,
-          async (_grant, currentSignal) => {
+          async (_grant, currentSignal, _evidence, consentQuery) => {
             // Binding creation consumes this request's proof. Dispatch and admission recheck live.
             if (ingressAccount) {
               const initial = ingressAccount;
@@ -403,7 +404,7 @@ export function managedNativeAuthorization(options: {
             }
             const account = await liveAccount(token, session, currentSignal);
             if (!account) return null;
-            const latest = await approved(session, currentSignal);
+            const latest = await approved(session, currentSignal, consentQuery);
             return latest && (!grant.managedConsent || latest.evidenceId === grant.managedConsent.evidenceId)
               ? account : null;
           },
