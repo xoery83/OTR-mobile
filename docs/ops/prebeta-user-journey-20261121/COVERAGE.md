@@ -9,7 +9,7 @@ QA Trip a0bcf637-4d71-4d8b-ba17-a998d8917fe0: Native Beta Journey 20261121, Nov2
 | Area | Current result | Actual evidence / next action |
 |---|---|---|
 | Existing Auth | UI_PASS | C0 retained QA B, normal Account/Trip UI; cold restart pending |
-| First Guest / Auth transition | MC_INTERFACE_PENDING | NATIVE-GUEST-ENTRY-20261121; no reset, copied Session or new simulator |
+| Guest / Auth transition | RETURN_TO_GUEST_NOT_APPLICABLE | Owner clarified: users who have logged in cannot return to Guest. No missing-entry bug; prior NATIVE-GUEST-ENTRY request withdrawn. Fresh Guest applies only to never-logged-in initial state, not this retained B account. No reset/session copy/new entry. |
 | New Trip | NATIVE_PASS / QUEUE_COMPLETED | CREATE_TRIP + Person create + formal readback completed; independent server verification pending |
 | Day Feed | CREATE_READ_PASS | Six manual types displayed; P3 check-in/out and P4 pickup/return displayed on correct dates |
 | Focus / Details / Edit / Cancel | PARTIAL | P1 inline Focus observed; complete same-Item Edit/Cancel/Reopen still pending |
@@ -43,3 +43,5 @@ Owner screenshot exposed duplicate horizontal inset: P6Detail already provides c
 6dde1bb9 /Build16 installed in place on original C0, no phone/main change. P6 canonical21pt gutter actual screenshot PASS; duplicate16pt inner inset removed. Fresh process retained P3/P6 Edit1; normal P1/P5 title Edit1 and P4 titleEdit1/plateQA1121 Save/Details passed; second fresh process Day Feed retained P1/P3/P5/P6 Edit1 and P4QA1121. P2 temporaryNZ9002 Cancel/Discard returned originalNZ9001; formalCloud remains closed. Import original09:55:47 batch reopened from Updates with1saved/0notSaved/0waiting, noAnalyze. Ledger actual coldUI retained totalNZD24/self12; Settlement saved summary owed12/paid24/share12. Final readiness unresolved.
 
 Root2 independently found sameHosted RECEIPT/CORE_CAPABILITY_CLOSED for originalP3/P1 requests; originalP3 Core/legacyReceipt counts0. Mutation acceptance stillUNKNOWN, no forced replay or newID. Root2 checking finiteScope READ predicates and Hosted composition. Native local code uses manualCompatibilityREAD, guarded by sustainedDev before finiteScope; not a verified deployed source match.
+
+Owner clarification: an already signed-in user cannot return to Guest. Do not add a new Guest entry or manufacture fresh state by clearing the current QA account. Continue authenticated-user coverage.
