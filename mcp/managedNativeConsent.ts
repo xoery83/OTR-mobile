@@ -274,15 +274,12 @@ export function managedNativeAuthorization(options: {
             }),
           )
           .safeParse(await readAuth(token, "/user/oauth/grants", boundary));
-        if (
-          !grants.success ||
-          grants.data.filter(
-            (grant) =>
-              grant.client.id === options.principal.clientId &&
-              grant.scopes.includes("openid"),
-          ).length !== 1
-        )
-          return reply(403, { error: "OTR_CONSENT_UNAVAILABLE" });
+        if (!grants.success) throw Error("MCP_ISSUER_GRANT_RESPONSE_INVALID");
+        const matchingGrants = grants.data.filter(
+          (grant) => grant.client.id === options.principal.clientId &&
+            isMcpOidcScopeSet(grant.scopes.join(" ")),
+        );
+        if (matchingGrants.length !== 1) throw Error("MCP_ISSUER_ACTIVE_GRANT_MISSING");
         stage = "consent_read";
         const shown = inspection.parse(
           await boundary.run(() =>
@@ -318,11 +315,15 @@ export function managedNativeAuthorization(options: {
           ? reply(200, result)
           : reply(409, { error: "OTR_CONSENT_UNAVAILABLE" });
       } catch (error) {
-        if (decisionId) {
+        if (decisionId || stage === "issuer_grant" || stage === "consent_read") {
           console.info(JSON.stringify({
             event: "mcp_managed_consent_confirmation_failed",
-            decisionId,
+            ...(decisionId ? { decisionId } : {}),
             stage,
+            ...(error instanceof Error && (
+              error.message === "MCP_ISSUER_GRANT_RESPONSE_INVALID" ||
+              error.message === "MCP_ISSUER_ACTIVE_GRANT_MISSING"
+            ) ? { reason: error.message } : {}),
             aborted: boundary.signal.aborted,
             durationMs: Date.now() - started,
           }));

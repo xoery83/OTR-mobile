@@ -251,6 +251,7 @@ it("uses the same signed native session for live user and private Consent and st
   let revoked = false;
   let firstParty: string;
   let activeGrant = true;
+  let grantScopes = ["openid", "email", "offline_access"];
   const getUser = vi.fn<typeof fetch>(async (url, init) => {
     const bearer = new Headers(init?.headers).get("authorization");
     if (url === managedDevBetaIssuer + "/user/oauth/grants") {
@@ -260,7 +261,7 @@ it("uses the same signed native session for live user and private Consent and st
           ? [
               {
                 client: { id: clientId },
-                scopes: ["openid"],
+                scopes: grantScopes,
                 granted_at: new Date().toISOString(),
               },
             ]
@@ -402,6 +403,10 @@ it("uses the same signed native session for live user and private Consent and st
   expect((await native.confirmation(decideCall(firstParty))).status).toBe(403);
   expect(adapter.decideById).not.toHaveBeenCalled();
   activeGrant = true;
+  grantScopes = ["openid", "otr.trips.read"];
+  expect((await native.confirmation(decideCall(firstParty))).status).toBe(403);
+  expect(adapter.decideById).not.toHaveBeenCalled();
+  grantScopes = ["openid", "email", "offline_access"];
   vi.mocked(adapter.inspectById).mockRejectedValueOnce(new Error("MCP_CONSENT_STORE_UNAVAILABLE"));
   const unavailable = await native.confirmation(decideCall(firstParty));
   expect(unavailable.status).toBe(503);
