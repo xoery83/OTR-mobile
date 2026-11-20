@@ -100,7 +100,7 @@ describe("sync engine", () => {
       () => "2026-09-09T00:01:00.000Z",
     ).run("AUTHENTICATED_ONLINE");
 
-    expect(repository.markDependencyBlocked).toHaveBeenCalledOnce();
+    expect(repository.markDependencyBlocked).toHaveBeenCalledWith("operation-1", undefined, "create first");
     expect(repository.markRetryable).not.toHaveBeenCalled();
     expect(repository.markFailed).not.toHaveBeenCalled();
   });

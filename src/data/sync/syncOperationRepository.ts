@@ -339,7 +339,7 @@ export function createSyncOperationRepository(
         id,
       );
     },
-    async markDependencyBlocked(id: string, dependencyOperationId?: string) {
+    async markDependencyBlocked(id: string, dependencyOperationId?: string, reason?: string) {
       if (selected) await assertTarget(id);
       const userId = await getActiveUserId();
       const invalid = await database.getAllAsync<{ id: string }>(
@@ -359,13 +359,16 @@ export function createSyncOperationRepository(
         `UPDATE sync_operations SET status = 'DEPENDENCY_BLOCKED',
           dependency_operation_id = COALESCE(?, dependency_operation_id),
           failure_category = 'DEPENDENCY', last_error_code = 'DEPENDENCY_BLOCKED',
-          last_error_message = 'Waiting for an earlier operation.', next_attempt_at = NULL,
+          last_error_message = ?, next_attempt_at = NULL,
           claim_owner = NULL, lease_expires_at = NULL, updated_at = ? WHERE id = ? AND operation_type NOT IN ('TRIP_COVER_LOCAL_SAVE','TRIP_DESTINATIONS_LOCAL_SAVE')
           AND owner_user_id=? AND NOT EXISTS (SELECT 1 FROM sync_operations dependency
             WHERE dependency.id=COALESCE(?,sync_operations.dependency_operation_id)
               AND dependency.owner_user_id=sync_operations.owner_user_id
               AND dependency.operation_type=?)`,
         dependencyOperationId ?? null,
+        reason && /^CORE_[A-Z0-9_]{1,90}$/.test(reason)
+          ? reason
+          : "Waiting for an earlier operation.",
         clockNow(),
         id,
         userId,

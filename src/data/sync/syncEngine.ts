@@ -27,7 +27,7 @@ export type SyncOperationRepository = {
   ): Promise<void>;
   markFailed?(id: string, error: Error): Promise<void>;
   markPending?(id: string, error?: Error): Promise<void>;
-  markDependencyBlocked?(id: string, dependencyOperationId?: string): Promise<void>;
+  markDependencyBlocked?(id: string, dependencyOperationId?: string, reason?: string): Promise<void>;
 };
 
 export type SyncWorker = {
@@ -240,6 +240,7 @@ export function createSyncEngine(
                 normalized instanceof SyncDependencyError
                   ? normalized.dependencyOperationId
                   : undefined,
+                normalized.message,
               );
             } else if (failure === "retryable") {
               await repository.markRetryable(
