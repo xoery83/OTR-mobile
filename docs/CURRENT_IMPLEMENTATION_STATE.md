@@ -1,3 +1,11 @@
+# Current stage — Pre-Beta Forms QA user journey,21November2026NZDT
+
+Owner accepted unified Build14/b10178c1 and ordered full C0 journey on the same candidate branch, with no Main merge/push and no MCP phone interruption. New independent QA B Trip a0bcf637…: normal Trip/Person/Reader queue completed; six manual P1–P6 Creates displayed in Day Feed. P1/P3 formal APPLIED receipts cached; independent service readback pending. P4/P5/P6 local saves retained but original Cloud operations have receipt/dependency recovery failures, sent to MC with exact IDs. P2 remains existing LOCAL_CORE_COMMIT/formal opt-in closed, not Cloud PASS. QA Expense2400NZD minor split1200/1200 is SYNCED/revision1; Settlement summary owed1200. Import synthetic TEXT batch cda66d73…/job174683ae… accepted locally, no Analyze/Provider.
+
+Native Local-First draft repair is in progress: unrelated Item/background sync incorrectly expired unsent Create/Edit using a global fingerprint. P2/P3/P5 deterministic red cases reproduced. Candidate preserves Actor/Account/generation, full local roster intent and certificate permission scope, same-target revision/facts and immutable retry identities;196affected+17Reader checks PASS. Build15 prepared next, not yet installed. Owner clarified no extra P4 vehicle inputs in Create; UI expansion withdrawn, Edit unchanged. C0 coordinate control fails noWindowsAvailable; Owner assisted two native buttons, AX/text remain available. MC coordinates minimum tool repair, Guest entry and exact Backend readback. See docs/ops/prebeta-user-journey-20261121/COVERAGE.md and DRAFT_SYNC_FIX.md. No new shared Backend/SQL/Provider/Main operation.
+
+## Retained unified Build14 acceptance
+
 # Current Implementation State — Unified iOS acceptance, 21 November 2026 NZDT
 
 Native active worktree: `native-unified-prebeta-20261121`, branch `codex/native-unified-prebeta-20261121`. Product source **b10178c1f2d9cbe20e0ec6473a39ee66dccce06b**, based on remote main **41de43927fd9869673c1ca929e911f58d1f6f96d**. One formal iOS candidate: **art.xoery.otr / paid Team3K49Z2Q5X7 / Build14 / Shared DEV + Managed Supabase**. C0 and physical iPhone installed in place; exact Metro input JS matches. No main merge/push authorized automatically or performed.

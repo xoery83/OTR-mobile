@@ -814,6 +814,88 @@ async function freshAcceptedFixture(
   });
   return { ...fresh, itemId: draft.itemId };
 }
+it.each(["CREATE", "EDIT", "ACCESS_CHANGED"] as const)(
+  "keeps draft facts through a certified read refresh: %s",
+  async (mode) => {
+    const f = await freshAcceptedFixture(),
+      repo = f.repo(),
+      draft = mode === "EDIT"
+        ? await repo.read(f.tripId, f.itemId)
+        : await repo.createDraft(f.tripId),
+      context = await f.core.captureContext(f.tripId),
+      accepted = (await f.core.acceptedSnapshot(context))!;
+    const { buildCoreActorCollection } =
+      await import("../../../backend/src/tripCoreV2Collection");
+    const bundle = await buildCoreActorCollection(
+      accepted.graph,
+      accepted.actor,
+      {
+        epoch: accepted.certificate.epoch,
+        revision: 2,
+        accessRevision: accepted.certificate.access_revision +
+          (mode === "ACCESS_CHANGED" ? 1 : 0),
+        generatedAt: "2026-10-20T00:01:00Z",
+      },
+      accepted.participatingPersonIds.map((personId) => ({
+        person_id: personId,
+        account_id: f.originalAccount,
+        active: true,
+        participating: true,
+        revision: 1,
+      })),
+      async (bytes) => createHash("sha256").update(bytes).digest("hex"),
+    );
+    await f.core.refresh(context, { collection: async () => bundle });
+    const fields = mode === "EDIT"
+      ? { ...draft.fields, description: "Draft retained across readback" }
+      : inputFor(draft.fields);
+    const before = count(f.sql);
+    if (mode === "ACCESS_CHANGED") {
+      await expect(repo.save(draft, fields)).rejects.toThrow("MANUAL_PLAN_CONFLICT");
+      expect(count(f.sql)).toBe(before);
+    } else {
+      const saved = await repo.save(draft, fields);
+      expect(saved.itemId).toBe(draft.itemId);
+      expect(saved.operationIds).toHaveLength(1);
+      expect(await repo.save(draft, fields)).toEqual(saved);
+    }
+  },
+);
+it("keeps an unsaved P3 Create valid when another Item changes under the same actor", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    first = await repo.createDraft(f.tripId);
+  await repo.save(first, inputFor(first.fields));
+  const draft = await repo.createDraft(f.tripId),
+    previous = await repo.read(f.tripId, first.itemId);
+  await repo.save(previous, { ...previous.fields, description: "Previous stay updated" });
+  const input = { ...inputFor(draft.fields), title: "Second QA stay" };
+  const result = await repo.save(draft, input);
+  expect(result.itemId).toBe(draft.itemId);
+  expect(result.operationIds).toHaveLength(1);
+  expect((await f.repo().read(f.tripId, draft.itemId)).fields.title).toBe(input.title);
+  expect((await f.repo().read(f.tripId, first.itemId)).fields.description).toBe(
+    "Previous stay updated",
+  );
+  expect(await repo.save(draft, input)).toEqual(result);
+});
+it("keeps a P3 Edit valid when only another Item changes", async () => {
+  const f = await fixture(),
+    repo = f.repo(),
+    first = await repo.createDraft(f.tripId);
+  await repo.save(first, inputFor(first.fields));
+  const edit = await repo.read(f.tripId, first.itemId),
+    other = await repo.createDraft(f.tripId);
+  await repo.save(other, { ...inputFor(other.fields), title: "Independent stay" });
+  const result = await repo.save(edit, { ...edit.fields, description: "Retained draft" });
+  expect(result.itemId).toBe(first.itemId);
+  expect((await f.repo().read(f.tripId, first.itemId)).fields.description).toBe(
+    "Retained draft",
+  );
+  expect((await f.repo().read(f.tripId, other.itemId)).fields.title).toBe(
+    "Independent stay",
+  );
+});
 it("fresh Accepted own P3 edits via original finite MANUAL batch with no local Create history", async () => {
   const f = await freshAcceptedFixture(),
     repo = f.repo();

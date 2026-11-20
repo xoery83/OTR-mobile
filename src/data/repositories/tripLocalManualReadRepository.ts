@@ -134,7 +134,24 @@ export async function readLocalManualSnapshotWithinTransaction(
       )
     : snapshot.fingerprint;
   await assertAccountRequestContext(scope, account);
-  return { ...snapshot, actor, fingerprint };
+  return { ...snapshot, actor, fingerprint, localRoster };
+}
+
+export function localManualDraftScope({
+  cert,
+  localRoster,
+}: NonNullable<Awaited<ReturnType<typeof readLocalManualSnapshotWithinTransaction>>>) {
+  return {
+    localRoster,
+    certificate: cert
+      ? {
+          epoch: cert.epoch,
+          accessRevision: cert.access_revision,
+          actorBinding: cert.actor_person_binding_hash,
+          roster: cert.roster_hash,
+        }
+      : null,
+  };
 }
 
 // A separate read authority; this never constructs a Hosted certificate or canonical Source.

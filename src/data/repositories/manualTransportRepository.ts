@@ -29,7 +29,10 @@ import {
 import { requireActiveUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
-import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
+import {
+  localManualDraftScope,
+  readLocalManualSnapshotWithinTransaction,
+} from "./tripLocalManualReadRepository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 const json = (value: unknown) => canonicalCoreJson(value as Json);
 export const manualTransportTypeSchema = z.enum([
@@ -85,6 +88,7 @@ type Command = ReturnType<typeof validateCoreCommand>;
 type State = {
   context: AccountRequestContext;
   fingerprint: string;
+  authorization: string;
   actor: string;
   revision: number | null;
   original: ManualTransportFields;
@@ -257,6 +261,7 @@ export function createManualTransportRepository(
         drafts.set(draft, {
           context,
           fingerprint: snapshot.fingerprint,
+          authorization: json(localManualDraftScope(snapshot)),
           actor: json(snapshot.actor),
           revision: row ? (row.semantic_revision as number) : null,
           original: structuredClone(fields),
@@ -331,10 +336,15 @@ export function createManualTransportRepository(
             };
           }
         }
-        if (
-          snapshot.fingerprint !== state.fingerprint ||
-          (row && row.semantic_revision !== state.revision)
-        )
+        if (row && row.semantic_revision !== state.revision)
+          throw new Error("MANUAL_TRANSPORT_CONFLICT");
+        const unchangedDraft =
+          !state.attempt &&
+          json(localManualDraftScope(snapshot)) === state.authorization &&
+          (row
+            ? json(fieldsFor(snapshot, draft.itemId)) === json(state.original)
+            : !snapshot.graph.itinerary_events.some((item) => item.id === draft.itemId));
+        if (snapshot.fingerprint !== state.fingerprint && !unchangedDraft)
           throw new Error("MANUAL_TRANSPORT_CONFLICT");
         const payloads: { command: string; payload: unknown }[] = [];
         function makeEndpoint(role: "ORIGIN" | "DESTINATION") {

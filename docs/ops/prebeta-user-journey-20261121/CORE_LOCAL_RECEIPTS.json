@@ -1,0 +1,106 @@
+{
+  "recordedAt": "2026-11-20T20:49:29.909787+00:00",
+  "readOnly": true,
+  "independentServerReadback": false,
+  "tripId": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
+  "receipts": [
+    {
+      "operationId": "58fd1026-a8f5-4ba9-bd6f-c9ae18592095",
+      "actorAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "tripId": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "errorCode": null,
+      "result": {
+        "changed": [],
+        "created": [
+          {
+            "id": "e7086247-8f7e-4312-9c83-664390e9f33a",
+            "kind": "ITEM"
+          }
+        ],
+        "custodyGrantId": null,
+        "replacement": null,
+        "retiredEdges": []
+      },
+      "committedAt": "2026-11-20T20:22:31.17203Z"
+    },
+    {
+      "operationId": "1338cbd1-2480-46f5-98c2-9be7db5dcede",
+      "actorAccountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+      "tripId": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
+      "command": "CREATE_ITEM",
+      "outcome": "APPLIED",
+      "errorCode": null,
+      "result": {
+        "changed": [],
+        "created": [
+          {
+            "id": "be50008a-5950-491d-a95c-2bfedda7c02f",
+            "kind": "ITEM"
+          }
+        ],
+        "custodyGrantId": null,
+        "replacement": null,
+        "retiredEdges": []
+      },
+      "committedAt": "2026-11-20T20:27:33.467232Z"
+    }
+  ],
+  "queue": [
+    {
+      "id": "4b32ea44-6a0c-4cf3-b31b-dc8ee2977d0a",
+      "operation_type": "CREATE_TRIP",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "518e46e3-a202-4e3c-a0ce-13b8f06eac34",
+      "operation_type": "TRIP_PERSON_CLOUD_CREATE",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "0bad7daf-69c7-4023-8a05-5a808d2e6684",
+      "operation_type": "TRIP_NORMAL_READBACK",
+      "status": "PROCESSING",
+      "last_error_code": null
+    },
+    {
+      "id": "58fd1026-a8f5-4ba9-bd6f-c9ae18592095",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "1338cbd1-2480-46f5-98c2-9be7db5dcede",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "2ee5525a-6a5e-469f-a01e-12a39ea8687b",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "RETRYABLE",
+      "last_error_code": "SYNC_FAILED"
+    },
+    {
+      "id": "0febbef3-0d4f-4ff9-a2b4-a9686a153571",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "DEPENDENCY_BLOCKED",
+      "last_error_code": "DEPENDENCY_BLOCKED"
+    },
+    {
+      "id": "becfbc29-9147-4039-b62e-3e3ffe3f057e",
+      "operation_type": "CORE_V2_COMMAND",
+      "status": "RETRYABLE",
+      "last_error_code": "SYNC_FAILED"
+    },
+    {
+      "id": "8a4e8292-937f-437d-bb6b-6a45a9de983b",
+      "operation_type": "LOCAL_CORE_COMMIT",
+      "status": "DEPENDENCY_BLOCKED",
+      "last_error_code": null
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "trip": {
+    "account_id": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+    "id": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
+    "create_operation_id": "4b32ea44-6a0c-4cf3-b31b-dc8ee2977d0a",
+    "name": "Native Beta Journey 20261121",
+    "start_date": "2026-11-21",
+    "end_date": "2026-11-24"
+  },
+  "operations": [
+    {
+      "id": "4b32ea44-6a0c-4cf3-b31b-dc8ee2977d0a",
+      "operation_type": "CREATE_TRIP",
+      "entity_type": "TRIP",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null
+    },
+    {
+      "id": "518e46e3-a202-4e3c-a0ce-13b8f06eac34",
+      "operation_type": "TRIP_PERSON_CLOUD_CREATE",
+      "entity_type": "TRIP_PERSON",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null
+    },
+    {
+      "id": "0bad7daf-69c7-4023-8a05-5a808d2e6684",
+      "operation_type": "TRIP_NORMAL_READBACK",
+      "entity_type": "TRIP_READBACK",
+      "status": "COMPLETED",
+      "attempt_count": 0,
+      "last_error_code": null
+    }
+  ],
+  "readOnly": true,
+  "databaseCopied": false
+}

@@ -814,6 +814,27 @@ it("explicit formal P2 commits Sparse+authored same-ID atomically and preserves 
     ),
   ).rejects.toThrow("LOCAL_MANUAL_DRAFT_FROZEN");
 });
+it.each(["CREATE", "EDIT"] as const)(
+  "formal P2 %s retains its draft when an unrelated Stay saves",
+  async (mode) => {
+    const f = fixture(), { repo, tripId } = await normalFormalTrip(f);
+    const first = await repo.createDraft(tripId);
+    await repo.save(first, formalFields(), () => true);
+    const draft = mode === "EDIT"
+      ? await repo.createDraft(tripId, first.itemId)
+      : await repo.createDraft(tripId);
+    const stays = createManualStayRepository(f.db, f.account, f.core);
+    const stay = await stays.createDraft(tripId);
+    await stays.save(stay, {
+      ...stay.fields, title: "Independent QA stay", startDate: "2027-02-06",
+      endDate: "2027-02-07",
+    });
+    const fields = { ...formalFields(), flightNumberLiteral: "NZ5099" };
+    const saved = await repo.save(draft, fields, () => true);
+    expect(saved.itemId).toBe(draft.itemId);
+    expect(await repo.save(draft, fields, () => true)).toEqual(saved);
+  },
+);
 it("formal P2 queue failure rolls back both commands and exact draft retry preserves IDs", async () => {
   const f = fixture(),
     { repo, tripId } = await normalFormalTrip(f),

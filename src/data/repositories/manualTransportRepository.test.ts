@@ -127,6 +127,24 @@ const inputFor = (fields: ManualTransportFields): ManualTransportFields => ({
   arrivalLocation: null,
   description: "Bring bags",
 });
+it.each(["CREATE", "EDIT"] as const)(
+  "keeps a P5 %s draft when another Item changes",
+  async (mode) => {
+    const f = await fixture(), repo = f.repo();
+    const first = await repo.createDraft(f.tripId);
+    await repo.save(first, inputFor(first.fields));
+    const draft = mode === "CREATE"
+      ? await repo.createDraft(f.tripId)
+      : await repo.read(f.tripId, first.itemId);
+    const other = await repo.createDraft(f.tripId);
+    await repo.save(other, { ...inputFor(other.fields), title: "Independent train" });
+    const fields = { ...inputFor(draft.fields), title: "Retained transport draft" };
+    const saved = await repo.save(draft, fields);
+    expect(saved.itemId).toBe(draft.itemId);
+    expect((await f.repo().read(f.tripId, draft.itemId)).fields.title).toBe(fields.title);
+    expect(await repo.save(draft, fields)).toEqual(saved);
+  },
+);
 const count = (sql: DatabaseSync) =>
   sql.prepare("SELECT COUNT(*) n FROM trip_core_pending_intents").get()!.n;
 it("creates true departure-only NTC Segment, cold reads Notes, and never fills arrival or unknown operator", async () => {
@@ -727,19 +745,21 @@ it.each([
   expect(count(f.sql)).toBe(before);
 });
 
-it("rejects a stale new draft without persisting a command and permits a fresh draft after reread", async () => {
+it("rejects a stale same-Item Edit without a command and permits a fresh draft after reread", async () => {
   const f = await fixture(),
     repo = f.repo();
-  const stale = await repo.createDraft(f.tripId);
-  const concurrent = await repo.createDraft(f.tripId);
-  await repo.save(concurrent, inputFor(concurrent.fields));
+  const initial = await repo.createDraft(f.tripId);
+  await repo.save(initial, inputFor(initial.fields));
+  const stale = await repo.read(f.tripId, initial.itemId);
+  const concurrent = await repo.read(f.tripId, initial.itemId);
+  await repo.save(concurrent, { ...concurrent.fields, title: "Newer transport" });
   const before = count(f.sql);
   await expect(repo.save(stale, inputFor(stale.fields))).rejects.toThrow(
     "MANUAL_TRANSPORT_CONFLICT",
   );
   expect(count(f.sql)).toBe(before);
-  const fresh = await repo.createDraft(f.tripId);
-  const saved = await repo.save(fresh, inputFor(fresh.fields));
+  const fresh = await repo.read(f.tripId, initial.itemId);
+  const saved = await repo.save(fresh, { ...fresh.fields, title: "After reread" });
   expect(saved.localStatus).toBe("PENDING");
   expect(saved.itemId).toBe(fresh.itemId);
   expect(Number(count(f.sql))).toBeGreaterThan(Number(before));

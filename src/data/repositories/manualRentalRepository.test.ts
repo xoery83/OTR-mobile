@@ -261,14 +261,13 @@ it("keeps two identical rentals independent by Item ID and never manufactures Bo
     a = await repo.createDraft(f.tripId),
     b = await repo.createDraft(f.tripId);
   await repo.save(a, inputFor(a.fields));
-  await expect(repo.save(b, inputFor(b.fields))).rejects.toThrow("CONFLICT");
-  const fresh = await repo.createDraft(f.tripId);
-  await repo.save(fresh, inputFor(fresh.fields));
+  const saved = await repo.save(b, inputFor(b.fields));
+  expect(await repo.save(b, inputFor(b.fields))).toEqual(saved);
   const local = (await f.read(f.tripId))!;
   expect(new Set(local.items.map((i) => i.itemId)).size).toBe(2);
   expect(local.items.every((i) => i.bookingSummaries.length === 0)).toBe(true);
   expect(local.rows("2026-10-20").map((r) => r.itemRef)).toEqual(
-    expect.arrayContaining([a.itemId, fresh.itemId]),
+    expect.arrayContaining([a.itemId, b.itemId]),
   );
 });
 it("retains unchanged endpoint seconds, full spatial facts and independent vehicle data through title/date-only edits", async () => {
