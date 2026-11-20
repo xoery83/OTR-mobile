@@ -1,6 +1,6 @@
-# Native unified Build14 final receipt — pending dispatch
+# Native unified Build14 final receipt — dispatched
 
-Destination: MC chat01a19a2c-de35-72d2-96b7-e66333286e13. Automatic review rejected the final receipt message because this exact destination lacks explicit communication authorization. Do not route indirectly or retry without authorization. No token, credential, real user identity or private Trip content is in this proposed handoff.
+Destination: MC chat01a19a2c-de35-72d2-96b7-e66333286e13. Owner subsequently explicitly authorized this exact destination and scope. The final receipt was successfully sent through send_message_to_thread on21 November2026 NZDT; independent MC ACK remains pending. The earlier automatic-review rejection is retained as historical context, not a current block. No token, credential, real user identity or private Trip content is in this proposed handoff.
 
 Product source b10178c1f2d9cbe20e0ec6473a39ee66dccce06b, origin/main baseline41de43927fd9869673c1ca929e911f58d1f6f96d. Build14, art.xoery.otr, paid Team3K49Z2Q5X7, Shared DEV/Managed Supabase. Existing C0 and original physical iPhone installed in place; exact Metro input SHA206d2d27d8de0bac0df6feb76ed67f28e3daefe71f319e54d69317f4638e938d.
 

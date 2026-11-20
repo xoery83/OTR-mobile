@@ -33,5 +33,5 @@
   "finalPhoneAccount": "Owner-selected Apple Account",
   "privateUserIdentityOrTripDetailsPersisted": false,
   "productionProtectedSqlPaidProviderTouched": false,
-  "mcFinalReceiptDelivery": "PENDING_EXPLICIT_DESTINATION_COMMUNICATION_AUTHORIZATION"
+  "mcFinalReceiptDelivery": "SENT_OWNER_EXPLICITLY_AUTHORIZED_ACK_PENDING"
 }
