@@ -233,9 +233,9 @@ it("uses the same signed native session for live user and private Consent and st
   const sessionId = "33333333-3333-4333-8333-333333333333";
   const attemptId = "44444444-4444-4444-8444-444444444444";
   const closesAt = Date.now() + 60000;
-  const sign = async (audience: string, firstParty = false, subject = accountId) =>
+  const sign = async (audience: string, firstParty = false, subject = accountId, scope = "openid email offline_access") =>
     new SignJWT({
-      ...(firstParty ? {} : { client_id: clientId, scope: "openid offline_access" }),
+      ...(firstParty ? {} : { client_id: clientId, scope }),
       session_id: sessionId,
       role: "authenticated",
       is_anonymous: false,
@@ -321,6 +321,8 @@ it("uses the same signed native session for live user and private Consent and st
   const invalid = call("invalid");
   expect(await native.authorize(invalid)).toBeNull();
   expect(await native.unapproved(invalid, invalid.signal)).toBeNull();
+  const legacyScopes = call(await sign(managedDevBetaResource, false, accountId, "openid otr.trips.read"), "initialize");
+  expect(await native.authorize(legacyScopes)).toBeNull();
   const defaultAudience = call(await sign("authenticated"), "initialize");
   expect(await native.authorize(defaultAudience)).toBeNull();
   expect(await native.unapproved(defaultAudience, defaultAudience.signal)).toBeNull();

@@ -178,7 +178,7 @@ it.each(["client", "redirect", "account", "scope", "authorization"])(
       client: { client: { id: other, name: "Other" } },
       redirect: { redirect_uri: "https://other.invalid/callback" },
       account: { user: { id: other } },
-      scope: { scope: "openid email" },
+      scope: { scope: "openid otr.trips.read" },
       authorization: { authorization_id: "other" },
     }[mode];
     q.oauth.getAuthorizationDetails.mockResolvedValueOnce({
@@ -190,7 +190,7 @@ it.each(["client", "redirect", "account", "scope", "authorization"])(
   },
 );
 
-it.each(["openid offline_access", "offline_access openid"])(
+it.each(["openid email", "openid offline_access", "offline_access openid email", "openid email offline_access"])(
   "accepts only the read identity and refresh protocol scopes: %s",
   async (scope) => {
     const q = fixture();
@@ -205,7 +205,9 @@ it.each(["openid offline_access", "offline_access openid"])(
 
 it.each([
   "offline_access",
-  "openid offline_access email",
+  "openid otr.trips.write",
+  "email offline_access",
+  "openid email email",
   "openid offline_access offline_access",
   "openid profile",
 ])("refuses any expanded or duplicate provider scopes: %s", async (scope) => {

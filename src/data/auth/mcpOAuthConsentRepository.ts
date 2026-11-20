@@ -18,6 +18,7 @@ import { isSupabaseDevPublicKey } from "./devSupabasePublicKey";
 import {
   mcpConsentPolicyPinSchema,
   mcpConsentDetailsSchema,
+  isMcpOidcScopeSet,
   matchesConsentPolicy,
   matchesConsentScopes,
   type McpConsentDetails,
@@ -401,7 +402,7 @@ export function createMcpOAuthConsentRepository(
         ? !legacy.redirectUris.includes(data.redirect_uri)
         : !validBetaRedirect(data.redirect_uri)) ||
       (expectedRedirect !== undefined && data.redirect_uri !== expectedRedirect) ||
-      !["openid", "openid offline_access", "offline_access openid"].includes(data.scope)
+      !isMcpOidcScopeSet(data.scope)
     )
       throw new McpConsentError("REQUEST_CHANGED");
     expectedRedirect = data.redirect_uri;

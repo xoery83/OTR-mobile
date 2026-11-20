@@ -7,7 +7,7 @@ import {
 } from "../backend/src/authAccountQualification";
 import { createMcpBetaAccountBinding } from "../backend/src/mcpBetaAccountBinding";
 import { createRequestBoundary, readBoundedJson } from "../src/data/api/requestBoundary";
-import { type McpConsentPolicyPin } from "../src/data/auth/mcpOAuthConsentContract";
+import { isMcpOidcScopeSet, type McpConsentPolicyPin } from "../src/data/auth/mcpOAuthConsentContract";
 import {
   managedDevBetaIssuer as issuer,
   managedDevBetaResource as resource,
@@ -206,7 +206,7 @@ export function managedNativeAuthorization(options: {
         })).parse(await readAuth(token, "/user/oauth/grants", boundary));
         boundary.signal.throwIfAborted();
         return grants.filter((entry) =>
-          entry.client.id === options.principal.clientId && entry.scopes.includes("openid"),
+          entry.client.id === options.principal.clientId && isMcpOidcScopeSet(entry.scopes.join(" ")),
         ).length === 1 ? { accountId: claims.sub, sessionId: claims.session_id } : null;
       } catch {
         return null;
@@ -356,7 +356,7 @@ export function managedNativeAuthorization(options: {
           c.sub !== options.principal.accountId ||
           c.client_id !== options.principal.clientId ||
           c.iat > Math.floor(Date.now() / 1000) ||
-          (c.scope !== undefined && !c.scope.split(/\s+/).includes("openid"))
+          (c.scope !== undefined && !isMcpOidcScopeSet(c.scope))
         )
           return null;
         const session: Session = {

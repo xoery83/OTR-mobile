@@ -25,6 +25,7 @@ import {
 
 import {
   mcpConsentPolicyPinSchema,
+  mcpOidcScope,
   mcpConsentClaimsSchema,
   mcpConsentGrantSchema,
   matchesConsentScopes,
@@ -338,7 +339,7 @@ export function betaProviderMetadata(raw: unknown, issuer: string) {
   return {
     ...metadata,
     scopes_supported: metadata.scopes_supported.filter(
-      (scope) => scope === "openid" || scope === "offline_access",
+      (scope) => mcpOidcScope.safeParse(scope).success,
     ),
   };
 }

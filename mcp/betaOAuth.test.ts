@@ -68,7 +68,7 @@ it("advertises exactly the supported consent identity scopes while retaining iss
     };
   expect(betaProviderMetadata(raw, issuer)).toEqual({
     ...raw,
-    scopes_supported: ["openid", "offline_access"],
+    scopes_supported: ["openid", "email", "offline_access"],
   });
   expect(() =>
     betaProviderMetadata({ ...raw, issuer: "https://foreign.invalid" }, issuer),

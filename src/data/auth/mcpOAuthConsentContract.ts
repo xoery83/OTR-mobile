@@ -2,10 +2,11 @@ import { z } from "zod";
 
 // Auth-owned wire v1; configured pins are deployment inputs, never client assertions.
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
+export const mcpOidcScope = z.enum(["openid", "email", "offline_access"]);
 const identityScopes = z
-  .array(z.enum(["openid", "offline_access"]))
+  .array(mcpOidcScope)
   .min(1)
-  .max(2)
+  .max(mcpOidcScope.options.length)
   .refine((v) => v.includes("openid") && new Set(v).size === v.length);
 export const mcpConsentPolicySchema = z.strictObject({
   id: z.string().min(1).max(256),
@@ -95,11 +96,15 @@ export function matchesConsentPolicy(
     policyHash === pin.policyHash && JSON.stringify(policy) === JSON.stringify(pin.policy)
   );
 }
+export function isMcpOidcScopeSet(scope: unknown): boolean {
+  return typeof scope === "string" && identityScopes.safeParse(scope.split(" ")).success;
+}
+
 export function matchesConsentScopes(scope: string, pin: McpConsentPolicyPin) {
   const scopes = scope.split(" ");
   return (
     scopes.length === pin.identityScopes.length &&
-    new Set(scopes).size === scopes.length &&
-    scopes.every((v) => pin.identityScopes.includes(v as "openid" | "offline_access"))
+    isMcpOidcScopeSet(scope) &&
+    pin.identityScopes.every((value) => scopes.includes(value))
   );
 }
