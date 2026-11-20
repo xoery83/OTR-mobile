@@ -1,3 +1,13 @@
+# Unified Beta delivery — 21 November 2026 NZDT
+
+Owner appointed Native as the sole Beta Delivery Lead. Ordinary approved fixes may merge/push Main after checks and real path verification; protected authority/financial contracts and publication still require their existing gates. Main/Hosted Writer returned by MC. Current remote Main `bedf24dc` includes Managed MCP `c138470d`; its no-commit merge into `codex/native-unified-prebeta-20261121` is undergoing compatibility checks, not yet committed/pushed. Unique backlog and journey matrix: `docs/BETA_PRODUCT_ACCEPTANCE.md`.
+
+Current simulator C0 / `art.xoery.otr` remains formal Build19 (`6164e295`), retained SQLite80/Session/history. Phone Build14 untouched. Normal Data & Sync completed a recovery cycle: the controlled-outage P3 original Create `2005a186…` is now COMPLETED under the original Item `d1e9d2f9…`; its Edit `4aa434fa…` remains dependency-blocked. Independent server readback pending; this is not physical-airplane-mode evidence. Original P3 Edit `5f7d0785…` still has capabilities503 and P4 receipt503. See `NORMAL_RECOVERY_FIRST_PROGRESS.json` under the prebeta journey evidence.
+
+Hosted formal `f692ea0d` / container `2dda4a64…` still has separate Core/Consent managers. Root2 restored exact gateway limit1 and returned resources. Approved Main connection reuse must be delivered as software-only compatible artifact: historical MCP deploy also changed Consent policy/TTL and is not reusable unchanged. Root2 request `NATIVE-BETA-SINGLE-LEASE-20261121` preserves existing configuration, TTL600, role1, SQL/Auth and exact rollback. No new Provider/SQL/role scope. After deployment, retry original operations and independently verify fields/no duplicates before Cloud PASS.
+
+Merged compatibility first pass found source typing defects and missing dependency/fixture; five affected suites193PASS after minimal type corrections. Temporary one-shot QA probe is removed from release source; evidence remains. No new user-facing features. Next: finish merged compatibility and independent review → unify simulator source → original P3/P4/P5/P6 recovery/independent readback → Settlement/Import and minimum collaboration safety. Do not repeat retained Build14/16/19 local evidence or return a previously signed-in Account to Guest.
+
 # Current continuation — Pre-Beta QA, 21 November 2026 NZDT
 
 Worktree `native-unified-prebeta-20261121`, candidate branch only. Current C0 `art.xoery.otr` Build19, product `6164e295`, installed in place and kept CLOSED pending resource return; original Session/SQLite80/history retained. Phone Build14 untouched; no main merge/push. Build16 (`6dde1bb9`) P6 detail gutter actual device PASS; P1/P3/P4/P5/P6 local Edit and fresh-process restoration PASS. P4 plate QA1121 retained, Create fields unchanged. P2 Sparse Cancel preserves NZ9001, not Cloud. Original Import batch 1 saved, expense NZD24/self12 and Settlement owed12 cold UI retained. Final Settlement readiness and current offline test remain incomplete. Owner clarified that previously logged-in users cannot return to Guest: current B return-to-Guest is NOT_APPLICABLE, not an Auth entry bug. The prior Guest-entry request is withdrawn; fresh Guest only applies to never-logged-in initial state.
@@ -35,6 +45,25 @@ Evidence and resume: `docs/ops/unified-prebeta-20261121/INTEGRATION.md`, `FINAL_
 ## Retained accepted main handoff
 
 # Current Implementation State — 15 November2026 NZDT
+
+## MCP Shared DEV closure candidate — 21 November 2026 NZDT
+
+The isolated MCP review branch remains based on GitHub Main `41de4392`.
+It retains formal OIDC, account binding and explicit OTR business Consent.
+A verified pending account can load static tool descriptors. Business
+calls still require live authorization and the approved Consent binding.
+P5 `20261117000100` owns the identity DDL. The Shared DEV forward install
+requires its validated predecessor or exact pre-existing postimage.
+The candidate includes the already qualified Build 14 foreground discovery
+and Trip Home date projection source. Final ChatGPT and physical iPhone
+evidence remains in the Managed DEV final closure preflight packet.
+
+Standing Managed Consent starts its configured finite lifetime at explicit
+approval. A pending challenge is short lived and bounded by its original
+access token. A new access token must independently validate with the issuer
+and match the same OAuth session, account, client and policy. A new session or
+an expired Consent requires a fresh decision. See the Managed section of
+`docs/mcp/MCP_AUTH_CONTRACT.md` for the DEV role capacity and acceptance scope.
 
 ## Current checkpoint
 

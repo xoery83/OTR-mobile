@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { loadMcpQaRuntime } from "./mcpQaRuntime";
+import { mcpIngressBodyLimit } from "./mcpIngress";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
 import { createDevBackendHandler, type DevBackendGateway } from "./app";
 const clientId = "11111111-1111-4111-8111-111111111111";
@@ -393,4 +394,56 @@ it("delegates only exact optional paths without bypassing ordinary authenticatio
   expect(
     (await handle(new Request("https://api-dev.xoery.art/oauth/consent/private"))).status,
   ).toBe(404);
+});
+
+it("mounts managed DEV only with its own explicit config and injects the owning handler and Core", async () => {
+  const q = fixture();
+  const raw = JSON.stringify({ fixture: "exact approved policy" });
+  const dependencies = {
+    gateway: q.gateway as unknown as DevBackendGateway,
+    coreConnection: q.core,
+  };
+  const script = new Uint8Array([1, 2]);
+  const host = vi.fn(async () => new Response("mounted"));
+  const createManagedDevConfiguredHost = vi.fn(() => host);
+  const files = {
+    ...q.files,
+    managedDevModule: vi.fn(async () => ({ createManagedDevConfiguredHost })),
+    managedDevAsset: vi.fn(async () => script),
+  };
+  const env = {
+    ...q.env,
+    OTR_DEV_MCP_READ_QA_CONFIG: undefined,
+    OTR_DEV_MCP_MANAGED_DEV_CONFIG: raw,
+  };
+  expect(await loadMcpQaRuntime(
+    { ...env, OTR_DEV_MCP_MANAGED_DEV_CONFIG: undefined },
+    q.gateway, q.core, files, dependencies,
+  )).toBeUndefined();
+  await expect(loadMcpQaRuntime(
+    { ...env, OTR_DEV_MCP_READ_QA_CONFIG: "{}" },
+    q.gateway, q.core, files, dependencies,
+  )).rejects.toThrow("MANAGED_DEV_MCP_PORT_CLOSED");
+  await expect(loadMcpQaRuntime(
+    env, q.gateway, undefined, files, dependencies,
+  )).rejects.toThrow("MANAGED_DEV_MCP_PORT_CLOSED");
+  expect(files.managedDevModule).not.toHaveBeenCalled();
+  expect(await loadMcpQaRuntime(env, q.gateway, q.core, files, dependencies)).toBe(host);
+  expect(createManagedDevConfiguredHost).toHaveBeenCalledExactlyOnceWith(
+    raw, q.env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY,
+    { ...dependencies, managedWriteAdmissionVersion: 2 }, createDevBackendHandler, script,
+  );
+  const managedNativeConsent = { begin: vi.fn(), decide: vi.fn(), readBinding: vi.fn(), page: vi.fn() };
+  const injected = { ...dependencies, managedNativeConsent };
+  expect(await loadMcpQaRuntime(env, q.gateway, q.core, files, injected)).toBe(host);
+  expect(createManagedDevConfiguredHost).toHaveBeenLastCalledWith(
+    raw, q.env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY,
+    { ...injected, managedWriteAdmissionVersion: 2 }, createDevBackendHandler, script,
+    managedNativeConsent,
+  );
+  expect(mcpIngressBodyLimit("/oauth/consent", "POST")).toBe(0);
+  expect(mcpIngressBodyLimit("/oauth/consent", "POST", true)).toBe(4096);
+  expect(mcpIngressBodyLimit("/oauth/consent/config", "POST", true)).toBe(0);
+  expect(files.module).not.toHaveBeenCalled();
+  expect(files.asset).not.toHaveBeenCalled();
 });

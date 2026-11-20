@@ -4,6 +4,7 @@ import {
   readBoundedJson,
 } from "../../src/data/api/requestBoundary";
 import { coreUuid } from "../../src/domain/trip/tripCoreV2";
+import type { ManagedWriteAdmission } from "./managedWriteAdmission";
 import {
   tripCreateWireRequestSchema as tripCreateRequestSchema,
   tripCreateWireResultSchema as tripCreateResultSchema,
@@ -12,7 +13,11 @@ import {
 } from "../../src/domain/trip/tripCreateWireContract";
 
 export type TripCreatePort = {
-  create(actorAccountId: string, request: TripCreateRequest): Promise<TripCreateResult>;
+  create(
+    actorAccountId: string,
+    request: TripCreateRequest,
+    admit?: ManagedWriteAdmission,
+  ): Promise<TripCreateResult>;
   receipt(actorAccountId: string, operationId: string): Promise<TripCreateResult | null>;
   parentReceipt?(
     actorAccountId: string,
@@ -43,6 +48,7 @@ export async function tripCreateBoundary(
   request: Request,
   actorAccountId: string,
   port?: TripCreatePort,
+  managedWriteAdmission?: ManagedWriteAdmission,
 ) {
   const url = new URL(request.url);
   if (url.search) return failure(400, "TRIP_CREATE_INVALID");
@@ -94,7 +100,9 @@ export async function tripCreateBoundary(
       )
         return failure(400, "TRIP_CREATE_INVALID");
       const result = tripCreateResultSchema.parse(
-        await port.create(actorAccountId, parsed.data),
+        managedWriteAdmission
+          ? await port.create(actorAccountId, parsed.data, managedWriteAdmission)
+          : await port.create(actorAccountId, parsed.data),
       );
       if (
         result.actorAccountId !== actorAccountId ||

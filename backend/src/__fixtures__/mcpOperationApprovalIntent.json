@@ -1,0 +1,48 @@
+{
+  "tripId": "00000000-0000-4000-8000-000000000001",
+  "accountId": "00000000-0000-4000-8000-000000000002",
+  "clientId": "00000000-0000-4000-8000-000000000003",
+  "resource": "https://synthetic.example.invalid/mcp",
+  "operationId": "00000000-0000-4000-8000-000000000004",
+  "idempotencyKey": "00000000-0000-4000-8000-000000000004",
+  "oldName": "Synthetic trip before",
+  "expectedMetadataRevision": 2,
+  "newName": "Synthetic trip after",
+  "expectedAfterRevision": 3,
+  "before": {
+    "name": "Synthetic trip before",
+    "endDate": "2026-12-04",
+    "startDate": "2026-12-01",
+    "destination": null,
+    "destinations": [
+      {
+        "source": "MANUAL",
+        "displayLabel": "Auckland",
+        "destinationId": "00000000-0000-4000-8000-000000000005"
+      },
+      {
+        "source": "MANUAL",
+        "displayLabel": "Nelson",
+        "destinationId": "00000000-0000-4000-8000-000000000006"
+      }
+    ]
+  },
+  "after": {
+    "name": "Synthetic trip after",
+    "endDate": "2026-12-04",
+    "startDate": "2026-12-01",
+    "destination": null,
+    "destinations": [
+      {
+        "source": "MANUAL",
+        "displayLabel": "Auckland",
+        "destinationId": "00000000-0000-4000-8000-000000000005"
+      },
+      {
+        "source": "MANUAL",
+        "displayLabel": "Nelson",
+        "destinationId": "00000000-0000-4000-8000-000000000006"
+      }
+    ]
+  }
+}

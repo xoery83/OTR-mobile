@@ -6,10 +6,25 @@ import { authorizedTripVersionFromCollection } from "../../src/domain/trip/tripA
 import {
   coreClosedCapabilities,
   coreCapabilitiesSchema,
+  validateCoreCommand,
 } from "../../src/domain/trip/tripCoreV2Commands";
 import { corePersonBindingSchema } from "../../src/domain/trip/tripCoreV2Read";
 import { projectCoreItem } from "../../src/domain/trip/tripCoreV2Views";
-import type { CoreActor, CoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
+import {
+  coreCanManage,
+  type CoreActor,
+  type CoreGraph,
+} from "../../src/domain/trip/tripCoreV2Mutation";
+import {
+  buildTripItemSnapshot,
+  buildTripItemPage,
+  type TripItemListQuery,
+} from "./tripItemsRead";
+import { readCoreLifecycleState } from "./tripCoreLifecycleState";
+import { readCoreExpenseRelations } from "./tripCoreExpenseRelations";
+import { coreLifecycleGraphHash } from "../../src/domain/trip/tripCoreV2Lifecycle";
+import { itemLifecycleBaseSchema } from "../../src/domain/trip/tripLifecycleContract";
+import { readRosterRows, projectTripRoster } from "./tripPeopleRead";
 import { buildCoreActorCollection } from "./tripCoreV2Collection";
 import {
   lockCorePgActor,
@@ -85,6 +100,9 @@ export function createCorePgReader(
     tripId: string,
     ordinaryOrderVersion?: 1,
     localDocumentMetadata = false,
+    includeDeleted = false,
+    includeRoster = false,
+    includeCapabilities = false,
   ) {
     coreUuid.parse(actorAccountId);
     coreUuid.parse(tripId);
@@ -110,6 +128,19 @@ export function createCorePgReader(
         await lease.query("SET LOCAL ROLE otr_trip_core_v2_writer");
         const graph = await readCorePgGraph(lease, tripId);
         await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+        const expenseRelations = gateMode?.betaLifecycle
+          ? await readCoreExpenseRelations(lease, actorAccountId, tripId)
+          : undefined;
+        if (expenseRelations) graph.expense_links = expenseRelations.links;
+        const lifecycle = gateMode?.betaLifecycle
+          ? await readCoreLifecycleState(lease, actorAccountId, tripId)
+          : undefined;
+        const excluded = new Set(
+          lifecycle?.deletedItemIds.filter((id) => {
+            const row = graph.itinerary_events.find((row) => row.id === id);
+            return !includeDeleted || !row || !coreCanManage(graph, actor, "ITEM", row);
+          }) ?? [],
+        );
         const bindings = z
           .array(
             corePersonBindingSchema.extend({
@@ -132,6 +163,8 @@ export function createCorePgReader(
               ledgerExpenseIds: [],
               sourceEvidenceRefs: [],
             };
+        if (expenseRelations)
+          rights.ledgerExpenseIds = expenseRelations.authorizedExpenseIds;
         const collection = await buildCoreActorCollection(
           graph,
           actor,
@@ -153,11 +186,24 @@ export function createCorePgReader(
           rights.sourceEvidenceRefs,
           ordinaryOrderVersion,
           localDocumentMetadata,
+          excluded,
         );
+        const roster = includeRoster
+          ? await readRosterRows(lease, actorAccountId, tripId)
+          : undefined;
+        const gate = includeCapabilities
+          ? await readCoreGate(
+              lease,
+              actorAccountId,
+              tripId,
+              gateMode,
+              "runtime_enabled,enabled_commands,enabled_families,enabled_admission_modes",
+            )
+          : undefined;
         await assertCoreReadScope(lease, actorAccountId, tripId, gateMode);
         await lease.query("COMMIT");
         began = false;
-        return { actor, graph, collection, rights, bindings };
+        return { actor, graph, collection, rights, bindings, lifecycle, roster, gate };
       } catch (error) {
         if (began) {
           try {
@@ -171,6 +217,149 @@ export function createCorePgReader(
     });
   }
   return {
+    async betaCapabilityContext(actorAccountId: string, tripId: string) {
+      if (!gateMode?.betaLifecycle) throw new Error("CORE_CAPABILITY_CLOSED");
+      const s = await snapshot(
+        actorAccountId,
+        tripId,
+        undefined,
+        false,
+        false,
+        false,
+        true,
+      );
+      const manual = normalManualCapabilities(s.gate, true);
+      return {
+        actorAccountId,
+        tripId,
+        accessRevision: s.collection.manifest.accessRevision,
+        epoch: s.collection.manifest.epoch,
+        observedAt: s.collection.manifest.generatedAt,
+        canManageTrip: s.actor.canManageShared,
+        state: s.lifecycle!.tripState,
+        commands: manual?.commands ?? [],
+        families: manual?.families ?? [],
+      };
+    },
+    async people(actorAccountId: string, tripId: string) {
+      if (!gateMode?.betaLifecycle) throw new Error("CORE_CAPABILITY_CLOSED");
+      const s = await snapshot(actorAccountId, tripId, undefined, false, false, true);
+      return projectTripRoster(s.roster, actorAccountId, tripId, hash);
+    },
+    async itemLifecycle(
+      actorAccountId: string,
+      tripId: string,
+      itemId: string,
+      family: string,
+    ) {
+      if (!gateMode?.betaLifecycle) throw new Error("CORE_CAPABILITY_CLOSED");
+      coreUuid.parse(itemId);
+      const s = await snapshot(actorAccountId, tripId, undefined, false, true);
+      const root = s.graph.itinerary_events.find((row) => row.id === itemId);
+      if (
+        !root ||
+        root.experience_family !== family ||
+        !coreCanManage(s.graph, s.actor, "ITEM", root)
+      )
+        throw new Error("NOT_VISIBLE");
+      const command = validateCoreCommand({
+        contractVersion: 2,
+        intentVersion: 2,
+        operationId: itemId,
+        tripId,
+        command: "HIDE_OBJECT",
+        target: { kind: "ITEM", id: itemId },
+        baseVector: [{ kind: "ITEM", id: itemId, revision: root.semantic_revision }],
+        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+        payload: {
+          scope: "OBJECT_ONLY",
+          affectedIds: [{ kind: "ITEM", id: itemId }],
+          graphHash: "0".repeat(64),
+        },
+      });
+      const hasFinancialReferences = s.graph.expense_links.some(
+        (row) => row.type === "ITINERARY_EVENT" && row.target_id === itemId,
+      );
+      return itemLifecycleBaseSchema.parse({
+        version: "otr.lifecycle.read/1",
+        actorAccountId,
+        tripId,
+        itemId,
+        family,
+        itemRevision: root.semantic_revision,
+        graphHash: await coreLifecycleGraphHash(s.graph, s.actor, command, hash),
+        availableActions:
+          s.lifecycle!.tripState !== "ACTIVE" ||
+          s.lifecycle!.deletedItemIds.includes(itemId)
+            ? []
+            : [root.hidden_at ? "RESTORE" : "HIDE", "DELETE"],
+        impact: {
+          affectedItems: [{ itemId, revision: root.semantic_revision }],
+          hasFinancialReferences,
+          changesOriginalFiles: false,
+          warnings: hasFinancialReferences ? ["FINANCIAL_REFERENCES_RETAINED"] : [],
+        },
+        observedAt: s.collection.manifest.generatedAt,
+      });
+    },
+    async items(actorAccountId: string, tripId: string, query: TripItemListQuery) {
+      if (!gateMode?.betaLifecycle) throw new Error("CORE_CAPABILITY_CLOSED");
+      const s = await snapshot(actorAccountId, tripId);
+      return buildTripItemPage(
+        s.graph,
+        s.actor,
+        s.collection,
+        new Set(s.lifecycle!.deletedItemIds),
+        query,
+        hash,
+      );
+    },
+    async itemSnapshot(actorAccountId: string, tripId: string, itemId: string) {
+      if (!gateMode?.betaLifecycle) throw new Error("CORE_CAPABILITY_CLOSED");
+      coreUuid.parse(itemId);
+      const s = await snapshot(
+        actorAccountId,
+        tripId,
+        undefined,
+        false,
+        true,
+        false,
+        true,
+      );
+      const result = buildTripItemSnapshot(
+        s.graph,
+        s.actor,
+        s.collection,
+        itemId,
+        {
+          ...s.rights,
+          rosterHash: s.collection.manifest.participatingRosterHash,
+          participatingPersonIds: s.bindings
+            .filter((b) => b.active && b.participating)
+            .map((b) => b.person_id),
+        },
+        true,
+        s.lifecycle!.deletedItemIds.includes(itemId),
+      );
+      const root = s.graph.itinerary_events.find((row) => row.id === itemId)!;
+      const manual = normalManualCapabilities(s.gate, true);
+      return {
+        ...result,
+        item: {
+          ...result.item,
+          capabilities: {
+            ...result.item.capabilities,
+            canEdit:
+              s.gate?.runtime_enabled === true &&
+              !!manual?.commands.includes("SET_ITEM_TEXT") &&
+              manual.families.includes(String(root.experience_family)) &&
+              s.lifecycle!.tripState === "ACTIVE" &&
+              !s.lifecycle!.deletedItemIds.includes(itemId) &&
+              coreCanManage(s.graph, s.actor, "ITEM", root),
+          },
+        },
+      };
+    },
     async capabilities(actorAccountId: string, tripId: string, operationId?: string) {
       coreUuid.parse(actorAccountId);
       coreUuid.parse(tripId);
@@ -223,7 +412,7 @@ export function createCorePgReader(
           const gate = enabled
             ? await readCoreGate(lease, actorAccountId, tripId, gateMode)
             : undefined;
-          const manual = normalManualCapabilities(gate);
+          const manual = normalManualCapabilities(gate, gateMode?.betaLifecycle);
           const normal = manual !== null;
           const reviewedGate =
             enabled && gateMode?.sustainedDev && gateMode.reviewedP1

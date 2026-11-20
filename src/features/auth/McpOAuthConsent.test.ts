@@ -52,8 +52,12 @@ function nodes(raw: unknown): Node[] {
   const node = raw as Node;
   return [node, ...nodes(node.props.children)];
 }
-function fixture() {
+function fixture(showUnavailableProviders = false) {
   const repo = {
+    browserProviders: [] as ("google" | "apple")[],
+    identityLinkEnabled: false,
+    linkProvider: vi.fn(),
+    signInProvider: vi.fn(),
     requestCode: vi.fn(async () => undefined),
     verifyCode: vi.fn(),
     load: vi.fn(),
@@ -63,7 +67,7 @@ function fixture() {
   const navigate = vi.fn();
   function render() {
     state.cursor = state.refCursor = 0;
-    return nodes(McpOAuthConsent({ repository: repo, navigate }));
+    return nodes(McpOAuthConsent({ repository: repo, navigate, showUnavailableProviders }));
   }
   const fill = (label: string, text: string) =>
     render().find((n) => n.props.accessibilityLabel === label)!.props.onChangeText!(text);
@@ -132,40 +136,42 @@ it("requires an explicit decision then normal session cleanup before redirect", 
   expect(q.repo.decide).toHaveBeenCalledWith(true);
   expect(events).toEqual(["cleanup", "navigate"]);
 });
-it("shows explicit Write scope and waits for the Write button decision", async () => {
-  const q = fixture();
-  q.fill("oauthConsent.email", "qa@example.invalid");
-  q.press("oauthConsent.send");
-  await vi.waitFor(() =>
-    expect(
-      q.render().some((n) => n.props.accessibilityLabel === "oauthConsent.code"),
-    ).toBe(true),
-  );
-  q.repo.verifyCode.mockResolvedValueOnce({
-    kind: "CONSENT",
-    accountId: "unit",
-    clientName: "Unit Client",
-    businessAccess: "READ_WRITE",
-  });
-  q.fill("oauthConsent.code", "12345678");
-  q.press("oauthConsent.verify");
-  await vi.waitFor(() =>
-    expect(q.render().some((n) => n.props.label === "oauthConsent.allowWrite")).toBe(
-      true,
-    ),
-  );
-  expect(q.render().some((n) => n.props.children === "oauthConsent.writeScope")).toBe(
-    true,
-  );
-  expect(q.render().some((n) => n.props.label === "oauthConsent.allow")).toBe(false);
-  expect(q.repo.decide).not.toHaveBeenCalled();
-  q.repo.decide.mockResolvedValueOnce({
-    kind: "REDIRECT",
-    url: "https://claude.ai/api/mcp/auth_callback?code=unit",
-  });
-  q.press("oauthConsent.allowWrite");
-  await vi.waitFor(() => expect(q.repo.decide).toHaveBeenCalledWith(true));
-});
+it.each([
+  ["READ_WRITE", "oauthConsent.allowWrite", "oauthConsent.writeScope"],
+  ["BETA_READ_WRITE", "oauthConsent.allowBeta", "oauthConsent.betaScope"],
+])(
+  "shows %s scope and waits for its connection decision",
+  async (businessAccess, allowKey, scopeKey) => {
+    const q = fixture();
+    q.fill("oauthConsent.email", "qa@example.invalid");
+    q.press("oauthConsent.send");
+    await vi.waitFor(() =>
+      expect(
+        q.render().some((n) => n.props.accessibilityLabel === "oauthConsent.code"),
+      ).toBe(true),
+    );
+    q.repo.verifyCode.mockResolvedValueOnce({
+      kind: "CONSENT",
+      accountId: "unit",
+      clientName: "Unit Client",
+      businessAccess,
+    });
+    q.fill("oauthConsent.code", "12345678");
+    q.press("oauthConsent.verify");
+    await vi.waitFor(() =>
+      expect(q.render().some((n) => n.props.label === allowKey)).toBe(true),
+    );
+    expect(q.render().some((n) => n.props.children === scopeKey)).toBe(true);
+    expect(q.render().some((n) => n.props.label === "oauthConsent.allow")).toBe(false);
+    expect(q.repo.decide).not.toHaveBeenCalled();
+    q.repo.decide.mockResolvedValueOnce({
+      kind: "REDIRECT",
+      url: "https://claude.ai/api/mcp/auth_callback?code=unit",
+    });
+    q.press(allowKey);
+    await vi.waitFor(() => expect(q.repo.decide).toHaveBeenCalledWith(true));
+  },
+);
 it("keeps rate-limit errors visible and invalid email submit disabled", async () => {
   const q = fixture();
   q.fill("oauthConsent.email", "invalid");
@@ -181,4 +187,72 @@ it("keeps rate-limit errors visible and invalid email submit disabled", async ()
     ).toBe("oauthConsent.RATE_LIMIT"),
   );
   expect(q.navigate).not.toHaveBeenCalled();
+});
+
+it("finishes policy-satisfied OTP reuse with cleanup and navigation, without asking for another approval", async () => {
+  const q = fixture(),
+    events: string[] = [];
+  q.fill("oauthConsent.email", "qa@example.invalid");
+  q.press("oauthConsent.send");
+  await vi.waitFor(() =>
+    expect(
+      q.render().some((n) => n.props.accessibilityLabel === "oauthConsent.code"),
+    ).toBe(true),
+  );
+  q.repo.verifyCode.mockResolvedValueOnce({
+    kind: "REDIRECT",
+    url: "https://chatgpt.com/connector/oauth/unit?code=unit",
+  });
+  q.repo.close.mockImplementationOnce(async () => {
+    events.push("cleanup");
+  });
+  q.navigate.mockImplementationOnce(() => {
+    events.push("navigate");
+  });
+  q.fill("oauthConsent.code", "12345678");
+  q.press("oauthConsent.verify");
+  await vi.waitFor(() => expect(q.navigate).toHaveBeenCalledOnce());
+  expect(events).toEqual(["cleanup", "navigate"]);
+  expect(q.repo.decide).not.toHaveBeenCalled();
+});
+
+it("shows only explicitly configured provider controls and opens before async login", async () => {
+  const q = fixture();
+  expect(q.render().some((n) => n.props.label === "auth.continueGoogle")).toBe(false);
+  q.repo.browserProviders = ["google", "apple"];
+  q.repo.identityLinkEnabled = true;
+  const popup = { receive: vi.fn(), close: vi.fn() };
+  const open = vi.fn(() => popup);
+  q.repo.signInProvider.mockResolvedValueOnce({
+    kind: "CONSENT",
+    accountId: "unit",
+    clientName: "Unit",
+  });
+  state.cursor = state.refCursor = 0;
+  const tree = nodes(
+    McpOAuthConsent({ repository: q.repo, navigate: q.navigate, openProvider: open }),
+  );
+  tree.find((n) => n.props.label === "auth.continueGoogle")!.props.onPress!();
+  expect(open).toHaveBeenCalledOnce();
+  await vi.waitFor(() =>
+    expect(q.repo.signInProvider).toHaveBeenCalledWith("google", popup),
+  );
+  const labels = q.render().map((node) => node.props.label);
+  expect(labels).toContain("oauthConsent.allow");
+  expect(labels).not.toContain("oauthConsent.linkGoogle");
+  expect(labels).not.toContain("oauthConsent.linkApple");
+  expect(q.repo.decide).not.toHaveBeenCalled();
+  expect(q.navigate).not.toHaveBeenCalled();
+});
+
+
+it("shows unavailable social options on managed QA relink without starting provider login", () => {
+  const q = fixture(true);
+  for (const label of ["auth.continueApple", "auth.continueGoogle"]) {
+    const button = q.render().find((node) => node.props.label === label);
+    expect(button?.props.disabled).toBe(true);
+    button?.props.onPress?.();
+  }
+  expect(q.render().some((node) => node.props.children === "oauthConsent.qaEmailOnly")).toBe(true);
+  expect(q.repo.signInProvider).not.toHaveBeenCalled();
 });

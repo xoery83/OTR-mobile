@@ -26,7 +26,7 @@ const configSchema = z.strictObject({
 export type CorePgConfig = z.input<typeof configSchema>;
 // Dormant until a separately accepted dedicated primary principal is provisioned.
 // Each operation owns a fresh session; no role/GUC/aborted transaction can leak to another actor.
-export function createCorePgConnection(input: CorePgConfig): CorePgConnection {
+export function createCorePgConnection(input: CorePgConfig): CorePgConnection & { close(): Promise<void> } {
   // Sealed Source admission revalidates evidence; the 90s Import request covers FIFO + lease.
   return createOwningPgConnection(input, "otr_trip_core_v2_gateway", {
     idleMs: 5000,
@@ -50,12 +50,28 @@ export function createSourcePdfPgConnection(input: CorePgConfig) {
     reuse: true,
   });
 }
-export function createTripPgConnection(input: CorePgConfig): CorePgConnection {
-  return createOwningPgConnection(input, "otr_trip_create_gateway");
+export function createTripPgConnection(input: CorePgConfig) {
+  const connection = createOwningPgConnection(input, "otr_trip_create_gateway");
+  return Object.assign(connection, {
+    withReadLease<T>(work: (lease: CorePgLease) => Promise<T>) {
+      return connection.withLease(work, true);
+    },
+  });
 }
 // Explicit isolated V2 composition only; this cannot open SQL/credential gates.
-export function createTripMetadataPgConnection(input: CorePgConfig): CorePgConnection {
-  return createOwningPgConnection(input, "otr_trip_metadata_gateway");
+export function createTripMetadataPgConnection(input: CorePgConfig) {
+  const connection = createOwningPgConnection(input, "otr_trip_metadata_gateway");
+  return Object.assign(connection, {
+    withReadLease<T>(work: (lease: CorePgLease) => Promise<T>) {
+      return connection.withLease(work, true);
+    },
+    withManagedUpdateLease<T>(work: (lease: CorePgLease) => Promise<T>) {
+      return connection.withLease(work, true);
+    },
+  });
+}
+export function createMcpOperationApprovalPgConnection(input: CorePgConfig) {
+  return createOwningPgConnection(input, "otr_mcp_operation_approval_gateway");
 }
 export function createPersonPgConnection(input: CorePgConfig): CorePgConnection {
   return createOwningPgConnection(input, "otr_trip_person_command_gateway");
@@ -71,6 +87,7 @@ function createOwningPgConnection(
     | "otr_trip_source_command_gateway"
     | "otr_trip_create_gateway"
     | "otr_trip_metadata_gateway"
+    | "otr_mcp_operation_approval_gateway"
     | "otr_external_integration_call_gateway",
   budget: { idleMs: number; leaseMs: number; connectMs?: number; reuse?: boolean } = {
     idleMs: 5000,
@@ -97,13 +114,17 @@ function createOwningPgConnection(
   }
   const waiters = new Set<() => void>();
   // The Core principal has one connection: bound contention without reusing actor sessions.
-  async function acquire() {
+  async function acquire(queuedAdmission = false) {
     if (!occupied) {
       occupied = true;
       return;
     }
-    if (principal !== "otr_trip_core_v2_gateway" || waiters.size >= 4)
-      throw new Error("CORE_CONNECTION_BUSY");
+    if (
+      (principal !== "otr_trip_core_v2_gateway" &&
+        !(queuedAdmission &&
+          (principal === "otr_trip_create_gateway" || principal === "otr_trip_metadata_gateway"))) ||
+      waiters.size >= 4
+    ) throw new Error("CORE_CONNECTION_BUSY");
     await new Promise<void>((resolve, reject) => {
       const wake = () => {
         clearTimeout(timer);
@@ -125,13 +146,13 @@ function createOwningPgConnection(
   }
   return {
     discardIdle,
-    close() {
+    async close() {
       closed = true;
-      return discardIdle();
+      await discardIdle();
     },
-    async withLease<T>(work: (lease: CorePgLease) => Promise<T>) {
+    async withLease<T>(work: (lease: CorePgLease) => Promise<T>, queuedAdmission = false) {
       if (closed) throw new Error("CORE_CONNECTION_RETIRED");
-      await measureSourcePdfPhase("pg_lease_wait", acquire);
+      await measureSourcePdfPhase("pg_lease_wait", () => acquire(queuedAdmission));
       const prior = idle;
       const reused = prior && !prior.isRetired() ? prior : undefined;
       clearTimeout(idleTimer);
@@ -254,7 +275,10 @@ function createOwningPgConnection(
               }
             },
           };
-          const result = await work(lease);
+          const result = await measureSourcePdfPhase(
+            "pg_read_result",
+            () => work(lease),
+          );
           if (!finished || isRetired()) throw new Error("CORE_TRANSACTION_UNFINISHED");
           reusable = !failed;
           return result;

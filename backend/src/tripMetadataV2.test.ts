@@ -71,7 +71,7 @@ it("qualifies exact V2 update and immutable result reader through existing route
   const response = await tripMetadataV2Boundary(request(), actor, p);
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual(result);
-  expect(p.update).toHaveBeenCalledWith(actor, input);
+  expect(p.update).toHaveBeenCalledWith(actor, input, undefined);
   const read = await tripMetadataV2Boundary(
     new Request(`http://unit/v2/trip-metadata-operations/${operationId}`, {
       headers: { "OTR-Trip-Metadata-Version": "2" },

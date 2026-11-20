@@ -1,0 +1,3315 @@
+[
+  {
+    "toolName": "list_trips",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "create_trip",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "update_trip",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "archive_trip",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.archive",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "unarchive_trip",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.unarchive",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "delete_trip",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.delete",
+        "risk": "L3_HIGH_IMPACT_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": true
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "preview_trip_currency",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.currency.preview",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "update_trip_currency",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.currency.update",
+        "risk": "L3_HIGH_IMPACT_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": true
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "list_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "search_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "create_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "update_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "hide_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "restore_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "delete_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_visibility",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_participation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "list_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "search_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "create_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "update_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "hide_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "restore_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "delete_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_visibility",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_participation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "list_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "search_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "create_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "update_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "hide_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "restore_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "delete_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_visibility",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_participation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "list_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "search_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "create_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "update_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "hide_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "restore_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "delete_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_visibility",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_participation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "list_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "search_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "create_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "update_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "hide_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "restore_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "delete_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_visibility",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_participation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "list_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "search_trip_items",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.search",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "create_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "update_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "hide_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.hide",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "restore_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "delete_trip_item",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "multi-target destructive effect => L3",
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_visibility",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.visibility",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "set_trip_item_participation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.p1.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p2.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p3.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p4.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p5.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      },
+      {
+        "capabilityId": "otr.p6.participation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "list_trip_people",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.people.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "expense_list",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "expense_get",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "expense_create",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.create",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "expense_update",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.update",
+        "risk": "L1_NORMAL_WRITE",
+        "dynamicEscalation": [
+          "participantSplit/payer/settlementParticipation changes => L2"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "expense_delete",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.delete",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [
+          "DECLARED_PLAN_TARGET_FENCE"
+        ],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "expense_restore",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.restore",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "expense_valuation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.valuation",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "expense_payment_record",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.payment_record",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "expense_conflicts",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.conflicts",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "expense_resolve",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.resolve",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "fx_lookup",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.fx.lookup",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "fx_snapshots",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.fx.snapshots",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "expense_link",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.link",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "expense_unlink",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.expense.unlink",
+        "risk": "L2_SENSITIVE_WRITE",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics. Multi-step writes carry complete executionPlan; exact actual Apply membership and Preview digest bind it. Declared aggregate destructive targets register deny-only900s fences across clients/operation replacements before any dispatch; no bulk approval or executor is granted.",
+    "planEnforcementVersion": "otr.mcp-beta.plan-enforcement/1.1.1"
+  },
+  {
+    "toolName": "settlement_preview",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.settlement.preview",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "settlement_list",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.settlement.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "settlement_get",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.settlement.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "settlement_history",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.settlement.history",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "settlement_payments_read",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.settlement.payments.read",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "personal_payment_list",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.personal_payment.list",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "personal_payment_get",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.personal_payment.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "personal_review_read",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.personal_review.read",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "ledger_history",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.ledger.history",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "ledger_export",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.ledger.export",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_operation_status",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.core.operation.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_operation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.operation.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_metadata_operation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.metadata.operation.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_ledger_operation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.ledger.operation.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_lifecycle_operation",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.lifecycle.operation.get",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_capabilities",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.permissions.read",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "read_core_snapshot",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.core.collection.read",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_item_lifecycle_base",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.item.lifecycle.base",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  },
+  {
+    "toolName": "get_trip_lifecycle_base",
+    "riskPolicies": [
+      {
+        "capabilityId": "otr.trip.lifecycle.base",
+        "risk": "READ",
+        "dynamicEscalation": [],
+        "requiresTrustedConfirmation": false
+      }
+    ],
+    "descriptionDelta": "Server-enforced risk v1.1: L1/L2 OAuth+ACL+validation, no per-operation click; explain sensitive lifecycle/sharing/allocation/payment effects. L3 exact trusted approval; never decompose high-impact operations. Same Preview/Apply fields, Operation/CAS/idempotency/Receipt/UNKNOWN semantics."
+  }
+]

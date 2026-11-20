@@ -1,0 +1,144 @@
+{
+  "capabilityId": "otr.p5.create",
+  "toolName": "create_trip_item",
+  "pathParams": {
+    "tripId": "00000000-0000-4000-8000-000000000007"
+  },
+  "query": {},
+  "request": {
+    "contractVersion": 2,
+    "intentVersion": 2,
+    "operationId": "00000000-0000-4000-8000-000000000010",
+    "tripId": "00000000-0000-4000-8000-000000000007",
+    "baseVector": [
+      {
+        "kind": "ITEM",
+        "id": "00000000-0000-4000-8000-000000000011",
+        "revision": null
+      }
+    ],
+    "command": "CREATE_ITEM",
+    "payload": {
+      "core": {
+        "title": "Layer3 P5 Test 01"
+      },
+      "participation": {
+        "mode": "WHOLE_GROUP",
+        "people": [],
+        "selfPersonId": null
+      },
+      "acl": {
+        "visibility": "GROUP",
+        "people": []
+      },
+      "family": "P5",
+      "endpoints": {
+        "origin": {
+          "time": {
+            "instant": null,
+            "local_date": "2026-12-02",
+            "local_time": null,
+            "clock_precision": null,
+            "quality": "UNKNOWN",
+            "basis": "DERIVED_CIVIL",
+            "zone_id": null,
+            "supplied_offset_seconds": null,
+            "source_instant": null,
+            "source_instant_precision": null,
+            "civil_resolution": "PENDING",
+            "resolution_offset_seconds": null,
+            "interpretation_key": null,
+            "interpretation_input_sha256": null,
+            "provenance_refs": null
+          },
+          "place": {
+            "authored_label": "Auckland",
+            "authored_text": null,
+            "authored_address": null,
+            "accepted_address": null,
+            "accepted_latitude": null,
+            "accepted_longitude": null,
+            "accepted_place_id": null,
+            "spatial_provenance_refs": null,
+            "location_input_revision": null,
+            "authored_address_line1": null,
+            "authored_address_line2": null,
+            "authored_address_locality": null,
+            "authored_address_region": null,
+            "authored_address_postal_code": null,
+            "authored_address_country": null,
+            "accepted_address_line1": null,
+            "accepted_address_line2": null,
+            "accepted_address_locality": null,
+            "accepted_address_region": null,
+            "accepted_address_postal_code": null,
+            "accepted_address_country": null
+          }
+        },
+        "destination": {
+          "time": {
+            "instant": null,
+            "local_date": "2026-12-02",
+            "local_time": null,
+            "clock_precision": null,
+            "quality": "UNKNOWN",
+            "basis": "DERIVED_CIVIL",
+            "zone_id": null,
+            "supplied_offset_seconds": null,
+            "source_instant": null,
+            "source_instant_precision": null,
+            "civil_resolution": "PENDING",
+            "resolution_offset_seconds": null,
+            "interpretation_key": null,
+            "interpretation_input_sha256": null,
+            "provenance_refs": null
+          },
+          "place": {
+            "authored_label": "Nelson",
+            "authored_text": null,
+            "authored_address": null,
+            "accepted_address": null,
+            "accepted_latitude": null,
+            "accepted_longitude": null,
+            "accepted_place_id": null,
+            "spatial_provenance_refs": null,
+            "location_input_revision": null,
+            "authored_address_line1": null,
+            "authored_address_line2": null,
+            "authored_address_locality": null,
+            "authored_address_region": null,
+            "authored_address_postal_code": null,
+            "authored_address_country": null,
+            "accepted_address_line1": null,
+            "accepted_address_line2": null,
+            "accepted_address_locality": null,
+            "accepted_address_region": null,
+            "accepted_address_postal_code": null,
+            "accepted_address_country": null
+          }
+        }
+      },
+      "service": {
+        "service_key": "layer3-p5-test-01",
+        "transport_subtype": "BUS",
+        "attribution": "UNSPECIFIED",
+        "operator_namespace": "NAME",
+        "operator_issuer": "",
+        "operator_value": "",
+        "operator_literal": "",
+        "service_number": "",
+        "service_literal": "",
+        "codeshare_operating_key": null
+      }
+    },
+    "admission": {
+      "mode": "MANUAL",
+      "sourceIntentId": null,
+      "policyVersion": null
+    },
+    "target": {
+      "kind": "ITEM",
+      "id": "00000000-0000-4000-8000-000000000011"
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { isLegacyStoredP5Identity, p5IdentityPatch } from "./p5Identity";
 import { authoredFlightDetailsSchema } from "./authoredFlightDetails";
 import {
   isVerifiedLocalOperation,
@@ -18,6 +19,13 @@ import {
 import { canonicalCoreJson, type Json } from "./tripCoreV2Json";
 import { instantMicroseconds, validateCalendarDate } from "./dayReadModel";
 import { isIso4217Money } from "../ledger/currency";
+import {
+  authoredPlacePatchSchema,
+  authoredPlaceChanges,
+  patchCoreBoundary,
+  emptyCoreBoundary,
+  type SparseBoundaryPatch,
+} from "./tripCoreSparseFields";
 export type CoreRow = Record<string, unknown>;
 export type CoreGraph = { [T in f.CoreTable]: CoreRow[] };
 export type CoreActor = {
@@ -104,6 +112,14 @@ export type VerifiedPrivateDocumentCustody = Readonly<{
   mediaType: string;
   contentVersion: number;
 }>;
+export type VerifiedExpenseLinkAuthority = Readonly<{
+  actorAccountId: string;
+  tripId: string;
+  linkId: string;
+  expenseId: string;
+  itemId: string;
+  expenseRevision: number;
+}>;
 export function applyCoreCommand(
   given: CoreGraph,
   input: unknown,
@@ -113,6 +129,8 @@ export function applyCoreCommand(
   lifecycleGraphHash?: string,
   actorProjection = false,
   privateDocumentCustody?: VerifiedPrivateDocumentCustody,
+  deletedItemIds: ReadonlySet<string> = new Set(),
+  expenseLinkAuthority?: VerifiedExpenseLinkAuthority,
 ): CoreMutation {
   return executeCoreMutation(
     given,
@@ -124,6 +142,8 @@ export function applyCoreCommand(
     actorProjection,
     privateDocumentCustody,
     false,
+    deletedItemIds,
+    expenseLinkAuthority,
   );
 }
 export function applyLocalCoreOperation(
@@ -161,6 +181,8 @@ function executeCoreMutation(
   actorProjection: boolean,
   privateDocumentCustody: VerifiedPrivateDocumentCustody | undefined,
   local: boolean,
+  deletedItemIds: ReadonlySet<string> = new Set(),
+  expenseLinkAuthority?: VerifiedExpenseLinkAuthority,
 ): CoreMutation {
   if (!actor.active || q.tripId !== actor.tripId) throw new Error("TRIP_NOT_AUTHORIZED");
   if (q.admission.mode !== "MANUAL" && !sourceAuthorized)
@@ -178,12 +200,24 @@ function executeCoreMutation(
     return r;
   };
   for (const v of q.baseVector) {
-    if (v.kind === "SOURCE" || v.kind === "EXPENSE_LINK") continue;
+    if (v.kind === "SOURCE") continue;
+    if (v.kind === "EXPENSE_LINK") {
+      const existing = g.expense_links.find((row) => row.id === v.id);
+      if (v.revision === null ? !!existing : !existing || v.revision !== 1)
+        throw new Error("REVISION_CONFLICT");
+      continue;
+    }
     const r = g[table(v.kind)].find((x) => x.id === v.id);
     if (r && !coreCanRead(g, actor, v.kind, r)) throw new Error("NOT_VISIBLE");
     if (v.revision === null ? !!r : !r || rev(r, v.kind) !== v.revision)
       throw new Error("REVISION_CONFLICT");
   }
+  if (
+    q.target.kind === "ITEM" &&
+    deletedItemIds.has(q.target.id) &&
+    q.command !== "DELETE_ITEM"
+  )
+    throw new Error("ITEM_DELETED");
   const usedBases = new Set<string>([q.target.kind + ":" + q.target.id]);
   const requireBase = (k: f.CoreKind, id: string) => {
     usedBases.add(k + ":" + id);
@@ -232,7 +266,12 @@ function executeCoreMutation(
         throw new Error("AUTO_CLEAR_FORBIDDEN");
       state[address] = {
         state: value === null ? "CLEARED" : "KNOWN",
-        origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
+        origin:
+          q.admission.mode === "MANUAL"
+            ? "MANUAL"
+            : q.admission.mode === "IMPORT"
+              ? "PROVIDER"
+              : "SOURCE",
         protected: q.admission.mode === "MANUAL",
         changed_revision: r[k === "ITEM" ? "semantic_revision" : "revision"] as number,
         evidence_ref: null,
@@ -242,7 +281,11 @@ function executeCoreMutation(
     Object.assign(r, changes);
   };
   const defaults = (t: f.CoreTable): CoreRow =>
-    Object.fromEntries(Object.keys(f.coreTableSchemas[t].shape).map((k) => [k, null]));
+    Object.fromEntries(
+      Object.keys(f.coreTableSchemas[t].shape)
+        .filter((k) => k !== "identity_state")
+        .map((k) => [k, null]),
+    );
   const create = (
     k: f.CoreKind,
     id: string,
@@ -379,13 +422,107 @@ function executeCoreMutation(
       if (q.admission.mode === "AUTO_SOURCE" && v === null)
         throw new Error("AUTO_CLEAR_FORBIDDEN");
       state[address + key] = {
-        state: v === null ? "CLEARED" : "KNOWN",
-        origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
+        state:
+          v === null &&
+          (old?.[key] == null ||
+            (typeof old?.[key] === "string" &&
+              !(old[key] as string).trim() &&
+              isLegacyStoredP5Identity(old))) &&
+          (values.identity_state as any)?.fields?.[key] === "UNKNOWN"
+            ? "UNKNOWN"
+            : v === null
+              ? "CLEARED"
+              : "KNOWN",
+        origin:
+          q.admission.mode === "MANUAL"
+            ? "MANUAL"
+            : q.admission.mode === "IMPORT"
+              ? "PROVIDER"
+              : "SOURCE",
         protected: q.admission.mode === "MANUAL",
         changed_revision: rev(item, "ITEM"),
         evidence_ref: null,
       };
     }
+  };
+  const manualChanges = (r: CoreRow, old: CoreRow, values: CoreRow, prefix: string) =>
+    Object.fromEntries(
+      Object.entries(values).filter(([key, value]) =>
+        value === null
+          ? old[key] !== null ||
+            (r.field_state as Record<string, { state: string }>)[prefix + key]?.state !==
+              "CLEARED"
+          : canonicalCoreJson(value as Json) !==
+            canonicalCoreJson((old[key] ?? null) as Json),
+      ),
+    );
+  const manualRoot = (r: CoreRow, values: CoreRow) => {
+    const changes = manualChanges(r, r, values, "itinerary_events.");
+    if (!Object.keys(changes).length) return;
+    touch("ITEM", r);
+    mark("ITEM", r, changes);
+  };
+  const manualDetail = (r: CoreRow, t: f.CoreTable, values: CoreRow, role?: string) => {
+    const identity =
+      t === "itinerary_transport_services"
+        ? "service_key"
+        : t === "trip_stay_rooms"
+          ? "room_id"
+          : "role";
+    const old =
+      g[t].find(
+        (row) => row.event_id === r.id && (role === undefined || row[identity] === role),
+      ) ?? {};
+    const changes = manualChanges(r, old, values, t + "." + (role ? role + "." : ""));
+    if (!Object.keys(changes).length) return;
+    touch("ITEM", r);
+    detail(t, r.id as string, changes, role);
+  };
+  const manualPlace = (old: CoreRow, supplied: CoreRow): CoreRow => {
+    const full = f.corePlaceSchema.safeParse(supplied).success;
+    if (full)
+      return Object.fromEntries(
+        Object.entries(supplied).filter(
+          ([key, value]) =>
+            canonicalCoreJson(value as Json) !==
+            canonicalCoreJson((old[key] ?? null) as Json),
+        ),
+      );
+    const authored = Object.fromEntries(
+      Object.entries(supplied).filter(
+        ([key, value]) =>
+          key.startsWith("authored_") &&
+          (!full ||
+            canonicalCoreJson(value as Json) !==
+              canonicalCoreJson((old[key] ?? null) as Json)),
+      ),
+    );
+    const changes = Object.keys(authored).length
+      ? authoredPlaceChanges(old, authoredPlacePatchSchema.parse(authored))
+      : {};
+    return changes;
+  };
+  const manualTransportPoint = (
+    r: CoreRow,
+    t: "itinerary_transport_endpoints" | "trip_transport_operational_facts",
+    role: string,
+    changes: Record<string, any>,
+  ) => {
+    const old = g[t].find((row) => row.event_id === r.id && row.role === role);
+    if (!old) throw new Error("NOT_VISIBLE");
+    const values: CoreRow = {};
+    if (changes.time) {
+      const next = patchCoreBoundary(coreStoredBoundary(old), changes.time);
+      for (const [key, value] of Object.entries(next))
+        if (
+          canonicalCoreJson((old[key] ?? null) as Json) !==
+            canonicalCoreJson(value as Json) ||
+          (Object.hasOwn(changes.time, key) && value === null)
+        )
+          values[key] = value;
+    }
+    if (changes.place) Object.assign(values, manualPlace(old, changes.place));
+    manualDetail(r, t, values, role);
   };
   const replaceDetails = (t: f.CoreTable, id: string, rows: CoreRow[], key: string) => {
     const item = root("ITEM", id, true);
@@ -404,7 +541,25 @@ function executeCoreMutation(
         throw new Error("PROTECTED_FIELD");
     for (const row of rows) {
       const { [key]: identity, ...facts } = row;
-      detail(t, id, facts, identity as string);
+      const resetIdentity =
+        t === "itinerary_transport_services" &&
+        facts.identity_state === undefined &&
+        g[t].some(
+          (old) =>
+            old.event_id === id &&
+            old[key] === identity &&
+            old.identity_state !== undefined,
+        );
+      detail(
+        t,
+        id,
+        resetIdentity ? { ...facts, identity_state: null } : facts,
+        identity as string,
+      );
+      if (resetIdentity) {
+        const updated = g[t].find((row) => row.event_id === id && row[key] === identity)!;
+        delete updated.identity_state;
+      }
     }
     g[t] = g[t].filter((r) => r.event_id !== id || rows.some((n) => n[key] === r[key]));
     for (const row of removed)
@@ -413,7 +568,12 @@ function executeCoreMutation(
         if (!f.isCoreFieldAddress(address)) continue;
         state[address] = {
           state: "CLEARED",
-          origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
+          origin:
+            q.admission.mode === "MANUAL"
+              ? "MANUAL"
+              : q.admission.mode === "IMPORT"
+                ? "PROVIDER"
+                : "SOURCE",
           protected: q.admission.mode === "MANUAL",
           changed_revision: rev(item, "ITEM"),
           evidence_ref: null,
@@ -581,7 +741,12 @@ function executeCoreMutation(
           }
           state[key] = {
             state: value === null ? "CLEARED" : "KNOWN",
-            origin: q.admission.mode === "MANUAL" ? "MANUAL" : q.admission.mode === "IMPORT" ? "PROVIDER" : "SOURCE",
+            origin:
+              q.admission.mode === "MANUAL"
+                ? "MANUAL"
+                : q.admission.mode === "IMPORT"
+                  ? "PROVIDER"
+                  : "SOURCE",
             protected: q.admission.mode === "MANUAL",
             changed_revision: rev(r, "ITEM"),
             evidence_ref: null,
@@ -625,14 +790,108 @@ function executeCoreMutation(
       const formal = q.command === "SET_AUTHORED_FLIGHT_DETAILS";
       if (!formal && (!local || q.admission.mode !== "MANUAL"))
         throw new Error("LOCAL_CAPABILITY_REQUIRED");
+      if (formal && "patch" in p) {
+        if (q.admission.mode !== "MANUAL") throw new Error("SCOPE_NOT_AUTHORIZED");
+        const r = target();
+        const intent = g.trip_flight_intents.find((row) => row.event_id === r.id);
+        if (
+          r.experience_family !== "P2" ||
+          intent?.qualification !== "SPARSE" ||
+          r.owner_account_id !== actor.accountId
+        )
+          throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
+        const patch = p.patch;
+        if (patch.flightNumberLiteral !== undefined) {
+          manualRoot(r, { title: patch.flightNumberLiteral });
+          manualDetail(r, "trip_flight_intents", {
+            flight_number_literal: patch.flightNumberLiteral,
+          });
+        }
+        if (patch.origin || patch.destination) {
+          if (r.temporal_shape !== "TRANSPORT") {
+            const previous = coreStoredBoundary(r, "start");
+            const previousState = structuredClone(r.field_state) as Record<
+              string,
+              unknown
+            >;
+            touch("ITEM", r);
+            detail("itinerary_transport_endpoints", r.id as string, previous, "ORIGIN");
+            detail(
+              "itinerary_transport_endpoints",
+              r.id as string,
+              emptyCoreBoundary(),
+              "DESTINATION",
+            );
+            const cleared: CoreRow = {};
+            for (const [key] of Object.entries(previous)) {
+              const column = key === "instant" ? "planned_start" : "start_" + key;
+              if (Object.hasOwn(previousState, "itinerary_events." + column))
+                (r.field_state as Record<string, unknown>)[
+                  "itinerary_transport_endpoints.ORIGIN." + key
+                ] = previousState["itinerary_events." + column];
+              if (r[column] !== null) cleared[column] = null;
+            }
+            for (const key of Object.keys(emptyCoreBoundary())) {
+              const column = key === "instant" ? "planned_end" : "end_" + key;
+              if (r[column] !== null) cleared[column] = null;
+            }
+            manualRoot(r, cleared);
+            r.temporal_shape = "TRANSPORT";
+            r.event_type = "flight";
+          }
+          for (const [input, role] of [
+            ["origin", "ORIGIN"],
+            ["destination", "DESTINATION"],
+          ] as const) {
+            const changes = patch[input];
+            if (!changes) continue;
+            const endpoint = g.itinerary_transport_endpoints.find(
+              (row) => row.event_id === r.id && row.role === role,
+            )!;
+            if (changes.time) {
+              const previous = coreStoredBoundary(endpoint),
+                next = patchCoreBoundary(previous, changes.time);
+              const values = Object.fromEntries(
+                Object.entries(next).filter(
+                  ([key, value]) =>
+                    canonicalCoreJson((endpoint[key] ?? null) as Json) !==
+                      canonicalCoreJson(value as Json) ||
+                    (Object.hasOwn(changes.time, key) && value === null),
+                ),
+              );
+              manualDetail(r, "itinerary_transport_endpoints", values, role);
+            }
+            if (Object.hasOwn(changes, "name"))
+              manualDetail(
+                r,
+                "itinerary_transport_endpoints",
+                manualPlace(endpoint, { authored_label: changes.name }),
+                role,
+              );
+            const annotations: CoreRow = {};
+            if (Object.hasOwn(changes, "airportCode"))
+              annotations.airport_code = changes.airportCode;
+            if (Object.hasOwn(changes, "terminal"))
+              annotations.terminal = changes.terminal;
+            manualDetail(r, "trip_endpoint_details", annotations, role);
+          }
+        }
+        break;
+      }
       const b = formal
         ? authoredFlightDetailsSchema.parse(p)
         : localAuthoredFlightPayloadSchema.parse(p);
       const existing = g.itinerary_events.find((x) => x.id === q.target.id);
       if (formal && (!existing || existing.owner_account_id !== actor.accountId))
         throw new Error("MANUAL_FLIGHT_EDIT_UNAVAILABLE");
-      if (q.admission.mode === "IMPORT" && (!existing || existing.semantic_revision !== 1 ||
-          Object.values(existing.field_state as Record<string, { origin: string }>).some(field => field.origin !== "PROVIDER")))
+      if (
+        q.admission.mode === "IMPORT" &&
+        (!existing ||
+          existing.semantic_revision !== 1 ||
+          Object.values(existing.field_state as Record<string, { origin: string }>).some(
+            (field) => field.origin !== "PROVIDER",
+          ))
+      )
         throw new Error("PROTECTED_FIELD");
       const intent = g.trip_flight_intents.find((x) => x.event_id === q.target.id);
       if (
@@ -811,6 +1070,12 @@ function executeCoreMutation(
     }
     case "SET_ITEM_TEXT": {
       const r = target();
+      if (
+        q.admission.mode === "MANUAL" &&
+        r.experience_family === "P2" &&
+        Object.hasOwn(p, "title")
+      )
+        throw new Error("INVALID_AGGREGATE");
       touch("ITEM", r);
       mark("ITEM", r, p);
       break;
@@ -873,6 +1138,53 @@ function executeCoreMutation(
     }
     case "SET_ITEM_SCHEDULE": {
       const r = target();
+      if ("schedulePatch" in p) {
+        if (q.admission.mode !== "MANUAL" || r.temporal_shape === "TRANSPORT")
+          throw new Error("SCOPE_NOT_AUTHORIZED");
+        const values: CoreRow = {};
+        for (const role of ["start", "end"] as const) {
+          if (!Object.hasOwn(p.schedulePatch, role)) continue;
+          const patch = p.schedulePatch[role] as SparseBoundaryPatch | null;
+          if (patch === null) {
+            for (const key of Object.keys(emptyCoreBoundary())) {
+              const column = key === "instant" ? "planned_" + role : role + "_" + key;
+              if (r[column] !== null) values[column] = null;
+            }
+            continue;
+          }
+          const previous =
+            r[role + "_quality"] == null
+              ? emptyCoreBoundary()
+              : coreStoredBoundary(r, role);
+          const next = patchCoreBoundary(previous, patch);
+          for (const [key, value] of Object.entries(next)) {
+            const column = key === "instant" ? "planned_" + role : role + "_" + key;
+            if (
+              canonicalCoreJson((r[column] ?? null) as Json) !==
+                canonicalCoreJson(value as Json) ||
+              (Object.hasOwn(patch, key) &&
+                value === null &&
+                (r.field_state as Record<string, { state: string }>)[
+                  "itinerary_events." + column
+                ]?.state !== "CLEARED")
+            )
+              values[column] = value;
+          }
+        }
+        if (!Object.keys(values).length) break;
+        touch("ITEM", r);
+        mark("ITEM", r, values);
+        if (!r.start_local_date) throw new Error("INVALID_FACT");
+        r.temporal_shape =
+          r.experience_family === "P3"
+            ? "STAY"
+            : r.end_local_date
+              ? "SPAN"
+              : r.start_local_time || r.planned_start
+                ? "POINT"
+                : "CALENDAR";
+        break;
+      }
       touch("ITEM", r);
       setSchedule(r, p.schedule);
       break;
@@ -881,8 +1193,11 @@ function executeCoreMutation(
       const r = target();
       if (!["P1", "P3", "P6"].includes(r.experience_family as string))
         throw new Error("INVALID_AGGREGATE");
-      touch("ITEM", r);
-      mark("ITEM", r, p.place);
+      if (q.admission.mode === "MANUAL") manualRoot(r, manualPlace(r, p.place));
+      else {
+        touch("ITEM", r);
+        mark("ITEM", r, p.place);
+      }
       break;
     }
     case "SET_ITEM_GROUPING": {
@@ -908,6 +1223,7 @@ function executeCoreMutation(
       const r = target();
       if (!["P1", "P6"].includes(r.experience_family as string))
         throw new Error("INVALID_AGGREGATE");
+      if (p.family !== r.experience_family) throw new Error("INVALID_AGGREGATE");
       touch("ITEM", r);
       mark("ITEM", r, { experience_family: p.family, activity_category: p.category });
       break;
@@ -989,24 +1305,53 @@ function executeCoreMutation(
     case "SET_RENTAL_DETAILS": {
       const r = target();
       if (r.experience_family !== "P4") throw new Error("INVALID_AGGREGATE");
-      touch("ITEM", r);
-      detail("trip_rental_details", r.id as string, p.details);
+      if (q.admission.mode !== "MANUAL") {
+        touch("ITEM", r);
+        detail("trip_rental_details", r.id as string, p.details);
+      } else if (p.details) manualDetail(r, "trip_rental_details", p.details);
       for (const [input, role] of [
         ["pickup", "PICKUP"],
         ["return", "RETURN"],
       ] as const)
-        if (Object.hasOwn(p.places, input))
-          detail(
-            "trip_rental_places",
-            r.id as string,
-            p.places[input] ?? clearPlace,
-            role,
-          );
+        if (Object.hasOwn(p.places ?? {}, input)) {
+          if (q.admission.mode === "MANUAL") {
+            const old =
+              g.trip_rental_places.find(
+                (row) => row.event_id === r.id && row.role === role,
+              ) ?? {};
+            manualDetail(
+              r,
+              "trip_rental_places",
+              p.places[input] === null ? clearPlace : manualPlace(old, p.places[input]),
+              role,
+            );
+          } else
+            detail(
+              "trip_rental_places",
+              r.id as string,
+              p.places[input] ?? clearPlace,
+              role,
+            );
+        }
       break;
     }
     case "SET_ACTIVITY_DETAILS": {
       const r = target();
       if (r.experience_family !== "P6") throw new Error("INVALID_AGGREGATE");
+      if (q.admission.mode === "MANUAL") {
+        if (p.details) manualDetail(r, "trip_activity_details", p.details);
+        if (Object.hasOwn(p, "entryPlace")) {
+          const old =
+            g.trip_activity_entry_places.find((row) => row.event_id === r.id) ?? {};
+          manualDetail(
+            r,
+            "trip_activity_entry_places",
+            p.entryPlace === null ? clearPlace : manualPlace(old, p.entryPlace),
+            "ENTRY",
+          );
+        }
+        break;
+      }
       touch("ITEM", r);
       detail("trip_activity_details", r.id as string, p.details);
       detail(
@@ -1020,6 +1365,91 @@ function executeCoreMutation(
     case "SET_TRANSPORT_DETAILS": {
       const r = target();
       if (r.experience_family !== "P5") throw new Error("INVALID_AGGREGATE");
+      if ("patch" in p) {
+        if (q.admission.mode !== "MANUAL") throw new Error("SCOPE_NOT_AUTHORIZED");
+        const patch = p.patch;
+        for (const [input, role] of [
+          ["origin", "ORIGIN"],
+          ["destination", "DESTINATION"],
+        ] as const) {
+          if (patch.endpoints?.[input])
+            manualTransportPoint(
+              r,
+              "itinerary_transport_endpoints",
+              role,
+              patch.endpoints[input],
+            );
+          if (patch.annotations?.[input])
+            manualDetail(r, "trip_endpoint_details", patch.annotations[input], role);
+        }
+        if (patch.service) {
+          const services = g.itinerary_transport_services.filter(
+            (row) => row.event_id === r.id,
+          );
+          const old =
+            services.find((row) => row.service_key === patch.service.service_key) ??
+            (services.length === 1 ? services[0] : undefined);
+          if (!old) throw new Error("INVALID_AGGREGATE");
+          const facts = p5IdentityPatch(old, patch.service);
+          const key = patch.service.service_key ?? old.service_key;
+          if (key !== old.service_key) {
+            touch("ITEM", r);
+            const state = r.field_state as Record<string, unknown>,
+              prefix = "itinerary_transport_services." + old.service_key + ".";
+            for (const address of Object.keys(state))
+              if (address.startsWith(prefix)) {
+                state[
+                  "itinerary_transport_services." +
+                    key +
+                    "." +
+                    address.slice(prefix.length)
+                ] = state[address];
+                delete state[address];
+              }
+            old.service_key = key;
+          }
+
+          manualDetail(r, "itinerary_transport_services", facts, key as string);
+        }
+        for (const change of patch.operationalChanges ?? []) {
+          const role = change.operation === "ADD" ? change.fact.role : change.role;
+          const old = g.trip_transport_operational_facts.find(
+            (row) => row.event_id === r.id && row.role === role,
+          );
+          if (change.operation === "ADD") {
+            if (old) throw new Error("DUPLICATE_CORE_ROW");
+            touch("ITEM", r);
+            detail(
+              "trip_transport_operational_facts",
+              r.id as string,
+              { ...change.fact.time, ...change.fact.place },
+              role,
+            );
+          } else if (change.operation === "PATCH")
+            manualTransportPoint(
+              r,
+              "trip_transport_operational_facts",
+              role,
+              change.changes,
+            );
+          else if (old) {
+            touch("ITEM", r);
+            g.trip_transport_operational_facts =
+              g.trip_transport_operational_facts.filter((row) => row !== old);
+            const state = r.field_state as Record<string, unknown>;
+            for (const key of Object.keys(old))
+              if (!["trip_id", "event_id", "role"].includes(key))
+                state["trip_transport_operational_facts." + role + "." + key] = {
+                  state: "CLEARED",
+                  origin: "MANUAL",
+                  protected: true,
+                  changed_revision: rev(r, "ITEM"),
+                  evidence_ref: null,
+                };
+          }
+        }
+        break;
+      }
       touch("ITEM", r);
       if (p.endpoints)
         for (const [input, role] of [
@@ -1309,6 +1739,13 @@ function executeCoreMutation(
       }
       break;
     }
+    case "DELETE_ITEM": {
+      const r = target();
+      if (deletedItemIds.has(q.target.id)) break;
+      touch("ITEM", r);
+      mark("ITEM", r, { hidden_at: now });
+      break;
+    }
     case "HIDE_OBJECT":
     case "RESTORE_OBJECT": {
       if (
@@ -1340,6 +1777,7 @@ function executeCoreMutation(
       for (const x of p.affectedIds) {
         requireBase(x.kind, x.id);
         const r = root(x.kind, x.id, true);
+        if ((q.command === "HIDE_OBJECT") === (r.hidden_at !== null)) continue;
         touch(x.kind, r);
         mark(x.kind, r, { hidden_at: q.command === "HIDE_OBJECT" ? now : null });
       }
@@ -1459,9 +1897,63 @@ function executeCoreMutation(
       setAcl("DOCUMENT", row, p.acl);
       break;
     }
-    case "AUTHORIZE_DOCUMENT_COPY":
     case "LINK_EXPENSE":
-    case "UNLINK_EXPENSE":
+    case "UNLINK_EXPENSE": {
+      const proof = expenseLinkAuthority;
+      if (!proof || p.expectedExpenseRevision === undefined)
+        throw new Error("OWNING_CAPABILITY_REQUIRED");
+      if (
+        q.admission.mode !== "MANUAL" ||
+        p.targetKind !== "ITEM" ||
+        proof.actorAccountId !== actor.accountId ||
+        proof.tripId !== actor.tripId ||
+        proof.linkId !== q.target.id ||
+        proof.expenseId !== p.expenseId ||
+        proof.itemId !== p.targetId
+      )
+        throw new Error("NOT_VISIBLE");
+      if (proof.expenseRevision !== p.expectedExpenseRevision)
+        throw new Error("REVISION_CONFLICT");
+      requireBase("ITEM", p.targetId);
+      const item = root("ITEM", p.targetId, true);
+      if (deletedItemIds.has(p.targetId)) throw new Error("ITEM_DELETED");
+      const existing = g.expense_links.find((row) => row.id === q.target.id);
+      if (
+        existing &&
+        (existing.expense_id !== p.expenseId ||
+          existing.type !== "ITINERARY_EVENT" ||
+          existing.target_id !== p.targetId)
+      )
+        throw new Error("INVALID_LINK");
+      if (q.command === "LINK_EXPENSE") {
+        if (existing) break;
+        if (
+          g.expense_links.some(
+            (row) =>
+              row.expense_id === p.expenseId &&
+              row.type === "ITINERARY_EVENT" &&
+              row.target_id === p.targetId,
+          )
+        )
+          throw new Error("DUPLICATE_LINK");
+        g.expense_links.push({
+          id: q.target.id,
+          expense_id: p.expenseId,
+          journey_id: actor.tripId,
+          type: "ITINERARY_EVENT",
+          target_id: p.targetId,
+          metadata: {},
+          created_by: actor.accountId,
+          created_at: now,
+        });
+      } else {
+        if (!existing) break;
+        g.expense_links = g.expense_links.filter((row) => row.id !== q.target.id);
+      }
+      touch("ITEM", item);
+      break;
+    }
+    case "AUTHORIZE_DOCUMENT_COPY":
       throw new Error("OWNING_CAPABILITY_REQUIRED");
   }
   for (const [t, rows] of Object.entries(g))

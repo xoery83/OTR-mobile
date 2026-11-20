@@ -122,6 +122,7 @@ export async function verifyGoldenReadback(
     assert.equal(audit.visibility, payload.acl.visibility);
     assert.equal(audit.participation_mode, payload.participation.mode);
     if (payload.family !== "P5") {
+      assert("schedule" in payload, "INDEPENDENT_SPARSE_SCHEDULE_REQUIRES_OWNING_READER");
       expectedBoundary(audit, payload.schedule.start, "start");
       if (payload.schedule.end) expectedBoundary(audit, payload.schedule.end, "end");
       else assert.equal(audit.end_local_date, null);
@@ -250,7 +251,7 @@ export async function verifyGoldenReadback(
         ["pickup", "PICKUP"],
         ["return", "RETURN"],
       ] as const) {
-        if (!Object.hasOwn(payload.places, key)) continue;
+        if (!payload.places || !Object.hasOwn(payload.places, key)) continue;
         assert(payload.places[key], "INDEPENDENT_RENTAL_WHOLE_ROLE_CLEAR_UNSUPPORTED");
         const matches = evidence.rentalPlaces?.filter((r) => r.role === role);
         assert.equal(matches?.length, 1, "INDEPENDENT_RENTAL_PLACE_IDENTITY_REQUIRED");
@@ -272,6 +273,7 @@ export async function verifyGoldenReadback(
       assert.equal(audit.description, payload.description);
   } else if (p.command === "SET_ITEM_SCHEDULE") {
     const payload = corePayloadSchemas.SET_ITEM_SCHEDULE.parse(p.payload);
+    assert("schedule" in payload, "INDEPENDENT_SPARSE_SCHEDULE_REQUIRES_OWNING_READER");
     expectedBoundary(audit, payload.schedule.start, "start");
     if (payload.schedule.end) expectedBoundary(audit, payload.schedule.end, "end");
     else assert.equal(audit.end_local_date, null);

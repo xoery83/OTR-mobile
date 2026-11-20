@@ -192,8 +192,17 @@ async function main() {
           }
         : {}),
       tripMetadataV2Port: metadata?.tripMetadataV2Port,
+      tripLifecyclePort: trip && "tripLifecyclePort" in trip ? trip.tripLifecyclePort : undefined,
+      managedTripLifecycleForGrant:
+        trip && "managedTripLifecycleForGrant" in trip ? trip.managedTripLifecycleForGrant : undefined,
       ...(trip && "guestAdoptionRuntime" in trip
         ? { guestAdoptionRuntime: trip.guestAdoptionRuntime }
+        : {}),
+      ...(trip && "managedNativeConsent" in trip
+        ? { managedNativeConsent: trip.managedNativeConsent }
+        : {}),
+      ...(trip && "managedMcpApprovalConnection" in trip
+        ? { managedMcpApprovalConnection: trip.managedMcpApprovalConnection }
         : {}),
       ...(trip && "coreConnection" in trip
         ? { coreConnection: trip.coreConnection }

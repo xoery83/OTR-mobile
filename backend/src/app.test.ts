@@ -706,6 +706,22 @@ const ledgerExpenseBody = {
 };
 
 describe("OTR Dev Backend", () => {
+  it("rejects an expired Managed write after route validation without creating an expense", async () => {
+    const { gateway } = createGateway();
+    const operationId = "60000000-0000-4000-8000-000000000001";
+    const admit = vi.fn(async () => false);
+    const handle = createDevBackendHandler({ gateway, managedWriteAdmission: admit });
+    const response = await handle(new Request(`http://localhost/v2/trips/${tripId}/expenses`, {
+      method: "POST",
+      headers: { Authorization: "Bearer valid-token", "Idempotency-Key": operationId },
+      body: JSON.stringify(ledgerExpenseBody),
+    }));
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: { code: "MCP_WRITE_ADMISSION_DENIED" } });
+    expect(admit).toHaveBeenCalledExactlyOnceWith(userId, { tripId, operationId }, ledgerExpenseBody);
+    expect(gateway.createLedgerExpense).not.toHaveBeenCalled();
+  });
+
   it("authenticates and creates both approved entity types", async () => {
     const { gateway } = createGateway();
     const handle = createDevBackendHandler({ gateway });

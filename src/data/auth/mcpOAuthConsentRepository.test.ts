@@ -1,12 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Buffer } from "node:buffer";
 import { afterEach, expect, it, vi } from "vitest";
-import { createMcpOAuthConsentRepository } from "./mcpOAuthConsentRepository";
+import {
+  createMcpOAuthConsentRepository,
+  mcpBetaConsentConfigSchema,
+} from "./mcpOAuthConsentRepository";
 const id = "1f3d7935-1bdc-4952-8d7f-0f72077368c1";
 const other = "33333333-3333-4333-8333-333333333333";
 const clientId = "22222222-2222-4222-8222-222222222222";
 const redirectUri = "https://chatgpt.com/connector/oauth/unit-draft-fixture";
-function fixture(businessAccess?: "READ_WRITE", accountIds = [id]) {
+function fixture(businessAccess?: "READ_WRITE", accountIds = [id], beta = false) {
   const config = {
     clientId,
     redirectUris: [redirectUri],
@@ -47,7 +50,19 @@ function fixture(businessAccess?: "READ_WRITE", accountIds = [id]) {
     verifyOtp: vi.fn(async () => ({ error: null as null | { status: number } })),
     signOut: vi.fn(async () => ({ error: null })),
   };
-  const repo = createMcpOAuthConsentRepository(config, "unit-authorization", {
+  const selected = beta
+    ? {
+        authOrigin: "https://isolated.example.invalid/",
+        publishableKey:
+          Buffer.from("synthetic-public-header").toString("base64url") +
+          "." +
+          Buffer.from(JSON.stringify({ role: "anon" })).toString("base64url") +
+          ".synthetic-unverifiable-api-key",
+        expiresAt: config.expiresAt,
+        businessAccess: "BETA_READ_WRITE" as const,
+      }
+    : config;
+  const repo = createMcpOAuthConsentRepository(selected, "unit-authorization", {
     auth,
   } as unknown as SupabaseClient);
   return { config, details, auth, oauth, repo };
@@ -163,7 +178,7 @@ it.each(["client", "redirect", "account", "scope", "authorization"])(
       client: { client: { id: other, name: "Other" } },
       redirect: { redirect_uri: "https://other.invalid/callback" },
       account: { user: { id: other } },
-      scope: { scope: "openid email" },
+      scope: { scope: "openid otr.trips.read" },
       authorization: { authorization_id: "other" },
     }[mode];
     q.oauth.getAuthorizationDetails.mockResolvedValueOnce({
@@ -175,7 +190,7 @@ it.each(["client", "redirect", "account", "scope", "authorization"])(
   },
 );
 
-it.each(["openid offline_access", "offline_access openid"])(
+it.each(["openid email", "openid offline_access", "offline_access openid email", "openid email offline_access"])(
   "accepts only the read identity and refresh protocol scopes: %s",
   async (scope) => {
     const q = fixture();
@@ -190,7 +205,9 @@ it.each(["openid offline_access", "offline_access openid"])(
 
 it.each([
   "offline_access",
-  "openid offline_access email",
+  "openid otr.trips.write",
+  "email offline_access",
+  "openid email email",
   "openid offline_access offline_access",
   "openid profile",
 ])("refuses any expanded or duplicate provider scopes: %s", async (scope) => {
@@ -450,3 +467,157 @@ it.each(["close", "expiry"])(
     ]);
   },
 );
+
+it("isolated Beta uses normal current Accounts without QA identity lists and requires its presented full scope", async () => {
+  const q = fixture(undefined, [id], true);
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  q.auth.getUser.mockResolvedValue({
+    data: { user: { id: other, is_anonymous: false } },
+    error: null,
+  });
+  q.oauth.getAuthorizationDetails.mockResolvedValue({
+    data: { ...q.details, user: { id: other } },
+    error: null,
+  });
+  await q.repo.requestCode("another-normal@example.invalid");
+  expect(await q.repo.load()).toMatchObject({
+    kind: "CONSENT",
+    businessAccess: "BETA_READ_WRITE",
+    accountId: other,
+  });
+  expect(await q.repo.decide(true)).toMatchObject({ kind: "REDIRECT" });
+  await q.repo.close();
+});
+it("isolated Beta rejects changed OAuth client, callbacks and anonymous users before provider approval", async () => {
+  const q = fixture(undefined, [id], true);
+  await q.repo.load();
+  q.oauth.getAuthorizationDetails.mockResolvedValue({
+    data: { ...q.details, client: { id: other, name: "changed" } },
+    error: null,
+  });
+  await expect(q.repo.decide(true)).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  await q.repo.close();
+  const r = fixture(undefined, [id], true);
+  r.oauth.getAuthorizationDetails.mockResolvedValue({
+    data: { ...r.details, redirect_uri: "https://foreign.invalid/callback?injected=yes" },
+    error: null,
+  });
+  await expect(r.repo.load()).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  await r.repo.close();
+  const anonymous = fixture(undefined, [id], true);
+  anonymous.auth.getUser.mockResolvedValue({
+    data: { user: { id, is_anonymous: true } },
+    error: null,
+  });
+  await expect(anonymous.repo.load()).rejects.toMatchObject({ code: "CLOSED" });
+  await anonymous.repo.close();
+});
+it("isolated Beta configuration rejects shared Supabase origins, insecure URLs and service-role keys", () => {
+  const key =
+    Buffer.from("header").toString("base64url") +
+    "." +
+    Buffer.from(JSON.stringify({ role: "service_role" })).toString("base64url") +
+    ".invalid-signature";
+  for (const authOrigin of [
+    "http://foreign.invalid/",
+    "https://tuqigdxrvrerfewsxqgm.supabase.co/",
+    "https://user:password@isolated.invalid/",
+  ])
+    expect(
+      mcpBetaConsentConfigSchema.safeParse({
+        authOrigin,
+        publishableKey: key,
+        expiresAt: Date.now() + 60000,
+        businessAccess: "BETA_READ_WRITE",
+      }).success,
+    ).toBe(false);
+  expect(
+    mcpBetaConsentConfigSchema.safeParse({
+      authOrigin: "https://isolated.invalid/",
+      publishableKey: key,
+      expiresAt: Date.now() + 60000,
+      businessAccess: "BETA_READ_WRITE",
+    }).success,
+  ).toBe(false);
+});
+
+it.each(["load", "after-presentation"])(
+  "isolated Beta keeps redirect-only repeated consent closed at %s",
+  async (phase) => {
+    const q = fixture(undefined, [id], true);
+    if (phase === "after-presentation") await q.repo.load();
+    q.oauth.getAuthorizationDetails.mockResolvedValue({
+      data: { redirect_url: redirectUri + "?code=prior-grant&state=unit" },
+      error: null,
+    });
+    await expect(
+      phase === "load" ? q.repo.load() : q.repo.decide(true),
+    ).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+    expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+    expect(q.oauth.denyAuthorization).not.toHaveBeenCalled();
+    await q.repo.close();
+    expect(q.auth.signOut).toHaveBeenCalledWith({ scope: "local" });
+  },
+);
+
+it.each([true, false])("validates the pinned callback for a reused Managed OAuth grant (%s)", async (matches) => {
+  const q = fixture();
+  const url = (matches ? redirectUri : "https://chatgpt.com/connector/oauth/another-client") + "?code=unit&state=unit";
+  q.oauth.getAuthorizationDetails.mockResolvedValue({ data: { redirect_url: url }, error: null });
+  const repo = createMcpOAuthConsentRepository({
+    authOrigin: "https://tuqigdxrvrerfewsxqgm.supabase.co/",
+    publishableKey: "sb_publishable_unit_fixture_no_live_credentials",
+    expiresAt: Date.now() + 60_000,
+    businessAccess: "BETA_READ_WRITE",
+    managedNativeOAuth: true,
+    managedDev: { accountId: id, clientId, redirectUri },
+    consentPolicy: {
+      contractVersion: 1, identityScopes: ["openid"], policyHash: "a".repeat(64),
+      policy: { id: "unit", version: "1", resource: "https://api-dev.xoery.art/mcp",
+        permissions: ["otr.trip.get"], business_scopes: ["otr.trips.read", "otr.trips.write"],
+        allow_reuse: false, grant_ttl_seconds: 600 },
+    },
+  }, "unit-authorization", { auth: q.auth } as unknown as SupabaseClient);
+  if (matches) await expect(repo.load()).resolves.toEqual({ kind: "REDIRECT", url });
+  else await expect(repo.load()).rejects.toMatchObject({ code: "REQUEST_CHANGED" });
+  expect(q.oauth.approveAuthorization).not.toHaveBeenCalled();
+  await repo.close();
+});
+
+it.each(["APPROVED", "PENDING"] as const)("reads back a Managed decision after a lost response (%s)", async (state) => {
+  const q = fixture();
+  const auth = { ...q.auth, getSession: vi.fn(async () => ({ data: { session: { access_token: "synthetic-first-party" } }, error: null })) };
+  const challengeId = "55555555-5555-4555-8555-555555555555";
+  const policyHash = "a".repeat(64);
+  const challenge = { id: challengeId, accountId: id, state: "PENDING", policy: { policyId: "unit", policyVersion: "1", policyHash } };
+  const request = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(Response.json({}, { status: 403 }))
+    .mockResolvedValueOnce(Response.json({}, { status: 503 }))
+    .mockResolvedValueOnce(Response.json(challenge))
+    .mockResolvedValueOnce(Response.json({}, { status: 403 }))
+    .mockResolvedValueOnce(Response.json({ ...challenge, state }));
+  const repo = createMcpOAuthConsentRepository({
+    authOrigin: "https://tuqigdxrvrerfewsxqgm.supabase.co/",
+    publishableKey: "sb_publishable_unit_fixture_no_live_credentials",
+    expiresAt: Date.now() + 60_000,
+    businessAccess: "BETA_READ_WRITE",
+    managedNativeOAuth: true,
+    managedDev: { accountId: id, clientId, redirectUri },
+    consentPolicy: {
+      contractVersion: 1, identityScopes: ["openid"], policyHash,
+      policy: { id: "unit", version: "1", resource: "https://api-dev.xoery.art/mcp",
+        permissions: ["otr.trip.get"], business_scopes: ["otr.trips.read", "otr.trips.write"],
+        allow_reuse: false, grant_ttl_seconds: 600 },
+    },
+  }, challengeId, { auth } as unknown as SupabaseClient, request, true);
+  await expect(repo.verifyCode("unit@example.invalid", "12345678"))
+    .rejects.toMatchObject({ code: "UNAVAILABLE" });
+  await expect(repo.verifyCode("unit@example.invalid", "12345678"))
+    .resolves.toMatchObject({ kind: "CONSENT" });
+  expect(q.auth.verifyOtp).toHaveBeenCalledOnce();
+  if (state === "APPROVED") await expect(repo.decide(true)).resolves.toEqual({ kind: "DECIDED", decision: state });
+  else await expect(repo.decide(true)).rejects.toMatchObject({ code: "UNAVAILABLE" });
+  expect(request.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).action)).toEqual(["inspect", "inspect", "inspect", "decide", "inspect"]);
+  await repo.close();
+});

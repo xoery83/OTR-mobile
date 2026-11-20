@@ -56,6 +56,23 @@ it("uses the dedicated Edit finite predicate and exact operation/actor parameter
     [operationId, actor],
   ]);
 });
+it("queues snapshots and receipts through the read lease, never updates", async () => {
+  const snapshot = { formatVersion: 2, actorAccountId: actor, tripId, metadataRevision: 1, metadata: before };
+  const query = vi.fn(async (sql: string) => ({
+    rows: sql.includes("finite_scope_allowed") ? [{ allowed: true }]
+      : sql.includes("trip_metadata_snapshot") ? [{ result: snapshot }]
+      : sql.startsWith("SELECT") ? [{ result }] : [],
+  }));
+  const lease = { query, retire: vi.fn() };
+  const withReadLease = vi.fn<CorePgConnection["withLease"]>(async (work) => work(lease));
+  const withLease = vi.fn<CorePgConnection["withLease"]>(async (work) => work(lease));
+  const storage = createTripMetadataV2PgStorage({ withLease: withLease as CorePgConnection["withLease"], withReadLease: withReadLease as CorePgConnection["withLease"] });
+  expect(await storage.snapshot(actor, tripId, operationId)).toEqual(snapshot);
+  expect(await storage.receipt(actor, operationId)).toEqual(result);
+  expect(await storage.update(actor, request)).toEqual(result);
+  expect(withReadLease).toHaveBeenCalledTimes(2);
+  expect(withLease).toHaveBeenCalledOnce();
+});
 it("closed scope cannot execute a command and rolls back", async () => {
   const f = fixture(result, false);
   await expect(f.storage.update(actor, request)).rejects.toMatchObject({
@@ -64,6 +81,69 @@ it("closed scope cannot execute a command and rolls back", async () => {
   expect(f.query.mock.calls.some(([sql]) => sql.includes("update_command"))).toBe(false);
   expect(f.query.mock.calls.at(-1)?.[0]).toBe("ROLLBACK");
 });
+it.each(["acl", "cas", "revoked", "admitted", "admitted-v3"] as const)(
+  "runs Managed metadata admission at the owning write boundary (%s)",
+  async (outcome) => {
+    const admitted = outcome === "admitted" || outcome === "admitted-v3";
+    const updateRequest =
+      outcome === "admitted-v3"
+        ? {
+            ...request,
+            formatVersion: 3 as const,
+            before: { ...request.before, destination: null, destinations: [] },
+            after: { ...request.after, destination: null, destinations: [] },
+          }
+        : request;
+    const updateReceipt = { ...result, ...updateRequest };
+    const f = fixture(updateReceipt);
+    const existing = f.query.getMockImplementation()!;
+    const extendAdmissionIdle = "SET LOCAL idle_in_transaction_session_timeout='20s'";
+    const restoreIdle = "SET LOCAL idle_in_transaction_session_timeout TO DEFAULT";
+    const check = vi.fn(async () => {
+      expect(f.query.mock.calls.at(-1)?.[0]).toBe(extendAdmissionIdle);
+      return admitted;
+    });
+    f.query.mockImplementation(async (sql, params) => {
+      if (sql.includes("trip_metadata_snapshot")) {
+        if (outcome === "acl") throw Object.assign(new Error(), { code: "42501" });
+        return {
+          rows: [
+            {
+              result: {
+                formatVersion: updateRequest.formatVersion,
+                actorAccountId: actor,
+                tripId,
+                metadataRevision: outcome === "cas" ? 2 : 1,
+                metadata: updateRequest.before,
+              },
+            },
+          ],
+        };
+      }
+      if (sql.includes("trip_metadata_update_result"))
+        return { rows: [{ result: null }] };
+      if (sql.includes("trip_metadata_update_command")) {
+        expect(check).toHaveBeenCalledExactlyOnceWith(actor, updateRequest);
+        expect(f.query.mock.calls.at(-2)?.[0]).toBe(restoreIdle);
+      }
+      return existing(sql, params);
+    });
+    const update = f.storage.update(actor, updateRequest, check);
+    if (admitted) await expect(update).resolves.toEqual(updateReceipt);
+    else
+      await expect(update).rejects.toMatchObject({
+        status: { acl: 403, cas: 409, revoked: 401 }[outcome],
+      });
+    const statements = f.query.mock.calls.map(([sql]) => sql);
+    expect(
+      statements.filter((sql) => sql.includes("trip_metadata_update_command")),
+    ).toHaveLength(admitted ? 1 : 0);
+    expect(check).toHaveBeenCalledTimes(outcome === "acl" || outcome === "cas" ? 0 : 1);
+    if (outcome === "acl" || outcome === "cas") expect(statements).not.toContain(extendAdmissionIdle);
+    expect(statements.includes(restoreIdle)).toBe(admitted);
+    expect(statements.at(-1)).toBe(admitted ? "COMMIT" : "ROLLBACK");
+  },
+);
 it("validates receipt before commit, rejects wrong account or unsafe revision", async () => {
   for (const wrong of [
     { ...result, actorAccountId: randomUUID() },

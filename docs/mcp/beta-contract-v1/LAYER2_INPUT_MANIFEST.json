@@ -1,0 +1,95 @@
+{
+  "contractVersion": "otr.mcp-beta.contract/1.0.0",
+  "status": "FROZEN v1.0",
+  "baselineMain": "41de43927fd9869673c1ca929e911f58d1f6f96d",
+  "revisionOrigin": "eaaf88aafe080f86a944a1f6219b2d798f405230",
+  "frozenContractCommitSha": "2da5e1a7e88056239ad04217d3c3222421f05ec9",
+  "sixDocumentsSha256": {
+    "MCP_BETA_AI_PLANNING_CONTRACT_V1.md": "7ab00e725654cd9c15b174103239b1088a2944e8cf386a59ffd4bcfd97dce5ba",
+    "MCP_BETA_API_GAP_AND_ACCEPTANCE_MATRIX.md": "ec99478c6003515fd3b103e16a1c6fd98fbccfee4dc57cf050c0320d6eec59ab",
+    "MCP_BETA_IOS_SYNC_CONTRACT_V1.md": "679d118648a35274b6517306c0c46a5dce612c1d1304f10ac559ac2ee3106583",
+    "MCP_BETA_OWNER_DECISIONS.md": "9a1c3bd0efde0247705d02730aab388fa958f60aab3ddd7fa3687e43ad184e22",
+    "MCP_BETA_PARALLEL_AGENT_BOUNDARIES.md": "9caf4872743171c75d8b1f7fc8a7188985c774fae848826b29ec253fc84c0adc",
+    "MCP_BETA_SERVER_API_CONTRACT_V1.md": "db9a36038c584ee75f625e1931f3908866931874db0c66f231943efe46e69b58"
+  },
+  "contractBundleSha256": "87bd6171998dc92ec6f7bb86212783866adfc95db77aa55b001091464c631f42",
+  "bundleHashEncoding": "SHA256(UTF8(JSON sixDocumentsSha256 sorted keys, separators comma/colon, no newline))",
+  "capabilityRegistrySha256": "00fcc54e77110116311e4e5725d761274cdb82bdff562c337ee47013eec526d0",
+  "artifactsSha256": {
+    "CAPABILITY_REGISTRY_V1.json": "00fcc54e77110116311e4e5725d761274cdb82bdff562c337ee47013eec526d0",
+    "DISPATCH_MANIFEST_V1.json": "59594a6bca3cc43dcde80e9f512a440150303570d7119a6630215a6a42e545a5",
+    "SOURCE_PINS_V1.json": "26610063b05519b8beb2699037bbffa58996107fb53bc8e1d0d345bcd8a5c5ba",
+    "SCHEMA_CONTRACT_V1.json": "8a8d53a7138f1d4a3b0d70b9bb8d3e2da1aebb44796d0061ec8ecba523ad36f1",
+    "FINAL_REVIEW.md": "fad294a7a815b406d4f3ca4c8160eee7f7c1be648998360f3aefada57260f305",
+    "STATIC_VALIDATION_RECEIPT.json": "ec4467b3159dcd5bd7f58b2d3f4d6546df30a3de5e8f150a4de9a088b7b9a68f"
+  },
+  "statistics": {
+    "capabilities": 103,
+    "httpTemplates": 42,
+    "dispatchUnits": 64,
+    "existingDispatchUnits": 34,
+    "owningDispatchChanges": 14,
+    "newReaderDispatchUnits": 16,
+    "qualificationDispatchUnitsOverlapping": 9,
+    "mcpBindingCapabilities": 100,
+    "syncImpactCapabilities": 31,
+    "historicalAuditRows": 207
+  },
+  "ownerDecisions": [
+    {
+      "id": "OD01",
+      "status": "ACCEPTED",
+      "source": "Owner message: MCP Beta Contract v1.0 — Final Revision & Freeze, current chat"
+    },
+    {
+      "id": "OD02",
+      "status": "ACCEPTED",
+      "source": "Owner message: MCP Beta Contract v1.0 — Final Revision & Freeze, current chat"
+    },
+    {
+      "id": "OD03",
+      "status": "ACCEPTED",
+      "source": "Owner message: MCP Beta Contract v1.0 — Final Revision & Freeze, current chat"
+    },
+    {
+      "id": "OD04",
+      "status": "ACCEPTED",
+      "source": "Owner message: MCP Beta Contract v1.0 — Final Revision & Freeze, current chat"
+    },
+    {
+      "id": "OD05",
+      "status": "ACCEPTED",
+      "source": "Owner message: MCP Beta Contract v1.0 — Final Revision & Freeze, current chat"
+    },
+    {
+      "id": "OD06",
+      "status": "ACCEPTED",
+      "source": "Owner message: MCP Beta Contract v1.0 — Final Revision & Freeze, current chat"
+    }
+  ],
+  "implementationStatus": "NOT_STARTED_BY_THIS_FREEZE",
+  "authorization": "CONTRACT_FILES_AND_FREEZE_RECORD_ONLY",
+  "layer": "LAYER2",
+  "inputPathBase": "docs/mcp/beta-contract-v1/",
+  "sourceCheckoutInstruction": "Start independent worktree from baselineMain; consume six docs and artifacts from frozenContractCommitSha as read-only contract; Owner starts agent separately. Handoff commit only adds pinned input manifests.",
+  "scope": "Pure Guide/Tool descriptions/Planning schema and offline synthetic model understanding",
+  "mandatoryObligations": [
+    "Use only Registry103 capability/Tool/Schema identities",
+    "Expense member IDs only from VERIFIED Roster results, never infer personId equality",
+    "Plan updates only from authorized ItemSnapshot; preserve omitted/redacted/source fields",
+    "Unarchive: archived selection, lifecycle base, Preview/actual confirmation dependency, original operation receipt/readback",
+    "PLAN_ONLY/NOT_EXECUTED, no real HTTP/Mutation/false confirmation or Settlement writes"
+  ],
+  "prohibited": [
+    "Change frozen contract unilaterally",
+    "Use another layer writable worktree/runtime/session",
+    "Treat old Consumer PASS as current whole Beta PASS"
+  ],
+  "acceptanceArtifacts": [
+    "Guide and Tool descriptions",
+    "tool-planning.schema.json and exact source pins",
+    "synthetic materials/snapshots/Expected Plan manifests",
+    "actual model output/transcript and independent conformance results"
+  ],
+  "exitLevel": "PLAN_QUALIFIED"
+}

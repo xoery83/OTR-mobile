@@ -1,3 +1,4 @@
+import { createManagedOAuthConsent } from "./auth/managedOAuthConsent";
 import {
   createTripPersonSelfNicknamePgPort,
   SelfNicknamePgError,
@@ -21,9 +22,12 @@ import {
   createTripPgConnection,
   createTripMetadataPgConnection,
   createCorePgConnection,
+  createMcpOperationApprovalPgConnection,
   createPersonPgConnection,
 } from "./tripCoreV2PgConnection";
 import { createTripMetadataV2PgStorage } from "./tripMetadataV2PgStorage";
+import { createTripLifecyclePgStorage } from "./tripLifecycle";
+import { createMcpL3LifecyclePort } from "./mcpL3LifecycleAdmission";
 import { createCorePgHttpConnection } from "./tripCoreV2PgHttpConnection";
 import { constants } from "node:fs";
 import { open } from "node:fs/promises";
@@ -85,6 +89,7 @@ const sustainedTripCreateRuntimeSchema = z.strictObject({
   metadataPg: pgConfig,
   corePg: pgConfig,
   personPg: pgConfig,
+  mcpApprovalPg: pgConfig.optional(),
 });
 export const tripCreateRuntimeSchema = z.union([
   finiteTripCreateRuntimeSchema,
@@ -149,6 +154,28 @@ export async function loadDevTripCreateRuntime(
   }
   if (config.version === 3) {
     const rawCoreConnection = createCorePgConnection(config.corePg);
+    const managedConfig = environment.OTR_DEV_MCP_MANAGED_DEV_CONFIG;
+    const managedMcpApprovalConnection =
+      managedConfig !== undefined && config.mcpApprovalPg
+        ? createMcpOperationApprovalPgConnection(config.mcpApprovalPg)
+        : undefined;
+    let managedNativeConsent;
+    if (managedConfig !== undefined) {
+      try {
+        const { consentPolicy, expiresAt } = JSON.parse(managedConfig);
+        const policy = {
+          policyId: consentPolicy.policy.id,
+          policyVersion: consentPolicy.policy.version,
+          policyHash: consentPolicy.policyHash,
+          expiresAt: expiresAt === null ? Number.MAX_SAFE_INTEGER : expiresAt,
+          ...(expiresAt === null ? { grantTtlSeconds: consentPolicy.policy.grant_ttl_seconds } : {}),
+        };
+        managedNativeConsent = createManagedOAuthConsent(rawCoreConnection, () => policy);
+      } catch {
+        console.info("MCP_MANAGED_CONSENT_CLOSED");
+      }
+    }
+
     const guestAdoptionRuntime = loadDevGuestAdoptionRuntime(
       environment,
       rawCoreConnection,
@@ -157,18 +184,22 @@ export async function loadDevTripCreateRuntime(
     const createPort = createTripPgStorage(tripConnection);
     if (environment.OTR_DEV_TRIP_PARENT_RECEIPT_READ_ENABLED === "1")
       createPort.parentReceipt = createTripParentReceiptPgReader(tripConnection);
+    const metadataConnection = createTripMetadataPgConnection(config.metadataPg);
+    const enableLifecycle = environment.OTR_DEV_MCP_BETA_LAYER1_ENABLED === "1";
     const sustained = createSustainedDevTripPorts(
       {
         create: createPort,
-        metadata: createTripMetadataV2PgStorage(
-          createTripMetadataPgConnection(config.metadataPg),
-        ),
+        metadata: createTripMetadataV2PgStorage(metadataConnection),
+        ...(enableLifecycle
+          ? { lifecycle: createTripLifecyclePgStorage(metadataConnection) }
+          : {}),
         core: createCorePgHttpConnection(
           rawCoreConnection,
           async (bytes) => createHash("sha256").update(bytes).digest("hex"),
           undefined,
           {
             sustainedDev: true,
+            ...(enableLifecycle ? { betaLifecycle: true as const } : {}),
             ...(readUniversalP1 ? { reviewedP1: true as const } : {}),
           },
           readUniversalP1,
@@ -178,6 +209,10 @@ export async function loadDevTripCreateRuntime(
       true,
     );
     if (!sustained) throw new Error("TRIP_CREATE_RUNTIME_UNAVAILABLE");
+    const managedTripLifecycleForGrant = enableLifecycle
+      ? (grant: Parameters<typeof createMcpL3LifecyclePort>[1]) =>
+          createMcpL3LifecyclePort(metadataConnection, grant)
+      : undefined;
     const person = createTripPersonCloudCreatePgPort(
       createPersonPgConnection(config.personPg),
     );
@@ -229,12 +264,17 @@ export async function loadDevTripCreateRuntime(
     };
     return {
       ...sustained,
+      managedNativeConsent,
+      managedMcpApprovalConnection,
+      managedTripLifecycleForGrant,
       guestAdoptionRuntime,
       ...(memberClaimPort ? { memberClaimPort } : {}),
       ...(selfTripNicknamePort ? { selfTripNicknamePort } : {}),
       tripPersonCloudCreatePort,
       async close() {
         closed = true;
+        await rawCoreConnection.close();
+        await managedMcpApprovalConnection?.close();
         sustained.close();
       },
     };
@@ -275,7 +315,7 @@ export async function loadDevTripCreateRuntime(
       throw new TripCreateError(403, "TRIP_CREATE_FORBIDDEN");
   };
   const tripCreatePort: TripCreatePort = {
-    async create(actor, request) {
+    async create(actor, request, ...admission) {
       scope(actor, request.operationId);
       const checked = tripCreateRequestSchema.parse(request);
       if (
@@ -287,7 +327,7 @@ export async function loadDevTripCreateRuntime(
         JSON.stringify(checked) !== JSON.stringify(config.request)
       )
         throw new TripCreateError(409, "TRIP_CREATE_COLLISION");
-      const result = await storage.create(actor, checked);
+      const result = await storage.create(actor, checked, ...admission);
       scope(actor, checked.operationId);
       return result;
     },

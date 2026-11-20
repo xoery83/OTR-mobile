@@ -41,6 +41,7 @@ export type BackendMutation = (
   signal: AbortSignal,
 ) => Promise<Response>;
 export type ApprovalRequest = Readonly<{
+  managedConsent?: import("./oauth").ManagedConsentEvidence;
   accountId: string;
   clientId: string;
   resource: string;
@@ -480,7 +481,9 @@ export function createMutationTools(context: {
           return "FLIGHT_EDIT_REQUIRES_SPARSE_AUTHORED_ITEM";
         return null;
       }
-      const next = corePayloadSchemas.SET_ITEM_SCHEDULE.parse(p.command.payload).schedule;
+      const parsed = corePayloadSchemas.SET_ITEM_SCHEDULE.parse(p.command.payload);
+      if (!("schedule" in parsed)) return "DATE_EDIT_REQUIRES_OWNING_TEMPORAL_ADAPTER";
+      const next = parsed.schedule;
       if (item.family === "P2" || item.schedule.shape === "TRANSPORT")
         return "DATE_EDIT_REQUIRES_OWNING_TEMPORAL_ADAPTER";
       for (const [current, replacement] of [

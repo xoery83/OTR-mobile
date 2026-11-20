@@ -1,0 +1,43 @@
+{
+  "accountId": "00000000-0000-4000-8000-000000000001",
+  "after": {
+    "name": "Layer3 ChatGPT 01",
+    "endDate": "2026-12-04",
+    "startDate": "2026-12-01",
+    "destination": null,
+    "destinations": [
+      {
+        "source": "MANUAL",
+        "displayLabel": "Auckland",
+        "destinationId": "00000000-0000-4000-8000-000000000002"
+      },
+      {
+        "source": "MANUAL",
+        "displayLabel": "Nelson",
+        "destinationId": "00000000-0000-4000-8000-000000000003"
+      }
+    ]
+  },
+  "before": {
+    "name": "Layer3 OAuth recovery 02",
+    "endDate": "2026-12-04",
+    "startDate": "2026-12-01",
+    "destination": null,
+    "destinations": [
+      {
+        "source": "MANUAL",
+        "displayLabel": "Auckland",
+        "destinationId": "00000000-0000-4000-8000-000000000002"
+      },
+      {
+        "source": "MANUAL",
+        "displayLabel": "Nelson",
+        "destinationId": "00000000-0000-4000-8000-000000000003"
+      }
+    ]
+  },
+  "clientId": "00000000-0000-4000-8000-000000000004",
+  "operationId": "00000000-0000-4000-8000-000000000005",
+  "resource": "https://mcp-integration.example.invalid/mcp",
+  "tripId": "00000000-0000-4000-8000-000000000006"
+}

@@ -89,6 +89,36 @@ it("rolls back SQL collision and maps it to a bounded response", async () => {
   ]);
 });
 
+it("denies a revoked Managed grant before issuing the Trip create command", async () => {
+  const actor = randomUUID();
+  const request = { ...input(), formatVersion: 2 as const, destinations: [] };
+  const calls: string[] = [];
+  const connection: CorePgConnection = {
+    withLease: async (work) =>
+      work({
+        retire: vi.fn(),
+        query: async (sql) => {
+          calls.push(sql);
+          return { rows: sql.includes("finite_scope_allowed") ? [{ allowed: true }] : [] };
+        },
+      }),
+  };
+  const admit = vi.fn(async () => {
+    calls.push("ADMISSION");
+    return false;
+  });
+  await expect(createTripPgStorage(connection).create(actor, request, admit)).rejects
+    .toMatchObject({ status: 401, code: "MCP_WRITE_ADMISSION_DENIED" });
+  expect(admit).toHaveBeenCalledExactlyOnceWith(actor, request);
+  expect(calls).toEqual([
+    "BEGIN",
+    expect.stringContaining("trip_create_finite_scope_allowed"),
+    "SET LOCAL idle_in_transaction_session_timeout='20s'",
+    "ADMISSION",
+    "ROLLBACK",
+  ]);
+});
+
 it.each([false, undefined])(
   "closed or absent finite scope rejects bootstrap before mutation",
   async (allowed) => {

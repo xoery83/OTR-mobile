@@ -1,0 +1,247 @@
+{
+  "contractVersion": "otr.mcp-beta.contract/1.0.0",
+  "baselineMain": "41de43927fd9869673c1ca929e911f58d1f6f96d",
+  "sources": [
+    {
+      "alias": "StructuredTripCreate",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripCreateRequestSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "TripCreateResult",
+      "path": "src/domain/trip/tripCreateWireContract.ts",
+      "exportsOrProjection": "tripCreateWireResultSchema",
+      "sha256": "5ff1d98b16baa79eb6237d6a2c5520dcbf15d8f16e464e365afde76e11542633"
+    },
+    {
+      "alias": "StructuredMetadataUpdate",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripMetadataUpdateSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "StructuredMetadataReceipt",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripMetadataReceiptSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "TripMetadataSnapshot",
+      "path": "src/domain/trip/tripStructuredDestinationContract.ts",
+      "exportsOrProjection": "structuredTripMetadataSnapshotSchema",
+      "sha256": "22e0ddb56a120f9c62e75eb2522453b990a422798876d0c4444f28638b5286cc"
+    },
+    {
+      "alias": "CoreEnvelope",
+      "path": "src/domain/trip/tripCoreV2Commands.ts",
+      "exportsOrProjection": "coreCommandSchema + validateCoreCommand",
+      "sha256": "a381f850820322857b9c33127e67ecc58d6c4ba5a0130bf22ce9f2a3793b4830"
+    },
+    {
+      "alias": "CoreReceipt",
+      "path": "src/domain/trip/tripCoreV2Receipt.ts",
+      "exportsOrProjection": "coreReceiptSchema",
+      "sha256": "69e941fdd232c26f8ee86087539958e3f7a1a502da8b09bf0798ceae64235187"
+    },
+    {
+      "alias": "CoreReceiptProjection",
+      "path": "src/domain/trip/tripCoreV2Receipt.ts",
+      "exportsOrProjection": "CoreReceiptProjection (type), raw FULL receipt validated by validateCoreReceipt",
+      "sha256": "69e941fdd232c26f8ee86087539958e3f7a1a502da8b09bf0798ceae64235187"
+    },
+    {
+      "alias": "Expense",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerExpenseSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "ExpensePage",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerExpenseListResponseSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "ExpenseCommand",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseCommandRequestSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseMutationResponse",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "ledgerExpenseMutationResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpensePaymentRecord",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "createLedgerPaymentRecordRequestSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpensePaymentRecordResult",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "ledgerPaymentRecordMutationResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseConflictChain",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseConflictChainResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseConflictResolution",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseConflictChainResolutionRequestSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "ExpenseConflictResolutionResult",
+      "path": "src/data/api/ledgerMutationContracts.ts",
+      "exportsOrProjection": "expenseConflictChainResolutionResponseSchema",
+      "sha256": "420106b4c9be21b8985f76449761536e473ec46605b187eabfa5f88930a4601d"
+    },
+    {
+      "alias": "RateLookupRequest",
+      "path": "src/data/api/ledgerFxContracts.ts",
+      "exportsOrProjection": "ledgerRateLookupRequestSchema",
+      "sha256": "f2e5cf723ac52652044acc6ef15775e5aa4f6d0aaec30ea2b6165c126e0a87d2"
+    },
+    {
+      "alias": "RateLookupResponse",
+      "path": "src/data/api/ledgerFxContracts.ts",
+      "exportsOrProjection": "ledgerRateLookupResponseSchema",
+      "sha256": "f2e5cf723ac52652044acc6ef15775e5aa4f6d0aaec30ea2b6165c126e0a87d2"
+    },
+    {
+      "alias": "JourneyCurrencyPreviewRequest",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyPreviewRequestSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "JourneyCurrencyPreview",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyPreviewSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "JourneyCurrencyCommitRequest",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyCommitRequestSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "JourneyCurrencyCommit",
+      "path": "src/data/api/ledgerCurrencyContracts.ts",
+      "exportsOrProjection": "journeyCurrencyCommitSchema",
+      "sha256": "0d258e4e039276c8e389d07004f56f3f59db28c67fff7f01f40cb7faf6d65f0c"
+    },
+    {
+      "alias": "SettlementPreviewRequest",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "settlementPreviewRequestSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "SettlementPreview",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "settlementPreviewSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "FinalizedSettlement",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "finalizedSettlementSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalPayment",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementPaymentSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalPaymentRead",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementPaymentSchema + personalSettlementPaymentFxProjectionSchema (wrapper defined here)",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "LedgerRateQuote",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerRateQuoteSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "LedgerAuditEvent",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerAuditEventSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "SettlementPayment",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "settlementPaymentSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalPaymentList",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementPaymentListResponseSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "PersonalReviewResponse",
+      "path": "src/data/api/ledgerSettlementContracts.ts",
+      "exportsOrProjection": "personalSettlementReviewResponseSchema",
+      "sha256": "21baf6ab88c5fc44496e0056f626c050b7bced5fbfafc26616c4dac29af82e3e"
+    },
+    {
+      "alias": "BaseTripList",
+      "path": "src/domain/trip/tripDiscoveryContract.ts",
+      "exportsOrProjection": "tripDiscoveryPageSchema",
+      "sha256": "4b72bc683bd2f19ad1f9f12e8c958e928f906a1ae733d77bad57fc31b929da10"
+    },
+    {
+      "alias": "CoreCollection",
+      "path": "src/domain/trip/tripCoreV2Read.ts",
+      "exportsOrProjection": "coreReadManifestSchema + coreReadPageSchema",
+      "sha256": "8f68a16745ee9f0f8eb085ae495a1462f1697ac06cd256fd8019a71f935e9c12"
+    },
+    {
+      "alias": "BaseItemSnapshot",
+      "path": "mcp/contract.ts",
+      "exportsOrProjection": "itemEditBaseOutput",
+      "sha256": "8a7b8d1404aeb21af341e0010a205966b368dc9b6b9b12ac6d406c88e1eba63e"
+    },
+    {
+      "alias": "CoreRelationRecord",
+      "path": "src/domain/trip/tripCoreV2Read.ts",
+      "exportsOrProjection": "coreReadRecordSchema (kind=RELATION, validated by validateCoreReadCollection)",
+      "sha256": "8f68a16745ee9f0f8eb085ae495a1462f1697ac06cd256fd8019a71f935e9c12"
+    },
+    {
+      "alias": "CoreRelationRows",
+      "path": "src/domain/trip/tripCoreV2.ts",
+      "exportsOrProjection": "trip_item_participantsSchema + trip_item_visibility_peopleSchema + expense_linksSchema",
+      "sha256": "ae78e4ba51d8d689c669bb1612921bd52f70b6a86352f9cb07add8d9eea880f4"
+    },
+    {
+      "alias": "LedgerRosterAuthority",
+      "path": "src/data/api/ledgerReadContracts.ts",
+      "exportsOrProjection": "ledgerMemberSchema + ledgerBootstrapResponseSchema",
+      "sha256": "b282ec1a74f0d5d705fabe82f59aa1d1d460457cc70cde19936c0d40fc27203a"
+    },
+    {
+      "alias": "TripPersonAuthority",
+      "path": "docs/architecture/TRIP_CANONICAL_A1_I1_REPORT.md",
+      "exportsOrProjection": "Section D: canonical TripPerson identity mapping",
+      "sha256": "cfc7c468b85ed6574214c4c3b7fe7e2d9e99850b73cd1c4b11ee3a012c365a38"
+    }
+  ],
+  "projectionPolicy": "Base aliases pin existing exports; ItemSnapshot, TripList and RosterSnapshot are frozen new/extended projections, not claims those exports already implement them."
+}

@@ -1,3 +1,4 @@
+import { p5IdentityStateSchema } from "./p5Identity";
 import { z } from "zod";
 import { ordinaryNodeSchema, ordinaryGapSchema } from "./tripCoreOrdinaryOrder";
 import { canonicalCoreJson, parseCoreJson, type Json } from "./tripCoreV2Json";
@@ -258,12 +259,13 @@ export const itinerary_transport_servicesSchema = z.strictObject({
     "TRANSFER",
   ]),
   attribution: z.enum(["MARKETING", "OPERATING", "UNSPECIFIED"]),
-  operator_namespace: z.enum(["IATA_AIRLINE", "ICAO_AIRLINE", "AUTHORITY", "NAME"]),
-  operator_issuer: coreText(128),
-  operator_value: coreText(128),
-  operator_literal: coreText(255),
-  service_number: coreText(64),
-  service_literal: coreText(255),
+  operator_namespace: z.enum(["IATA_AIRLINE", "ICAO_AIRLINE", "AUTHORITY", "NAME"]).nullable(),
+  identity_state: p5IdentityStateSchema.optional(),
+  operator_issuer: coreText(128).nullable(),
+  operator_value: coreText(128).nullable(),
+  operator_literal: coreText(255).nullable(),
+  service_number: coreText(64).nullable(),
+  service_literal: coreText(255).nullable(),
   codeshare_operating_key: z
     .string()
     .regex(/^[A-Za-z0-9._:-]{1,32}$/)
