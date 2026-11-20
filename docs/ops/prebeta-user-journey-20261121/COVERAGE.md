@@ -37,3 +37,9 @@ QA Trip a0bcf637-4d71-4d8b-ba17-a998d8917fe0: Native Beta Journey 20261121, Nov2
 ## P6 detail gutter correction
 
 Owner screenshot exposed duplicate horizontal inset: P6Detail already provides canonical feedGutter21, while TicketedActivityContent immersive applied page16 again. Changed the inner padding to vertical-only; outer canonical inset and vertical rhythm retained. No Form, field, permission, Save or persistence change.226 existing activity/fixture tests, UI guard and scoped lint passed. Updated binary/device visual comparison NOT_VERIFIED. CUA subsequently returned current-turn-unavailable; do not count attempted navigation as PASS.
+
+## Build16 actual device continuation
+
+6dde1bb9 /Build16 installed in place on original C0, no phone/main change. P6 canonical21pt gutter actual screenshot PASS; duplicate16pt inner inset removed. Fresh process retained P3/P6 Edit1; normal P1/P5 title Edit1 and P4 titleEdit1/plateQA1121 Save/Details passed; second fresh process Day Feed retained P1/P3/P5/P6 Edit1 and P4QA1121. P2 temporaryNZ9002 Cancel/Discard returned originalNZ9001; formalCloud remains closed. Import original09:55:47 batch reopened from Updates with1saved/0notSaved/0waiting, noAnalyze. Ledger actual coldUI retained totalNZD24/self12; Settlement saved summary owed12/paid24/share12. Final readiness unresolved.
+
+Root2 independently found sameHosted RECEIPT/CORE_CAPABILITY_CLOSED for originalP3/P1 requests; originalP3 Core/legacyReceipt counts0. Mutation acceptance stillUNKNOWN, no forced replay or newID. Root2 checking finiteScope READ predicates and Hosted composition. Native local code uses manualCompatibilityREAD, guarded by sustainedDev before finiteScope; not a verified deployed source match.

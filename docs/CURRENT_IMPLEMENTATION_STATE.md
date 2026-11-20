@@ -1,3 +1,9 @@
+# Current continuation — Build16 /21November2026NZDT
+
+Candidate6dde1bb9, originalC0/art.xoery.otr in-placeBuild16, phoneBuild14 untouched, noMainmerge/push. P6 duplicatehorizontalpadding fixed;226targetedtests/UIguard/lintPASS and actualdevicegutterPASS. P1/P3/P4/P5/P6 localEdit and coldDayFeed restorationPASS; P4plateQA1121 retained, Createfieldsunchanged. P2SparseCancel preservesNZ9001, notCloud. Importoriginalbatch1saved and Expense24/self12/Settlementowed12 coldUI retained. Finalreadiness/fullOffline/freshGuest stillpending.
+
+P3 originalEdit5f7d0785… cloudNOTPASS: receipt-first503;Root2 confirmedRECEIPT/CORE_CAPABILITY_CLOSED, independentCore/legacyReceipt0. OriginalMutationstatusUNKNOWN, noforcedReplay/newID. Hostedimageb4d460f1…/Backendsource5f28d8b2… reportedbyRoot2. FiniteScopeREAD/sustainedeligibility diagnosisactive; Native ownsfollow-up, Root2Hostedreadonly, CoreWriterforprotectedcontract. Evidence docs/ops/prebeta-user-journey-20261121/BUILD16_DEVICE_PROGRESS.json andCOVERAGE.md. ContinueoriginalP3receiptresolution thenformalreadback; nopermissionbypass.
+
 # Current stage — Pre-Beta Forms QA user journey,21November2026NZDT
 
 Owner accepted unified Build14/b10178c1 and ordered full C0 journey on the same candidate branch, with no Main merge/push and no MCP phone interruption. New independent QA B Trip a0bcf637…: normal Trip/Person/Reader queue completed; six manual P1–P6 Creates displayed in Day Feed. P1/P3 formal APPLIED receipts cached; independent service readback pending. P4/P5/P6 local saves retained but original Cloud operations have receipt/dependency recovery failures, sent to MC with exact IDs. P2 remains existing LOCAL_CORE_COMMIT/formal opt-in closed, not Cloud PASS. QA Expense2400NZD minor split1200/1200 is SYNCED/revision1; Settlement summary owed1200. Import synthetic TEXT batch cda66d73…/job174683ae… accepted locally, no Analyze/Provider.
