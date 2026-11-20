@@ -942,8 +942,16 @@ function SummarySection({
           {t("settlement.waitingRates", { count: automaticWaiting })}
         </Text>
       ) : null}
-      {debugMode && settlement.message ? (
-        <Text style={styles.message}>{settlement.message}</Text>
+      {settlement.message &&
+      (debugMode ||
+        [
+          "Settlement preview failed.",
+          "Sync pending financial changes before confirming.",
+          "Saved Ledger data does not yet match the current Settlement source.",
+        ].includes(settlement.message)) ? (
+        <Text style={styles.message}>
+          {debugMode ? settlement.message : systemMessage(settlement.message)}
+        </Text>
       ) : null}
       {debugMode && settlement.refreshDiagnostic ? (
         <Text style={styles.meta}>
