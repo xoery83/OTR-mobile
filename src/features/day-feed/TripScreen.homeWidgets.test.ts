@@ -11,6 +11,7 @@ import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
 import { createDefaultManualTransportRepository } from "@/data/repositories/manualTransportRepository";
+vi.mock("expo-network", () => ({}));
 vi.mock("@/native/p3FormScan", () => ({
   createP3SourceScanPort: vi.fn(() => undefined),
 }));
@@ -95,7 +96,12 @@ const state = vi.hoisted(() => ({
   shellNavigationVisible: true,
   shellVisibleDates: null as null | { first: string; last: string },
   syncCompletion: null as
-    | ((event: { accountId: string; generation: number; journeyIds: string[] }) => void)
+    | ((event: {
+        accountId: string;
+        generation: number;
+        journeyIds: string[];
+        discoveryChanged?: boolean;
+      }) => void)
     | null,
   appActive: null as (() => void) | null,
   resume: null as any,
@@ -2099,6 +2105,21 @@ it("shows the qualified Day read while the optional Home snapshot is still loadi
     release?.(state.snapshot);
     await new Promise<void>((resolve) => setImmediate(resolve));
   }
+});
+
+it("refreshes the open Trip Home after metadata discovery for the current Account", async () => {
+  await loaded();
+  (state.focusEffect as () => void)();
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const revision = find(render(), LocalTripWorkspace).refreshKey;
+  const event = { accountId: actor, generation: 5, journeyIds: [], discoveryChanged: true };
+  state.syncCompletion?.({ ...event, accountId: "other-account" });
+  state.syncCompletion?.({ ...event, generation: 4 });
+  expect(find(render(), LocalTripWorkspace).refreshKey).toBe(revision);
+
+  state.syncCompletion?.(event);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  expect(find(render(), LocalTripWorkspace).refreshKey).toBe(revision + 1);
 });
 
 it("publishes an acknowledged remote revision before an unrelated Home snapshot completes", async () => {

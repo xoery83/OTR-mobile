@@ -1,0 +1,76 @@
+diff --git a/src/features/day-feed/LocalTripWorkspace.test.ts b/src/features/day-feed/LocalTripWorkspace.test.ts
+index 1358113..c9cee10 100644
+--- a/src/features/day-feed/LocalTripWorkspace.test.ts
++++ b/src/features/day-feed/LocalTripWorkspace.test.ts
+@@ -2082,6 +2082,49 @@ it.each(["onQueryDirty", "onBusy"])(
+   },
+ );
+ 
++it("renders newly confirmed remote Trip dates as soon as the owning read finishes", async () => {
++  const tripId = "20000000-0000-4000-8000-000000000001";
++  const accountId = "10000000-0000-4000-8000-000000000001";
++  const context = { accountId, tripId, generation: getAccountGeneration() };
++  const metadata = {
++    name: "Shared Trip", destination: null, destinations: [],
++    startDate: "2026-12-10", endDate: "2026-12-13",
++  };
++  const previous = {
++    formatVersion: 3 as const, actorAccountId: accountId, tripId,
++    metadataRevision: 1, metadata,
++  };
++  const current = {
++    context,
++    snapshot: { ...previous, metadataRevision: 2, metadata: { ...metadata, endDate: "2026-12-14" } },
++  };
++  const held = deferred<typeof current>();
++  const repo = repository();
++  vi.mocked(repo.readMetadataEditBase).mockResolvedValue({ confirmed: previous, pendingOperationIds: [] });
++  state.repo.mockResolvedValue(repo);
++  const readMerged = vi.fn(async () => ({
++    cachedAt: null,
++    trips: [{ ...metadata, id: tripId, createdAt: null, localStatus: null,
++      selectedCoverAssetId: null, remoteListed: true }],
++  }));
++  state.discovery.mockResolvedValue({ readMerged });
++  state.parentMetadataRead.mockReturnValue(held.promise);
++  props.tripId = tripId;
++  props.serverParentPeopleEnabled = true;
++  render();
++  await vi.dynamicImportSettled();
++  await flush();
++  render();
++  expect(state.preparation.metadata.endDate).toBe("2026-12-13");
++  const discoveryReads = readMerged.mock.calls.length;
++
++  held.resolve(current);
++  await flush();
++  render();
++  expect(state.preparation.metadata.endDate).toBe("2026-12-14");
++  expect(readMerged).toHaveBeenCalledTimes(discoveryReads);
++});
++
+ it.each(["success", "cover", "revoked", "switched"])(
+   "server-parent Details preserves formal CAS and stale-response isolation: %s",
+   async (mode) => {
+diff --git a/src/features/day-feed/LocalTripWorkspace.tsx b/src/features/day-feed/LocalTripWorkspace.tsx
+index 4fd60e0..6046a8b 100644
+--- a/src/features/day-feed/LocalTripWorkspace.tsx
++++ b/src/features/day-feed/LocalTripWorkspace.tsx
+@@ -587,8 +587,15 @@ function LocalTripContent({
+               ticket === request.current &&
+               base.context.tripId === cached.id &&
+               base.context.accountId === qaAccountId
+-            )
+-              { setRemoteMetadataReady(base); setMetadataBaseError(false); }
++            ) {
++              setRemoteSelected((previous) =>
++                previous?.id === base.context.tripId
++                  ? { ...previous, ...base.snapshot.metadata }
++                  : previous,
++              );
++              setRemoteMetadataReady(base);
++              setMetadataBaseError(false);
++            }
+           } catch {
+             if (
+               alive.current &&

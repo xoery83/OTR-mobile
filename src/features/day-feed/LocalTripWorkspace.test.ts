@@ -1,3 +1,22 @@
+import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
+import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
+import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
+import { createElement, type ReactNode } from "react";
+import { createRequire } from "node:module";
+import { DatabaseSync } from "node:sqlite";
+import { randomUUID } from "node:crypto";
+import { migrations } from "@/data/db/migrations";
+import { createTripPersonRepository } from "@/data/repositories/tripPersonRepository";
+import { beforeEach, expect, it, vi } from "vitest";
+import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
+import type { Trip } from "@/domain/trip/types";
+import type { TripRepository } from "@/data/repositories/tripRepository";
+import {
+  advanceAccountGeneration,
+  getAccountGeneration,
+} from "@/data/auth/accountGeneration";
+import { LocalTripWorkspace } from "./LocalTripWorkspace";
+import { router } from "expo-router";
 const restore = vi.hoisted(() => ({
   observation: null as any,
   refresh: vi.fn(),
@@ -19,7 +38,6 @@ const guestCurrency = vi.hoisted(() => ({ readSetup: vi.fn() }));
 vi.mock("@/data/repositories/guestTripCurrencyRepository", () => ({
   readGuestTripCurrencyRepository: async () => ({ readSetup: guestCurrency.readSetup }),
 }));
-import { guestTripDraftInventory } from "@/data/auth/guestTripDraftInventory";
 vi.mock("@/data/auth/guestTripDraftInventory", async (original) => {
   const m = await original<typeof import("@/data/auth/guestTripDraftInventory")>();
   return {
@@ -27,8 +45,6 @@ vi.mock("@/data/auth/guestTripDraftInventory", async (original) => {
     guestTripDraftInventory: m.createGuestTripDraftInventory(async () => {}),
   };
 });
-import { readLocalTripPrincipal } from "@/data/auth/localTripAccess";
-import { readLocalSession, readCommittedLocalSession } from "@/data/auth/authRepository";
 vi.mock("./CreateTripDestinations", () => ({
   CreateTripDestinations: (props: any) => {
     state.nodes.push({ destinations: props });
@@ -54,25 +70,9 @@ vi.mock("./ManualItineraryContent", () => ({
     return null;
   },
 }));
-import { createElement, type ReactNode } from "react";
-import { createRequire } from "node:module";
-import { DatabaseSync } from "node:sqlite";
-import { randomUUID } from "node:crypto";
-import { migrations } from "@/data/db/migrations";
-import { createTripPersonRepository } from "@/data/repositories/tripPersonRepository";
-import { beforeEach, expect, it, vi } from "vitest";
-import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
-import type { Trip } from "@/domain/trip/types";
-import type { TripRepository } from "@/data/repositories/tripRepository";
-import {
-  advanceAccountGeneration,
-  getAccountGeneration,
-} from "@/data/auth/accountGeneration";
-import { LocalTripWorkspace } from "./LocalTripWorkspace";
 vi.mock("./MyTripsListSkeleton", () => ({
   MyTripsListSkeleton: () => createElement("div", { "data-my-trips-skeleton": true }),
 }));
-import { router } from "expo-router";
 vi.mock("@/features/ledger/CurrencySettingsScreen", () => ({
   CurrencySettingsScreen: (props: any) => {
     state.nodes.push({ currencyScreen: props });
@@ -2081,6 +2081,49 @@ it.each(["onQueryDirty", "onBusy"])(
     );
   },
 );
+
+it("renders newly confirmed remote Trip dates as soon as the owning read finishes", async () => {
+  const tripId = "20000000-0000-4000-8000-000000000001";
+  const accountId = "10000000-0000-4000-8000-000000000001";
+  const context = { accountId, tripId, generation: getAccountGeneration() };
+  const metadata = {
+    name: "Shared Trip", destination: null, destinations: [],
+    startDate: "2026-12-10", endDate: "2026-12-13",
+  };
+  const previous = {
+    formatVersion: 3 as const, actorAccountId: accountId, tripId,
+    metadataRevision: 1, metadata,
+  };
+  const current = {
+    context,
+    snapshot: { ...previous, metadataRevision: 2, metadata: { ...metadata, endDate: "2026-12-14" } },
+  };
+  const held = deferred<typeof current>();
+  const repo = repository();
+  vi.mocked(repo.readMetadataEditBase).mockResolvedValue({ confirmed: previous, pendingOperationIds: [] });
+  state.repo.mockResolvedValue(repo);
+  const readMerged = vi.fn(async () => ({
+    cachedAt: null,
+    trips: [{ ...metadata, id: tripId, createdAt: null, localStatus: null,
+      selectedCoverAssetId: null, remoteListed: true }],
+  }));
+  state.discovery.mockResolvedValue({ readMerged });
+  state.parentMetadataRead.mockReturnValue(held.promise);
+  props.tripId = tripId;
+  props.serverParentPeopleEnabled = true;
+  render();
+  await vi.dynamicImportSettled();
+  await flush();
+  render();
+  expect(state.preparation.metadata.endDate).toBe("2026-12-13");
+  const discoveryReads = readMerged.mock.calls.length;
+
+  held.resolve(current);
+  await flush();
+  render();
+  expect(state.preparation.metadata.endDate).toBe("2026-12-14");
+  expect(readMerged).toHaveBeenCalledTimes(discoveryReads);
+});
 
 it.each(["success", "cover", "revoked", "switched"])(
   "server-parent Details preserves formal CAS and stale-response isolation: %s",

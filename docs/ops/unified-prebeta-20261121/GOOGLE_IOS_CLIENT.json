@@ -1,0 +1,17 @@
+{
+  "status": "CREATED_OWNER_APPROVED_NOT_YET_NATIVE_VERIFIED",
+  "project": "ontheroad-500506",
+  "type": "iOS",
+  "name": "OTR iOS Pre-Beta art.xoery.otr",
+  "bundleId": "art.xoery.otr",
+  "teamId": "3K49Z2Q5X7",
+  "clientId": "580120713844-qgv0ptkgnn80h1f7qlg0nahard5qgmcu.apps.googleusercontent.com",
+  "reversedScheme": "com.googleusercontent.apps.580120713844-qgv0ptkgnn80h1f7qlg0nahard5qgmcu",
+  "webClientIdUnchanged": "580120713844-t44tea8s903dbflo0oqfk35gq4dto5rm.apps.googleusercontent.com",
+  "oldClientPreserved": true,
+  "extraScopesAdded": false,
+  "appCheckEnabled": false,
+  "aiAgentOptionEnabled": false,
+  "secretReadOrExported": false,
+  "evidence": "Google Cloud UI successful creation modal; explicit same-chat Owner approval"
+}

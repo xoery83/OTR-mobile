@@ -1,6 +1,6 @@
-// Native reserved 77; registry registration remains with the unique Native Writer.
+// Appended after existing Import/Parent migrations; their historical IDs remain unchanged.
 export const privateAccountProfileMigration = {
-  id: 77,
+  id: 80,
   name: "account_private_profile_local",
   sql: `
 CREATE TABLE account_private_profile_local (

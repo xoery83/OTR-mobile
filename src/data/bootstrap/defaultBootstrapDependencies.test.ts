@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   scheduleHealth: vi.fn(),
   downstream: vi.fn(),
   foregroundDownstream: vi.fn(),
+  focusedDiscovery: vi.fn(),
   appStateListener: null as ((state: string) => void) | null,
   networkListener: null as
     ((state: { isConnected?: boolean; isInternetReachable?: boolean }) => void) | null,
@@ -47,6 +48,7 @@ vi.mock("@/data/auth/authRepository", () => ({
 vi.mock("../sync/tripDownstreamCoordinator", () => ({
   refreshAccountTripReads: mocks.downstream,
   refreshForegroundTripReads: mocks.foregroundDownstream,
+  refreshFocusedTripDiscovery: mocks.focusedDiscovery,
 }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: async () => ({
@@ -124,6 +126,7 @@ describe("default bootstrap sync", () => {
     mocks.listJourneys.mockResolvedValue([]);
     mocks.downstream.mockResolvedValue(undefined);
     mocks.foregroundDownstream.mockResolvedValue(undefined);
+    mocks.focusedDiscovery.mockResolvedValue(undefined);
     mocks.selectedJourney.mockResolvedValue(null);
     mocks.refreshJourney.mockResolvedValue({ changed: false, incomplete: false });
   });
@@ -149,12 +152,19 @@ describe("default bootstrap sync", () => {
       mocks.networkListener?.({ isConnected: true });
       await vi.advanceTimersByTimeAsync(0);
       expect(mocks.downstream).toHaveBeenCalledTimes(3);
-      await vi.advanceTimersByTimeAsync(14_999);
+      await vi.advanceTimersByTimeAsync(9_999);
+      expect(mocks.focusedDiscovery).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(mocks.focusedDiscovery).toHaveBeenCalledOnce();
+      const [canRefresh] = mocks.focusedDiscovery.mock.lastCall!;
+      expect(canRefresh()).toBe(true);
+      await vi.advanceTimersByTimeAsync(4_999);
       expect(mocks.downstream).toHaveBeenCalledTimes(3);
       expect(mocks.foregroundDownstream).not.toHaveBeenCalled();
       await vi.advanceTimersByTimeAsync(1);
       expect(mocks.foregroundDownstream).toHaveBeenCalledOnce();
       subscription.remove();
+      expect(canRefresh()).toBe(false);
       await vi.advanceTimersByTimeAsync(45_000);
       expect(mocks.foregroundDownstream).toHaveBeenCalledOnce();
     } finally {

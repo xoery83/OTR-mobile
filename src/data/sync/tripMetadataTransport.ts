@@ -1,3 +1,4 @@
+import { recordQaMetadataTiming } from "./recordQaMetadataTiming";
 import { tripMetadataRevisionedSnapshotSchema } from "@/domain/trip/tripMetadataV2Contract";
 import { structuredTripMetadataSnapshotSchema } from "@/domain/trip/tripStructuredDestinationContract";
 import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
@@ -121,6 +122,7 @@ export function createTripMetadataTransport(
       coreUuid.parse(operationId);
       await assertAccountRequestContext(scope, account);
       dispatchGuard();
+      recordQaMetadataTiming(tripId, "SYNC_REQUEST");
       const result = await createAuthenticatedApiClient(
         options,
         tokenProvider,
@@ -137,6 +139,7 @@ export function createTripMetadataTransport(
         result.tripId !== tripId
       )
         throw new Error("TRIP_METADATA_SNAPSHOT_MISMATCH");
+      recordQaMetadataTiming(tripId, "SYNC_RESPONSE", result.metadataRevision);
       return result;
     },
   };

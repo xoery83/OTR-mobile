@@ -1,0 +1,11 @@
+{
+  "bundleId": "art.xoery.otr",
+  "team": "3K49Z2Q5X7",
+  "backend": "https://api-dev.xoery.art",
+  "managedAuth": "https://tuqigdxrvrerfewsxqgm.supabase.co",
+  "syncTransport": "dev",
+  "existingPublicKeySha256": "e2337f29000bb3e38e5c0765ec003c8a3805872e3fc50ad11716e6b75c65db1b",
+  "source": "existing canonical .env.local public variable only",
+  "privateCredentialsCopied": false,
+  "isolatedBeta": false
+}

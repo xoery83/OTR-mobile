@@ -5,6 +5,25 @@ export async function isKnownGuestSqliteSchema(
   database: Pick<MigrationDatabase, "getFirstAsync">,
   version: number,
 ) {
+  if (version === 80) {
+    if (!(await isKnownGuestSqliteSchema(database, 79))) return false;
+    const registration = await database.getFirstAsync<{ name: string }>(
+      "SELECT name FROM schema_migrations WHERE id=80",
+    );
+    if (registration?.name !== "account_private_profile_local") return false;
+    const table = await database.getFirstAsync<{ present: number }>(
+      "SELECT 1 AS present FROM sqlite_master WHERE type='table' AND name='account_private_profile_local'",
+    );
+    if (table?.present !== 1) return false;
+    const columns = await database.getFirstAsync<{ n: number }>(`
+      SELECT COUNT(*) AS n FROM pragma_table_info('account_private_profile_local')
+      WHERE (SELECT COUNT(*) FROM pragma_table_info('account_private_profile_local'))=4 AND (
+        (cid=0 AND name='account_id' AND type='TEXT' AND "notnull"=1 AND pk=1) OR
+        (cid=1 AND name='accepted_snapshot_json' AND type='TEXT' AND "notnull"=0 AND pk=0) OR
+        (cid=2 AND name='draft_json' AND type='TEXT' AND "notnull"=1 AND pk=0) OR
+        (cid=3 AND name='updated_at' AND type='TEXT' AND "notnull"=1 AND pk=0))`);
+    return columns?.n === 4;
+  }
   if (version === 74) return true;
   if (version === 79) {
     const registered = await database.getFirstAsync<{ n: number }>(`
