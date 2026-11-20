@@ -1,0 +1,7 @@
+{
+  "sourceSha": "b10178c1f2d9cbe20e0ec6473a39ee66dccce06b",
+  "reviewerChat": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "result": "NO_BLOCKER",
+  "scope": "Remove stale UI Bundle suppression; preserve adapter native identity/nonce/exchange; component disabled/handler/accessibility/fallback",
+  "testsReused": 20
+}

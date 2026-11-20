@@ -1,0 +1,19 @@
+{
+  "sourceSha": "b10178c1f2d9cbe20e0ec6473a39ee66dccce06b",
+  "build": "14",
+  "bundle": "art.xoery.otr",
+  "normalSyncCompiledTrue": true,
+  "googleButtonHasStaleBundleHide": false,
+  "googleClientPresent": true,
+  "metroInputSha256": "206d2d27d8de0bac0df6feb76ed67f28e3daefe71f319e54d69317f4638e938d",
+  "jsSha256": "1beb2210ede248e8b5de1a8c3b7d78d6372550d124f05e6083ca40b53fc9c36c",
+  "physicalInstalled": true,
+  "existingC0Installed": true,
+  "bothMetroInputsIdentical": true,
+  "signatureVerifiedBeforeInstallation": true,
+  "googleRealLoginAndColdRecovery": "PASS",
+  "appleRealLoginAndColdRecovery": "PASS",
+  "originalQaSessionBeforeOwnerSwitchPreserved": true,
+  "originalDatabaseResetOrCopied": false,
+  "zipSha256": "6a6ae3fb9e75ee1d67d728c9ad4ab1c18d7064136da1692a49189b6ae4d9af62"
+}

@@ -1,0 +1,22 @@
+{
+  "sourceSha": "b10178c1f2d9cbe20e0ec6473a39ee66dccce06b",
+  "deviceBuild": "14",
+  "normalRoute": "Account > Add / Login another account",
+  "originalQaSessionRetained": true,
+  "appleButtonVisible": true,
+  "nativeGoogleBrandedButtonVisible": true,
+  "googleSdkStarted": true,
+  "systemPromptDestination": "accounts.google.com",
+  "officialGoogleOnTheRoadAccountChooserReached": true,
+  "googleLogin": "ACTUAL_OWNER_NORMAL_LOGIN_PASS",
+  "appleLogin": "NOT_YET_VERIFIED",
+  "settingsAppleLinkNotUsed": true,
+  "credentialsReadOrExported": false,
+  "providerPermissionBypass": false,
+  "googleAccountUiConfirmed": true,
+  "ownerAccountTripListObserved": true,
+  "priorSyntheticQaListAbsentAfterSwitch": true,
+  "processRestartAndTripRecovery": "PASS",
+  "rawUserIdentityOrTripDetailsPersisted": false,
+  "note": "Owner performed account selection; no JWT/Subject/credentials extracted; does not claim first Beta registration or independent server identity query."
+}

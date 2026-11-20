@@ -42,3 +42,13 @@ MC has explicitly returned the physical phone window (NATIVE_BUILD10_HANDOFF.md)
 ## Google button actual-device repair — Build14
 
 Build13 was installed in place; original registered QA B Session and original MCP Trip (Dec10–18, preparation1/2/1) restored. Normal Account → Add/Login actual UI exposed Apple but no Google. Actual root cause was a second obsolete art.xoery.otr exclusion in GoogleSignInButton, missed when updating the adapter. Remove only this UI suppression; retain adapter registered-Bundle, native capability, nonce and exchange checks. New real-component regression binds the unified Bundle and verifies branded control/disabled/handler semantics and missing-module fallback.20 tests/3suites PASS; normal runtime gate remains enabled. This is not Google or Apple login PASS.
+
+## Build14 actual login progress
+
+Both existing C0 and physical iPhone updated in place to same product source b10178c1 / Build14. Identical Metro input SHA206d2d27d8de0bac0df6feb76ed67f28e3daefe71f319e54d69317f4638e938d. Actual normal Account/Add Login shows Apple and branded Google. Google SDK reached official account chooser; Owner selected their existing account and completed confirmation. Actual account switch, account-specific Trip list and process-restart recovery PASS. No personal names/emails/Trip details, JWT or Subjects persisted in evidence. Apple normal login reached native system sheet; Owner confirmation pending. Settings link-identity flow was not used. This is Shared DEV login, not App Attest or isolated Beta first registration.
+
+## Final acceptance
+
+Google and Apple normal native login, separate Account/Trip UI, and individual process-restart recovery PASS on physical Build14. Owner completed both provider system confirmations. Representative UI account isolation passed (QA B → Google → Apple); this is not a new exhaustive Backend/RLS matrix. Final normal Data & Sync check on Build14 completed in9s, Everything is up to date. No new golden-slice Create/Edit, independent provider-subject query, whole queue/draft census, App Attest or isolated Beta first-registration claim. Existing Manual/MCP receipts remain their original scope.
+
+Phone now remains signed into the Owner-selected Apple Account; no logout/revoke or credential copying. Both physical and C0 are installed Build14/sourceb10178c1. Full paid-Team artifact is retained under ignored ios/unified-artifacts (SHA6a6ae3fb9e75ee1d67d728c9ad4ab1c18d7064136da1692a49189b6ae4d9af62). Source remains independent branch; no main merge/push. Main baseline has3 unchanged TypeScript errors; see final check log. No Native task processes or Metro left running.
