@@ -1,0 +1,15 @@
+{
+  "build": "19",
+  "source": "6164e29596ea3dd951cf612fabf9612da1e288de",
+  "bundle": "art.xoery.otr",
+  "js_sha256": "28ec8ec515fe004ef1bd698ed82e9dd2144eb397ecb873b0d1df6f0d76d60788",
+  "installed_in_place": true,
+  "launch_after_install": false,
+  "P3_original_operation_preserved": "5f7d0785-d519-44da-8852-342af47b806d",
+  "P3_status": "RETRYABLE",
+  "P3_attempts": 8,
+  "reason_closed": "MC holds shared service lock; await independent RESOURCE_RETURNED",
+  "next": "Normal existing Core receipt-first recovery, same Operation ID, independent PG readback, Native Details/cold recovery",
+  "provider_calls": 0,
+  "main_merge_push": false
+}

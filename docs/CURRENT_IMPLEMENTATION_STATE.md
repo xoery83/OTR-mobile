@@ -1,6 +1,6 @@
 # Current continuation — Pre-Beta QA, 21 November 2026 NZDT
 
-Worktree `native-unified-prebeta-20261121`, candidate branch only. Current C0 `art.xoery.otr` Build18, product `10923e37`; original Session/SQLite80/history retained. Phone Build14 untouched; no main merge/push. Build16 (`6dde1bb9`) P6 detail gutter actual device PASS; P1/P3/P4/P5/P6 local Edit and fresh-process restoration PASS. P4 plate QA1121 retained, Create fields unchanged. P2 Sparse Cancel preserves NZ9001, not Cloud. Original Import batch 1 saved, expense NZD24/self12 and Settlement owed12 cold UI retained. Final Settlement readiness, fresh Guest and current offline test remain incomplete.
+Worktree `native-unified-prebeta-20261121`, candidate branch only. Current C0 `art.xoery.otr` Build19, product `6164e295`, installed in place and kept CLOSED pending resource return; original Session/SQLite80/history retained. Phone Build14 untouched; no main merge/push. Build16 (`6dde1bb9`) P6 detail gutter actual device PASS; P1/P3/P4/P5/P6 local Edit and fresh-process restoration PASS. P4 plate QA1121 retained, Create fields unchanged. P2 Sparse Cancel preserves NZ9001, not Cloud. Original Import batch 1 saved, expense NZD24/self12 and Settlement owed12 cold UI retained. Final Settlement readiness, fresh Guest and current offline test remain incomplete.
 
 P3 original Edit Operation `5f7d0785-d519-44da-8852-342af47b806d`, Item `be50008a-5950-491d-a95c-2bfedda7c02f`, Synthetic Trip `a0bcf637-4d71-4d8b-ba17-a998d8917fe0`: Cloud NOT PASS. Root2 confirmed RECEIPT 503/CORE_CAPABILITY_CLOSED. Build17 bounded normal-session read-only probe returned 404/null, independent Core/legacy receipt counts0; no fallback submit. Build18 normal recovery of original IDs still encountered intermittent 503; no new IDs or permission bypass. Build17 probe flag is OFF in Build18, compiled call absent.
 
@@ -8,7 +8,9 @@ P3 original Edit Operation `5f7d0785-d519-44da-8852-342af47b806d`, Item `be50008
 
 Native diagnostic repair in10923e37 retains bounded CORE_ dependency reasons instead of discarding them; status/dispatch/identity semantics unchanged.110 tests/lint and independent Review NO_BLOCKER; TS retains only three known baseline errors. Prior draft/gutter Review NO_BLOCKER. Evidence: `docs/ops/prebeta-user-journey-20261121/BUILD16_DEVICE_PROGRESS.json`, `P3_CURRENT_READ_ONLY_PROBE.json`, `BUILD18_SYNC_RESUME.json`, `COVERAGE.md`.
 
-Next: independently confirm connlimit1 and safe resource return → normal Data&Sync original-operation recovery → formal Receipt and independent PG fields → Native Details/point/cold recovery. P4/P5/P6 original cloud failures remain separate, same contract. No Provider or protected SQL change by Native.
+Root2 independently confirmed at11:06:50NZDT: connlimit1, gateway sessions0, idle transactions0; old dual-connection container exited. MC still holds the exclusive shared service lock for a single-connection temporary candidate, so Native has closed the App to avoid background calls. Root2 was asked to send RESOURCE_RETURNED to this chat after the formal baseline and lock release; that is the resume trigger. Build19 includes the two-line Settlement readiness busy/disabled feedback change (guard/lint PASS, device interaction pending). See BUILD19_RESOURCE_WAIT.json.
+
+Next: independently confirm safe resource return → normal Data&Sync original-operation recovery → formal Receipt and independent PG fields → Native Details/point/cold recovery. P4/P5/P6 original cloud failures remain separate, same contract. No Provider or protected SQL change by Native.
 
 # Current stage — Pre-Beta Forms QA user journey,21November2026NZDT
 
