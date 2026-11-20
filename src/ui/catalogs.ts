@@ -372,6 +372,7 @@ export const en = {
 
   "auth.emailTitle": "Sign in or create an account",
   "auth.continueGoogle": "Continue with Google",
+  "auth.continueApple": "Continue with Apple",
   "auth.appleLinkTitle": "Connect Apple Account",
   "auth.appleLinkExplanation": "Connect Apple sign-in to your current OTR account.",
   "auth.appleLinkConfirmation":
@@ -3925,6 +3926,7 @@ export const zhHans: Record<MessageKey, string> = {
 
   "auth.emailTitle": "登录或创建账户",
   "auth.continueGoogle": "使用 Google 继续",
+  "auth.continueApple": "使用 Apple 继续",
   "auth.appleLinkTitle": "连接 Apple 账户",
   "auth.appleLinkExplanation": "将 Apple 登录连接到当前 OTR 账号。",
   "auth.appleLinkConfirmation": "授权 Apple 登录连接到当前已登录的 OTR 账号？",
