@@ -22,6 +22,8 @@ import {
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
 import { ZodError } from "zod";
+import type { ManagedWriteAdmission } from "./managedWriteAdmission";
+import type { CoreExpenseLinkDecision } from "./tripCoreExpenseLink";
 export type CoreCommandTransaction = {
   actor: CoreActor;
   authoritativeClock?(): Promise<string>;
@@ -30,6 +32,10 @@ export type CoreCommandTransaction = {
   canReadReceipt(receipt: CoreReceipt): Promise<boolean>;
   enabledCommands(): Promise<readonly CoreCommandName[]>;
   readLockedGraph(command: CoreCommand): Promise<CoreGraph>;
+  lifecycleContext?(): Promise<
+    { tripState: "ACTIVE" | "ARCHIVED" | "DELETED"; deletedItemIds: string[] } | undefined
+  >;
+  verifyExpenseLink?(command: CoreCommand): Promise<CoreExpenseLinkDecision | undefined>;
   verifyAdmission(
     command: CoreCommand,
     intentSha256: string,
@@ -53,6 +59,7 @@ export type CoreCommandStorage = {
       operationId: string;
       baseVector: CoreCommand["baseVector"];
       manualCompatibility?: "MANUAL" | "READ";
+      managedMcp?: true;
     },
     work: (transaction: CoreCommandTransaction) => Promise<T>,
   ): Promise<T>;
@@ -96,6 +103,9 @@ const terminalErrors = new Set([
   "OWNING_CAPABILITY_REQUIRED",
   "INVALID_PARTICIPATION",
   "REVISION_OVERFLOW",
+  "ITEM_DELETED",
+  "TRIP_ARCHIVED",
+  "TRIP_DELETED",
 ]);
 export async function executeCoreCommandV2(
   storage: CoreCommandStorage,
@@ -104,6 +114,7 @@ export async function executeCoreCommandV2(
   input: unknown,
   hash: ImportHash,
   clock = () => new Date().toISOString(),
+  managedWriteAdmission?: ManagedWriteAdmission,
 ): Promise<CoreReceiptProjection> {
   const command = validateCoreCommand(input);
   if (command.tripId !== tripId) throw new Error("NOT_VISIBLE");
@@ -115,7 +126,10 @@ export async function executeCoreCommandV2(
       tripId,
       operationId: command.operationId,
       baseVector: command.baseVector,
-      ...(["MANUAL", "IMPORT"].includes(command.admission.mode) ? { manualCompatibility: "MANUAL" as const } : {}),
+      ...(managedWriteAdmission ? { managedMcp: true as const } : {}),
+      ...(["MANUAL", "IMPORT"].includes(command.admission.mode)
+        ? { manualCompatibility: "MANUAL" as const }
+        : {}),
     },
     async (tx) => {
       if (tx.actor.accountId !== actorAccountId || tx.actor.tripId !== tripId)
@@ -140,6 +154,13 @@ export async function executeCoreCommandV2(
       if (!(await tx.enabledCommands()).includes(command.command))
         throw new Error("CORE_CAPABILITY_CLOSED");
       const before = await tx.readLockedGraph(command);
+      // Existing authored-flight owner authority rejects before any receipt DML.
+      if (
+        command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
+        before.itinerary_events.find((row) => row.id === command.target.id)
+          ?.owner_account_id !== actorAccountId
+      )
+        throw new Error("NOT_VISIBLE");
       const committedAt = tx.authoritativeClock ? await tx.authoritativeClock() : clock();
       let mutation: CoreMutation | null = null,
         errorCode: string | null = null;
@@ -149,6 +170,16 @@ export async function executeCoreCommandV2(
           intentSha256,
           before,
         );
+        const lifecycle = await tx.lifecycleContext?.();
+        if (lifecycle && lifecycle.tripState !== "ACTIVE")
+          throw new Error("TRIP_" + lifecycle.tripState);
+        const expenseLinkDecision =
+          (command.command === "LINK_EXPENSE" || command.command === "UNLINK_EXPENSE") &&
+          Object.hasOwn(command.payload as object, "expectedExpenseRevision")
+            ? await tx.verifyExpenseLink?.(command)
+            : undefined;
+        if (expenseLinkDecision && "errorCode" in expenseLinkDecision)
+          throw new Error(expenseLinkDecision.errorCode);
         mutation = applyCoreCommand(
           before,
           command,
@@ -158,6 +189,8 @@ export async function executeCoreCommandV2(
           await tx.lifecycleGraphHash(command, before),
           false,
           privateDocumentCustody || undefined,
+          new Set(lifecycle?.deletedItemIds ?? []),
+          expenseLinkDecision,
         );
       } catch (error) {
         if (error instanceof ZodError) errorCode = "INVALID_FACT";
@@ -176,8 +209,21 @@ export async function executeCoreCommandV2(
             ? "CONFLICT"
             : "REJECTED";
       const affected = mutation?.changed ?? [];
-      const snapshots = (graph: CoreGraph) =>
-        affected.flatMap((x) => {
+      const beforeLink =
+        command.target.kind === "EXPENSE_LINK"
+          ? before.expense_links.find((row) => row.id === command.target.id)
+          : undefined;
+      const afterLink =
+        mutation && command.target.kind === "EXPENSE_LINK"
+          ? mutation.graph.expense_links.find((row) => row.id === command.target.id)
+          : undefined;
+      const linkChanged =
+        !!mutation &&
+        command.target.kind === "EXPENSE_LINK" &&
+        canonicalCoreJson((beforeLink ?? null) as Json) !==
+          canonicalCoreJson((afterLink ?? null) as Json);
+      const snapshots = (graph: CoreGraph) => [
+        ...affected.flatMap((x) => {
           const facts = graph[coreKindTables[x.kind]].find((r) => r.id === x.id);
           return facts && coreCanRead(graph, tx.actor, x.kind, facts)
             ? [
@@ -191,7 +237,18 @@ export async function executeCoreCommandV2(
                 },
               ]
             : [];
-        });
+        }),
+        ...(linkChanged
+          ? graph.expense_links
+              .filter((row) => row.id === command.target.id)
+              .map((facts) => ({
+                kind: "EXPENSE_LINK" as const,
+                id: command.target.id,
+                revision: 1,
+                facts,
+              }))
+          : []),
+      ];
       const vector = command.baseVector.map((v) => {
         const changed = affected.find((x) => x.kind === v.kind && x.id === v.id);
         return {
@@ -200,7 +257,11 @@ export async function executeCoreCommandV2(
           baseRevision: v.revision,
           committedRevision: errorCode
             ? null
-            : (changed?.committedRevision ?? v.revision),
+            : v.kind === "EXPENSE_LINK"
+              ? mutation?.graph.expense_links.some((row) => row.id === v.id)
+                ? 1
+                : null
+              : (changed?.committedRevision ?? v.revision),
         };
       });
       const typed = (x: CoreMutation["changed"][number]) => ({ kind: x.kind, id: x.id });
@@ -259,8 +320,14 @@ export async function executeCoreCommandV2(
         targetVector: vector,
         outcome,
         result: {
-          created: affected.filter((x) => x.baseRevision === null).map(typed),
-          changed: affected.filter((x) => x.baseRevision !== null).map(typed),
+          created: [
+            ...affected.filter((x) => x.baseRevision === null).map(typed),
+            ...(linkChanged && !beforeLink && afterLink ? [command.target] : []),
+          ],
+          changed: [
+            ...affected.filter((x) => x.baseRevision !== null).map(typed),
+            ...(linkChanged && beforeLink ? [command.target] : []),
+          ],
           retiredEdges,
           replacement:
             command.command === "REPLACE_BOOKING" && mutation
@@ -287,6 +354,8 @@ export async function executeCoreCommandV2(
         ...body,
         receiptSha256: await coreHashValue("otr-trip-core-receipt-v2", body, hash),
       });
+      if (managedWriteAdmission && !(await managedWriteAdmission(actorAccountId, command)))
+        throw Error("MCP_WRITE_ADMISSION_DENIED");
       const domainReceiptId = await tx.commit(mutation, receipt, canonicalIntent);
       return (await tx.canReadReceipt(receipt))
         ? { projection: "FULL", domainReceiptId, receipt }

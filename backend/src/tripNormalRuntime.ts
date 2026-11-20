@@ -41,11 +41,11 @@ export function createNormalDevTripPorts(
       throw new TripCreateError(403, "TRIP_NORMAL_DEV_FORBIDDEN");
   };
   const tripCreatePort: TripCreatePort = {
-    async create(actor, request) {
+    async create(actor, request, ...admission) {
       guard(actor);
       if (!("formatVersion" in request) || request.formatVersion !== 2)
         throw new TripCreateError(400, "TRIP_NORMAL_V2_REQUIRED");
-      const result = await ports.create.create(actor, request);
+      const result = await ports.create.create(actor, request, ...admission);
       guard(actor);
       return result;
     },
@@ -57,11 +57,11 @@ export function createNormalDevTripPorts(
     },
   };
   const tripMetadataV2Port: TripMetadataV2Port = {
-    async update(actor, request) {
+    async update(actor, request, admit) {
       guard(actor);
       if (request.formatVersion !== 3)
         throw new TripCreateError(400, "TRIP_NORMAL_METADATA_V3_REQUIRED");
-      const result = await ports.metadata.update(actor, request);
+      const result = await ports.metadata.update(actor, request, admit);
       guard(actor);
       return result;
     },

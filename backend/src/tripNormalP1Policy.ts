@@ -34,7 +34,17 @@ export const normalP2SparseCommands = [
 ] as const;
 const localDocumentCommands = ["CREATE_DOCUMENT_METADATA", "RECONCILE_ITEM_DOCUMENTS"] as const;
 
-export function normalManualCapabilities(gate: Record<string, unknown> | undefined) {
+export const normalBetaItemCommands = [
+  ...normalP2SparseCommands,
+  "SET_ITEM_CATEGORY", "SET_ITEM_GROUPING", "SET_ITEM_STATUS",
+  "HIDE_OBJECT", "RESTORE_OBJECT", "DELETE_ITEM", "SET_OBJECT_VISIBILITY",
+] as const;
+export const normalBetaCommands = [...normalBetaItemCommands, "LINK_EXPENSE", "UNLINK_EXPENSE"] as const;
+
+export function normalManualCapabilities(
+  gate: Record<string, unknown> | undefined,
+  betaLifecycle = false,
+) {
   const configured = gate?.enabled_commands;
   const importEnabled = JSON.stringify(gate?.enabled_admission_modes) === '["MANUAL","IMPORT"]';
   if (importEnabled) gate = { ...gate, enabled_admission_modes: ["MANUAL"] };
@@ -48,6 +58,23 @@ export function normalManualCapabilities(gate: Record<string, unknown> | undefin
     };
   }
   const documents = localDocuments ? localDocumentCommands : [];
+  if (
+    betaLifecycle &&
+    gate.runtime_enabled === true &&
+    JSON.stringify(gate.enabled_families) === '["P1","P2","P3","P4","P5","P6"]' &&
+    JSON.stringify(gate.enabled_admission_modes) === '["MANUAL"]' &&
+    Array.isArray(gate.enabled_commands)
+  ) {
+    const enabled = gate.enabled_commands;
+    const profile = [normalBetaItemCommands, normalBetaCommands].find(
+      (commands) => enabled.length === commands.length && commands.every((command) => enabled.includes(command)),
+    );
+    if (profile) return {
+      commands: [...profile, ...documents],
+      families: ["P1", "P2", "P3", "P4", "P5", "P6"],
+      ...(importEnabled ? { importEnabled: true } : {}),
+    };
+  }
   if (isNormalP1Gate(gate)) return { commands: [...normalP1Commands, ...documents], families: ["P1"], ...(importEnabled ? { importEnabled: true } : {}) };
   const rental = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4"]';
   const transport = JSON.stringify(gate?.enabled_families) === '["P1","P3","P4","P5"]';

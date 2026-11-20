@@ -28,8 +28,8 @@ const location = z.strictObject({
 const stay = coreSparseStayPayloadSchema.shape.details
   .unwrap()
   .refine((d) => Object.keys(d).length > 0);
-const rental = corePayloadSchemas.SET_RENTAL_DETAILS.shape.details;
-const activity = corePayloadSchemas.SET_ACTIVITY_DETAILS.shape.details;
+const rental = corePayloadSchemas.SET_RENTAL_DETAILS.options[0].shape.details;
+const activity = corePayloadSchemas.SET_ACTIVITY_DETAILS.options[0].shape.details;
 const action = {
   mode: z.enum(["PREVIEW", "APPLY"]).default("PREVIEW"),
   preview_digest: z

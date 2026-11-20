@@ -38,6 +38,7 @@ import {
 import { createFlightEnrichmentBoundary } from "./flight-enrichment/hostBoundary";
 import type { createFlightEnrichmentService } from "./flight-enrichment/service";
 import { tripMetadataV2Boundary, type TripMetadataV2Port } from "./tripMetadataV2";
+import type { ManagedWriteAdmission } from "./managedWriteAdmission";
 import { universalBoundary, type UniversalPort } from "./universalImport";
 import { captureCustodyBoundary } from "./captureCustodyHttp";
 import type { CaptureMaterialCustody } from "../../src/domain/capture/captureCustody";
@@ -73,6 +74,12 @@ import {
 import { coreHttpBoundary, type CoreHttpConnection } from "./tripCoreV2Http";
 import { tripMetadataBoundary, type TripMetadataPort } from "./tripMetadata";
 import { tripCreateBoundary, type TripCreatePort } from "./tripCreate";
+import { tripLifecycleBoundary, type TripLifecyclePort } from "./tripLifecycle";
+import { tripItemsBoundary } from "./tripItemsRead";
+import { tripPeopleBoundary } from "./tripPeopleRead";
+import { tripBetaCapabilitiesBoundary } from "./tripBetaCapabilities";
+import { isLedgerBetaReadPath, ledgerBetaReadBoundary } from "./ledgerBetaRead";
+import { ledgerOperationReadBoundary, type LedgerOperationQuery } from "./ledgerOperationRead";
 import { tripDiscoveryBoundary, type TripDiscoveryPort } from "./tripDiscovery";
 import {
   tripDocumentOriginalBoundary,
@@ -252,6 +259,10 @@ export type DevBackendGateway = {
   canWriteTrip(userId: string, tripId: string): Promise<boolean>;
   canFinalizeSettlement(userId: string, tripId: string): Promise<boolean>;
   bootstrapLedger(userId: string, tripId: string): Promise<LedgerBootstrapResponse>;
+  readPersonalPaymentAudit?(userId: string, tripId: string, recordId: string): Promise<unknown>;
+  readLedgerOperation?(
+    userId: string, tripId: string, operationId: string, query: LedgerOperationQuery,
+  ): Promise<unknown>;
   pullLedgerChanges(
     userId: string,
     tripId: string,
@@ -294,6 +305,9 @@ export type DevBackendGateway = {
     userId: string,
     tripId: string,
     proposedCurrency: string,
+  ): Promise<JourneyCurrencyPreview>;
+  previewJourneyCurrencyReadonly?(
+    userId: string, tripId: string, proposedCurrency: string,
   ): Promise<JourneyCurrencyPreview>;
   commitJourneyCurrency(
     userId: string,
@@ -653,6 +667,14 @@ export type SafeLogEvent = {
 };
 
 export type BackendDependencies = {
+  managedWriteAdmissionVersion?: 1 | 2;
+  /** Optional Auth-owned adapter passed only to the Managed MCP mount. */
+  managedNativeConsent?: unknown;
+  managedMcpApprovalConnection?: import("./tripCoreV2PgStorage").CorePgConnection;
+  managedTripLifecycleForGrant?: (
+    grant: Parameters<typeof import("./mcpL3LifecycleAdmission").createMcpL3LifecyclePort>[1],
+  ) => TripLifecyclePort;
+  managedWriteAdmission?: ManagedWriteAdmission;
   sourcePngPreparationForRequest?: SourcePngPreparationForRequest;
   mcpHttp?: (request: Request) => Promise<Response | null>;
   sourcePdfV2Port?: Parameters<typeof sourcePdfV2Boundary>[3];
@@ -697,6 +719,7 @@ export type BackendDependencies = {
   tripCreatePort?: TripCreatePort;
   tripMetadataPort?: TripMetadataPort;
   tripMetadataV2Port?: TripMetadataV2Port;
+  tripLifecyclePort?: TripLifecyclePort;
   documentOriginalReader?: DocumentOriginalReader;
   coreConnection?: CoreHttpConnection;
   guestAdoptionRuntime?: GuestAdoptionDevRuntime;
@@ -797,17 +820,44 @@ async function parseBody(request: Request) {
   }
 }
 
-async function mutateJourneyCurrency(request: Request, gateway: DevBackendGateway) {
+async function admitManagedLedgerWrite(
+  admit: ManagedWriteAdmission | undefined,
+  actor: string,
+  tripId: string,
+  operationId: string,
+  body: unknown,
+) {
+  if (admit && !(await admit(actor, { tripId, operationId }, body)))
+    throw new HttpError(401, "MCP_WRITE_ADMISSION_DENIED", "The grant is no longer current.");
+}
+
+async function mutateJourneyCurrency(
+  request: Request,
+  gateway: DevBackendGateway,
+  admit?: ManagedWriteAdmission,
+) {
   const match = new URL(request.url).pathname.match(
-    /^\/v2\/trips\/([^/]+)\/ledger\/journey-currency\/(preview|commit)$/,
+    /^\/v2\/trips\/([^/]+)\/ledger\/journey-currency\/(preview|preview-readonly|commit)$/,
   );
   if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
   const [, tripId, action] = match;
   assertTripId(tripId);
-  const user = await authenticate(request, gateway);
+  const user = action === "preview-readonly"
+    ? await authenticateNormalAccount(request, gateway)
+    : await authenticate(request, gateway);
   if (!(await gateway.canFinalizeSettlement(user.id, tripId)))
     throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Journey owner access is required.");
   const body = await parseBody(request);
+  if (action === "preview-readonly") {
+    const parsed = journeyCurrencyPreviewRequestSchema.strict().safeParse(body);
+    if (new URL(request.url).search || !parsed.success)
+      throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    if (!gateway.previewJourneyCurrencyReadonly)
+      throw new HttpError(503, "CAPABILITY_UNAVAILABLE", "The reader is unavailable.");
+    return json(200, await gateway.previewJourneyCurrencyReadonly(
+      user.id, tripId, parsed.data.proposedCurrency,
+    ));
+  }
   if (action === "preview") {
     const parsed = journeyCurrencyPreviewRequestSchema.safeParse(body);
     if (!parsed.success)
@@ -820,12 +870,14 @@ async function mutateJourneyCurrency(request: Request, gateway: DevBackendGatewa
   const parsed = journeyCurrencyCommitRequestSchema.safeParse(body);
   if (!parsed.success)
     throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  const key = getIdempotencyKey(request);
+  await admitManagedLedgerWrite(admit, user.id, tripId, key, body);
   return json(
     200,
     await gateway.commitJourneyCurrency(
       user.id,
       tripId,
-      getIdempotencyKey(request),
+      key,
       parsed.data,
     ),
   );
@@ -1496,6 +1548,7 @@ async function executeTypedExpense(
   key: string,
   body: unknown,
   expectedType: ExpenseCommandRequest["envelope"]["patchOrIntent"]["type"],
+  admit?: ManagedWriteAdmission,
 ) {
   const parsed = expenseCommandRequestSchema.safeParse(body);
   if (
@@ -1508,13 +1561,18 @@ async function executeTypedExpense(
       "INVALID_PAYLOAD",
       "A matching typed intent and idempotency key are required.",
     );
+  await admitManagedLedgerWrite(admit, userId, tripId, key, body);
   return json(
     200,
     await gateway.executeExpenseCommand(userId, tripId, expenseId, key, parsed.data),
   );
 }
 
-async function createLedgerExpense(request: Request, gateway: DevBackendGateway) {
+async function createLedgerExpense(
+  request: Request,
+  gateway: DevBackendGateway,
+  admit?: ManagedWriteAdmission,
+) {
   const url = new URL(request.url);
   const match = url.pathname.match(/^\/v2\/trips\/([^/]+)\/expenses$/);
   if (!match) throw new HttpError(404, "NOT_FOUND", "The endpoint does not exist.");
@@ -1535,6 +1593,7 @@ async function createLedgerExpense(request: Request, gateway: DevBackendGateway)
       key,
       input,
       "CREATE",
+      admit,
     );
   }
   const parsed = createLedgerExpenseRequestSchema.safeParse(input);
@@ -1546,16 +1605,22 @@ async function createLedgerExpense(request: Request, gateway: DevBackendGateway)
     throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
   }
 
+  const key = getIdempotencyKey(request);
+  await admitManagedLedgerWrite(admit, user.id, tripId, key, input);
   const response = await gateway.createLedgerExpense(
     user.id,
     tripId,
-    getIdempotencyKey(request),
+    key,
     parsed.data,
   );
   return json(response.idempotentReplay ? 200 : 201, response);
 }
 
-async function mutateLedgerExpense(request: Request, gateway: DevBackendGateway) {
+async function mutateLedgerExpense(
+  request: Request,
+  gateway: DevBackendGateway,
+  admit?: ManagedWriteAdmission,
+) {
   const url = new URL(request.url);
   const match = url.pathname.match(
     /^\/v2\/trips\/([^/]+)\/expenses\/([^/]+)(?:\/(restore))?$/,
@@ -1585,6 +1650,7 @@ async function mutateLedgerExpense(request: Request, gateway: DevBackendGateway)
         : request.method === "DELETE"
           ? "DELETE"
           : "RESTORE",
+      admit,
     );
   }
   const parsed =
@@ -1601,6 +1667,7 @@ async function mutateLedgerExpense(request: Request, gateway: DevBackendGateway)
   }
 
   const idempotencyKey = getIdempotencyKey(request);
+  await admitManagedLedgerWrite(admit, user.id, tripId, idempotencyKey, input);
   if (request.method === "PUT") {
     return json(
       200,
@@ -1686,6 +1753,7 @@ async function readExpenseConflicts(request: Request, gateway: DevBackendGateway
 async function resolveLedgerExpenseConflict(
   request: Request,
   gateway: DevBackendGateway,
+  admit?: ManagedWriteAdmission,
 ) {
   const match = new URL(request.url).pathname.match(
     /^\/v2\/trips\/([^/]+)\/expenses\/([^/]+)\/conflict-resolution$/,
@@ -1713,13 +1781,15 @@ async function resolveLedgerExpenseConflict(
     const user = await authenticate(request, gateway);
     if (!(await gateway.canWriteTrip(user.id, tripId)))
       throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
+    const key = getIdempotencyKey(request);
+    await admitManagedLedgerWrite(admit, user.id, tripId, key, body);
     return json(
       200,
       await gateway.resolveExpenseConflictChain(
         user.id,
         tripId,
         expenseId,
-        getIdempotencyKey(request),
+        key,
         parsed.data,
       ),
     );
@@ -1732,13 +1802,15 @@ async function resolveLedgerExpenseConflict(
   if (!(await gateway.canWriteTrip(user.id, tripId))) {
     throw new HttpError(403, "TRIP_WRITE_FORBIDDEN", "Trip write access is required.");
   }
+  const key = getIdempotencyKey(request);
+  await admitManagedLedgerWrite(admit, user.id, tripId, key, body);
   return json(
     200,
     await gateway.resolveLedgerExpenseConflict(
       user.id,
       tripId,
       expenseId,
-      getIdempotencyKey(request),
+      key,
       parsed.data,
     ),
   );
@@ -1822,7 +1894,11 @@ async function createFinalizedGuardFixture(request: Request, gateway: DevBackend
   );
 }
 
-async function createLedgerEvidence(request: Request, gateway: DevBackendGateway) {
+async function createLedgerEvidence(
+  request: Request,
+  gateway: DevBackendGateway,
+  admit?: ManagedWriteAdmission,
+) {
   const match = new URL(request.url).pathname.match(
     /^\/v2\/trips\/([^/]+)\/expenses\/([^/]+)\/(payment-records|valuations)$/,
   );
@@ -1840,6 +1916,7 @@ async function createLedgerEvidence(request: Request, gateway: DevBackendGateway
     const parsed = createLedgerPaymentRecordRequestSchema.safeParse(body);
     if (!parsed.success)
       throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+    await admitManagedLedgerWrite(admit, user.id, tripId, idempotencyKey, body);
     const response = await gateway.addLedgerPaymentRecord(
       user.id,
       tripId,
@@ -1858,10 +1935,12 @@ async function createLedgerEvidence(request: Request, gateway: DevBackendGateway
       idempotencyKey,
       body,
       "APPLY_VALUATION",
+      admit,
     );
   const parsed = applyLedgerValuationRequestSchema.safeParse(body);
   if (!parsed.success)
     throw new HttpError(400, "INVALID_PAYLOAD", "The request payload is invalid.");
+  await admitManagedLedgerWrite(admit, user.id, tripId, idempotencyKey, body);
   return json(
     200,
     await gateway.applyLedgerValuation(
@@ -2527,6 +2606,8 @@ function reportingFilters(url: URL): ReportingFilters {
 }
 
 export function createDevBackendHandler({
+  managedNativeConsent,
+  managedWriteAdmission,
   sourcePngPreparationForRequest,
   mcpHttp,
   sourcePdfV2Port,
@@ -2551,6 +2632,7 @@ export function createDevBackendHandler({
   tripCreatePort,
   tripMetadataPort,
   tripMetadataV2Port,
+  tripLifecyclePort,
   documentOriginalReader,
   flightTextSourceConnection,
   coreConnection,
@@ -2642,7 +2724,7 @@ export function createDevBackendHandler({
 
     try {
       const url = new URL(request.url);
-      if (mcpHttp && mcpIngressBodyLimit(url.pathname, request.method) !== null) {
+      if (mcpHttp && mcpIngressBodyLimit(url.pathname, request.method, !!managedNativeConsent) !== null) {
         route = "/mcp/auth-resource";
         response = (await mcpHttp(request)) ?? new Response(null, { status: 404 });
       } else if (guestAdoptionBodyLimit(url.pathname) !== null) {
@@ -2850,6 +2932,7 @@ export function createDevBackendHandler({
         const actor = await authenticateNormalAccount(request, gateway);
         response = await tripMemberClaimBoundary(request, actor, memberClaimPort);
       } else if (
+        !(request.method === "GET" && url.pathname.endsWith("/people")) &&
         /^\/v2\/trips\/[^/]+\/(?:people|person-create-operations\/[^/]+)$/.test(
           url.pathname,
         )
@@ -2870,6 +2953,22 @@ export function createDevBackendHandler({
           actor.id,
           captureMaterialCustody,
         );
+      } else if (/^\/v2\/trips\/[^/]+\/capabilities$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/capabilities";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await tripBetaCapabilitiesBoundary(request, actor.id, gateway, coreConnection?.read);
+      } else if (/^\/v2\/trips\/[^/]+\/people$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/people";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await tripPeopleBoundary(
+          request, actor.id, (a, t) => gateway.canReadTrip(a, t), coreConnection?.read,
+        );
+      } else if (/^\/v2\/trips\/[^/]+\/items(?:\/[^/]+(?:\/lifecycle)?)?$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/items/:itemId";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await tripItemsBoundary(
+          request, actor.id, (a, t) => gateway.canReadTrip(a, t), coreConnection?.read,
+        );
       } else if (url.pathname === "/v2/trips" && request.method === "GET") {
         route = "/v2/trips:list";
         const actor = await authenticateNormalAccount(request, gateway);
@@ -2885,12 +2984,29 @@ export function createDevBackendHandler({
         /^\/v2\/trip-metadata-operations\/[^/]+$/.test(url.pathname)
       ) {
         route = "/v2/trips/:tripId/metadata";
+        const execute = async () => {
+          const actor = await measureSourcePdfPhase("auth", () => authenticateNormalAccount(request, gateway));
+          return ["2", "3"].includes(request.headers.get("OTR-Trip-Metadata-Version") ?? "")
+            ? tripMetadataV2Boundary(
+                request,
+                actor.id,
+                tripMetadataV2Port,
+                managedWriteAdmission,
+              )
+            : tripMetadataBoundary(request, actor.id, tripMetadataPort);
+        };
+        response =
+          request.method === "GET" && /^\/v2\/trips\/[^/]+\/metadata$/.test(url.pathname)
+            ? await runSourcePdfTimings(requestId, "metadata-read", execute)
+            : request.method === "POST" && managedWriteAdmission
+              ? await runSourcePdfTimings(requestId, "metadata-write", execute)
+              : await execute();
+      } else if (/^\/v2\/trips\/[^/]+\/(?:lifecycle|lifecycle-operations\/[^/]+)$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/lifecycle";
         const actor = await authenticateNormalAccount(request, gateway);
-        response = ["2", "3"].includes(
-          request.headers.get("OTR-Trip-Metadata-Version") ?? "",
-        )
-          ? await tripMetadataV2Boundary(request, actor.id, tripMetadataV2Port)
-          : await tripMetadataBoundary(request, actor.id, tripMetadataPort);
+        response = await tripLifecycleBoundary(
+          request, actor.id, tripLifecyclePort, managedWriteAdmission,
+        );
       } else if (
         url.pathname === "/v2/trips" ||
         /^\/v2\/trip-create-operations\/[^/]+$/.test(url.pathname) ||
@@ -2898,7 +3014,12 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips:create";
         const actor = await authenticateNormalAccount(request, gateway);
-        response = await tripCreateBoundary(request, actor.id, tripCreatePort);
+        const execute = () =>
+          tripCreateBoundary(request, actor.id, tripCreatePort, managedWriteAdmission);
+        response =
+          request.method === "GET" && /^\/v2\/trips\/[^/]+\/create-receipt$/.test(url.pathname)
+            ? await runSourcePdfTimings(requestId, "parent-receipt-read", execute)
+            : await execute();
       } else if (/^\/v2\/trips\/[^/]+\/documents\/[^/]+\/original$/.test(url.pathname)) {
         route = "/v2/trips/:tripId/documents/:documentId/original";
         const actor = await authenticate(request, gateway);
@@ -2922,12 +3043,18 @@ export function createDevBackendHandler({
       } else if (/^\/v2\/trips\/[^/]+\/core\//.test(url.pathname)) {
         route = "/v2/trips/:tripId/core/:resource";
         const actor = await authenticateNormalAccount(request, gateway);
-        response = await coreHttpBoundary(
-          request,
-          actor.id,
-          (a, t) => gateway.canReadTrip(a, t),
-          coreConnection,
-        );
+        const execute = () =>
+          coreHttpBoundary(
+            request,
+            actor.id,
+            (a, t) => gateway.canReadTrip(a, t),
+            coreConnection,
+            managedWriteAdmission,
+          );
+        response =
+          request.method === "GET" && url.pathname.endsWith("/core/collection")
+            ? await runSourcePdfTimings(requestId, "core-read", execute)
+            : await execute();
       } else if (/^\/v2\/trips\/[^/]*\/source-import-catalogs$/.test(url.pathname)) {
         route = "/v2/trips/:tripId/source-import-catalogs";
         response = await readPublicationBoundary(request, gateway);
@@ -2972,6 +3099,14 @@ export function createDevBackendHandler({
       ) {
         route = "/v2/trips/:tripId/expenses/:expenseId/conflicts";
         response = await readExpenseConflicts(request, gateway);
+      } else if (/^\/v2\/trips\/[^/]+\/ledger\/operations\/[^/]+$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/ledger/operations/:operationId";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await ledgerOperationReadBoundary(request, actor.id, gateway);
+      } else if (request.method === "GET" && isLedgerBetaReadPath(url.pathname, url.searchParams)) {
+        route = redactLogRoute(url.pathname);
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await ledgerBetaReadBoundary(request, actor.id, gateway);
       } else if (request.method === "GET" && url.pathname.startsWith("/v2/")) {
         route = redactLogRoute(url.pathname);
         response = await readEntity(request, gateway, (userId, period, from, to) =>
@@ -3016,12 +3151,12 @@ export function createDevBackendHandler({
         response = await lookupLedgerRate(request, gateway);
       } else if (
         request.method === "POST" &&
-        /^\/v2\/trips\/[^/]+\/ledger\/journey-currency\/(preview|commit)$/.test(
+        /^\/v2\/trips\/[^/]+\/ledger\/journey-currency\/(preview|preview-readonly|commit)$/.test(
           url.pathname,
         )
       ) {
         route = "/v2/trips/:tripId/ledger/journey-currency/:action";
-        response = await mutateJourneyCurrency(request, gateway);
+        response = await mutateJourneyCurrency(request, gateway, managedWriteAdmission);
       } else if (
         request.method === "POST" &&
         (/^\/v2\/trips\/[^/]+\/review-findings$/.test(url.pathname) ||
@@ -3087,13 +3222,13 @@ export function createDevBackendHandler({
         /\/expenses\/[^/]+\/(payment-records|valuations)$/.test(url.pathname)
       ) {
         route = "/v2/trips/:tripId/expenses/:expenseId/evidence";
-        response = await createLedgerEvidence(request, gateway);
+        response = await createLedgerEvidence(request, gateway, managedWriteAdmission);
       } else if (
         request.method === "POST" &&
         url.pathname.endsWith("/conflict-resolution")
       ) {
         route = "/v2/trips/:tripId/expenses/:expenseId/conflict-resolution";
-        response = await resolveLedgerExpenseConflict(request, gateway);
+        response = await resolveLedgerExpenseConflict(request, gateway, managedWriteAdmission);
       } else if (
         request.method === "POST" &&
         (url.pathname.endsWith("/corrections") ||
@@ -3106,10 +3241,10 @@ export function createDevBackendHandler({
         (request.method === "POST" && /\/expenses\/[^/]+\/restore$/.test(url.pathname))
       ) {
         route = "/v2/trips/:tripId/expenses/:expenseId";
-        response = await mutateLedgerExpense(request, gateway);
+        response = await mutateLedgerExpense(request, gateway, managedWriteAdmission);
       } else if (request.method === "POST" && url.pathname.startsWith("/v2/")) {
         route = "/v2/trips/:tripId/expenses";
-        response = await createLedgerExpense(request, gateway);
+        response = await createLedgerExpense(request, gateway, managedWriteAdmission);
       } else {
         const match = url.pathname.match(routePattern);
         if (request.method !== "POST" || !match) {

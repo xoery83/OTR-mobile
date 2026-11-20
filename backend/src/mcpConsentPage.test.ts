@@ -1,4 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
+import { mcpProviderCallbackPath } from "@/data/auth/mcpBrowserProvider";
+import type { McpConsentPolicyPin } from "@/data/auth/mcpOAuthConsentContract";
 import { createMcpConsentPage } from "./mcpConsentPage";
 const config = () => ({
   clientId: "11111111-1111-4111-8111-111111111111",
@@ -51,4 +53,52 @@ it("stops all three surfaces at the finite deadline and refuses secret configura
       new Uint8Array([1]),
     ),
   ).toThrow();
+});
+
+it("serves an explicitly pinned v1 public policy without changing its strict same-origin page boundary", async () => {
+  const origin = "https://isolated.invalid";
+  const policy: McpConsentPolicyPin = {
+    contractVersion: 1 as const,
+    policy: {
+      id: "otr.beta",
+      version: "unit-risk1.1",
+      resource: origin + "/mcp",
+      permissions: ["otr.trip.get"],
+      business_scopes: ["otr.trips.read", "otr.trips.write"],
+      allow_reuse: true,
+      grant_ttl_seconds: 3600,
+    },
+    policyHash: "a".repeat(64),
+    identityScopes: ["openid", "offline_access"],
+  };
+  const publicKey =
+    Buffer.from("{}").toString("base64url") +
+    "." +
+    Buffer.from('{"role":"anon"}').toString("base64url") +
+    ".synthetic-public-api-key";
+  const beta = {
+    authOrigin: origin + "/",
+    publishableKey: publicKey,
+    expiresAt: Date.now() + 60000,
+    businessAccess: "BETA_READ_WRITE",
+    consentPolicy: policy,
+  } as const;
+  const handle = createMcpConsentPage(beta, new Uint8Array([1]));
+  expect(handle(new Request(origin + mcpProviderCallbackPath))).toBeNull();
+  const providerPage = createMcpConsentPage(
+    { ...beta, browserProviders: ["google", "apple"] },
+    new Uint8Array([1]),
+  );
+  expect(providerPage(new Request(origin + mcpProviderCallbackPath))?.status).toBe(200);
+  expect(
+    providerPage(new Request(origin + mcpProviderCallbackPath, { method: "POST" }))
+      ?.status,
+  ).toBe(405);
+  policy.policy.permissions[0] = "changed-after-configuration";
+  const response = handle(new Request(origin + "/oauth/consent/config"))!;
+  expect((await response.json()).consentPolicy.policy.permissions).toEqual([
+    "otr.trip.get",
+  ]);
+  expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  expect(handle(new Request("https://other.invalid/oauth/consent/config"))).toBeNull();
 });

@@ -16,6 +16,7 @@ it.each([false, true])(
       evidenceRefs: ["track-c/field-evidence/" + randomUUID() + "/service"],
       authorizationRefs: ["registry/synthetic-registry/1"],
     }));
+    const commit = vi.fn(async () => randomUUID());
     const storage: CoreCommandStorage = {
       withLockedCommand: async (_scope, work) =>
         work({
@@ -37,30 +38,49 @@ it.each([false, true])(
           },
           lifecycleGraphHash: async () => undefined,
           admissionAudit: audit,
-          commit: async () => randomUUID(),
+          commit,
         }),
     };
+    const input = {
+      contractVersion: 2,
+      intentVersion: 2,
+      operationId: randomUUID(),
+      tripId: trip,
+      command: "CREATE_SPARSE_FLIGHT",
+      target: { kind: "ITEM", id },
+      baseVector: [{ kind: "ITEM", id, revision: null }],
+      admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+      payload: {
+        flightNumberLiteral: "NZ5069",
+        departureDate: "2026-12-14",
+        ...coreDefaults("member"),
+      },
+    };
+    if (!reject) {
+      const check = vi.fn(async () => false);
+      await expect(
+        executeCoreCommandV2(storage, account, trip, input, hash, undefined, check),
+      ).rejects.toThrow("MCP_WRITE_ADMISSION_DENIED");
+      expect(check).toHaveBeenCalledExactlyOnceWith(account, input);
+      expect(commit).not.toHaveBeenCalled();
+      audit.mockClear();
+    }
+    const check = vi.fn(async () => {
+      expect(commit).not.toHaveBeenCalled();
+      expect(audit).toHaveBeenCalledTimes(reject ? 0 : 1);
+      return true;
+    });
     const response = await executeCoreCommandV2(
       storage,
       account,
       trip,
-      {
-        contractVersion: 2,
-        intentVersion: 2,
-        operationId: randomUUID(),
-        tripId: trip,
-        command: "CREATE_SPARSE_FLIGHT",
-        target: { kind: "ITEM", id },
-        baseVector: [{ kind: "ITEM", id, revision: null }],
-        admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
-        payload: {
-          flightNumberLiteral: "NZ5069",
-          departureDate: "2026-12-14",
-          ...coreDefaults("member"),
-        },
-      },
+      input,
       hash,
+      undefined,
+      check,
     );
+    expect(check).toHaveBeenCalledExactlyOnceWith(account, input);
+    expect(commit).toHaveBeenCalledOnce();
     expect(response.projection).toBe("FULL");
     if (response.projection !== "FULL") throw new Error("REDACTED");
     expect(await validateCoreReceipt(response.receipt, hash)).toEqual(response.receipt);

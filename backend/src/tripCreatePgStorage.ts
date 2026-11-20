@@ -5,6 +5,7 @@ import {
   type TripCreateWireRequest as TripCreateRequest,
 } from "../../src/domain/trip/tripCreateWireContract";
 import { TripCreateError, type TripCreatePort } from "./tripCreate";
+import type { ManagedWriteAdmission } from "./managedWriteAdmission";
 
 type PgFailure = Error & { code?: string };
 function classify(error: unknown): never {
@@ -23,6 +24,7 @@ type TripQuery = (
   tripId: string | null,
   operationId: string,
   request?: TripCreateRequest,
+  admit?: ManagedWriteAdmission,
 ) => Promise<ReturnType<typeof tripCreateResultSchema.parse> | null>;
 
 async function queryTripOnLease(
@@ -34,6 +36,7 @@ async function queryTripOnLease(
     tripId,
     operationId,
     request,
+    admit,
   ]: Parameters<TripQuery>
 ): ReturnType<TripQuery> {
   const finiteScope = async () => {
@@ -46,6 +49,13 @@ async function queryTripOnLease(
     if (allowed !== true) throw new TripCreateError(503, "TRIP_CREATE_CLOSED");
   };
   await finiteScope();
+  if (request && admit) {
+    // OAuth and Consent readback can outlast the ordinary PG idle timeout.
+    await lease.query("SET LOCAL idle_in_transaction_session_timeout='20s'");
+    if (!(await admit(actorAccountId, request)))
+      throw new TripCreateError(401, "MCP_WRITE_ADMISSION_DENIED");
+    await lease.query("SET LOCAL idle_in_transaction_session_timeout TO DEFAULT");
+  }
   const rows = (await lease.query(sql, parameters)).rows;
   const result = rows[0]?.result;
   const checked = result === null ? null : tripCreateResultSchema.parse(result);
@@ -72,7 +82,7 @@ async function queryTripOnLease(
 }
 function tripStorage(query: TripQuery): TripCreatePort {
   return {
-    async create(actorAccountId, input: TripCreateRequest) {
+    async create(actorAccountId, input, admit) {
       const result = await query(
         "formatVersion" in input
           ? "SELECT public.trip_create_command($1::uuid,$2::uuid,$3::uuid,$4::jsonb) AS result"
@@ -92,6 +102,7 @@ function tripStorage(query: TripQuery): TripCreatePort {
         input.tripId,
         input.operationId,
         input,
+        admit,
       );
       if (!result) throw new TripCreateError(503, "TRIP_CREATE_RESULT_INVALID");
       return result;
@@ -252,8 +263,8 @@ export async function withTripPgStorageOnTransaction<T>(
   };
   const port = tripStorage(query);
   const bounded: TripCreatePort = Object.freeze({
-    create: (actorAccountId: string, input: TripCreateRequest) =>
-      run(() => port.create(actorAccountId, tripCreateWireRequestSchema.parse(input))),
+    create: (actorAccountId: string, input: TripCreateRequest, admit?: ManagedWriteAdmission) =>
+      run(() => port.create(actorAccountId, tripCreateWireRequestSchema.parse(input), admit)),
     receipt: (...args) => run(() => port.receipt(...args)),
   });
   try {

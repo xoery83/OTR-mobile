@@ -1,3 +1,4 @@
+import { validStoredTransportIdentity } from "./p5Identity";
 import {
   coreTableSchemas,
   coreKindTables,
@@ -79,6 +80,8 @@ function validateGraph(
       );
       if ((table === "expense_links" ? row.journey_id : row.trip_id) !== tripId)
         throw new Error("CROSS_TRIP_REFERENCE");
+      if (table === "itinerary_transport_services" && !validStoredTransportIdentity(row))
+        throw new Error("INVALID_TRANSPORT_IDENTITY");
       const key = coreMirrorKey(table as CoreTable, row);
       if (seen.has(key)) throw new Error("DUPLICATE_CORE_ROW");
       seen.add(key);

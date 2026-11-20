@@ -1,10 +1,15 @@
+import { createRequestBoundary, readBoundedBytes } from "../src/data/api/requestBoundary";
 import { jwtVerify, type JWTVerifyGetKey, type CryptoKey } from "jose";
 import { z } from "zod";
+import type { BetaBackend } from "./beta";
 import type { BackendRead } from "./read";
 import type { BackendMutation } from "./mutation";
 import type { McpAuthorization } from "./server";
 
+export type ManagedConsentEvidence = Readonly<{ evidenceId: string; sessionId: string; policyHash: string }>;
+
 export type OAuthGrant = Readonly<{
+  managedConsent?: ManagedConsentEvidence;
   accountId: string;
   clientId: string;
   tokenId: string;
@@ -23,11 +28,19 @@ export type OAuthOptions = {
     signal: AbortSignal,
     evidence: Readonly<{ accessToken: string }>,
   ) => Promise<boolean>;
+  onInactiveGrant?: (
+    grant: OAuthGrant,
+    request: { method: string; pathname: string; body: unknown },
+  ) => void;
   bindBackend: (
     grant: OAuthGrant,
     signal: AbortSignal,
     evidence: Readonly<{ accessToken: string }>,
-  ) => Promise<{ read: BackendRead; backend?: BackendMutation }>;
+  ) => Promise<{
+    read: BackendRead;
+    backend?: BackendMutation;
+    betaBackend?: BetaBackend;
+  }>;
 };
 const claims = z.object({
   sub: z.uuid(),
@@ -87,13 +100,38 @@ export function createOAuthAuthorizer(options: OAuthOptions) {
       });
       // Only trusted Auth callbacks receive request-scoped evidence for their own issuer.
       const evidence = Object.freeze({ accessToken: bearer.slice(7) });
-      if (!(await options.isGrantActive(grant, request.signal, evidence))) return null;
+      if (!(await options.isGrantActive(grant, request.signal, evidence))) {
+        if (options.onInactiveGrant) {
+          const boundary = createRequestBoundary(1000, request.signal);
+          try {
+            const body =
+              request.method === "POST"
+                ? JSON.parse(
+                    new TextDecoder().decode(
+                      await readBoundedBytes(request.clone(), 65536, boundary),
+                    ),
+                  )
+                : null;
+            options.onInactiveGrant(grant, {
+              method: request.method,
+              pathname: new URL(request.url).pathname,
+              body,
+            });
+          } catch {
+            /* Observation never permits a rejected grant or changes its denial. */
+          } finally {
+            boundary.close();
+          }
+        }
+        return null;
+      }
       const ports = await options.bindBackend(grant, request.signal, evidence);
       request.signal.throwIfAborted();
       return {
         ...grant,
         read: ports.read,
         ...(ports.backend ? { backend: ports.backend } : {}),
+        ...(ports.betaBackend ? { betaBackend: ports.betaBackend } : {}),
       };
     } catch {
       return null;

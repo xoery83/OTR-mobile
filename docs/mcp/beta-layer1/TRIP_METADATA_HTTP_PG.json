@@ -1,0 +1,595 @@
+{
+  "status": "TRIP_METADATA_HTTP_PG_PASS",
+  "scope": "NORMAL_LOCAL_AUTH_HTTP_EXISTING_TRIP_AUTHORITIES_POSTGRES_INDEPENDENT_READBACK; no Native claim",
+  "capabilityIds": [
+    "otr.trip.get",
+    "otr.trip.create",
+    "otr.trip.update",
+    "otr.trip.operation.get",
+    "otr.metadata.operation.get"
+  ],
+  "sourceBase": "41de43927fd9869673c1ca929e911f58d1f6f96d",
+  "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+  "accounts": [
+    "e57ec61a-676c-4383-8341-13c3c9eadb98",
+    "6da50737-4a8d-4a26-88e5-c4fcc6ca41e2"
+  ],
+  "receiptHash": "0caf9c6d1fb9009586c9184ade60c02fc6b4ac99fbbd2b200aae9b23db4f1f47",
+  "readbackHash": "242811471b16746a26dc8b369c55a5b19c8ce9eacecb1623d5ae0a8832b537c9",
+  "readback": {
+    "name": "Layer 1 metadata accepted",
+    "destinations": [
+      {
+        "source": "MANUAL",
+        "displayLabel": "Nelson",
+        "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd"
+      },
+      {
+        "source": "MANUAL",
+        "displayLabel": "Auckland",
+        "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf"
+      }
+    ],
+    "metadataRevision": 1
+  },
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/v2/trips",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": {
+        "formatVersion": 2,
+        "operationId": "f6eee176-5bfc-4e60-bee7-974a27884cdd",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "name": "Layer 1 metadata",
+        "destination": null,
+        "startDate": "2026-12-01",
+        "endDate": "2026-12-04",
+        "destinations": [
+          {
+            "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+            "displayLabel": "Auckland",
+            "source": "MANUAL"
+          },
+          {
+            "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+            "displayLabel": "Nelson",
+            "source": "MANUAL"
+          }
+        ]
+      },
+      "status": 201,
+      "response": {
+        "operationId": "f6eee176-5bfc-4e60-bee7-974a27884cdd",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "ownerPersonId": "549dd418-b0e1-4e05-9242-ae54c0ca6122",
+        "coreEpoch": "a051b541-bbb6-4dfe-a11b-6366d1f87ffd",
+        "coreRevision": 1,
+        "coreAccessRevision": 1,
+        "name": "Layer 1 metadata",
+        "destination": null,
+        "startDate": "2026-12-01",
+        "endDate": "2026-12-04",
+        "formatVersion": 2,
+        "destinations": [
+          {
+            "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+            "displayLabel": "Auckland",
+            "source": "MANUAL"
+          },
+          {
+            "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+            "displayLabel": "Nelson",
+            "source": "MANUAL"
+          }
+        ],
+        "metadataRevision": 0
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": {
+        "formatVersion": 2,
+        "operationId": "f6eee176-5bfc-4e60-bee7-974a27884cdd",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "name": "Layer 1 metadata",
+        "destination": null,
+        "startDate": "2026-12-01",
+        "endDate": "2026-12-04",
+        "destinations": [
+          {
+            "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+            "displayLabel": "Auckland",
+            "source": "MANUAL"
+          },
+          {
+            "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+            "displayLabel": "Nelson",
+            "source": "MANUAL"
+          }
+        ]
+      },
+      "status": 201,
+      "response": {
+        "operationId": "f6eee176-5bfc-4e60-bee7-974a27884cdd",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "ownerPersonId": "549dd418-b0e1-4e05-9242-ae54c0ca6122",
+        "coreEpoch": "a051b541-bbb6-4dfe-a11b-6366d1f87ffd",
+        "coreRevision": 1,
+        "coreAccessRevision": 1,
+        "name": "Layer 1 metadata",
+        "destination": null,
+        "startDate": "2026-12-01",
+        "endDate": "2026-12-04",
+        "formatVersion": 2,
+        "destinations": [
+          {
+            "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+            "displayLabel": "Auckland",
+            "source": "MANUAL"
+          },
+          {
+            "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+            "displayLabel": "Nelson",
+            "source": "MANUAL"
+          }
+        ],
+        "metadataRevision": 0
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trip-create-operations/f6eee176-5bfc-4e60-bee7-974a27884cdd",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 200,
+      "response": {
+        "operationId": "f6eee176-5bfc-4e60-bee7-974a27884cdd",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "ownerPersonId": "549dd418-b0e1-4e05-9242-ae54c0ca6122",
+        "coreEpoch": "a051b541-bbb6-4dfe-a11b-6366d1f87ffd",
+        "coreRevision": 1,
+        "coreAccessRevision": 1,
+        "name": "Layer 1 metadata",
+        "destination": null,
+        "startDate": "2026-12-01",
+        "endDate": "2026-12-04",
+        "formatVersion": 2,
+        "destinations": [
+          {
+            "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+            "displayLabel": "Auckland",
+            "source": "MANUAL"
+          },
+          {
+            "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+            "displayLabel": "Nelson",
+            "source": "MANUAL"
+          }
+        ],
+        "metadataRevision": 0
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 200,
+      "response": {
+        "formatVersion": 3,
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "metadataRevision": 0,
+        "metadata": {
+          "name": "Layer 1 metadata",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata",
+      "accountId": "6da50737-4a8d-4a26-88e5-c4fcc6ca41e2",
+      "request": null,
+      "status": 403,
+      "response": {
+        "error": {
+          "code": "TRIP_METADATA_FORBIDDEN",
+          "message": "TRIP_METADATA_FORBIDDEN"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/9bd77464-6dc7-4a61-a680-f38dd4b82e6e/metadata",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 403,
+      "response": {
+        "error": {
+          "code": "TRIP_METADATA_FORBIDDEN",
+          "message": "TRIP_METADATA_FORBIDDEN"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata?formatVersion=2",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 400,
+      "response": {
+        "error": {
+          "code": "TRIP_METADATA_INVALID",
+          "message": "TRIP_METADATA_INVALID"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata?formatVersion=3&formatVersion=3",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 400,
+      "response": {
+        "error": {
+          "code": "TRIP_METADATA_INVALID",
+          "message": "TRIP_METADATA_INVALID"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata?actor=forged",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 400,
+      "response": {
+        "error": {
+          "code": "TRIP_METADATA_INVALID",
+          "message": "TRIP_METADATA_INVALID"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": {
+        "formatVersion": 3,
+        "operationId": "303cdac7-18ac-451e-8168-11843d81c42f",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "expectedMetadataRevision": 0,
+        "before": {
+          "name": "Layer 1 metadata",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "after": {
+          "name": "Layer 1 metadata accepted",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response": {
+        "formatVersion": 3,
+        "operationId": "303cdac7-18ac-451e-8168-11843d81c42f",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "expectedMetadataRevision": 0,
+        "before": {
+          "name": "Layer 1 metadata",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "after": {
+          "name": "Layer 1 metadata accepted",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "resultMetadataRevision": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": {
+        "formatVersion": 3,
+        "operationId": "303cdac7-18ac-451e-8168-11843d81c42f",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "expectedMetadataRevision": 0,
+        "before": {
+          "name": "Layer 1 metadata",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "after": {
+          "name": "Layer 1 metadata accepted",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            }
+          ]
+        }
+      },
+      "status": 200,
+      "response": {
+        "formatVersion": 3,
+        "operationId": "303cdac7-18ac-451e-8168-11843d81c42f",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "expectedMetadataRevision": 0,
+        "before": {
+          "name": "Layer 1 metadata",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "after": {
+          "name": "Layer 1 metadata accepted",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "resultMetadataRevision": 1
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trip-metadata-operations/303cdac7-18ac-451e-8168-11843d81c42f",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 200,
+      "response": {
+        "formatVersion": 3,
+        "operationId": "303cdac7-18ac-451e-8168-11843d81c42f",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "expectedMetadataRevision": 0,
+        "before": {
+          "name": "Layer 1 metadata",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "after": {
+          "name": "Layer 1 metadata accepted",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "resultMetadataRevision": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": {
+        "formatVersion": 3,
+        "operationId": "2e1ba4fc-4193-4afb-add8-692029940d38",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "expectedMetadataRevision": 0,
+        "before": {
+          "name": "Layer 1 metadata",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            }
+          ]
+        },
+        "after": {
+          "name": "Layer 1 metadata accepted",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            }
+          ]
+        }
+      },
+      "status": 409,
+      "response": {
+        "error": {
+          "code": "TRIP_METADATA_CONFLICT",
+          "message": "TRIP_METADATA_CONFLICT"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/654150f2-c0fd-48fc-9309-ad34748e8f57/metadata?formatVersion=3",
+      "accountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+      "request": null,
+      "status": 200,
+      "response": {
+        "formatVersion": 3,
+        "actorAccountId": "e57ec61a-676c-4383-8341-13c3c9eadb98",
+        "tripId": "654150f2-c0fd-48fc-9309-ad34748e8f57",
+        "metadataRevision": 1,
+        "metadata": {
+          "name": "Layer 1 metadata accepted",
+          "destination": null,
+          "startDate": "2026-12-01",
+          "endDate": "2026-12-04",
+          "destinations": [
+            {
+              "destinationId": "0087e3ce-f463-4866-8625-084db853a2cd",
+              "displayLabel": "Nelson",
+              "source": "MANUAL"
+            },
+            {
+              "destinationId": "28f80ebb-bc5d-4939-9474-0a60c4498bdf",
+              "displayLabel": "Auckland",
+              "source": "MANUAL"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

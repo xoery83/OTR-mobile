@@ -125,3 +125,64 @@ it("advertises only provider-supported request scopes without granting business 
     protectedResourceMetadata(resource, issuer, { read: ['openid" injected'] }),
   ).toThrow();
 });
+
+it("observes only signature-valid inactive grants without secrets, never binds a writer or changes denial", async () => {
+  const keys = await generateKeyPair("ES256"),
+    other = await generateKeyPair("ES256");
+  const account = randomUUID(),
+    clientId = randomUUID();
+  const observe = vi.fn(),
+    bind = vi.fn(async () => ({ read: async () => Response.json({}) }));
+  const authorize = createOAuthAuthorizer({
+    issuer,
+    resource,
+    key: keys.publicKey,
+    isGrantActive: async () => false,
+    onInactiveGrant: observe,
+    bindBackend: bind,
+  });
+  const token = (key = keys.privateKey) =>
+    new SignJWT({
+      sub: account,
+      client_id: clientId,
+      session_id: randomUUID(),
+      otr_scopes: ["otr.trips.read", "otr.trips.write"],
+      role: "authenticated",
+    })
+      .setProtectedHeader({ alg: "ES256", typ: "at+jwt" })
+      .setIssuer(issuer)
+      .setAudience(resource)
+      .setIssuedAt()
+      .setExpirationTime("1m")
+      .sign(key);
+  const good = await token();
+  const payload = {
+    method: "tools/call",
+    params: {
+      name: "update_trip",
+      arguments: { mode: "APPLY", idempotencyKey: randomUUID() },
+    },
+  };
+  const req = (value: string) =>
+    new Request(resource, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + value },
+      body: JSON.stringify(payload),
+    });
+  expect(await authorize(req(good))).toBeNull();
+  expect(observe).toHaveBeenCalledTimes(1);
+  expect(observe.mock.calls[0][0]).toMatchObject({ accountId: account, clientId });
+  expect(observe.mock.calls[0][1]).toEqual({
+    method: "POST",
+    pathname: "/mcp",
+    body: payload,
+  });
+  expect(JSON.stringify(observe.mock.calls)).not.toContain(good);
+  expect(await authorize(req(await token(other.privateKey)))).toBeNull();
+  expect(observe).toHaveBeenCalledTimes(1);
+  observe.mockImplementation(() => {
+    throw Error("OBSERVER_FAILED");
+  });
+  expect(await authorize(req(good))).toBeNull();
+  expect(bind).not.toHaveBeenCalled();
+});

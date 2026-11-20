@@ -1,4 +1,5 @@
 import { isOAuthResourceToken } from "./authResourceTokenBoundary";
+import { readLedgerOperationJournal, projectLedgerOperation } from "./ledgerOperationRead";
 import { classifySupabaseAuthAccount } from "./authAccountQualification";
 import {
   readPublicationCatalog,
@@ -674,6 +675,19 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
   const defaultRateProvider = createFrankfurterRateProvider();
   const rateQuoteProvider = config.rateQuoteProvider ?? defaultRateProvider;
   const rateSnapshotProvider = config.rateSnapshotProvider ?? defaultRateProvider;
+  const readCurrencyPreview = async (
+    userId: string,
+    tripId: string,
+    proposedCurrency: string,
+  ) => {
+    const result = await service.rpc("ledger_preview_journey_currency", {
+      actor_user: userId,
+      target_journey: tripId,
+      target_currency: proposedCurrency,
+    });
+    if (result.error) throw journeyCurrencyError(result.error.message);
+    return journeyCurrencyPreviewSchema.parse(result.data);
+  };
   const wakeForExpense = (
     response: LedgerExpenseMutationResponse | LedgerCorrectionMutationResponse,
   ) => {
@@ -856,6 +870,50 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return Boolean(
         creator.data.length || legacyMember.data.length || journeyMember.data.length,
       );
+    },
+
+    async readPersonalPaymentAudit(userId, tripId, recordId) {
+      const result = await service.rpc("ledger_read_personal_payment_audit_beta", {
+        actor_user: userId,
+        target_journey: tripId,
+        target_record: recordId,
+      });
+      if (result.error || !result.data)
+        throw new Error("PERSONAL_PAYMENT_AUDIT_READ_UNAVAILABLE");
+      return result.data;
+    },
+    async readLedgerOperation(userId, tripId, operationId, query) {
+      const rows = await readLedgerOperationJournal(
+        service,
+        userId,
+        tripId,
+        operationId,
+        query,
+      );
+      if (query.kind === "EXPENSE_PAYMENT_RECORD" && query.targetId && rows.length) {
+        const matches = [];
+        for (const row of rows) {
+          const payment = (row.response_body as { entity?: { id?: string } } | null)
+            ?.entity?.id;
+          if (!payment) continue;
+          const target = await service
+            .from("payment_records")
+            .select("id,expense_id,journey_id")
+            .eq("id", payment)
+            .eq("journey_id", tripId)
+            .maybeSingle();
+          if (target.error) throw new Error("LEDGER_OPERATION_READ_UNAVAILABLE");
+          if (
+            target.data &&
+            (target.data.expense_id === query.targetId ||
+              target.data.id === query.targetId)
+          )
+            matches.push(row);
+        }
+        if (!matches.length) throw new Error("OPERATION_TARGET_MISMATCH");
+        return projectLedgerOperation(matches, userId, tripId, operationId, query);
+      }
+      return projectLedgerOperation(rows, userId, tripId, operationId, query);
     },
 
     async discoverTrips(userId, cursor, limit) {
@@ -1235,14 +1293,9 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
         rateQuoteProvider,
         (claim.data ?? []) as ClaimedRateDemand[],
       );
-      const result = await service.rpc("ledger_preview_journey_currency", {
-        actor_user: userId,
-        target_journey: tripId,
-        target_currency: proposedCurrency,
-      });
-      if (result.error) throw journeyCurrencyError(result.error.message);
-      return journeyCurrencyPreviewSchema.parse(result.data);
+      return readCurrencyPreview(userId, tripId, proposedCurrency);
     },
+    previewJourneyCurrencyReadonly: readCurrencyPreview,
 
     async commitJourneyCurrency(userId, tripId, idempotencyKey, input) {
       const result = await service.rpc("ledger_commit_journey_currency", {

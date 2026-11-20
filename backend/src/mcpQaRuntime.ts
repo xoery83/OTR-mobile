@@ -12,7 +12,7 @@ import {
 } from "./mcpOAuthGrantVerifier";
 import { createMcpConsentPage } from "./mcpConsentPage";
 import { isSupabaseDevPublicKey } from "@/data/auth/devSupabasePublicKey";
-import type { DevBackendGateway } from "./app";
+import { createDevBackendHandler, type BackendDependencies, type DevBackendGateway } from "./app";
 import type { CoreHttpConnection } from "./tripCoreV2Http";
 import { mcpIngressBodyLimit } from "./mcpIngress";
 
@@ -176,12 +176,28 @@ type C02ModulePort = {
     diagnostic(event: unknown): void;
   }): (request: Request) => Promise<Response | null>;
 };
+type ManagedDevModule = {
+  createManagedDevConfiguredHost(
+    rawConfig: string,
+    publishableKey: string,
+    dependencies: BackendDependencies,
+    buildBackend: typeof createDevBackendHandler,
+    consentJavascript: Uint8Array,
+    nativeConsent?: unknown,
+  ): (request: Request) => Promise<Response | null>;
+};
 type RuntimeIo = {
   c02Module?(): Promise<C02ModulePort>;
+  managedDevModule?(): Promise<ManagedDevModule>;
+  managedDevAsset?(): Promise<Uint8Array>;
   module(): Promise<ModulePort>;
   asset(): Promise<Uint8Array>;
 };
 const io: RuntimeIo = {
+  managedDevModule: () =>
+    import(new URL("./mcp/managed-dev/runtime/managed-dev-beta.mjs", import.meta.url).href),
+  managedDevAsset: () =>
+    readFile(new URL("./mcp/managed-dev/runtime/consent-app.js", import.meta.url)),
   c02Module: () => import(new URL("./mcp/c02-host.mjs", import.meta.url).href),
   module: () => import(new URL("./mcp/runtime.mjs", import.meta.url).href),
   asset: () => readFile(new URL("./auth-consent/app.js", import.meta.url)),
@@ -193,10 +209,41 @@ export async function loadMcpQaRuntime(
   gateway: Pick<DevBackendGateway, "discoverTrips" | "canReadTrip">,
   core?: CoreHttpConnection,
   files: RuntimeIo = io,
+  managedDevDependencies?: BackendDependencies,
 ) {
   const readRaw = env.OTR_DEV_MCP_READ_QA_CONFIG;
   const writeRaw = env.OTR_DEV_MCP_WRITE_QA_CONFIG;
   const c02Raw = env.OTR_DEV_MCP_C02_QA_CONFIG;
+  const managedDevRaw = env.OTR_DEV_MCP_MANAGED_DEV_CONFIG;
+  if (managedDevRaw !== undefined) {
+    const publicKey = env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "";
+    if (
+      readRaw !== undefined || writeRaw !== undefined || c02Raw !== undefined ||
+      !managedDevDependencies || managedDevDependencies.gateway !== gateway ||
+      managedDevDependencies.coreConnection !== core ||
+      typeof gateway.discoverTrips !== "function" ||
+      typeof gateway.canReadTrip !== "function" || !core?.read ||
+      env.OTR_DEV_SUPABASE_URL !== issuer.replace(/\/auth\/v1$/, "") ||
+      !isSupabaseDevPublicKey(publicKey)
+    )
+      throw Error("MANAGED_DEV_MCP_PORT_CLOSED");
+    const [library, script] = await Promise.all([
+      (files.managedDevModule ?? io.managedDevModule!)(),
+      (files.managedDevAsset ?? io.managedDevAsset!)(),
+    ]);
+    if (script.byteLength === 0 || script.byteLength > 2097152)
+      throw Error("MCP_QA_ASSET_INVALID");
+    return library.createManagedDevConfiguredHost(
+      managedDevRaw,
+      publicKey,
+      { ...managedDevDependencies, managedWriteAdmissionVersion: 2 },
+      createDevBackendHandler,
+      script,
+      ...(managedDevDependencies.managedNativeConsent
+        ? [managedDevDependencies.managedNativeConsent]
+        : []),
+    );
+  }
   if (c02Raw !== undefined) {
     const publicKey = env.OTR_DEV_SUPABASE_PUBLISHABLE_KEY ?? "";
     if (

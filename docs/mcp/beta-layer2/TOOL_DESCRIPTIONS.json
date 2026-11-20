@@ -1,0 +1,1770 @@
+[
+  {
+    "capabilityId": "otr.trip.list",
+    "toolName": "list_trips",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips",
+    "requestSchema": "TripListQuery",
+    "responseSchema": "TripList",
+    "effect": "READ",
+    "commandUnits": [
+      "trip.list"
+    ],
+    "description": "Trip / List. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "READ；none",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.get",
+    "toolName": "get_trip",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/metadata",
+    "requestSchema": "TripMetadataQuery",
+    "responseSchema": "TripMetadataSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "trip.metadata.read"
+    ],
+    "description": "Trip / Get full metadata. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_READ；metadataRevision(read)",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.create",
+    "toolName": "create_trip",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips",
+    "requestSchema": "StructuredTripCreate",
+    "responseSchema": "TripCreateResult",
+    "effect": "WRITE",
+    "commandUnits": [
+      "trip.create"
+    ],
+    "description": "Trip / Create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "NORMAL_ACCOUNT；new tripId",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.update",
+    "toolName": "update_trip",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/metadata",
+    "requestSchema": "StructuredMetadataUpdate",
+    "responseSchema": "StructuredMetadataReceipt",
+    "effect": "WRITE",
+    "commandUnits": [
+      "trip.metadata.update"
+    ],
+    "description": "Trip / Update metadata/destinations/dates. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_MANAGE；expectedMetadataRevision+before",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.archive",
+    "toolName": "archive_trip",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/lifecycle",
+    "requestSchema": "TripArchive",
+    "responseSchema": "TripLifecycleReceipt",
+    "effect": "WRITE",
+    "commandUnits": [
+      "trip.lifecycle:ARCHIVE"
+    ],
+    "description": "Trip / Archive. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_OWNER；expectedMetadataRevision+graphHash",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.unarchive",
+    "toolName": "unarchive_trip",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/lifecycle",
+    "requestSchema": "TripUnarchive",
+    "responseSchema": "TripLifecycleReceipt",
+    "effect": "WRITE",
+    "commandUnits": [
+      "trip.lifecycle:UNARCHIVE"
+    ],
+    "description": "Trip / Restore archived Trip. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_OWNER；expectedMetadataRevision+graphHash",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.delete",
+    "toolName": "delete_trip",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/lifecycle",
+    "requestSchema": "TripDelete",
+    "responseSchema": "TripLifecycleReceipt",
+    "effect": "WRITE",
+    "commandUnits": [
+      "trip.lifecycle:DELETE"
+    ],
+    "description": "Trip / Delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_OWNER；expectedMetadataRevision+graphHash",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.currency.preview",
+    "toolName": "preview_trip_currency",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/ledger/journey-currency/preview-readonly",
+    "requestSchema": "JourneyCurrencyPreviewRequest",
+    "responseSchema": "JourneyCurrencyPreview",
+    "effect": "READ",
+    "commandUnits": [
+      "currency.preview"
+    ],
+    "description": "Currency / Journey currency preview. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_ORGANIZER；settingsRevision/fingerprint(read)",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.currency.update",
+    "toolName": "update_trip_currency",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/ledger/journey-currency/commit",
+    "requestSchema": "JourneyCurrencyCommitRequest",
+    "responseSchema": "JourneyCurrencyCommit",
+    "effect": "WRITE",
+    "commandUnits": [
+      "currency.commit"
+    ],
+    "description": "Currency / Journey currency commit. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_ORGANIZER；expectedSettingsRevision+previewFingerprint",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.list",
+    "toolName": "list_trip_items",
+    "family": "P1",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemListQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.list"
+    ],
+    "description": "P1 / list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.search",
+    "toolName": "search_trip_items",
+    "family": "P1",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemSearchQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.search"
+    ],
+    "description": "P1 / search. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.get",
+    "toolName": "get_trip_item",
+    "family": "P1",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items/{itemId}",
+    "requestSchema": "ItemGetQuery",
+    "responseSchema": "ItemSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "items.get"
+    ],
+    "description": "P1 / get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.create",
+    "toolName": "create_trip_item",
+    "family": "P1",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P1Create",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "CREATE_ITEM"
+    ],
+    "description": "P1 / Create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_CREATE；target:null",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.update",
+    "toolName": "update_trip_item",
+    "family": "P1",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P1Update",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_TEXT",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+      "SET_ITEM_CATEGORY",
+      "SET_ITEM_GROUPING",
+      "SET_ITEM_STATUS"
+    ],
+    "description": "P1 / Update fields. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector exact Item revision",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.hide",
+    "toolName": "hide_trip_item",
+    "family": "P1",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemHide",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "HIDE_OBJECT"
+    ],
+    "description": "P1 / hide. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.restore",
+    "toolName": "restore_trip_item",
+    "family": "P1",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemRestore",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "RESTORE_OBJECT"
+    ],
+    "description": "P1 / restore. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.delete",
+    "toolName": "delete_trip_item",
+    "family": "P1",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemDelete",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "DELETE_ITEM"
+    ],
+    "description": "P1 / delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.visibility",
+    "toolName": "set_trip_item_visibility",
+    "family": "P1",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemVisibility",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_OBJECT_VISIBILITY"
+    ],
+    "description": "P1 / visibility. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p1.participation",
+    "toolName": "set_trip_item_participation",
+    "family": "P1",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemParticipation",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_PARTICIPATION"
+    ],
+    "description": "P1 / participation. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.list",
+    "toolName": "list_trip_items",
+    "family": "P2",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemListQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.list"
+    ],
+    "description": "P2 / list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.search",
+    "toolName": "search_trip_items",
+    "family": "P2",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemSearchQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.search"
+    ],
+    "description": "P2 / search. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.get",
+    "toolName": "get_trip_item",
+    "family": "P2",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items/{itemId}",
+    "requestSchema": "ItemGetQuery",
+    "responseSchema": "ItemSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "items.get"
+    ],
+    "description": "P2 / get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.create",
+    "toolName": "create_trip_item",
+    "family": "P2",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P2Create",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "CREATE_SPARSE_FLIGHT"
+    ],
+    "description": "P2 / Create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_CREATE；target:null",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.update",
+    "toolName": "update_trip_item",
+    "family": "P2",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P2Update",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_AUTHORED_FLIGHT_DETAILS",
+      "SET_ITEM_TEXT"
+    ],
+    "description": "P2 / Update fields. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector exact Item revision",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.hide",
+    "toolName": "hide_trip_item",
+    "family": "P2",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemHide",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "HIDE_OBJECT"
+    ],
+    "description": "P2 / hide. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.restore",
+    "toolName": "restore_trip_item",
+    "family": "P2",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemRestore",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "RESTORE_OBJECT"
+    ],
+    "description": "P2 / restore. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.delete",
+    "toolName": "delete_trip_item",
+    "family": "P2",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemDelete",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "DELETE_ITEM"
+    ],
+    "description": "P2 / delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.visibility",
+    "toolName": "set_trip_item_visibility",
+    "family": "P2",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemVisibility",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_OBJECT_VISIBILITY"
+    ],
+    "description": "P2 / visibility. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p2.participation",
+    "toolName": "set_trip_item_participation",
+    "family": "P2",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemParticipation",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_PARTICIPATION"
+    ],
+    "description": "P2 / participation. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.list",
+    "toolName": "list_trip_items",
+    "family": "P3",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemListQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.list"
+    ],
+    "description": "P3 / list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.search",
+    "toolName": "search_trip_items",
+    "family": "P3",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemSearchQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.search"
+    ],
+    "description": "P3 / search. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.get",
+    "toolName": "get_trip_item",
+    "family": "P3",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items/{itemId}",
+    "requestSchema": "ItemGetQuery",
+    "responseSchema": "ItemSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "items.get"
+    ],
+    "description": "P3 / get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.create",
+    "toolName": "create_trip_item",
+    "family": "P3",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P3Create",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "CREATE_ITEM"
+    ],
+    "description": "P3 / Create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_CREATE；target:null",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.update",
+    "toolName": "update_trip_item",
+    "family": "P3",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P3Update",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_TEXT",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+      "SET_STAY_DETAILS"
+    ],
+    "description": "P3 / Update fields. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector exact Item revision",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.hide",
+    "toolName": "hide_trip_item",
+    "family": "P3",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemHide",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "HIDE_OBJECT"
+    ],
+    "description": "P3 / hide. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.restore",
+    "toolName": "restore_trip_item",
+    "family": "P3",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemRestore",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "RESTORE_OBJECT"
+    ],
+    "description": "P3 / restore. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.delete",
+    "toolName": "delete_trip_item",
+    "family": "P3",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemDelete",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "DELETE_ITEM"
+    ],
+    "description": "P3 / delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.visibility",
+    "toolName": "set_trip_item_visibility",
+    "family": "P3",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemVisibility",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_OBJECT_VISIBILITY"
+    ],
+    "description": "P3 / visibility. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p3.participation",
+    "toolName": "set_trip_item_participation",
+    "family": "P3",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemParticipation",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_PARTICIPATION"
+    ],
+    "description": "P3 / participation. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.list",
+    "toolName": "list_trip_items",
+    "family": "P4",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemListQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.list"
+    ],
+    "description": "P4 / list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.search",
+    "toolName": "search_trip_items",
+    "family": "P4",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemSearchQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.search"
+    ],
+    "description": "P4 / search. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.get",
+    "toolName": "get_trip_item",
+    "family": "P4",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items/{itemId}",
+    "requestSchema": "ItemGetQuery",
+    "responseSchema": "ItemSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "items.get"
+    ],
+    "description": "P4 / get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.create",
+    "toolName": "create_trip_item",
+    "family": "P4",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P4Create",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "CREATE_ITEM"
+    ],
+    "description": "P4 / Create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_CREATE；target:null",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.update",
+    "toolName": "update_trip_item",
+    "family": "P4",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P4Update",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_TEXT",
+      "SET_ITEM_SCHEDULE",
+      "SET_RENTAL_DETAILS"
+    ],
+    "description": "P4 / Update fields. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector exact Item revision",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.hide",
+    "toolName": "hide_trip_item",
+    "family": "P4",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemHide",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "HIDE_OBJECT"
+    ],
+    "description": "P4 / hide. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.restore",
+    "toolName": "restore_trip_item",
+    "family": "P4",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemRestore",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "RESTORE_OBJECT"
+    ],
+    "description": "P4 / restore. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.delete",
+    "toolName": "delete_trip_item",
+    "family": "P4",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemDelete",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "DELETE_ITEM"
+    ],
+    "description": "P4 / delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.visibility",
+    "toolName": "set_trip_item_visibility",
+    "family": "P4",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemVisibility",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_OBJECT_VISIBILITY"
+    ],
+    "description": "P4 / visibility. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p4.participation",
+    "toolName": "set_trip_item_participation",
+    "family": "P4",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemParticipation",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_PARTICIPATION"
+    ],
+    "description": "P4 / participation. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.list",
+    "toolName": "list_trip_items",
+    "family": "P5",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemListQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.list"
+    ],
+    "description": "P5 / list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.search",
+    "toolName": "search_trip_items",
+    "family": "P5",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemSearchQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.search"
+    ],
+    "description": "P5 / search. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.get",
+    "toolName": "get_trip_item",
+    "family": "P5",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items/{itemId}",
+    "requestSchema": "ItemGetQuery",
+    "responseSchema": "ItemSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "items.get"
+    ],
+    "description": "P5 / get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.create",
+    "toolName": "create_trip_item",
+    "family": "P5",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P5Create",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "CREATE_ITEM"
+    ],
+    "description": "P5 / Create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_CREATE；target:null",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.update",
+    "toolName": "update_trip_item",
+    "family": "P5",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P5Update",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_TEXT",
+      "SET_TRANSPORT_DETAILS"
+    ],
+    "description": "P5 / Update fields. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector exact Item revision",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.hide",
+    "toolName": "hide_trip_item",
+    "family": "P5",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemHide",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "HIDE_OBJECT"
+    ],
+    "description": "P5 / hide. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.restore",
+    "toolName": "restore_trip_item",
+    "family": "P5",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemRestore",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "RESTORE_OBJECT"
+    ],
+    "description": "P5 / restore. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.delete",
+    "toolName": "delete_trip_item",
+    "family": "P5",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemDelete",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "DELETE_ITEM"
+    ],
+    "description": "P5 / delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.visibility",
+    "toolName": "set_trip_item_visibility",
+    "family": "P5",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemVisibility",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_OBJECT_VISIBILITY"
+    ],
+    "description": "P5 / visibility. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p5.participation",
+    "toolName": "set_trip_item_participation",
+    "family": "P5",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemParticipation",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_PARTICIPATION"
+    ],
+    "description": "P5 / participation. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.list",
+    "toolName": "list_trip_items",
+    "family": "P6",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemListQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.list"
+    ],
+    "description": "P6 / list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.search",
+    "toolName": "search_trip_items",
+    "family": "P6",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items",
+    "requestSchema": "ItemSearchQuery",
+    "responseSchema": "ItemPage",
+    "effect": "READ",
+    "commandUnits": [
+      "items.search"
+    ],
+    "description": "P6 / search. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.get",
+    "toolName": "get_trip_item",
+    "family": "P6",
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items/{itemId}",
+    "requestSchema": "ItemGetQuery",
+    "responseSchema": "ItemSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "items.get"
+    ],
+    "description": "P6 / get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；actor/accessRevision+snapshot cursor",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.create",
+    "toolName": "create_trip_item",
+    "family": "P6",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P6Create",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "CREATE_ITEM"
+    ],
+    "description": "P6 / Create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_CREATE；target:null",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.update",
+    "toolName": "update_trip_item",
+    "family": "P6",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "P6Update",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_TEXT",
+      "SET_ITEM_SCHEDULE",
+      "SET_ITEM_PLACE",
+      "SET_ACTIVITY_DETAILS",
+      "SET_ITEM_CATEGORY",
+      "SET_ITEM_STATUS"
+    ],
+    "description": "P6 / Update fields. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector exact Item revision",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.hide",
+    "toolName": "hide_trip_item",
+    "family": "P6",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemHide",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "HIDE_OBJECT"
+    ],
+    "description": "P6 / hide. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.restore",
+    "toolName": "restore_trip_item",
+    "family": "P6",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemRestore",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "RESTORE_OBJECT"
+    ],
+    "description": "P6 / restore. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.delete",
+    "toolName": "delete_trip_item",
+    "family": "P6",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemDelete",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "DELETE_ITEM"
+    ],
+    "description": "P6 / delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.visibility",
+    "toolName": "set_trip_item_visibility",
+    "family": "P6",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemVisibility",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_OBJECT_VISIBILITY"
+    ],
+    "description": "P6 / visibility. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.p6.participation",
+    "toolName": "set_trip_item_participation",
+    "family": "P6",
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ItemParticipation",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "SET_ITEM_PARTICIPATION"
+    ],
+    "description": "P6 / participation. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；baseVector+graphHash for lifecycle",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.people.list",
+    "toolName": "list_trip_people",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/people",
+    "requestSchema": "RosterQuery",
+    "responseSchema": "RosterSnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "people.read"
+    ],
+    "description": "People / Read roster/roles/participation. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_READ；rosterRevision/fingerprint(read)",
+    "readback": "只读Roster / ROSTER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.list",
+    "toolName": "expense_list",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/expenses",
+    "requestSchema": "ExpenseListQuery",
+    "responseSchema": "ExpensePage",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /expenses"
+    ],
+    "description": "Ledger / expense.list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；none",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.get",
+    "toolName": "expense_get",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+    "requestSchema": "Empty",
+    "responseSchema": "Expense",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /expenses/{expenseId}"
+    ],
+    "description": "Ledger / expense.get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；revision(read)",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.create",
+    "toolName": "expense_create",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/expenses",
+    "requestSchema": "ExpenseCreateCommand",
+    "responseSchema": "ExpenseMutationResponse",
+    "effect": "WRITE",
+    "commandUnits": [
+      "POST /expenses"
+    ],
+    "description": "Ledger / expense.create. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_CREATE；observedBase:null/observedServerRevision:0",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.update",
+    "toolName": "expense_update",
+    "family": null,
+    "method": "PUT",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+    "requestSchema": "ExpenseUpdateCommand",
+    "responseSchema": "ExpenseMutationResponse",
+    "effect": "WRITE",
+    "commandUnits": [
+      "PUT /expenses/{expenseId}"
+    ],
+    "description": "Ledger / expense.update. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_EDIT；observedBase/revision+causalReceipt",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.delete",
+    "toolName": "expense_delete",
+    "family": null,
+    "method": "DELETE",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+    "requestSchema": "ExpenseDeleteCommand",
+    "responseSchema": "ExpenseMutationResponse",
+    "effect": "WRITE",
+    "commandUnits": [
+      "DELETE /expenses/{expenseId}"
+    ],
+    "description": "Ledger / expense.delete. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_EDIT；observedBase/revision",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.restore",
+    "toolName": "expense_restore",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}/restore",
+    "requestSchema": "ExpenseRestoreCommand",
+    "responseSchema": "ExpenseMutationResponse",
+    "effect": "WRITE",
+    "commandUnits": [
+      "POST /expenses/{expenseId}/restore"
+    ],
+    "description": "Ledger / expense.restore. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_EDIT；observedBase/revision",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.valuation",
+    "toolName": "expense_valuation",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}/valuations",
+    "requestSchema": "ExpenseValuationCommand",
+    "responseSchema": "ExpenseMutationResponse",
+    "effect": "WRITE",
+    "commandUnits": [
+      "POST /expenses/{expenseId}/valuations"
+    ],
+    "description": "Ledger / expense.valuation. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_EDIT；observedBase/revision+rate acceptance",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.payment_record",
+    "toolName": "expense_payment_record",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}/payment-records",
+    "requestSchema": "ExpensePaymentRecord",
+    "responseSchema": "ExpensePaymentRecordResult",
+    "effect": "WRITE",
+    "commandUnits": [
+      "POST /expenses/{expenseId}/payment-records"
+    ],
+    "description": "Ledger / expense.payment_record. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_PAYER；baseRevision",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.conflicts",
+    "toolName": "expense_conflicts",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflicts",
+    "requestSchema": "Empty",
+    "responseSchema": "ExpenseConflictChain",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /expenses/{expenseId}/conflicts"
+    ],
+    "description": "Ledger / expense.conflicts. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；revision(read)",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.resolve",
+    "toolName": "expense_resolve",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflict-resolution",
+    "requestSchema": "ExpenseConflictResolution",
+    "responseSchema": "ExpenseConflictResolutionResult",
+    "effect": "WRITE",
+    "commandUnits": [
+      "POST /expenses/{expenseId}/conflict-resolution"
+    ],
+    "description": "Ledger / expense.resolve. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_EDIT；conflict chain revisions",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.fx.lookup",
+    "toolName": "fx_lookup",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/ledger/rate-lookup",
+    "requestSchema": "RateLookupRequest",
+    "responseSchema": "RateLookupResponse",
+    "effect": "READ",
+    "commandUnits": [
+      "POST /ledger/rate-lookup"
+    ],
+    "description": "Ledger / fx.lookup. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；none",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.fx.snapshots",
+    "toolName": "fx_snapshots",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/ledger/rate-quotes",
+    "requestSchema": "RateQuotesQuery",
+    "responseSchema": "RateQuotes",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /ledger/rate-quotes"
+    ],
+    "description": "Ledger / fx.snapshots. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；none",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.link",
+    "toolName": "expense_link",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ExpenseItemLink",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "LINK_EXPENSE"
+    ],
+    "description": "Ledger / expense.link. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_AND_EXPENSE_READ_MANAGE；baseVector Item+link and Expense binding",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.expense.unlink",
+    "toolName": "expense_unlink",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/core/commands",
+    "requestSchema": "ExpenseItemUnlink",
+    "responseSchema": "CoreReceiptProjection",
+    "effect": "WRITE",
+    "commandUnits": [
+      "UNLINK_EXPENSE"
+    ],
+    "description": "Ledger / expense.unlink. Plan future write only after authorized current Base, exact preview and trusted human confirmation; never execute in Layer2.",
+    "permissionAndCAS": "CORE_AND_EXPENSE_READ_MANAGE；baseVector Item+link and Expense binding",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.settlement.preview",
+    "toolName": "settlement_preview",
+    "family": null,
+    "method": "POST",
+    "path": "/v2/trips/{tripId}/settlements/preview",
+    "requestSchema": "SettlementPreviewRequest",
+    "responseSchema": "SettlementPreview",
+    "effect": "READ",
+    "commandUnits": [
+      "POST /settlements/preview"
+    ],
+    "description": "Settlement read / settlement.preview. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；source fingerprint(read)",
+    "readback": "相应只读Ledger响应 / SETTLEMENT",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.settlement.list",
+    "toolName": "settlement_list",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/settlements",
+    "requestSchema": "SettlementListQuery",
+    "responseSchema": "SettlementPage",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /settlements"
+    ],
+    "description": "Settlement read / settlement.list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；source/read version",
+    "readback": "相应只读Ledger响应 / SETTLEMENT",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.settlement.get",
+    "toolName": "settlement_get",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/settlements/{settlementId}",
+    "requestSchema": "Empty",
+    "responseSchema": "FinalizedSettlement",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /settlements/{settlementId}"
+    ],
+    "description": "Settlement read / settlement.get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；immutable version id",
+    "readback": "相应只读Ledger响应 / SETTLEMENT",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.settlement.history",
+    "toolName": "settlement_history",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/settlements/{settlementId}/history",
+    "requestSchema": "HistoryQuery",
+    "responseSchema": "SettlementHistoryPage",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /settlements/{settlementId}/history"
+    ],
+    "description": "Settlement read / settlement.history. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；immutable lineage snapshot",
+    "readback": "相应只读Ledger响应 / SETTLEMENT",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.settlement.payments.read",
+    "toolName": "settlement_payments_read",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/settlements/{settlementId}/payments",
+    "requestSchema": "HistoryQuery",
+    "responseSchema": "SettlementPaymentPage",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /settlements/{settlementId}/payments"
+    ],
+    "description": "Settlement read / settlement.payments.read. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；current/version snapshot",
+    "readback": "相应只读Ledger响应 / SETTLEMENT",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.personal_payment.list",
+    "toolName": "personal_payment_list",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/ledger/personal-payments",
+    "requestSchema": "PersonalPaymentListQuery",
+    "responseSchema": "PersonalPaymentList",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /ledger/personal-payments"
+    ],
+    "description": "Settlement read / personal_payment.list. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "PERSONAL_PAYMENT_READ；cursor/read version",
+    "readback": "相应只读Ledger响应 / PERSONAL",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.personal_payment.get",
+    "toolName": "personal_payment_get",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/ledger/personal-payments/{paymentId}",
+    "requestSchema": "Empty",
+    "responseSchema": "PersonalPaymentRead",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /ledger/personal-payments/{paymentId}"
+    ],
+    "description": "Settlement read / personal_payment.get. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "PERSONAL_PAYMENT_READ；record revision(read)",
+    "readback": "相应只读Ledger响应 / PERSONAL",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.personal_review.read",
+    "toolName": "personal_review_read",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/settlement-review",
+    "requestSchema": "Empty",
+    "responseSchema": "PersonalReviewResponse",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /settlement-review"
+    ],
+    "description": "Settlement read / personal_review.read. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "SELF_TRIP_READ；statement fingerprint(read)",
+    "readback": "相应只读Ledger响应 / REVIEW",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.ledger.history",
+    "toolName": "ledger_history",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/ledger/history",
+    "requestSchema": "LedgerHistoryQuery",
+    "responseSchema": "LedgerHistoryPage",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /ledger/history"
+    ],
+    "description": "Ledger / ledger.history. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；read snapshot/cursor",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.ledger.export",
+    "toolName": "ledger_export",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/ledger/export",
+    "requestSchema": "LedgerExportQuery",
+    "responseSchema": "LedgerDataExport",
+    "effect": "READ",
+    "commandUnits": [
+      "GET /ledger/export"
+    ],
+    "description": "Ledger / ledger.export. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "LEDGER_READ；read snapshot",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.core.operation.get",
+    "toolName": "get_operation_status",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/core/operations/{operationId}",
+    "requestSchema": "Empty",
+    "responseSchema": "CoreReceiptOrUnknown",
+    "effect": "READ",
+    "commandUnits": [
+      "core.status"
+    ],
+    "description": "Infrastructure / Core receipt/status. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "ORIGINAL_ACTOR；operation immutable",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.operation.get",
+    "toolName": "get_trip_operation",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trip-create-operations/{operationId}",
+    "requestSchema": "Empty",
+    "responseSchema": "TripCreateResultOrUnknown",
+    "effect": "READ",
+    "commandUnits": [
+      "trip.status"
+    ],
+    "description": "Infrastructure / Trip create receipt/status. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "ORIGINAL_ACTOR；operation immutable",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.metadata.operation.get",
+    "toolName": "get_trip_metadata_operation",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trip-metadata-operations/{operationId}",
+    "requestSchema": "Empty",
+    "responseSchema": "StructuredMetadataReceiptOrUnknown",
+    "effect": "READ",
+    "commandUnits": [
+      "metadata.status"
+    ],
+    "description": "Infrastructure / Trip metadata receipt. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "ORIGINAL_ACTOR；operation immutable",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.ledger.operation.get",
+    "toolName": "get_ledger_operation",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/ledger/operations/{operationId}",
+    "requestSchema": "LedgerOperationQuery",
+    "responseSchema": "LedgerOperationStatus",
+    "effect": "READ",
+    "commandUnits": [
+      "ledger.status"
+    ],
+    "description": "Infrastructure / Ledger original operation status. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "ORIGINAL_ACTOR；operation immutable",
+    "readback": "LedgerBootstrap/changes+原operation / LEDGER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.lifecycle.operation.get",
+    "toolName": "get_trip_lifecycle_operation",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/lifecycle-operations/{operationId}",
+    "requestSchema": "Empty",
+    "responseSchema": "TripLifecycleReceiptOrUnknown",
+    "effect": "READ",
+    "commandUnits": [
+      "trip.lifecycle.status"
+    ],
+    "description": "Infrastructure / Trip lifecycle original receipt. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "ORIGINAL_ACTOR；operation immutable",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.permissions.read",
+    "toolName": "get_trip_capabilities",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/capabilities",
+    "requestSchema": "Empty",
+    "responseSchema": "CapabilitySnapshot",
+    "effect": "READ",
+    "commandUnits": [
+      "capabilities"
+    ],
+    "description": "Infrastructure / Allowed capabilities. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_READ；accessRevision/readAt",
+    "readback": "只读Roster / ROSTER",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.core.collection.read",
+    "toolName": "read_core_snapshot",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/core/collection",
+    "requestSchema": "CoreCollectionQuery",
+    "responseSchema": "CoreCollection",
+    "effect": "READ",
+    "commandUnits": [
+      "core.collection"
+    ],
+    "description": "Infrastructure / Certified Core readback. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_READ；epoch/revision/accessRevision",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.item.lifecycle.base",
+    "toolName": "get_item_lifecycle_base",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/items/{itemId}/lifecycle",
+    "requestSchema": "ItemLifecycleQuery",
+    "responseSchema": "ItemLifecycleBase",
+    "effect": "READ",
+    "commandUnits": [
+      "item.lifecycle.base"
+    ],
+    "description": "Infrastructure / Read authorized Item lifecycle base. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "CORE_MANAGE；current Item revision/read graphHash",
+    "readback": "ItemSnapshot+CoreReceipt / CORE",
+    "contractOnly": true
+  },
+  {
+    "capabilityId": "otr.trip.lifecycle.base",
+    "toolName": "get_trip_lifecycle_base",
+    "family": null,
+    "method": "GET",
+    "path": "/v2/trips/{tripId}/lifecycle",
+    "requestSchema": "Empty",
+    "responseSchema": "TripLifecycleBase",
+    "effect": "READ",
+    "commandUnits": [
+      "trip.lifecycle.base"
+    ],
+    "description": "Infrastructure / Read authorized Trip lifecycle base. Plan future authorized read; never execute in Layer2.",
+    "permissionAndCAS": "TRIP_OWNER；metadataRevision/read graphHash",
+    "readback": "TripMetadata/Discovery / TRIP",
+    "contractOnly": true
+  }
+]

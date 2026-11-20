@@ -82,12 +82,12 @@ export async function loadDevTripMetadataV2Runtime(
       throw new TripMetadataError(403, "TRIP_METADATA_FORBIDDEN");
   };
   const tripMetadataV2Port: TripMetadataV2Port = {
-    async update(actor, request) {
+    async update(actor, request, admit) {
       scope(actor, request.operationId);
       const checked = tripMetadataRevisionedUpdateSchema.parse(request);
       if (JSON.stringify(checked) !== JSON.stringify(config.request))
         throw new TripMetadataError(409, "TRIP_METADATA_COLLISION");
-      const result = await storage.update(actor, checked);
+      const result = await storage.update(actor, checked, admit);
       scope(actor, checked.operationId);
       return result;
     },

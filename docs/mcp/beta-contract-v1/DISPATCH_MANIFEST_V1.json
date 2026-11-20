@@ -1,0 +1,392 @@
+{
+  "contractVersion": "otr.mcp-beta.contract/1.0.0",
+  "capabilityCount": 103,
+  "routeCount": 42,
+  "dispatchCount": 64,
+  "units": [
+    {
+      "method": "GET",
+      "path": "/v2/trips",
+      "commandUnit": "trip.list",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/metadata",
+      "commandUnit": "trip.metadata.read",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips",
+      "commandUnit": "trip.create",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/metadata",
+      "commandUnit": "trip.metadata.update",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle:ARCHIVE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle:UNARCHIVE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle:DELETE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/preview-readonly",
+      "commandUnit": "currency.preview",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/journey-currency/commit",
+      "commandUnit": "currency.commit",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "commandUnit": "items.list",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items",
+      "commandUnit": "items.search",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}",
+      "commandUnit": "items.get",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "CREATE_ITEM",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_TEXT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_SCHEDULE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_PLACE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_CATEGORY",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_GROUPING",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_STATUS",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "HIDE_OBJECT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "RESTORE_OBJECT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "DELETE_ITEM",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_OBJECT_VISIBILITY",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ITEM_PARTICIPATION",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "CREATE_SPARSE_FLIGHT",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_AUTHORED_FLIGHT_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_STAY_DETAILS",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_RENTAL_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_TRANSPORT_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "SET_ACTIVITY_DETAILS",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/people",
+      "commandUnit": "people.read",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses",
+      "commandUnit": "GET /expenses",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "commandUnit": "GET /expenses/{expenseId}",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses",
+      "commandUnit": "POST /expenses",
+      "category": "EXISTING"
+    },
+    {
+      "method": "PUT",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "commandUnit": "PUT /expenses/{expenseId}",
+      "category": "EXISTING"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}",
+      "commandUnit": "DELETE /expenses/{expenseId}",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/restore",
+      "commandUnit": "POST /expenses/{expenseId}/restore",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/valuations",
+      "commandUnit": "POST /expenses/{expenseId}/valuations",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/payment-records",
+      "commandUnit": "POST /expenses/{expenseId}/payment-records",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflicts",
+      "commandUnit": "GET /expenses/{expenseId}/conflicts",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/expenses/{expenseId}/conflict-resolution",
+      "commandUnit": "POST /expenses/{expenseId}/conflict-resolution",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/ledger/rate-lookup",
+      "commandUnit": "POST /ledger/rate-lookup",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/rate-quotes",
+      "commandUnit": "GET /ledger/rate-quotes",
+      "category": "EXISTING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "LINK_EXPENSE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/core/commands",
+      "commandUnit": "UNLINK_EXPENSE",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "POST",
+      "path": "/v2/trips/{tripId}/settlements/preview",
+      "commandUnit": "POST /settlements/preview",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements",
+      "commandUnit": "GET /settlements",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}",
+      "commandUnit": "GET /settlements/{settlementId}",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/history",
+      "commandUnit": "GET /settlements/{settlementId}/history",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlements/{settlementId}/payments",
+      "commandUnit": "GET /settlements/{settlementId}/payments",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments",
+      "commandUnit": "GET /ledger/personal-payments",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/personal-payments/{paymentId}",
+      "commandUnit": "GET /ledger/personal-payments/{paymentId}",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/settlement-review",
+      "commandUnit": "GET /settlement-review",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/history",
+      "commandUnit": "GET /ledger/history",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/export",
+      "commandUnit": "GET /ledger/export",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/operations/{operationId}",
+      "commandUnit": "core.status",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trip-create-operations/{operationId}",
+      "commandUnit": "trip.status",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trip-metadata-operations/{operationId}",
+      "commandUnit": "metadata.status",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/ledger/operations/{operationId}",
+      "commandUnit": "ledger.status",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle-operations/{operationId}",
+      "commandUnit": "trip.lifecycle.status",
+      "category": "NEW_OWNING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/capabilities",
+      "commandUnit": "capabilities",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/core/collection",
+      "commandUnit": "core.collection",
+      "category": "EXISTING"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/items/{itemId}/lifecycle",
+      "commandUnit": "item.lifecycle.base",
+      "category": "NEW_READER"
+    },
+    {
+      "method": "GET",
+      "path": "/v2/trips/{tripId}/lifecycle",
+      "commandUnit": "trip.lifecycle.base",
+      "category": "NEW_READER"
+    }
+  ]
+}

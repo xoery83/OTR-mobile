@@ -25,7 +25,11 @@ import {
 import { canonicalCoreJson, type Json } from "../../src/domain/trip/tripCoreV2Json";
 import { coreLifecycleGraphHash } from "../../src/domain/trip/tripCoreV2Lifecycle";
 import { validateCoreReceipt } from "../../src/domain/trip/tripCoreV2Receipt";
-import { validateCoreCommand, isNormalImportCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
+import {
+  validateCoreCommand,
+  isNormalImportCoreCommand,
+  isNormalManualCoreCommand,
+} from "../../src/domain/trip/tripCoreV2Commands";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import type {
   CoreCommand,
@@ -37,6 +41,9 @@ import {
   type CoreCommandTransaction,
 } from "./tripCoreV2Commands";
 import type { ImportHash } from "../../src/domain/trip/flightImportReview";
+import { readCoreLifecycleState } from "./tripCoreLifecycleState";
+import { readCoreExpenseRelations } from "./tripCoreExpenseRelations";
+import { verifyCoreExpenseLink } from "./tripCoreExpenseLink";
 export type CorePgLease = {
   // Dedicated Source adapter verified the principal and started with a clean, idle session.
   verifiedSourceSession?: true;
@@ -127,6 +134,7 @@ const normalized = (row: CoreRow) => {
       fact[instant] = fraction(fact[instant], precision);
     else fact[instant] = fraction(fact[instant], fact[prefix + "clock_precision"]);
   }
+  if (fact.identity_state === null) delete fact.identity_state;
   // Keep the exact finite physical shape; missing tuple members are not invented.
   return Object.fromEntries(
     Object.entries(fact).filter(([, value]) => value !== undefined),
@@ -185,50 +193,70 @@ export async function lockCorePgActor(
 }
 async function persist(lease: CorePgLease, before: CoreGraph, mutation: CoreMutation) {
   for (const table of Object.keys(coreTableSchemas) as CoreTable[]) {
-    if (table === "expense_links") {
-      if (json(before[table]) !== json(mutation.graph[table]))
-        throw new Error("OWNING_CAPABILITY_REQUIRED");
-      continue;
-    }
+    const tripColumn = table === "expense_links" ? "journey_id" : "trip_id";
     const old = new Map(before[table].map((r) => [coreMirrorKey(table, r), r]));
     const current = new Map(
       mutation.graph[table].map((r) => [coreMirrorKey(table, r), r]),
     );
+    // A P5 service rekey keeps its physical provenance columns on the same row.
+    if (table === "itinerary_transport_services")
+      for (const [key, row] of current)
+        if (
+          !old.has(key) &&
+          mutation.graph.itinerary_events.some(
+            (event) => event.id === row.event_id && event.experience_family === "P5",
+          )
+        ) {
+          const previous = [...old.entries()].find(
+            ([, value]) => value.event_id === row.event_id,
+          );
+          if (previous) {
+            old.delete(previous[0]);
+            old.set(key, previous[1]);
+          }
+        }
     for (const [key, row] of old)
       if (!current.has(key)) {
         if (Object.values(coreKindTables).includes(table as never))
           throw new Error("CORE_PHYSICAL_DELETE_FORBIDDEN");
         const fields = coreTableKeys[table];
         await lease.query(
-          `DELETE FROM public.${quoted(table)} WHERE ${fields.map((k, i) => `${quoted(k)}=$${i + 1}`).join(" AND ")} AND trip_id=$${fields.length + 1}::uuid`,
-          [...fields.map((k) => row[k]), row.trip_id],
+          `DELETE FROM public.${quoted(table)} WHERE ${fields.map((k, i) => `${quoted(k)}=$${i + 1}`).join(" AND ")} AND ${tripColumn}=$${fields.length + 1}::uuid`,
+          [...fields.map((k) => row[k]), row[tripColumn]],
         );
       }
     for (const [key, row] of current) {
       const previous = old.get(key);
       if (previous && json(previous) === json(row)) continue;
       const fields = columns(table),
-        values = fields.map((k) => row[k]);
+        values = fields.map((k) => row[k] ?? null);
       // pg arrays/objects must be JSON text for finite JSONB columns, not PostgreSQL array literals.
       for (let i = 0; i < values.length; i++)
         if (values[i] !== null && typeof values[i] === "object")
           values[i] = json(values[i]);
       if (previous) {
+        if (table === "expense_links") throw new Error("INVALID_LINK");
         const keys = coreTableKeys[table],
-          updates = fields.filter((k) => !keys.includes(k));
+          updates = fields.filter(
+            (k) =>
+              !keys.includes(k) ||
+              (table === "itinerary_transport_services" &&
+                k === "service_key" &&
+                previous[k] !== row[k]),
+          );
         await lease.query(
           `UPDATE public.${quoted(table)} SET ${updates.map((k, i) => `${quoted(k)}=$${i + 1}`).join(",")} WHERE ${keys.map((k, i) => `${quoted(k)}=$${updates.length + i + 1}`).join(" AND ")} AND trip_id=$${updates.length + keys.length + 1}::uuid`,
           [
             ...updates.map((k) => {
-              const v = row[k];
+              const v = row[k] ?? null;
               return v !== null && typeof v === "object" ? json(v) : v;
             }),
-            ...keys.map((k) => row[k]),
+            ...keys.map((k) => previous[k]),
             row.trip_id,
           ],
         );
       } else {
-        const names = [...fields];
+        const names = fields.map((k) => physical(table, k));
         if (table === "itinerary_transport_services") {
           names.push("provenance_refs");
           values.push("{}");
@@ -468,7 +496,9 @@ function createCorePgStorageOnLease(
         [scope.actorAccountId, scope.tripId, scope.operationId],
       );
       if (gateMode?.sustainedDev && scope.manualCompatibility)
-        await lease.query("SELECT set_config('otr.core.manual_compat',$1,true)", [scope.manualCompatibility]);
+        await lease.query("SELECT set_config('otr.core.manual_compat',$1,true)", [
+          scope.manualCompatibility,
+        ]);
       const finiteScope = async () => {
         const allowed = (
           await lease.query(
@@ -525,7 +555,11 @@ function createCorePgStorageOnLease(
           );
         },
         async enabledCommands() {
-          if (gateMode?.sustainedDev && gateMode.reviewedP1 && scope.manualCompatibility !== "MANUAL") {
+          if (
+            gateMode?.sustainedDev &&
+            gateMode.reviewedP1 &&
+            scope.manualCompatibility !== "MANUAL"
+          ) {
             const reviewed = await readReviewedP1Gate(
               lease,
               actor.accountId,
@@ -578,6 +612,10 @@ function createCorePgStorageOnLease(
           ]);
           locked = await readCorePgGraph(lease, actor.tripId);
           await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
+          if (gateMode?.betaLifecycle)
+            locked.expense_links = (
+              await readCoreExpenseRelations(lease, actor.accountId, actor.tripId)
+            ).links;
           return locked;
         },
         async verifyAdmission(command, intent, graph) {
@@ -588,16 +626,23 @@ function createCorePgStorageOnLease(
           const activation = sourceP1
             ? await readReviewedP1Gate(lease, actor.accountId, actor.tripId)
             : await readCoreGate(lease, actor.accountId, actor.tripId, gateMode);
-          const manual = normalManualCapabilities(activation);
+          const manual = normalManualCapabilities(activation, gateMode?.betaLifecycle);
           const normal = manual !== null;
           const localMetadata = command.command === "CREATE_DOCUMENT_METADATA";
           const documentLink = command.command === "RECONCILE_ITEM_DOCUMENTS";
+          const expenseLink =
+            gateMode?.betaLifecycle === true &&
+            ["LINK_EXPENSE", "UNLINK_EXPENSE"].includes(command.command) &&
+            Object.hasOwn(command.payload as object, "expectedExpenseRevision");
+          const itemId = expenseLink
+            ? (command.payload as { targetId: string }).targetId
+            : command.target.id;
           const finiteFamily =
             command.command === "CREATE_SPARSE_FLIGHT"
               ? "P2"
               : command.command === "CREATE_ITEM"
                 ? (command.payload as { family?: string }).family
-                : graph.itinerary_events.find((item) => item.id === command.target.id)
+                : graph.itinerary_events.find((item) => item.id === itemId)
                     ?.experience_family;
           const reviewed =
             sourceP1 &&
@@ -623,19 +668,22 @@ function createCorePgStorageOnLease(
                 !command.admission.sourceIntentId ||
                 command.admission.policyVersion !== null
               : normal
-                ? (command.admission.mode !== "MANUAL" && !(manual!.importEnabled && isNormalImportCoreCommand(command))) ||
-                  (!localMetadata && !documentLink && !manual!.families.includes(String(finiteFamily))) ||
+                ? (command.admission.mode !== "MANUAL" &&
+                    !(manual!.importEnabled && isNormalImportCoreCommand(command))) ||
+                  (!localMetadata &&
+                    !documentLink &&
+                    !manual!.families.includes(String(finiteFamily))) ||
                   !(manual!.commands as readonly string[]).includes(command.command) ||
                   (command.command === "CREATE_ITEM" && finiteFamily === "P2") ||
                   (command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
                     finiteFamily !== "P2") ||
+                  (command.admission.mode === "MANUAL" &&
+                    !localMetadata &&
+                    !documentLink &&
+                    !isNormalManualCoreCommand(command, String(finiteFamily))) ||
                   (finiteFamily === "P2" &&
-                    ![
-                      "CREATE_SPARSE_FLIGHT",
-                      "SET_AUTHORED_FLIGHT_DETAILS",
-                      "SET_ITEM_PARTICIPATION",
-                      "RECONCILE_ITEM_DOCUMENTS",
-                    ].includes(command.command)) ||
+                    command.command === "SET_ITEM_TEXT" &&
+                    !(manual!.commands as readonly string[]).includes("DELETE_ITEM")) ||
                   (command.command === "SET_STAY_DETAILS" && finiteFamily !== "P3") ||
                   (command.command === "SET_RENTAL_DETAILS" && finiteFamily !== "P4") ||
                   (command.command === "SET_TRANSPORT_DETAILS" &&
@@ -648,18 +696,20 @@ function createCorePgStorageOnLease(
             throw new Error("CORE_CAPABILITY_CLOSED");
           if (
             normal &&
+            !gateMode?.betaLifecycle &&
             !localMetadata &&
             command.command !== "CREATE_ITEM" &&
             command.command !== "CREATE_SPARSE_FLIGHT" &&
-            graph.itinerary_events.find((item) => item.id === command.target.id)
+            graph.itinerary_events.find((item) => item.id === itemId)
               ?.owner_account_id !== actor.accountId
           )
             throw new Error("CORE_CREATOR_REQUIRED");
           if (
             normal &&
+            !gateMode?.betaLifecycle &&
             !documentLink &&
             finiteFamily === "P2" &&
-            command.command !== "CREATE_SPARSE_FLIGHT"
+            command.command === "SET_AUTHORED_FLIGHT_DETAILS"
           ) {
             if (
               graph.trip_flight_intents.find(
@@ -686,7 +736,8 @@ function createCorePgStorageOnLease(
               );
               if (
                 created.command !== "CREATE_SPARSE_FLIGHT" ||
-                created.admission.mode !== (command.admission.mode === "IMPORT" ? "IMPORT" : "MANUAL") ||
+                created.admission.mode !==
+                  (command.admission.mode === "IMPORT" ? "IMPORT" : "MANUAL") ||
                 created.target.id !== command.target.id ||
                 created.tripId !== actor.tripId
               )
@@ -722,11 +773,22 @@ function createCorePgStorageOnLease(
               command.command,
               finiteFamily,
               command.admission.mode,
-              command.target.id,
+              itemId,
               command.operationId,
               command.admission.sourceIntentId ?? "",
             ],
           );
+          if (normal && gateMode?.betaLifecycle && !localMetadata && !documentLink) {
+            const eligibility = await lease.query(
+              "SELECT public.trip_core_lock_item_manage($1::uuid,$2::uuid,$3::uuid)",
+              [actor.accountId, actor.tripId, itemId],
+            );
+            if (
+              command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
+              eligibility.rows[0]?.trip_core_lock_item_manage !== true
+            )
+              throw new Error("MANUAL_FLIGHT_CREATE_RECEIPT_REQUIRED");
+          }
           if (collision) throw new Error("REVISION_CONFLICT");
           if (command.command === "SET_ORDINARY_ORDER") {
             const bindings = (
@@ -774,7 +836,9 @@ function createCorePgStorageOnLease(
             !(gate.enabled_admission_modes as string[]).includes(
               command.admission.mode,
             ) ||
-            (family && !documentLink && !(gate.enabled_families as string[]).includes(family as string))
+            (family &&
+              !documentLink &&
+              !(gate.enabled_families as string[]).includes(family as string))
           )
             throw new Error("CORE_CAPABILITY_CLOSED");
           const requiresTemporalAuthority = (value: unknown): boolean => {
@@ -795,26 +859,41 @@ function createCorePgStorageOnLease(
             requiresTemporalAuthority(command.payload) ||
             !["MANUAL", "IMPORT"].includes(command.admission.mode) ||
             command.baseVector.some((v) => v.kind === "SOURCE") ||
-            [
-              "CREATE_DOCUMENT",
-              "AUTHORIZE_DOCUMENT_COPY",
-              "LINK_EXPENSE",
-              "UNLINK_EXPENSE",
-            ].includes(command.command) ||
+            ["CREATE_DOCUMENT", "AUTHORIZE_DOCUMENT_COPY"].includes(command.command) ||
+            (!expenseLink &&
+              ["LINK_EXPENSE", "UNLINK_EXPENSE"].includes(command.command)) ||
             (command.command === "APPEND_INSTRUCTION" &&
               (command.payload as { sourceRepresentationId: string | null })
                 .sourceRepresentationId !== null)
           ) {
+            if (scope.managedMcp) throw new Error("MCP_WRITE_ADMISSION_CLOSED");
             if (!admission) throw new Error("OWNING_CAPABILITY_REQUIRED");
             const owning = await admission.verify(lease, actor, command, intent, graph);
             verified = { command, intentSha256: intent };
             return owning;
           }
         },
+        async verifyExpenseLink(command) {
+          if (!gateMode?.betaLifecycle) return undefined;
+          return verifyCoreExpenseLink(lease, actor.accountId, command);
+        },
         async admissionAudit() {
           return verified && admission?.audit
             ? admission.audit(lease, actor, verified.command, verified.intentSha256)
             : { evidenceRefs: [], authorizationRefs: [] };
+        },
+        async lifecycleContext() {
+          if (!gateMode?.betaLifecycle) return undefined;
+          const gate = await readCoreGate(
+            lease,
+            actor.accountId,
+            actor.tripId,
+            gateMode,
+            "runtime_enabled,enabled_commands",
+          );
+          if (!(gate?.enabled_commands as string[] | undefined)?.includes("DELETE_ITEM"))
+            return undefined;
+          return readCoreLifecycleState(lease, actor.accountId, actor.tripId);
         },
         async lifecycleGraphHash(command, graph) {
           return "graphHash" in (command.payload as object)
@@ -850,7 +929,48 @@ function createCorePgStorageOnLease(
             await lease.query("SET LOCAL ROLE otr_trip_core_v2_gateway");
           }
           for (const v of receipt.targetVector) {
-            if (v.kind === "SOURCE" || v.kind === "EXPENSE_LINK") return false;
+            if (v.kind === "SOURCE") return false;
+            if (v.kind === "EXPENSE_LINK") {
+              if (!gateMode?.betaLifecycle) return false;
+              const row = (
+                await lease.query(
+                  "SELECT canonical_intent_text FROM public.trip_core_command_receipts WHERE actor_account_id=$1::uuid AND trip_id=$2::uuid AND operation_id=$3::uuid",
+                  [actor.accountId, actor.tripId, receipt.operationId],
+                )
+              ).rows[0];
+              if (typeof row?.canonical_intent_text !== "string") return false;
+              const command = validateCoreCommand(JSON.parse(row.canonical_intent_text)),
+                p = command.payload as {
+                  expenseId?: string;
+                  targetKind?: string;
+                  targetId?: string;
+                };
+              if (
+                command.operationId !== receipt.operationId ||
+                command.tripId !== actor.tripId ||
+                command.target.kind !== "EXPENSE_LINK" ||
+                command.target.id !== v.id ||
+                p.targetKind !== "ITEM" ||
+                !p.expenseId ||
+                !p.targetId ||
+                (await coreHashValue("otr-trip-core-intent-v2", command, hash)) !==
+                  receipt.intentSha256
+              )
+                return false;
+              const rights = await readCoreExpenseRelations(
+                  lease,
+                  actor.accountId,
+                  actor.tripId,
+                ),
+                item = graph.itinerary_events.find((item) => item.id === p.targetId);
+              if (
+                !rights.authorizedExpenseIds.includes(p.expenseId) ||
+                !item ||
+                !coreCanRead(graph, actor, "ITEM", item)
+              )
+                return false;
+              continue;
+            }
             const row = graph[coreKindTables[v.kind as CoreKind]].find(
               (r) => r.id === v.id,
             );
