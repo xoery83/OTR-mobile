@@ -70,7 +70,7 @@ export function createManagedOAuthConsent(
   const transaction = async <T>(
     signal: AbortSignal,
     work: (lease: ManagedOAuthReadPort & { retire(): void }) => Promise<T>,
-    options?: { decisionId?: string; readOnly?: boolean; retryBusyRead?: boolean },
+    options?: { decisionId?: string; readOnly?: boolean; retryBusyLease?: boolean },
   ): Promise<T> => {
     const decisionId = options?.decisionId;
     let stage = "lease";
@@ -90,6 +90,7 @@ export function createManagedOAuthConsent(
     signal.throwIfAborted();
     try {
       return await connection.withLease(async (lease) => {
+        stage = "begin";
         await lease.query(options?.readOnly ? "BEGIN READ ONLY" : "BEGIN", []);
         try {
           if (!options?.readOnly) {
@@ -112,15 +113,14 @@ export function createManagedOAuthConsent(
         }
       });
     } catch (error) {
-      if (
-        options?.retryBusyRead &&
-        stage === "lease" &&
-        (error as { code?: string } | null)?.code === "53300"
-      ) {
+      const leaseBusy =
+        stage === "lease" && (error as { code?: string } | null)?.code === "53300";
+      if (options?.retryBusyLease && leaseBusy) {
         await delay(300, undefined, { signal });
-        return transaction(signal, work, { ...options, retryBusyRead: false });
+        return transaction(signal, work, { ...options, retryBusyLease: false });
       }
       if (stage !== "rollback") recordFailure(error);
+      if (leaseBusy && decisionId) throw new Error("MCP_CONSENT_STORE_UNAVAILABLE");
       if (options?.readOnly && !(error instanceof ManagedConsentRejected)) {
         const code = (error as { code?: unknown } | null)?.code;
         console.info(JSON.stringify({
@@ -245,7 +245,7 @@ export function createManagedOAuthConsent(
         state: saved.state,
         expiresAt: saved.challenge_expires_ms,
       };
-    }, { readOnly: true, retryBusyRead: true });
+    }, { readOnly: true, retryBusyLease: true });
   };
   const decide = async (
     principal: Readonly<{ accountId: string; kind: "FIRST_PARTY" }>,
@@ -306,7 +306,7 @@ export function createManagedOAuthConsent(
         id: original.id,
         decision: allow ? ("APPROVED" as const) : ("DENIED" as const),
       };
-    }, { decisionId: original.id });
+    }, { decisionId: original.id, retryBusyLease: true });
   };
   return Object.freeze({
     version: "managed-api-v1" as const,
@@ -470,7 +470,7 @@ export function createManagedOAuthConsent(
             expiresAt: saved.consent_expires_ms,
           };
           return binding.expiresAt > Date.now() ? binding : null;
-        }, { readOnly: true, retryBusyRead: true });
+        }, { readOnly: true, retryBusyLease: true });
       } catch (error) {
         if (error instanceof ManagedConsentRejected || error instanceof z.ZodError) return null;
         throw error;

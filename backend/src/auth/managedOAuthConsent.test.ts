@@ -46,7 +46,7 @@ it.each([undefined, 600, 60])("bounds stored consent independently of the runtim
   }
 });
 
-it.each(["expired", "active", "revoked"] as const)(
+it.each(["expired", "active", "revoked", "busy", "busy-at-commit"] as const)(
   "renews only an expired approval in the same session and policy (%s)",
   async (previous) => {
     const now = Date.now();
@@ -80,10 +80,14 @@ it.each(["expired", "active", "revoked"] as const)(
       consent_expires_ms: now + 120_000,
     };
     const writes: string[] = [];
+    let leases = 0;
     const consent = createManagedOAuthConsent(
       {
-        withLease: async (work) =>
-          work({
+        withLease: async (work) => {
+          leases++;
+          if (previous === "busy" && leases === 1)
+            throw Object.assign(new Error("capacity"), { code: "53300" });
+          return work({
             retire() {},
             async query(sql, args) {
               if (sql.includes("AS session_state")) {
@@ -118,9 +122,12 @@ it.each(["expired", "active", "revoked"] as const)(
                 return { rows: [{ id }] };
               }
               if (sql === "COMMIT" || sql === "ROLLBACK") writes.push(sql);
+              if (sql === "COMMIT" && previous === "busy-at-commit")
+                throw Object.assign(new Error("capacity"), { code: "53300" });
               return { rows: [] };
             },
-          }),
+          });
+        },
       },
       () => policy,
     );
@@ -130,15 +137,18 @@ it.each(["expired", "active", "revoked"] as const)(
       true,
       new AbortController().signal,
     );
-    if (previous === "expired") {
+    if (previous === "expired" || previous === "busy") {
       await expect(result).resolves.toEqual({ id, decision: "APPROVED" });
       expect(writes).toEqual(["archive expired", "approve", "COMMIT"]);
     } else {
       await expect(result).rejects.toThrow("MANAGED_CONSENT_UNAVAILABLE");
       expect(writes).toEqual(
-        previous === "active" ? ["archive expired", "approve", "ROLLBACK"] : ["ROLLBACK"],
+        previous === "active" ? ["archive expired", "approve", "ROLLBACK"]
+          : previous === "busy-at-commit" ? ["archive expired", "approve", "COMMIT", "ROLLBACK"]
+          : ["ROLLBACK"],
       );
     }
+    expect(leases).toBe(previous === "busy" ? 2 : 1);
   },
 );
 
