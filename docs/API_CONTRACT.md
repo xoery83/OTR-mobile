@@ -1534,3 +1534,8 @@ The optional `CoreHttpConnection.memberAccess` owns this branch. It is absent by
 Native validates the self-scoped observation and uses its own AccountRequestContext with the existing repository revoke transaction; Owner receipts cannot be installed under another Account. Original UNKNOWNs keep their operation/intent and are queried only;404/503 is not NoCommit.
 
 Definitions, exact closed installation/rollback renderer and acceptance boundaries: `docs/ops/core-member-revoke-20261104/CONTRACT.md`. This is Source-only: no protected Schema/EXEC installation, runtime activation, real member mutation or Native-device E2E is implied.
+
+
+### P5 legacy Manual compatibility — 21 November 2026
+
+Descriptor-free P5 NAME service commands retain the existing legal exact-empty string profile for identity fields; whitespace-only and NULL are not equivalent. Validation does not rewrite canonical intent or inject identity_state. Explicit identity-v1 commands remain strictly state/value validated and must never fall back to legacy; edits cannot implicitly remove a stored v1 descriptor. Descriptor-free legacy persistence omits the optional identity_state column only when both prior and resulting rows lack it, allowing the established Hosted schema without new SQL authority. Explicit v1 writes still require qualified storage. Existing Attempt/UNKNOWN recovery remains original-operation receipt-first; absence/404 is not proof of no commit.

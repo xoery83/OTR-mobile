@@ -1,4 +1,4 @@
-import { validTransportIdentity } from "./p5Identity";
+import { validTransportCommandIdentity } from "./p5Identity";
 import { authoredFlightDetailsSchema } from "./authoredFlightDetails";
 import { z } from "zod";
 import { ordinaryOrderPayload } from "./tripCoreOrdinaryOrder";
@@ -215,7 +215,10 @@ const createItem = z.discriminatedUnion("family", [
         .optional(),
       operationalFacts: operational.optional(),
     })
-    .refine((v) => validTransportIdentity(v.service), "INVALID_TRANSPORT_IDENTITY"),
+    .refine(
+      (v) => validTransportCommandIdentity(v.service),
+      "INVALID_TRANSPORT_IDENTITY",
+    ),
   z.strictObject({
     ...generic,
     family: z.literal("P6"),
@@ -383,7 +386,8 @@ export const corePayloadSchemas = {
       })
       .refine(
         (v) =>
-          Object.keys(v).length > 0 && (!v.service || validTransportIdentity(v.service)),
+          Object.keys(v).length > 0 &&
+          (!v.service || validTransportCommandIdentity(v.service)),
         "INVALID_TRANSPORT_IDENTITY",
       ),
     z.strictObject({ patch: sparseTransportPatchSchema }),

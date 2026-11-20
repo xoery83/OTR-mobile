@@ -1,0 +1,27 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/root1-p5-legacy-profile-20261121
+
+ ❯ src/domain/trip/p5Identity.test.ts (13 tests | 1 failed) 32ms
+   × legacy sparse enrichment and rekey retain the descriptor-free profile 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/domain/trip/p5Identity.test.ts > legacy sparse enrichment and rekey retain the descriptor-free profile
+Error: INVALID_TRANSPORT_IDENTITY
+ ❯ p5IdentityPatch src/domain/trip/p5Identity.ts:92:11
+     90|   const baseline = upgradeLegacyP5Identity(previous);
+     91|   if (!validTransportIdentity({ ...baseline, ...supplied }))
+     92|     throw new Error("INVALID_TRANSPORT_IDENTITY");
+       |           ^
+     93|   const changes = Object.fromEntries(
+     94|     Object.entries(supplied).filter(
+ ❯ src/domain/trip/p5Identity.test.ts:359:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  12:25:06
+   Duration  233ms (transform 88ms, setup 9ms, import 131ms, tests 32ms, environment 0ms)
+

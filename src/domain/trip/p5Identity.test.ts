@@ -89,11 +89,24 @@ it("accepts explicit unknown and projects no invented service identity", () => {
   });
   expect(item.details.service).not.toHaveProperty("operatorLiteral");
 });
-it("rejects original five blank facts before any persistence", () => {
+it("accepts original five exact blank facts without changing intent bytes", () => {
   const s = known();
   for (const k of fields.filter((k) => k !== "operator_namespace"))
     (s as Record<string, unknown>)[k] = "";
-  expect(() => validateCoreCommand(fixture(s).command)).toThrow();
+  const { actor, command } = fixture(s);
+  const bytes = JSON.stringify(command);
+  expect(validateCoreCommand(command).payload).toEqual(command.payload);
+  const created = applyCoreCommand(
+    emptyCoreGraph(),
+    command,
+    actor,
+    "2026-11-21T00:00:00Z",
+  );
+  expect(created.graph.itinerary_transport_services[0]).toMatchObject(s);
+  expect(created.graph.itinerary_transport_services[0]).not.toHaveProperty(
+    "identity_state",
+  );
+  expect(JSON.stringify(command)).toBe(bytes);
 });
 it("accepts old complete bytes without injecting a descriptor", () => {
   const { command } = fixture(known());
@@ -112,7 +125,15 @@ it("enriches the same Item and service key with revision CAS and rejects an outs
     operationId: randomUUID(),
     command: "SET_TRANSPORT_DETAILS",
     baseVector: [{ ...command.target, revision: 1 }],
-    payload: { service: known() },
+    payload: {
+      service: {
+        ...known(),
+        identity_state: {
+          version: 1,
+          fields: Object.fromEntries(fields.map((k) => [k, "KNOWN"])),
+        },
+      },
+    },
   };
   const enriched = applyCoreCommand(g, update, actor, "2026-11-17T00:00:01Z").graph;
   expect(enriched.itinerary_events).toHaveLength(1);
@@ -190,7 +211,7 @@ it("sparse omission and repeated null retain unknown facts; known enrichment req
   });
 });
 
-it("reads the approved legacy P5 NAME/empty stored shape without changing canonical bytes or admitting a new blank create", async () => {
+it("reads the approved legacy P5 NAME/empty stored shape without changing canonical bytes and accepts its original legal command", async () => {
   const { validateCoreGraph } = await import("./tripCoreV2Graph");
   const { canonicalCoreJson } = await import("./tripCoreV2Json");
   const f = fixture(known()),
@@ -215,7 +236,7 @@ it("reads the approved legacy P5 NAME/empty stored shape without changing canoni
   expect(canonicalCoreJson(graph as never)).toBe(bytes);
   expect(() =>
     validateCoreCommand(fixture({ ...known(), operator_issuer: "" }).command),
-  ).toThrow();
+  ).not.toThrow();
 });
 
 it("versions an existing legacy empty service only under a new explicit same-Item edit", () => {
@@ -272,4 +293,76 @@ it("versions an existing legacy empty service only under a new explicit same-Ite
       },
     }),
   ).toMatchObject({ operator_literal: null, service_number: "44" });
+});
+
+it("rejects malformed legacy values and explicit v1 descriptors without fallback", () => {
+  for (const value of [null, " ", "\t"]) {
+    expect(() =>
+      validateCoreCommand(fixture({ ...known(), operator_issuer: value }).command),
+    ).toThrow();
+  }
+  for (const identity_state of [null, {}, identity]) {
+    expect(() =>
+      validateCoreCommand(
+        fixture({ ...known(), operator_issuer: "", identity_state }).command,
+      ),
+    ).toThrow();
+  }
+});
+it("preserves the legacy profile on a full edit and rejects descriptor downgrade", () => {
+  const service = { ...known(), operator_issuer: "" };
+  const f = fixture(service);
+  const g = applyCoreCommand(
+    emptyCoreGraph(),
+    f.command,
+    f.actor,
+    "2026-11-21T00:00:00Z",
+  ).graph;
+  const update = {
+    ...f.command,
+    operationId: randomUUID(),
+    command: "SET_TRANSPORT_DETAILS",
+    baseVector: [{ ...f.command.target, revision: 1 }],
+    payload: { service: { ...service, transport_subtype: "TRAIN" } },
+  };
+  const changed = applyCoreCommand(g, update, f.actor, "2026-11-21T00:00:01Z").graph;
+  expect(changed.itinerary_transport_services[0]).toMatchObject({
+    operator_issuer: "",
+    transport_subtype: "TRAIN",
+  });
+  expect(changed.itinerary_transport_services[0]).not.toHaveProperty("identity_state");
+  const v1 = fixture();
+  const explicit = applyCoreCommand(
+    emptyCoreGraph(),
+    v1.command,
+    v1.actor,
+    "2026-11-21T00:00:00Z",
+  ).graph;
+  expect(() =>
+    applyCoreCommand(
+      explicit,
+      {
+        ...update,
+        tripId: v1.actor.tripId,
+        target: v1.command.target,
+        baseVector: [{ ...v1.command.target, revision: 1 }],
+        payload: { service: known() },
+      },
+      v1.actor,
+      "2026-11-21T00:00:01Z",
+    ),
+  ).toThrow("INVALID_TRANSPORT_IDENTITY");
+});
+
+it("legacy sparse enrichment and rekey retain the descriptor-free profile", () => {
+  const legacy = { ...known(), operator_issuer: "", service_number: "" };
+  expect(p5IdentityPatch(legacy, { service_number: "13" })).toEqual({
+    service_number: "13",
+  });
+  expect(
+    p5IdentityPatch(legacy, { service_key: "new", transport_subtype: "TRAIN" }),
+  ).toEqual({ transport_subtype: "TRAIN" });
+  expect(() => p5IdentityPatch(legacy, { operator_issuer: null })).toThrow(
+    "INVALID_TRANSPORT_IDENTITY",
+  );
 });

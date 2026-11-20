@@ -541,25 +541,13 @@ function executeCoreMutation(
         throw new Error("PROTECTED_FIELD");
     for (const row of rows) {
       const { [key]: identity, ...facts } = row;
-      const resetIdentity =
+      if (
         t === "itinerary_transport_services" &&
         facts.identity_state === undefined &&
-        g[t].some(
-          (old) =>
-            old.event_id === id &&
-            old[key] === identity &&
-            old.identity_state !== undefined,
-        );
-      detail(
-        t,
-        id,
-        resetIdentity ? { ...facts, identity_state: null } : facts,
-        identity as string,
-      );
-      if (resetIdentity) {
-        const updated = g[t].find((row) => row.event_id === id && row[key] === identity)!;
-        delete updated.identity_state;
-      }
+        g[t].some((old) => old.event_id === id && old.identity_state !== undefined)
+      )
+        throw new Error("INVALID_TRANSPORT_IDENTITY");
+      detail(t, id, facts, identity as string);
     }
     g[t] = g[t].filter((r) => r.event_id !== id || rows.some((n) => n[key] === r[key]));
     for (const row of removed)

@@ -1,0 +1,27 @@
+mcp/beta.ts(24,8): error TS2307: Cannot find module '@modelcontextprotocol/server' or its corresponding type declarations.
+mcp/beta.ts(297,34): error TS7006: Parameter 'state' implicitly has an 'any' type.
+mcp/beta.ts(314,14): error TS7006: Parameter 'input' implicitly has an 'any' type.
+mcp/beta.ts(342,14): error TS7006: Parameter 'uri' implicitly has an 'any' type.
+mcp/beta.ts(357,16): error TS7031: Binding element 'plan' implicitly has an 'any' type.
+mcp/beta.ts(381,16): error TS7031: Binding element 'plan' implicitly has an 'any' type.
+mcp/beta.ts(431,16): error TS7031: Binding element 'capabilityId' implicitly has an 'any' type.
+mcp/beta.ts(562,30): error TS7006: Parameter 'ctx' implicitly has an 'any' type.
+mcp/beta.ts(884,19): error TS2347: Untyped function calls may not accept type arguments.
+mcp/beta.ts(1232,47): error TS18046: 'response' is of type 'unknown'.
+mcp/beta.ts(1233,29): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'BodyInit | null | undefined'.
+mcp/beta.ts(1234,19): error TS18046: 'response' is of type 'unknown'.
+mcp/beta.ts(1236,35): error TS18046: 'response' is of type 'unknown'.
+mcp/betaLegacySessions.ts(7,8): error TS2307: Cannot find module '@modelcontextprotocol/server' or its corresponding type declarations.
+mcp/domainToolRegistry.ts(2,48): error TS2307: Cannot find module '@modelcontextprotocol/server' or its corresponding type declarations.
+mcp/inChatConfirmation.ts(4,48): error TS2307: Cannot find module '@modelcontextprotocol/server' or its corresponding type declarations.
+mcp/inChatConfirmation.ts(185,14): error TS7006: Parameter 'uri' implicitly has an 'any' type.
+mcp/inChatConfirmation.ts(240,14): error TS7006: Parameter 'input' implicitly has an 'any' type.
+mcp/server.ts(45,8): error TS2307: Cannot find module '@modelcontextprotocol/server' or its corresponding type declarations.
+mcp/server.ts(758,51): error TS18046: 'protocol' is of type 'unknown'.
+mcp/server.ts(762,30): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'BodyInit | null | undefined'.
+mcp/server.ts(763,27): error TS18046: 'protocol' is of type 'unknown'.
+mcp/server.ts(764,28): error TS18046: 'protocol' is of type 'unknown'.
+mcp/server.ts(770,15): error TS18046: 'protocol' is of type 'unknown'.
+mcp/server.ts(775,53): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'WithImplicitCoercion<string | ArrayLike<number>>'.

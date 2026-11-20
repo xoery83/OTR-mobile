@@ -1,3 +1,7 @@
+# Root1 P5 legacy compatibility candidate — 21 November 2026
+
+Base4a64eeb0; bounded source-only fix restores existing Manual P5 NAME/exact-empty profile and omits absent optional identity_state for legacy Pg rows.144 targeted tests and scoped lint PASS, independent Review NO_BLOCKER. Full typecheck blocked by existing missing MCP SDK dependency (not PASS). No SQL/Hosted/Main write, no Native repository/SQLite edits. Native is sole Beta Lead: preserve Layer3 and SQLite81, serial integration → Root2 software deployment → original-operation P5 Receipt/readback/Native cold restore. UNKNOWN is receipt-first,404 not NoCommit. Details: `docs/ops/p5-legacy-profile-20261121/HANDOFF.md`.
+
 # Unified Beta delivery — 21 November 2026 NZDT
 
 Owner appointed Native as the sole Beta Delivery Lead. Ordinary approved fixes may merge/push Main after checks and real path verification; protected authority/financial contracts and publication still require their existing gates. Main/Hosted Writer returned by MC. Current remote Main `bedf24dc` includes Managed MCP `c138470d`; it is integrated in candidate `4a64eeb0` on `codex/native-unified-prebeta-20261121`, not yet merged/pushed to Main. Unique backlog and journey matrix: `docs/BETA_PRODUCT_ACCEPTANCE.md`.
