@@ -3208,7 +3208,7 @@ it("reads an existing immutable receipt locally only for the same original inten
   expect(await f.repo.retainedReceipt(f.ctx, f.command)).toEqual(f.receipt.receipt);
 });
 
-it("replays a pinned historical blank P5 only for local display, keeping strict dispatch and original bytes", async () => {
+it("replays and classifies legal legacy P5 with the sole formal validator while preserving original bytes", async () => {
   const { canonicalCoreJson } = await import("../../domain/trip/tripCoreV2Json");
   const { coreHashValue } = await import("../../domain/trip/tripCoreV2Read");
   const f = fixture(),
@@ -3285,10 +3285,10 @@ it("replays a pinned historical blank P5 only for local display, keeping strict 
   expect(display.graph.itinerary_events.map((r) => r.id)).toEqual(
     expect.arrayContaining([item, command.target.id]),
   );
-  expect(display.graph.itinerary_transport_services[0]).toMatchObject({
-    operator_literal: null,
-    identity_state: { version: 1 },
-  });
+  expect(display.graph.itinerary_transport_services[0].operator_literal).toBe("");
+  expect(display.graph.itinerary_transport_services[0]).not.toHaveProperty(
+    "identity_state",
+  );
   expect(await f.repo.combinedSnapshot(ctx)).not.toBeNull();
   expect(
     f.sql.prepare("SELECT * FROM sync_operations WHERE id=?").get(command.operationId),
@@ -3300,10 +3300,27 @@ it("replays a pinned historical blank P5 only for local display, keeping strict 
       )
       .get(command.operationId),
   ).toEqual({ canonical_intent_text: text, intent_sha256: digest });
-  await expect(f.repo.pending(ctx)).rejects.toThrow("INVALID_TRANSPORT_IDENTITY");
-  await expect(f.repo.enqueue(ctx, command)).rejects.toThrow(
-    "INVALID_TRANSPORT_IDENTITY",
-  );
+  const { validateCoreCommand, isNormalManualCreate } =
+    await import("../../domain/trip/tripCoreV2Commands");
+  const { unknownP5Identity } = await import("../../domain/trip/p5Identity");
+  const original = validateCoreCommand(command);
+  expect((await f.repo.pending(ctx))[0].command).toEqual(original);
+  expect(isNormalManualCreate(original)).toBe(true);
+  await expect(f.repo.enqueue(ctx, command)).resolves.toMatchObject({
+    operationId: command.operationId,
+  });
+  for (const service of [
+    { ...command.payload.service, operator_issuer: " " },
+    {
+      ...command.payload.service,
+      ...unknownP5Identity(),
+      operator_literal: "invalid known fact",
+    },
+  ]) {
+    expect(() =>
+      validateCoreCommand({ ...command, payload: { ...command.payload, service } }),
+    ).toThrow("INVALID_TRANSPORT_IDENTITY");
+  }
   f.sql
     .prepare("UPDATE sync_operations SET payload_json='{}' WHERE id=?")
     .run(command.operationId);

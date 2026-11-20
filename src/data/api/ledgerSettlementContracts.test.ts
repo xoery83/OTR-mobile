@@ -83,3 +83,219 @@ describe("Settlement 2.0 Personal Payment contracts", () => {
     ).toBe(false);
   });
 });
+
+it("preserves legitimate empty response labels without changing identities, amounts or source digests", async () => {
+  const { settlementPreviewSchema, personalSettlementReviewResponseSchema } =
+    await import("./ledgerSettlementContracts");
+  const memberId = payment.counterpartyMemberId;
+  const preview = {
+    state: "PREVIEW_READY",
+    journeyId: payment.id,
+    throughTimestamp: payment.occurredAt,
+    settlementCurrency: "NZD",
+    settlementScale: 2,
+    settingsRevision: 1,
+    algorithmVersion: "ledger-settlement-greedy-v1",
+    members: [{ memberId, displayNameSnapshot: "" }],
+    inputs: [],
+    blockers: [],
+    exclusions: [],
+    balances: [
+      {
+        memberId,
+        displayNameSnapshot: "",
+        currency: "NZD",
+        scale: 2,
+        paidMinor: 30,
+        owedMinor: 20,
+        transferredMinor: 0,
+        netMinor: 10,
+      },
+    ],
+    transfers: [
+      {
+        fromMemberId: memberId,
+        toMemberId: payment.id,
+        amount: { minor: 10, currency: "NZD", scale: 2 },
+      },
+    ],
+    inputDigest: "a".repeat(64),
+    sourceAsOf: payment.occurredAt,
+    sourceFingerprintPolicy: "SETTLEMENT_SOURCE_V1",
+    sourceFingerprint: "b".repeat(64),
+    confirmedSettlement: null,
+    confirmationDiff: [],
+  };
+  const before = JSON.stringify(preview);
+  expect(settlementPreviewSchema.parse(preview)).toEqual(preview);
+  expect(JSON.stringify(preview)).toBe(before);
+  expect(
+    settlementPreviewSchema.safeParse({
+      ...preview,
+      members: [{ memberId: "invalid", displayNameSnapshot: "" }],
+    }).success,
+  ).toBe(false);
+  expect(
+    settlementPreviewSchema.safeParse({
+      ...preview,
+      balances: [{ ...preview.balances[0], paidMinor: -1 }],
+    }).success,
+  ).toBe(false);
+  expect(
+    settlementPreviewSchema.safeParse({
+      ...preview,
+      transfers: [
+        { ...preview.transfers[0], amount: { minor: 0.5, currency: "NZD", scale: 2 } },
+      ],
+    }).success,
+  ).toBe(false);
+  expect(
+    settlementPreviewSchema.safeParse({
+      ...preview,
+      transfers: [
+        { ...preview.transfers[0], amount: { minor: 10, currency: "NZD", scale: 3 } },
+      ],
+    }).success,
+  ).toBe(false);
+  const review = {
+    statement: {
+      journeyId: payment.id,
+      memberId,
+      currency: "NZD",
+      scale: 2,
+      settingsRevision: 1,
+      algorithmVersion: "ledger-settlement-greedy-v1",
+      settlementId: null,
+      settlementRevision: null,
+      settlementInputDigest: null,
+      paidMinor: 30,
+      shareMinor: 20,
+      balanceMinor: 10,
+      contributions: [],
+    },
+    statementFingerprint: "c".repeat(64),
+    checkpoint: null,
+    delta: null,
+    coverage: [
+      { memberId, displayName: "", reviewedAt: null, reviewState: "NOT_REVIEWED" },
+    ],
+  };
+  expect(personalSettlementReviewResponseSchema.parse(review)).toEqual(review);
+  expect(
+    personalSettlementReviewResponseSchema.safeParse({
+      ...review,
+      coverage: [{ ...review.coverage[0], memberId: "invalid" }],
+    }).success,
+  ).toBe(false);
+});
+
+it("round-trips empty finalized and adjustment labels without weakening financial or identity fields", async () => {
+  const { settlementFinalizeResponseSchema, settlementAdjustmentPreviewSchema } =
+    await import("./ledgerSettlementContracts");
+  const memberId = payment.counterpartyMemberId;
+  const entity = {
+    id: payment.id,
+    journeyId: payment.id,
+    status: "FINALIZED",
+    throughTimestamp: payment.occurredAt,
+    settlementCurrency: "NZD",
+    settlementScale: 2,
+    settingsRevision: 1,
+    algorithmVersion: "ledger-settlement-greedy-v1",
+    inputDigest: "a".repeat(64),
+    revision: 1,
+    finalizedBy: memberId,
+    finalizedAt: payment.occurredAt,
+    inputs: [],
+    balances: [],
+    adjustmentDeltas: [
+      { memberId, displayNameSnapshot: "", deltaMinor: 10, currency: "NZD", scale: 2 },
+    ],
+    outstandingBalances: [
+      {
+        memberId,
+        displayNameSnapshot: "",
+        amount: { minor: 10, currency: "NZD", scale: 2 },
+      },
+    ],
+    transfers: [],
+    auditEvents: [],
+  };
+  const finalized = { entity, idempotentReplay: false };
+  const raw = JSON.stringify(finalized);
+  expect(settlementFinalizeResponseSchema.parse(finalized)).toEqual(finalized);
+  expect(JSON.stringify(finalized)).toBe(raw);
+  for (const changed of [
+    {
+      ...entity,
+      adjustmentDeltas: [{ ...entity.adjustmentDeltas[0], memberId: "invalid" }],
+    },
+    { ...entity, adjustmentDeltas: [{ ...entity.adjustmentDeltas[0], deltaMinor: 0.5 }] },
+    {
+      ...entity,
+      outstandingBalances: [{ ...entity.outstandingBalances[0], memberId: "invalid" }],
+    },
+    {
+      ...entity,
+      outstandingBalances: [
+        {
+          ...entity.outstandingBalances[0],
+          amount: { minor: 10.5, currency: "NZD", scale: 2 },
+        },
+      ],
+    },
+    {
+      ...entity,
+      outstandingBalances: [
+        {
+          ...entity.outstandingBalances[0],
+          amount: { minor: 10, currency: "NZD", scale: 3 },
+        },
+      ],
+    },
+  ])
+    expect(
+      settlementFinalizeResponseSchema.safeParse({ ...finalized, entity: changed })
+        .success,
+    ).toBe(false);
+  const adjustment = {
+    state: "PREVIEW_READY",
+    rootSettlementId: payment.id,
+    throughTimestamp: payment.occurredAt,
+    expectedHeadId: payment.id,
+    priorInputDigest: "a".repeat(64),
+    inputDigest: "b".repeat(64),
+    zeroTransfer: false,
+    inputs: [],
+    balances: [
+      {
+        memberId,
+        displayNameSnapshot: "",
+        currency: "NZD",
+        scale: 2,
+        sealedMinor: 0,
+        currentMinor: 10,
+        deltaMinor: 10,
+      },
+    ],
+    transfers: [],
+    blockers: [],
+    exclusions: [],
+    changedExpenses: [],
+  };
+  const adjustmentRaw = JSON.stringify(adjustment);
+  expect(settlementAdjustmentPreviewSchema.parse(adjustment)).toEqual(adjustment);
+  expect(JSON.stringify(adjustment)).toBe(adjustmentRaw);
+  for (const balance of [
+    { ...adjustment.balances[0], memberId: "invalid" },
+    { ...adjustment.balances[0], currentMinor: 0.5 },
+  ])
+    expect(
+      settlementAdjustmentPreviewSchema.safeParse({ ...adjustment, balances: [balance] })
+        .success,
+    ).toBe(false);
+  expect(
+    settlementAdjustmentPreviewSchema.safeParse({ ...adjustment, inputDigest: "invalid" })
+      .success,
+  ).toBe(false);
+});

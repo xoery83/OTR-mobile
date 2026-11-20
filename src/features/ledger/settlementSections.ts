@@ -346,7 +346,7 @@ export function buildFinalizedSettlementCategories(
         category: expense?.category ?? "other",
         occurredAt: expense?.occurredAt ?? "",
         payerMemberId: input.payer.memberId,
-        payerName: input.payer.displayNameSnapshot,
+        payerName: input.payer.displayNameSnapshot || t("common.traveller"),
         originalMinor: input.original.minor,
         originalComponentMinor:
           kind === "SPENDING" ? input.original.minor : (split?.originalMinor ?? null),
@@ -396,7 +396,7 @@ export function buildEstimatedSettlementCategories(
         category: input.expense.category,
         occurredAt: input.expense.occurredAt,
         payerMemberId: input.expense.payerMemberId,
-        payerName: names.get(input.expense.payerMemberId) ?? "Traveller",
+        payerName: names.get(input.expense.payerMemberId) || t("common.traveller"),
         originalMinor: input.expense.original.minor,
         originalComponentMinor:
           kind === "SPENDING"
@@ -574,7 +574,7 @@ export function chronologicalPersonalPayments(records: LocalPersonalPayment[]) {
 }
 
 export function memberName(members: SettlementMember[], id: string | null) {
-  return members.find((member) => member.id === id)?.label ?? t("common.traveller");
+  return members.find((member) => member.id === id)?.label || t("common.traveller");
 }
 
 export function settlementCacheMessage(online: boolean, content: "data" | "details") {

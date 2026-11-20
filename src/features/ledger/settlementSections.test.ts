@@ -752,3 +752,24 @@ function finalized(inputDigest: string) {
     finalizedAt: "2026-09-14T00:00:00.000Z",
   } as Parameters<typeof buildSettlementComparison>[0]["confirmed"];
 }
+
+it("uses the localized traveller fallback only for display without changing raw member labels", async () => {
+  const { memberName } = await import("./settlementSections");
+  const { getUiLocale, setUiLocale, t } = await import("@/ui/locale");
+  const members = [
+    { id: "empty", label: "" },
+    { id: "named", label: "Original traveller" },
+  ];
+  const raw = JSON.stringify(members),
+    original = getUiLocale();
+  try {
+    for (const locale of ["en", "zh-Hans"] as const) {
+      setUiLocale(locale);
+      expect(memberName(members, "empty")).toBe(t("common.traveller"));
+      expect(memberName(members, "named")).toBe("Original traveller");
+      expect(JSON.stringify(members)).toBe(raw);
+    }
+  } finally {
+    setUiLocale(original);
+  }
+});

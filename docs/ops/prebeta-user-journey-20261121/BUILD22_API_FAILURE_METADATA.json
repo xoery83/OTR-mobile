@@ -1,0 +1,16 @@
+{
+  "osLogProbe": "NO_RECORDS; no inference from absence",
+  "actualExistingDebugUI": {
+    "previewPhase": "settlement_preview",
+    "previewValidation": [
+      "members.0.displayNameSnapshot:too_small",
+      "balances.0.displayNameSnapshot:too_small"
+    ],
+    "reviewRoute": "GET /v2/trips/:id/settlement-review",
+    "reviewValidation": "coverage.0.displayName:too_small",
+    "at": "2026-11-20T23:33:58.272Z"
+  },
+  "root2Independent": "sameSyntheticTrip2members; linkedB canonicalPerson/profile names legitimatelyempty; unlinkedPerson namepresent; expensehistoricalname isnotcanonicalname",
+  "debugMode": "restored original OFF",
+  "fix": "response-onlylabelvalidation and presentationfallback; preserve rawdata/IDs/money/digests"
+}

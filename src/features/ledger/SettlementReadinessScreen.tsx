@@ -1093,7 +1093,9 @@ function ExpenseSection({
                   style={styles.memberMenuItem}
                 >
                   <Text style={[styles.memberMenuText, selected && styles.bold]}>
-                    {member.id === actorMemberId ? t("common.me") : member.label}
+                    {member.id === actorMemberId
+                      ? t("common.me")
+                      : memberName(members, member.id)}
                   </Text>
                   {selected ? <Text style={styles.memberMenuCheck}>✓</Text> : null}
                 </Pressable>
@@ -1552,7 +1554,7 @@ function GroupReviewStatus({
             {coverage.map((member) => (
               <View key={member.memberId} style={styles.reviewMemberRow}>
                 <Text style={styles.body}>
-                  {member.displayName}
+                  {member.displayName || t("common.traveller")}
                   {member.memberId === actorMemberId ? t("settlement.youSuffix") : ""}
                 </Text>
                 <Text
