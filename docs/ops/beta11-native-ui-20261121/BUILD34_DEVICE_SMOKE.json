@@ -1,0 +1,33 @@
+{
+  "status": "DEVICE_DEFAULT_CLOSED_SMOKE_PASS_NOT_HOSTED_JOIN_REVOKE",
+  "sourceCommit": "9e935108a8ce440746e79783d93f4905fbb65d0a",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundleId": "art.xoery.otr",
+  "build": "34",
+  "hbcSha256": "b3cecf1ebd174236f4aeb2f1bc3a2edd25755f5fc8004a37129501ab8cdae7ea",
+  "xcode": "Release BUILD SUCCEEDED",
+  "signature": "Simulator adhoc deep strict verify PASS; same bundle and build Team setting3K49Z2Q5X7",
+  "observed": [
+    "Cold My Trips with original QA/history/no login prompt",
+    "Same new Trip a1a6f569 and Person f7711ff6 retained; no local pending marker",
+    "People\u2192Send invitation opens correct recipient route",
+    "Hosted selector remains closed: Invitations are not available",
+    "Native Back returns same Trip; no Invite/Claim/Revoke submission"
+  ],
+  "noResetOrSessionCopy": true,
+  "sqliteVersion": 81,
+  "retainedOriginalOperations": [
+    [
+      "CREATE_TRIP",
+      "COMPLETED"
+    ],
+    [
+      "TRIP_PERSON_CLOUD_CREATE",
+      "COMPLETED"
+    ],
+    [
+      "TRIP_NORMAL_READBACK",
+      "COMPLETED"
+    ]
+  ]
+}
