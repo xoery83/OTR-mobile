@@ -96,6 +96,8 @@ const execution = {
     {
       candidateId: "a",
       kind: "P1",
+      subtype: "PLAN",
+      documentIds: [],
       fields: { title: "Harbour walk", "schedule.start.local_date": "2026-11-23" },
     },
   ],
