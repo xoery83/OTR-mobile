@@ -4,13 +4,15 @@ import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { validateCoreReceipt } from "@/domain/trip/tripCoreV2Receipt";
 import { coreHashValue } from "@/domain/trip/tripCoreV2Read";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
-// Retained exact MANUAL Create provenance only; caller owns transaction, Actor and revision fences.
+// Retained exact Create provenance; caller owns transaction, Actor and revision fences.
 export async function hasAcceptedManualCreate(
   database: Pick<CoreDatabase, "getAllAsync">,
   context: AccountRequestContext,
   itemId: string,
   family: "P1" | "P2" | "P3" | "P4" | "P5" | "P6",
+  admissionMode: "MANUAL" | "IMPORT" = "MANUAL",
 ) {
+  if (admissionMode === "IMPORT" && family !== "P1") return false;
   const rows = await database.getAllAsync<{
     operation_id: string;
     canonical_intent_text: string;
@@ -35,7 +37,7 @@ export async function hasAcceptedManualCreate(
     const command = validateCoreCommand(JSON.parse(row.canonical_intent_text));
     if (
       command.command !== (family === "P2" ? "CREATE_SPARSE_FLIGHT" : "CREATE_ITEM") ||
-      command.admission.mode !== "MANUAL" ||
+      command.admission.mode !== admissionMode ||
       command.target.id !== itemId ||
       command.tripId !== context.tripId ||
       (family !== "P2" && (command.payload as { family?: string }).family !== family)

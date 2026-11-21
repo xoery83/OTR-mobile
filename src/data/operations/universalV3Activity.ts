@@ -96,6 +96,94 @@ export async function readV3UnknownCandidates(
   );
 }
 
+// Retained local evidence is presentation only; it never grants admission or dispatches work.
+export async function readRetainedUniversalV3Results(
+  model: import("@/domain/capture/captureSubmission").CaptureJobReadModel,
+  candidates: readonly import("zod").z.infer<typeof import("../api/universalV3Contracts").universalV3Candidate>[],
+) {
+  const [
+    { requireAdoptedUserId },
+    { captureAccountRequestContext, assertAccountRequestContext },
+    { readInitializedDatabase },
+    { createTripCoreV2Repository },
+    { tripCoreSha256Hex },
+    { universalP1Identity },
+    { projectUniversalV3SaveState },
+  ] = await Promise.all([
+    import("../auth/authRepository"),
+    import("../auth/accountRequestContext"),
+    import("../db/database"),
+    import("../repositories/tripCoreV2Repository"),
+    import("../repositories/tripCoreSha256"),
+    import("@/domain/trip/universalImportIdentity"),
+    import("./universalV3Review"),
+  ]);
+  const tripId = model.batch.context.tripPrior?.id ?? model.assignedTripId;
+  if (!tripId) throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
+  const context = await captureAccountRequestContext(tripId, requireAdoptedUserId);
+  if (context.accountId !== model.batch.accountId)
+    throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
+  const repository = createTripCoreV2Repository(
+    await readInitializedDatabase(), requireAdoptedUserId, tripCoreSha256Hex,
+  );
+  const operations: V3ResultOperation[] = [];
+  for (const candidate of candidates) {
+    for (const kind of ["item", "link", "flight-details"]) {
+      const operationId = universalP1Identity(candidate.candidateId, "local-first", kind);
+      const retained = (await repository.pending(context, operationId)).find(
+        (row) => row.command.operationId === operationId,
+      );
+      if (!retained || retained.command.target.kind !== "ITEM") continue;
+      const receipt = await repository.retainedReceipt(context, retained.command);
+      if (retained.command.tripId !== tripId || (receipt && (
+        receipt.tripId !== tripId || receipt.actorAccountId !== context.accountId ||
+        receipt.operationId !== operationId
+      ))) throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
+      operations.push({ candidateId: candidate.candidateId, documentIds: candidate.documentIds,
+        command: retained.command, receipt });
+    }
+  }
+  const unknown = await readV3UnknownCandidates(model, candidates.map((c) => c.candidateId));
+  const snapshot = await repository.acceptedSnapshot(context);
+  await assertAccountRequestContext(context, requireAdoptedUserId);
+  if (!snapshot) return null;
+  if (snapshot.actor.accountId !== context.accountId || snapshot.actor.tripId !== tripId)
+    throw Error("UNIVERSAL_V3_REVIEW_CONTEXT");
+  const observations: Record<string, V3SaveObservation> = {};
+  for (const candidate of candidates) {
+    const rows = operations.filter((row) => row.candidateId === candidate.candidateId);
+    const find = (kind: string) => rows.find((row) => row.command.operationId ===
+      universalP1Identity(candidate.candidateId, "local-first", kind));
+    const item = find("item"), link = find("link");
+    const original = link ?? item;
+    const flight = rows.find((row) => row.command.command === "SET_AUTHORED_FLIGHT_DETAILS" &&
+      row.command.operationId === universalP1Identity(candidate.candidateId, "local-first", "flight-details") &&
+      row.command.target.id === original?.command.target.id);
+    let observed: V3SaveObservation = "UNCONFIRMED";
+    if (original) {
+      const target = original.command.target.id;
+      const readable = snapshot.graph.itinerary_events.some((row) => row.id === target &&
+        coreCanRead(snapshot.graph, snapshot.actor, "ITEM", row));
+      observed = flight && !flight.receipt ? "PENDING"
+        : flight?.receipt && ["REJECTED", "CONFLICT"].includes(flight.receipt.outcome)
+          ? "REVIEW_REQUIRED"
+          : projectUniversalV3SaveState({
+              itemOutcome: item ? item.receipt?.outcome ?? null : undefined,
+              relationOutcome: link ? link.receipt?.outcome ?? null : undefined,
+              itemReadback: readable,
+              relationReadback: readable && candidate.documentIds.every((id) =>
+                snapshot.graph.trip_item_document_links.some((edge) => edge.active &&
+                  edge.item_id === target && edge.document_id === id && edge.trip_id === tripId)),
+            });
+    }
+    observations[candidate.candidateId] = unknown.has(candidate.candidateId) && observed !== "VERIFIED"
+      ? "OUTCOME_UNKNOWN" : observed;
+  }
+  await assertAccountRequestContext(context, requireAdoptedUserId);
+  return { snapshot, operations, observations,
+    results: projectUniversalV3Results(snapshot, operations, observations) };
+}
+
 export type V3ResultOperation = {
   candidateId: string;
   documentIds: string[];

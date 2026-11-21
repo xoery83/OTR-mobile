@@ -13,6 +13,7 @@ import type {
 import type { UniversalV3ExecutionStatus } from "../api/universalV3Contracts";
 import {
   projectUniversalV3Activity,
+  readRetainedUniversalV3Results,
   readV3UnknownCandidates,
   type V3SaveObservation,
   projectV3ActivityFacts,
@@ -192,6 +193,28 @@ export async function readDefaultUniversalActivities(
         return capability.existing;
       },
       saves: async (job, result) => {
+        const retainedLocal = await readRetainedUniversalV3Results(
+          job,
+          result.candidates,
+        );
+        if (!isCurrent()) return {};
+        if (
+          retainedLocal &&
+          result.candidates.every(
+            (candidate) =>
+              retainedLocal.observations[candidate.candidateId] === "VERIFIED",
+          )
+        ) {
+          resultFacts.set(job.batch.batchId, {
+            ...projectUniversalV3Activity(result, retainedLocal.observations),
+            ...projectV3ActivityFacts(
+              retainedLocal.snapshot,
+              retainedLocal.operations,
+              retainedLocal.observations,
+            ),
+          });
+          return retainedLocal.observations;
+        }
         const { openUniversalV3Review } = await import("./universalV3Review");
         const unknown = await readV3UnknownCandidates(
           job,

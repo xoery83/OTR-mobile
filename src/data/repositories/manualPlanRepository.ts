@@ -517,7 +517,7 @@ export function createManualItemRepository(
         )
           throw Error("GUEST_P1_RESTORE_ITEM_EXISTS");
         const row = itemId ? editable(snapshot, itemId, context.accountId, family) : null;
-        // Exact MANUAL CREATE provenance is retained independently from accepted facts.
+        // Exact receipted Create provenance is retained independently from accepted facts.
         if (
           row &&
           expectedRevision !== undefined &&
@@ -538,6 +538,14 @@ export function createManualItemRepository(
             ["P1", "P3", "P4", "P6"].includes(family) &&
             snapshot.cert &&
             ((await hasAcceptedManualCreate(database, context, itemId!, family)) ||
+              (family === "P1" &&
+                (await hasAcceptedManualCreate(
+                  database,
+                  context,
+                  itemId!,
+                  family,
+                  "IMPORT",
+                ))) ||
               (freshAcceptedEdit = await freshAcceptedItem(context, itemId!)))
           )
         )

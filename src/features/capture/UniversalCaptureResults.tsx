@@ -34,6 +34,7 @@ import {
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
 import {
   projectUniversalV3Activity,
+  readRetainedUniversalV3Results,
   readV3UnknownCandidates,
   type V3SaveObservation,
   projectUniversalV3Results,
@@ -239,6 +240,21 @@ export function UniversalV3Activity({
         return;
       running = true;
       try {
+        const retained = await readRetainedUniversalV3Results(model, result.candidates);
+        if (!current()) return;
+        if (retained) {
+          setSavedResults(retained.results);
+          setResultOperations(retained.operations);
+          setObservations(retained.observations);
+          if (
+            result.candidates.every(
+              (candidate) => retained.observations[candidate.candidateId] === "VERIFIED",
+            )
+          ) {
+            setReadUnavailable(false);
+            return;
+          }
+        }
         const unknown = await readV3UnknownCandidates(
           model,
           result.candidates.map((c) => c.candidateId),
@@ -402,7 +418,7 @@ export function UniversalV3Activity({
           : undefined
       }
     >
-      {result && !intent?.confirmed
+      {result && !intent?.confirmed && progressState !== "complete"
         ? (rows.length ? displayRows.map((row) => row.candidate) : result.candidates).map(
             (original) => {
               const candidate =

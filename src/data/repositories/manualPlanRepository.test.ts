@@ -1,3 +1,4 @@
+import type { SQLiteBindValue } from "expo-sqlite";
 import { noteGuestPublicationRequested } from "../auth/guestPublicationHold";
 import { createManualRentalRepository } from "./manualRentalRepository";
 import { createManualStayRepository } from "./manualStayRepository";
@@ -1830,3 +1831,88 @@ it.each(["TEXT", "TIME"] as const)(
     expect(temporal(after)).toEqual(temporal(before));
   },
 );
+
+async function importedP1ProofFixture(foreignOwner = false) {
+  const f = await acceptedPlanFixture(foreignOwner);
+  const row = f.sql
+    .prepare(
+      `SELECT i.operation_id,i.canonical_intent_text,i.intent_sha256,op.payload_json,r.body_json,r.receipt_sha256
+    FROM trip_core_pending_intents i JOIN sync_operations op ON op.id=i.queue_operation_id
+    JOIN trip_core_trip_core_command_receipts r ON r.operation_id=i.operation_id
+    WHERE op.entity_id=? AND op.status='COMPLETED' AND i.state='APPLIED'`,
+    )
+    .get(f.itemId) as Record<string, string>;
+  const { coreHashValue } = await import("@/domain/trip/tripCoreV2Read");
+  const hash = async (bytes: Uint8Array) =>
+    createHash("sha256").update(bytes).digest("hex");
+  const command = JSON.parse(row.canonical_intent_text);
+  command.admission = {
+    mode: "IMPORT",
+    sourceIntentId: null,
+    policyVersion: null,
+  };
+  row.canonical_intent_text = row.payload_json = JSON.stringify(command);
+  row.intent_sha256 = await coreHashValue("otr-trip-core-intent-v2", command, hash);
+  const receipt = JSON.parse(row.body_json);
+  receipt.intentSha256 = row.intent_sha256;
+  const { receiptSha256: _previous, ...body } = receipt;
+  row.receipt_sha256 = receipt.receiptSha256 = await coreHashValue(
+    "otr-trip-core-receipt-v2",
+    body,
+    hash,
+  );
+  row.body_json = JSON.stringify(receipt);
+  // Synthetic retained-record fixture: never rewrite real immutable history.
+  const database: CoreDatabase = {
+    ...f.coreDatabase,
+    getAllAsync: async <T>(query: string, ...args: unknown[]) =>
+      query.includes("SELECT i.operation_id,i.canonical_intent_text")
+        ? ([row] as T[])
+        : f.coreDatabase.getAllAsync<T>(query, ...(args as SQLiteBindValue[])),
+  };
+  return {
+    ...f,
+    row,
+    importedRepo: createManualPlanRepository(database, f.identity, f.core),
+  };
+}
+it("edits an own accepted IMPORT P1 through the original Manual repository without changing its Source proof", async () => {
+  const f = await importedP1ProofFixture();
+  const original = JSON.stringify(f.row);
+  const draft = await f.importedRepo.read(f.tripId, f.itemId, f.revision);
+  await f.importedRepo.save(draft, {
+    ...draft.fields,
+    title: "My corrected imported plan",
+  });
+  const commands = await f.core.pending(await f.core.captureContext(f.tripId));
+  expect(commands).toHaveLength(1);
+  expect(commands[0].command).toMatchObject({
+    command: "SET_ITEM_TEXT",
+    admission: { mode: "MANUAL", sourceIntentId: null },
+    target: { id: f.itemId },
+    baseVector: [{ id: f.itemId, revision: f.revision }],
+  });
+  expect(JSON.stringify(f.row)).toBe(original);
+});
+it("an IMPORT Create proof does not authorize editing another Creator's P1", async () => {
+  const f = await importedP1ProofFixture(true);
+  await expect(f.importedRepo.read(f.tripId, f.itemId, f.revision)).rejects.toThrow(
+    "MANUAL_PLAN_UNAVAILABLE",
+  );
+});
+it.each(["receipt_sha256", "intent_sha256", "payload_json"])(
+  "rejects imported P1 with mismatched retained %s",
+  async (field) => {
+    const f = await importedP1ProofFixture();
+    f.row[field] = field === "payload_json" ? "{}" : "0".repeat(64);
+    await expect(f.importedRepo.read(f.tripId, f.itemId, f.revision)).rejects.toThrow();
+  },
+);
+it("keeps Account and revision fences when accepting IMPORT P1 proof", async () => {
+  const f = await importedP1ProofFixture();
+  await expect(f.importedRepo.read(f.tripId, f.itemId, f.revision + 1)).rejects.toThrow(
+    "MANUAL_PLAN_CONFLICT",
+  );
+  f.switchAccount();
+  await expect(f.importedRepo.read(f.tripId, f.itemId, f.revision)).rejects.toThrow();
+});

@@ -16,6 +16,7 @@ const h = vi.hoisted(() => ({
   confirm: vi.fn(),
   current: true,
   children: [] as any[],
+  retained: vi.fn(),
   buttons: new Map<string, any>(),
 }));
 vi.mock("react", async (original) => ({
@@ -52,6 +53,7 @@ vi.mock("react", async (original) => ({
 vi.mock("@/data/operations/universalV3Activity", async (original) => ({
   ...(await original<typeof import("@/data/operations/universalV3Activity")>()),
   readV3UnknownCandidates: async () => new Set(),
+  readRetainedUniversalV3Results: h.retained,
 }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
@@ -124,6 +126,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.slots = [];
   h.current = true;
+  h.retained.mockResolvedValue(null);
   h.check.mockResolvedValue("VERIFIED");
   h.open.mockResolvedValue({
     resultOperations: async () => ({
@@ -226,5 +229,19 @@ it("an explicit execution UNKNOWN survives a previous pre-confirmation read fail
   });
   expect(html).toContain(t("capture.activityStatus.uncertain"));
   expect(html).not.toContain(t("capture.ux.reviewReadUnavailable"));
+  expect(h.confirm).not.toHaveBeenCalled();
+});
+
+it("cold results use formal retained evidence even when the Backend is unavailable", async () => {
+  h.retained.mockResolvedValue({
+    results: [],
+    operations: [],
+    observations: { a: "VERIFIED" },
+  });
+  h.open.mockRejectedValue(Error("OFFLINE"));
+  render();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(render()).toContain(t("capture.activityStatus.complete"));
+  expect(h.open).not.toHaveBeenCalled();
   expect(h.confirm).not.toHaveBeenCalled();
 });

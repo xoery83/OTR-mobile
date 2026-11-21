@@ -49,7 +49,11 @@ it("another Batch's candidate IDs cannot complete this Batch", () => {
   expect(project(ready, { other: "VERIFIED" })).toEqual({ state: "checking", saved: 0 });
 });
 
-const q = vi.hoisted(() => ({ account: "owner", read: vi.fn() }));
+const q = vi.hoisted(() => ({ account: "owner", read: vi.fn(), snapshot: vi.fn(), pending: vi.fn(), receipt: vi.fn(), assert: vi.fn() }));
+vi.mock("../repositories/tripCoreV2Repository", () => ({ createTripCoreV2Repository: () => ({
+  acceptedSnapshot: q.snapshot, pending: q.pending, retainedReceipt: q.receipt,
+}) }));
+vi.mock("../repositories/tripCoreSha256", () => ({ tripCoreSha256Hex: vi.fn() }));
 vi.mock("../auth/authRepository", () => ({
   requireAdoptedUserId: async () => q.account,
 }));
@@ -59,7 +63,7 @@ vi.mock("../sync/syncOperationRepository", () => ({
 }));
 vi.mock("../auth/accountRequestContext", () => ({
   captureAccountRequestContext: async () => ({ accountId: q.account, tripId: "trip" }),
-  assertAccountRequestContext: async () => {},
+  assertAccountRequestContext: q.assert,
 }));
 it("known original queue UNKNOWN is projected without changing or claiming an operation", async () => {
   const { universalP1Identity } = await import("@/domain/trip/universalImportIdentity");
@@ -368,4 +372,71 @@ it("clipboard uses the recorded Paste source rather than pretending it was selec
     batch: { ...batchRow.batch, inputs: [{ acquisitionSource: "clipboard" }] },
   } as CaptureJobReadModel;
   expect(projectImportActivityRow(pasted).sources).toEqual(["TEXT"]);
+});
+
+async function retainedFixture() {
+  const { universalP1Identity } = await import("@/domain/trip/universalImportIdentity");
+  const { readRetainedUniversalV3Results } = await import("./universalV3Activity");
+  const f = resultFixture();
+  const candidateId = "6b8779e2-8b5c-49cc-9f0d-1725127ec77a";
+  const candidate = { candidateId, documentIds: ["d1"] } as never;
+  const model = { batch: { accountId: "actor", context: { tripPrior: { id: "trip" } } } } as CaptureJobReadModel;
+  const rows = [f.operation(candidateId, "one", "CREATE_ITEM", ["d1"], "APPLIED", true),
+    f.operation(candidateId, "one", "RECONCILE_ITEM_DOCUMENTS")];
+  rows.forEach((row, index) => {
+    row.command.operationId = universalP1Identity(candidateId, "local-first", index ? "link" : "item");
+    row.receipt!.operationId = row.command.operationId;
+  });
+  f.snapshot.graph.trip_item_document_links.forEach((edge) => { edge.trip_id = "trip"; });
+  q.account = "actor";
+  q.assert.mockReset();
+  q.read.mockResolvedValue([]);
+  q.snapshot.mockResolvedValue(f.snapshot);
+  q.pending.mockImplementation(async (_context, id) => rows.filter((row) => row.command.operationId === id));
+  q.receipt.mockImplementation(async (_context, command) => rows.find((row) => row.command.operationId === command.operationId)?.receipt ?? null);
+  return { ...f, rows, candidateId, model, candidate, read: () => readRetainedUniversalV3Results(model, [candidate]), universalP1Identity };
+}
+it("restores formal local results from original operations and retained receipts only", async () => {
+  const f = await retainedFixture();
+  const result = await f.read();
+  expect(result?.observations).toEqual({ [f.candidateId]: "VERIFIED" });
+  expect(result?.results).toMatchObject([{ itemId: "one", action: "created", state: "complete" }]);
+  expect(result?.operations.map((row) => row.command)).toEqual(f.rows.map((row) => row.command));
+  expect(q.assert).toHaveBeenCalled();
+});
+it("missing receipts never imply saved; absent local commands stay UNCONFIRMED", async () => {
+  const f = await retainedFixture();
+  f.rows.forEach((row) => { row.receipt = null; });
+  expect((await f.read())?.observations[f.candidateId]).toBe("PENDING");
+  expect((await f.read())?.results[0]).toMatchObject({ action: undefined, state: "saving" });
+  q.pending.mockResolvedValue([]);
+  expect(await f.read()).toMatchObject({ observations: { [f.candidateId]: "UNCONFIRMED" }, results: [] });
+});
+it("preserves known queue UNKNOWN without claiming success", async () => {
+  const f = await retainedFixture();
+  f.rows[1].receipt = null;
+  q.read.mockResolvedValue([{ id: f.universalP1Identity(f.candidateId, "local-first", "link"),
+    entityType: "TRIP_CORE_V2", operationType: "CORE_V2_COMMAND", status: "RETRYABLE", failureCategory: "UNKNOWN" }]);
+  const result = await f.read();
+  expect(result?.observations[f.candidateId]).toBe("OUTCOME_UNKNOWN");
+  expect(result?.results[0].state).toBe("unknown");
+});
+it("returns null without an accepted snapshot and rejects foreign scope evidence", async () => {
+  const f = await retainedFixture();
+  q.snapshot.mockResolvedValue(null);
+  expect(await f.read()).toBeNull();
+  q.snapshot.mockResolvedValue({ ...f.snapshot, actor: { ...f.snapshot.actor, accountId: "foreign" } });
+  await expect(f.read()).rejects.toThrow("UNIVERSAL_V3_REVIEW_CONTEXT");
+  q.snapshot.mockResolvedValue(f.snapshot);
+  f.rows[0].receipt!.actorAccountId = "foreign";
+  await expect(f.read()).rejects.toThrow("UNIVERSAL_V3_REVIEW_CONTEXT");
+  q.account = "foreign";
+  q.snapshot.mockClear();
+  await expect(f.read()).rejects.toThrow("UNIVERSAL_V3_REVIEW_CONTEXT");
+  expect(q.snapshot).not.toHaveBeenCalled();
+});
+it("discards local results when the captured Account generation becomes stale", async () => {
+  const f = await retainedFixture();
+  q.assert.mockResolvedValueOnce(undefined).mockRejectedValue(Error("STALE_ACCOUNT"));
+  await expect(f.read()).rejects.toThrow("STALE_ACCOUNT");
 });
