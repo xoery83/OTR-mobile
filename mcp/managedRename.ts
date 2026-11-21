@@ -19,7 +19,7 @@ const canonical = (value: unknown) => canonicalCoreJson(value as Json);
 
 export function createManagedRenameGate(
   raw: unknown,
-  principal: { accountId: string; clientId: string },
+  principal: { accountId: string | null; clientId: string },
   closesAt: number,
   consent: McpConsentPolicyPin,
   evidenceFile = "/var/lib/otr/mcp-managed-dev-rename.jsonl",

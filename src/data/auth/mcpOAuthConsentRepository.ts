@@ -85,7 +85,7 @@ export const mcpBetaConsentConfigSchema = z
     managedDev: z
       .strictObject({
         clientId: z.uuid(),
-        accountId: z.uuid(),
+        accountId: z.uuid().nullable(),
         redirectUri: z.url().refine((value) => {
           const u = new URL(value);
           return (
@@ -336,7 +336,7 @@ export function createMcpOAuthConsentRepository(
       identityError ||
       !identity.user ||
       identity.user.is_anonymous !== false ||
-      (beta?.managedDev && identity.user.id !== beta.managedDev.accountId) ||
+      (beta?.managedDev?.accountId != null && identity.user.id !== beta.managedDev.accountId) ||
       (legacy !== null && !legacy.accountIds.includes(identity.user.id))
     )
       throw new McpConsentError("CLOSED");
@@ -456,12 +456,13 @@ export function createMcpOAuthConsentRepository(
         await response.body?.cancel();
         throw new McpConsentError("UNAVAILABLE");
       }
-      return await readBoundedJson(response, 4096, boundary);
+      return { body: await readBoundedJson(response, 4096, boundary), accountId: data.session.user?.id };
     } finally {
       boundary.close();
     }
   }
   async function managedDetails(): Promise<McpConsentView> {
+    const { body, accountId } = await managedRequest({ action: "inspect" });
     const view = z
       .object({
         id: z.uuid(),
@@ -477,11 +478,13 @@ export function createMcpOAuthConsentRepository(
           .optional(),
         managedWrite: z.literal(true).optional(),
       })
-      .parse(await managedRequest({ action: "inspect" }));
+      .parse(body);
     if (
       !managedPin ||
       view.id !== authorizationId ||
-      view.accountId !== beta?.managedDev?.accountId ||
+      (beta?.managedDev?.accountId === null
+        ? view.accountId !== accountId
+        : view.accountId !== beta?.managedDev?.accountId) ||
       view.policy.policyId !== managedPin.policy.id ||
       view.policy.policyVersion !== managedPin.policy.version ||
       view.policy.policyHash !== managedPin.policyHash
@@ -703,7 +706,7 @@ export function createMcpOAuthConsentRepository(
           const expected = allow ? "APPROVED" : "DENIED";
           let response: unknown;
           try {
-            response = await managedRequest({ action: "decide", allow });
+            response = (await managedRequest({ action: "decide", allow })).body;
           } catch (error) {
             // The original decision can commit even when its response is lost.
             const current = await managedDetails().catch(() => null);

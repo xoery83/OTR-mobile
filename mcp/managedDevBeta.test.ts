@@ -212,6 +212,9 @@ it("keeps explicit persistent read-only deployment distinct from the temporary w
   );
   expect(() => makeHost({ ...config, oneRename: {} })).toThrow("MANAGED_DEV_BETA_CONFIG_NOT_APPROVED");
   expect(() => makeHost({ ...config, expiresAt: now + 3_600_000 })).toThrow("MANAGED_DEV_BETA_CONFIG_NOT_APPROVED");
+  expect(() => makeHost({
+    ...config, expiresAt: now + 60_000, managedDev: { ...config.managedDev, accountId: null },
+  })).toThrow("MANAGED_DEV_BETA_CONFIG_NOT_APPROVED");
   const host = makeHost(config);
   const temporary = makeHost({ ...config, expiresAt: now + 60_000 });
   const discovery = () => new Request(`${new URL(managedDevBetaResource).origin}/.well-known/oauth-protected-resource/mcp`);
@@ -465,6 +468,34 @@ it("uses the same signed native session for live user and private Consent and st
   expect(adapter.readBinding).toHaveBeenCalledOnce();
   expect(confirmed?.scopes).toEqual(["otr.trips.read"]);
   expect(getUser).toHaveBeenCalledWith(managedDevBetaIssuer + "/user", expect.anything());
+  const otherSubject = "55555555-5555-4555-8555-555555555555";
+  const otherToken = await sign(managedDevBetaResource, false, otherSubject);
+  const general = managedNativeAuthorization({
+    ...nativeOptions, principal: { clientId, accountId: null },
+  });
+  const verifyOtherAccount = () => getUser
+    .mockResolvedValueOnce(Response.json({ sub: otherSubject }))
+    .mockResolvedValueOnce(Response.json({ id: otherSubject, is_anonymous: false }));
+  expect(await native.authorize(call(otherToken))).toBeNull();
+  verifyOtherAccount();
+  expect(await general.authorize(call(otherToken))).toBeNull();
+  verifyOtherAccount();
+  vi.mocked(adapter.readBinding).mockResolvedValueOnce({ ...verifiedBinding, accountId: otherSubject });
+  expect(await general.authorize(call(otherToken))).toMatchObject({
+    accountId: otherSubject, clientId, scopes: ["otr.trips.read"],
+  });
+  const otherFirstParty = await sign("authenticated", true, otherSubject);
+  validateAccessToken.mockResolvedValueOnce({ id: otherSubject, accountClass: "NORMAL_ACCOUNT" });
+  getUser.mockResolvedValueOnce(Response.json([{
+    client: { id: clientId }, scopes: ["openid"], granted_at: new Date().toISOString(),
+  }]));
+  const foreignConsent = await general.confirmation(decideCall(otherFirstParty, {
+    action: "inspect", id: attemptId,
+  }));
+  expect(foreignConsent.status).toBe(404);
+  expect(adapter.inspectById).toHaveBeenLastCalledWith(
+    { accountId: otherSubject, kind: "FIRST_PARTY" }, attemptId, expect.any(AbortSignal),
+  );
   const jwk = await exportJWK(key);
   vi.stubGlobal("fetch", async (input: URL | string, init?: RequestInit) =>
     String(input) === managedDevBetaIssuer + "/.well-known/jwks.json"

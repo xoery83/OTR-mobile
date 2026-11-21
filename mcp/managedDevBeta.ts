@@ -100,6 +100,7 @@ export function createManagedDevConfiguredHost(
       (entry) => !config.consentPolicy!.policy.permissions.includes(entry.capabilityId),
     ) ||
     config.expiresAt <= Date.now() ||
+    (config.managedDev.accountId === null && (!persistent || !nativeConsent)) ||
     (persistent ? oneRename !== undefined : config.expiresAt > Date.now() + 1800000) ||
     Boolean(standing) !== config.consentPolicy.policy.version.endsWith(":standing-writes") ||
     (standing && (!persistent || !nativeConsent ||

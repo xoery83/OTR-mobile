@@ -1,7 +1,6 @@
 import { tripMetadataRevisionedUpdateSchema } from "../../src/domain/trip/tripMetadataV2Contract";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import intent from "../../docs/mcp/beta-consumer-write-20261117/TEST_INTENT.json";
 import { parseBetaCall, betaRequest } from "../../mcp/beta";
 import { contentDigest } from "../../mcp/mutation";
 import {
@@ -11,6 +10,18 @@ import {
   createMcpOperationApprovalHandler,
   createApprovalBoundMetadataPort,
 } from "./mcpOperationApproval";
+const before = {
+  name: "Synthetic original Trip",
+  startDate: "2026-12-01",
+  endDate: "2026-12-02",
+  destination: null,
+  destinations: [{ source: "MANUAL", destinationId: randomUUID(), displayLabel: "Synthetic destination" }],
+};
+const intent = {
+  accountId: randomUUID(), clientId: randomUUID(), resource: "https://synthetic.example.invalid/mcp",
+  tripId: randomUUID(), operationId: randomUUID(), oldName: before.name, newName: "Synthetic renamed Trip",
+  before, after: { ...before, name: "Synthetic renamed Trip" },
+};
 const scope = Object.fromEntries(
   [
     "accountId",
@@ -51,6 +62,36 @@ const approval = {
     request: betaRequest(call, intent.operationId),
   }),
 };
+it("binds a standing approval response to the current account", async () => {
+  const accountId = randomUUID();
+  const policyHash = "a".repeat(64);
+  const deleteCall = parseBetaCall({
+    capabilityId: "otr.trip.delete", toolName: "delete_trip",
+    pathParams: { tripId: intent.tripId }, query: {},
+    request: {
+      action: "DELETE", tripId: intent.tripId, operationId: intent.operationId,
+      expectedMetadataRevision: 2, graphHash: "b".repeat(64), reason: "unit only",
+    },
+  }).call;
+  const { row } = fixture();
+  const digest = contentDigest({
+    accountId, clientId: intent.clientId, resource: intent.resource,
+    call: deleteCall, request: betaRequest(deleteCall, intent.operationId),
+  });
+  const store = vi.fn(async () => ({
+    ...row(), accountId, call: deleteCall, digest, kind: "TRIP_DELETE", targetName: "Unit",
+    managedConsent: { policyHash, evidenceId: randomUUID(), sessionId: randomUUID() },
+  }));
+  const service = createMcpOperationApprovalService({
+    kind: "TRIP_DELETE_STANDING", accountId: null, clientId: intent.clientId,
+    resource: intent.resource, policyHash,
+  }, store, "s".repeat(48));
+  const signal = new AbortController().signal;
+  const principal = { accountId, sessionId: randomUUID() };
+  await expect(service.view(row().id, principal, signal)).resolves.toMatchObject({ accountId });
+  await expect(service.view(row().id, { ...principal, accountId: randomUUID() }, signal))
+    .rejects.toThrow("OPERATION_APPROVAL_NOT_FOUND");
+});
 function fixture() {
   let row: OperationApprovalRecord & { id: string; expiresAt: string } = {
     id: randomUUID(),
