@@ -56,11 +56,21 @@ const readFailureCodes = new Set([
   "TRIP_SUSTAINED_DEV_CLOSED",
 ]);
 const timing = new AsyncLocalStorage<{
+  requestId: string;
+  action: string;
   readDiagnostic: boolean;
   phases: Map<string, Phase>;
   pgCommandsByStage: Record<string, number>;
   slowestRemote: RemoteSample[];
 }>();
+
+// Server-generated correlation only; never copy caller identifiers or request values.
+export function sourcePdfRequestDiagnostic() {
+  const active = timing.getStore();
+  return active && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(active.requestId)
+    ? { requestId: active.requestId, action: active.action }
+    : undefined;
+}
 
 export function sourcePdfTimingStart() {
   return timing.getStore() ? performance.now() : undefined;
@@ -179,6 +189,9 @@ export async function runSourcePdfTimings<T>(
     | "material-intake"
     | "run-wake"
     | "core-read"
+    | "core-capabilities"
+    | "core-command"
+    | "core-receipt"
     | "metadata-read"
     | "metadata-write"
     | "parent-receipt-read",
@@ -186,11 +199,13 @@ export async function runSourcePdfTimings<T>(
 ) {
   return timing.run(
     {
+      requestId,
+      action,
       phases: new Map(),
       pgCommandsByStage: {},
       slowestRemote: [],
       readDiagnostic:
-        action === "core-read" ||
+        action.startsWith("core-") ||
         action === "metadata-read" ||
         action === "metadata-write" ||
         action === "parent-receipt-read",

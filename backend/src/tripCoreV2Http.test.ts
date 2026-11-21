@@ -1,3 +1,4 @@
+import { runSourcePdfTimings } from "./sourcePdfTiming";
 import { publicationFixture } from "./__fixtures__/tripCoreV2CandidatePublication";
 import { candidatePublicationRequestHash } from "../../src/domain/trip/tripCoreV2CandidatePublication";
 import { createHash, randomUUID } from "node:crypto";
@@ -603,4 +604,18 @@ it("negotiates finite IMPORT only with a compatible client, without binding a QA
       support === "1" ? ["MANUAL", "IMPORT"] : ["MANUAL"],
     );
   }
+});
+
+it("correlates a bounded busy lease without exposing extra error properties", async () => {
+  const requestId = randomUUID(), holderRequestId = randomUUID();
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const fail = async () => { throw Object.assign(Error("CORE_CONNECTION_BUSY"), { coreLeaseDiagnostic: { waitMs: 15000, waiterCount: 3, holderAgeMs: 12000, holderPhase: "SQL", holderRequestId, holderAction: "core-command", token: "PRIVATE_DIAGNOSTIC" } }); };
+    const result = await runSourcePdfTimings(requestId, "core-capabilities", () => coreHttpBoundary(request("capabilities"), actor, async () => true, { hash, read: { capabilities: fail } } as unknown as CoreHttpConnection));
+    expect(result?.status).toBe(503);
+    const event = log.mock.calls.map(([line]) => JSON.parse(String(line))).find(e => e.event === "core_execution_failed");
+    expect(event).toMatchObject({ requestId, resource: "CAPABILITIES", lease: { holderRequestId, holderAction: "core-command", holderPhase: "SQL", waitMs: 15000 } });
+    expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_DIAGNOSTIC");
+    expect(JSON.stringify(log.mock.calls)).not.toContain(actor);
+  } finally { log.mockRestore(); }
 });

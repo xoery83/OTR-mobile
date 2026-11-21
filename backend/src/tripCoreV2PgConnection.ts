@@ -3,7 +3,7 @@ import type { Duplex } from "node:stream";
 import { Client } from "pg";
 import { z } from "zod";
 import type { CorePgConnection, CorePgLease } from "./tripCoreV2PgStorage";
-import { measureSourcePdfPhase } from "./sourcePdfTiming";
+import { measureSourcePdfPhase, sourcePdfRequestDiagnostic } from "./sourcePdfTiming";
 const configSchema = z.strictObject({
   host: z
     .string()
@@ -96,7 +96,7 @@ function createOwningPgConnection(
 ) {
   const config = configSchema.parse(input);
   let occupied = false;
-  let holder: { started: number; phase: "SETUP" | "SQL" | "APPLICATION" | "RETIRE" } | undefined;
+  let holder: { started: number; phase: "SETUP" | "SQL" | "APPLICATION" | "RETIRE"; context?: ReturnType<typeof sourcePdfRequestDiagnostic> } | undefined;
   const boundedMs = (value: number) => Math.min(120_000, Math.max(0, Math.trunc(value)));
   function annotate(error: unknown, started: number, observed = holder, waitMs = boundedMs(Date.now() - started)) {
     if (error instanceof Error && !Object.hasOwn(error, "coreLeaseDiagnostic")) {
@@ -104,7 +104,7 @@ function createOwningPgConnection(
         Object.defineProperty(error, "coreLeaseDiagnostic", { value: {
           waitMs,
           waiterCount: waiters.size,
-          ...(observed ? { holderAgeMs: boundedMs(Date.now() - observed.started), holderPhase: observed.phase } : {}),
+          ...(observed ? { holderAgeMs: boundedMs(Date.now() - observed.started), holderPhase: observed.phase, ...(observed.context ? { holderRequestId: observed.context.requestId, holderAction: observed.context.action } : {}) } : {}),
         } });
       } catch { /* Diagnostics must never change the original failure. */ }
     }
@@ -169,7 +169,7 @@ function createOwningPgConnection(
       const queuedAt = Date.now();
       await measureSourcePdfPhase("pg_lease_wait", () => acquire(queuedAdmission, queuedAt));
       const waitMs = boundedMs(Date.now() - queuedAt);
-      const held: NonNullable<typeof holder> = { started: Date.now(), phase: "RETIRE" };
+      const held: NonNullable<typeof holder> = { started: Date.now(), phase: "RETIRE", context: sourcePdfRequestDiagnostic() };
       holder = held;
       const diagnose = (error: unknown) => annotate(error, queuedAt, held, waitMs);
       const prior = idle;

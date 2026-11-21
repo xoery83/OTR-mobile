@@ -1,3 +1,4 @@
+import { sourcePdfRequestDiagnostic } from "./sourcePdfTiming";
 import {
   validateCoreOwningCommand,
   coreAccessLossSchema,
@@ -47,6 +48,14 @@ import {
 } from "../../src/domain/trip/tripCoreV2CandidatePublication";
 import { validateCoreReadCollection } from "../../src/domain/trip/tripCoreV2Read";
 import type { createCorePgReader } from "./tripCoreV2PgRead";
+const leaseDiagnosticSchema = z.object({
+  waitMs: z.number().int().min(0).max(120_000),
+  waiterCount: z.number().int().min(0).max(4),
+  holderAgeMs: z.number().int().min(0).max(120_000).optional(),
+  holderPhase: z.enum(["SETUP", "SQL", "APPLICATION", "RETIRE"]).optional(),
+  holderRequestId: z.uuid().optional(),
+  holderAction: z.enum(["core-read", "core-capabilities", "core-command", "core-receipt", "dispatch", "observe-retained", "advance", "start-resume", "material-intake", "run-wake", "metadata-read", "metadata-write", "parent-receipt-read"]).optional(),
+});
 const validationFields = new Set([
   ...Object.values(coreTableSchemas).flatMap((schema) => Object.keys(schema.shape)),
   "contractVersion",
@@ -575,9 +584,15 @@ export async function coreHttpBoundary(
           : "OTHER";
         const driverCode =
           error && typeof error === "object" && "code" in error ? error.code : null;
+        const diagnostic = leaseDiagnosticSchema.safeParse(
+          (error as { coreLeaseDiagnostic?: unknown } | null)?.coreLeaseDiagnostic,
+        );
+        const context = sourcePdfRequestDiagnostic();
         console.info(
           JSON.stringify({
             event: "core_execution_failed",
+            ...(context ? { requestId: context.requestId } : {}),
+            ...(diagnostic.success ? { lease: diagnostic.data } : {}),
             resource: executionResource,
             category,
             driverCode: [

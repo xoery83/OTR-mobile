@@ -816,3 +816,17 @@ it("captures SQL failure phase without copying query text or parameters", async 
   expect(Object.keys((error as { coreLeaseDiagnostic: object }).coreLeaseDiagnostic).sort())
     .toEqual(["holderAgeMs", "holderPhase", "waitMs", "waiterCount"]);
 });
+
+it("reports the actual held request across another request's saturated lease queue", async () => {
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  const connection = createCorePgConnection(config), holderRequestId = randomUUID(), waiterId = randomUUID();
+  let release!: () => void, started!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const ready = new Promise<void>(resolve => { started = resolve; });
+  const first = runSourcePdfTimings(holderRequestId, "core-command", () => connection.withLease(async lease => { await lease.query("BEGIN"); started(); await held; await lease.query("COMMIT"); }));
+  await ready;
+  const queued = Promise.allSettled(Array.from({ length: 4 }, () => connection.withLease(async lease => { await lease.query("BEGIN"); await lease.query("COMMIT"); })));
+  try {
+    await expect(runSourcePdfTimings(waiterId, "core-capabilities", () => connection.withLease(async () => {}))).rejects.toMatchObject({ message: "CORE_CONNECTION_BUSY", coreLeaseDiagnostic: { holderRequestId, holderAction: "core-command", holderPhase: "APPLICATION", waiterCount: 4 } });
+  } finally { release(); await first; await queued; await connection.close(); log.mockRestore(); }
+});

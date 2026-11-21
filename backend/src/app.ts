@@ -3052,9 +3052,11 @@ export function createDevBackendHandler({
             managedWriteAdmission,
           );
         response =
-          request.method === "GET" && url.pathname.endsWith("/core/collection")
-            ? await runSourcePdfTimings(requestId, "core-read", execute)
-            : await execute();
+          await runSourcePdfTimings(requestId,
+            url.pathname.endsWith("/capabilities") ? "core-capabilities" :
+              url.pathname.endsWith("/commands") ? "core-command" :
+                /\/core\/operations\//.test(url.pathname) ? "core-receipt" : "core-read",
+            execute);
       } else if (/^\/v2\/trips\/[^/]*\/source-import-catalogs$/.test(url.pathname)) {
         route = "/v2/trips/:tripId/source-import-catalogs";
         response = await readPublicationBoundary(request, gateway);

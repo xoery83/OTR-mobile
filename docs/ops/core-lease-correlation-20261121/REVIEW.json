@@ -1,0 +1,16 @@
+{
+  "reviewer": "/root/directed_reader_review",
+  "status": "NO_BLOCKER_SOURCE_ONLY",
+  "tests": 65,
+  "lint": "PASS_with_existing_Native_dependency_tree",
+  "verified": [
+    "server randomUUID/static action only",
+    "holder captures own async request context at acquisition",
+    "bounded Zod log projection strips extras",
+    "no SQL/Actor/Token values",
+    "queue/timeouts/transaction/authority/error responses unchanged"
+  ],
+  "hostedPerformance": "NOT_VERIFIED",
+  "knownOpen": "normal capability CORE_CONNECTION_BUSY at15s",
+  "providerCalls": 0
+}
