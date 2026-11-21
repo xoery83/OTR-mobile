@@ -610,6 +610,7 @@ export async function createAuthenticatedHeadlessRunner(input: {
           createHash("sha256").update(bytes).digest("hex"),
         ).applyBootstrap(response, scope);
       },
+      account,
     );
   };
   const target = (op: string) => ({
@@ -793,7 +794,12 @@ export async function createAuthenticatedHeadlessRunner(input: {
     },
     async commitCurrency() {
       if (active !== "A" || !preview) throw Error("C_LEGITIMATE_PREVIEW_REQUIRED");
-      return (await currency()).commit(QA.tripId, preview, QA.currencyOperationId);
+      return (await currency()).commit(
+        QA.tripId,
+        preview,
+        QA.currencyOperationId,
+        await captureAccountScope(account),
+      );
     },
     localState() {
       return {

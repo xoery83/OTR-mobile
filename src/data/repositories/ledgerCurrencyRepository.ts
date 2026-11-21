@@ -1,3 +1,10 @@
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import {
+  captureAccountScope,
+  assertAccountRequestContext,
+  assertAccountRequestGeneration,
+  type AccountScope,
+} from "@/data/auth/accountRequestContext";
 import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import { ApiClientError } from "@/data/api/client";
 import { ZodError } from "zod";
@@ -92,9 +99,9 @@ export function classifyJourneyCurrencyPreviewFailure(
   return { kind, status, code };
 }
 
-async function client() {
+async function client(scope?: AccountScope) {
   try {
-    return createAuthenticatedApiClient();
+    return createAuthenticatedApiClient({}, undefined, scope);
   } catch (error) {
     // The shared client validates the public base URL before token or network work.
     if (error instanceof ZodError) throw new CurrencyApiConfigurationError();
@@ -145,30 +152,43 @@ export const ledgerCurrencyRepository = {
 
 export function createLedgerCurrencyCommands(
   api: typeof client = client,
-  afterCommit = async (journeyId: string) => {
-    const { refreshJourneyLedger, revalidateJourneyLedger } =
+  afterCommit = async (journeyId: string, scope: AccountScope) => {
+    const { refreshJourneyLedgerWithStatus, revalidateJourneyLedger } =
       await import("@/data/sync/ledgerReportingCoordinator");
-    await refreshJourneyLedger(journeyId);
+    await assertAccountRequestContext(scope, getAccountId);
+    await refreshJourneyLedgerWithStatus(journeyId, { ...scope, tripId: journeyId });
+    await assertAccountRequestContext(scope, getAccountId);
+    assertAccountRequestGeneration(scope);
     await revalidateJourneyLedger(journeyId);
+    await assertAccountRequestContext(scope, getAccountId);
   },
+  getAccountId: () => Promise<string> = requireActiveUserId,
 ) {
   return {
-    async preview(journeyId: string, proposedCurrency: string) {
-      return (await api()).post(
+    async preview(journeyId: string, proposedCurrency: string, scope?: AccountScope) {
+      const context = scope ?? (await captureAccountScope(getAccountId));
+      await assertAccountRequestContext(context, getAccountId);
+      const transport = await api(context);
+      await assertAccountRequestContext(context, getAccountId);
+      const response = await transport.post(
         `/v2/trips/${journeyId}/ledger/journey-currency/preview`,
         { proposedCurrency },
         journeyCurrencyPreviewSchema,
       );
+      await assertAccountRequestContext(context, getAccountId);
+      return response;
     },
 
     async commit(
       journeyId: string,
       preview: JourneyCurrencyPreview,
       operationId: string,
+      context: AccountScope,
     ) {
-      const response = await (
-        await api()
-      ).post(
+      await assertAccountRequestContext(context, getAccountId);
+      const transport = await api(context);
+      await assertAccountRequestContext(context, getAccountId);
+      const response = await transport.post(
         `/v2/trips/${journeyId}/ledger/journey-currency/commit`,
         {
           proposedCurrency: preview.proposedCurrency,
@@ -178,7 +198,9 @@ export function createLedgerCurrencyCommands(
         journeyCurrencyCommitSchema,
         { "Idempotency-Key": operationId },
       );
-      await afterCommit(journeyId);
+      await assertAccountRequestContext(context, getAccountId);
+      await afterCommit(journeyId, context);
+      await assertAccountRequestContext(context, getAccountId);
       return response;
     },
   };

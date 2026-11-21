@@ -13,6 +13,8 @@ Owner direction: 21 November 2026. Native is the single delivery lead after the 
 
 ## Prioritized journey backlog
 
+Ledger acceptance focus (Owner clarification, 21 November): reuse the existing expense, split and settlement functional evidence. Remaining checks concern wiring: the selected Trip, current Account/Actor, canonical Member roster and payer identity, Trip currency settings, expense draft defaults, independent settings readback and restart. Account/Trip changes must invalidate stale currency previews and confirmations. Test currency changes on an independent empty owned QA Trip; do not finalize settlements or change existing expense currency merely to exercise this wiring. No new financial calculation or consistency contract is authorized by this check.
+
 | ID | Priority | Journey / user result | State | Evidence / next step |
 |---|---|---|---|---|
 | BETA-01 | P0 | Launch, Google/Apple login, account-specific cached Trips and restart | PASS on Build14; unified Main recheck pending | Real physical Google/Apple acceptance: `ops/unified-prebeta-20261121/FINAL_NATIVE_ACCEPTANCE.json`. Reuse provider evidence; smoke affected integrated startup/SQLite/profile paths. |

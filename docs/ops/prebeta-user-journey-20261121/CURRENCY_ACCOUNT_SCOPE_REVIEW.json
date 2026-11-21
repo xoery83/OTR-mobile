@@ -1,0 +1,25 @@
+{
+  "status": "LOCAL_REVIEW_PASS_DEVICE_PENDING",
+  "scope": "Trip/Account/Member/Currency wiring only; reuse Ledger functional evidence",
+  "files": 6,
+  "verification": {
+    "focused_tests": 45,
+    "typecheck": "PASS",
+    "ui_guard": "PASS",
+    "scoped_lint": "PASS",
+    "independent_review": "NO_BLOCKER"
+  },
+  "device": "Forms QA C0; Build23 currently installed; next Build24",
+  "remaining": [
+    "empty owned Trip currency save/readback/reopen/cold",
+    "expense draft currency and payer/member context; Cancel",
+    "original Trip currency unchanged"
+  ],
+  "unchanged": [
+    "financial calculations",
+    "settings revision",
+    "preview digest",
+    "operation identity",
+    "Backend authorization"
+  ]
+}
