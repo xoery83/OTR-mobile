@@ -1,0 +1,32 @@
+{
+  "status": "OFFLINE_EXACT_PACKAGE_NOT_EXECUTION_AUTHORITY",
+  "preimageProfile": "20261121",
+  "ddlSHA256": "bbd9a76ed2bba4cb1913b25fae416eff6f505c48f4a537d7aa70159bfb07c2a3",
+  "preimages": {
+    "actor": {
+      "signature": "public.trip_core_lock_actor_scope(uuid,uuid)",
+      "beforeSHA256": "e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b",
+      "afterSHA256": "9508f40d2d7108444b53cf0096c9c8e280174ee7239e8adf969676b99031b71b",
+      "oid": 65465
+    },
+    "write": {
+      "signature": "public.trip_core_guard_write()",
+      "beforeSHA256": "a9deadb27ae359532800924944996c79111173658f752f893e8dcfd390fd8f5a",
+      "afterSHA256": "c7002363e20cf69e992a58d12cda3fb380371d2fd37a9b4e47ea7fa3f622dd47",
+      "oid": 65263
+    },
+    "read-state": {
+      "signature": "public.trip_core_finite_read_state_guard()",
+      "beforeSHA256": "1f1a14bd4e21d050e94dfbb9655a05167df4f2a8cc7e8007dbdb050b17053151",
+      "afterSHA256": "72f24c005285eebe1a8e76faa87285254190726035188b9095848c69b61f9bce",
+      "oid": 65713
+    }
+  },
+  "files": {
+    "INSTALL.private.sql": "19b5c32605942c42ac2ff7e83f778fcd198c3ef47b3e82ec6d7f14fb9643d8df",
+    "ROLLBACK_NO_HISTORY.private.sql": "65f506382418a2e70f2da0897abcb81d040046e771f3504f35fe78e1f691a4fb"
+  },
+  "grantOrActivationIncluded": false,
+  "claimNestedFixPreserved": true,
+  "hostedActions": 0
+}

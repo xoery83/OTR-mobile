@@ -4,7 +4,15 @@ import argparse,hashlib,json,os,re,runpy
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 SIGS={'actor':'public.trip_core_lock_actor_scope(uuid,uuid)','write':'public.trip_core_guard_write()','read-state':'public.trip_core_finite_read_state_guard()'}
-REQUIRED={'write':'90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef','read-state':'15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97'}
+# Complete frozen profiles only: never mix independently accepted generations.
+PREIMAGE_PROFILES={
+ '20261104':{'actor':'e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b','write':'90457991887db2a3a3ac0c74423cb21fa08d0d7f05b249380a951aaa6fbdffef','read-state':'15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97'},
+ '20261121':{'actor':'e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b','write':'a9deadb27ae359532800924944996c79111173658f752f893e8dcfd390fd8f5a','read-state':'1f1a14bd4e21d050e94dfbb9655a05167df4f2a8cc7e8007dbdb050b17053151'},
+}
+def supported_profile(manifest):
+ for name,profile in PREIMAGE_PROFILES.items():
+  if all(manifest[kind]['definitionSHA256']==digest for kind,digest in profile.items()):return name
+ raise ValueError('FIXED_PREIMAGE_PROFILE_REQUIRED')
 sha=lambda x:hashlib.sha256(x).hexdigest()
 quote=lambda x:"'"+str(x).replace("'","''")+"'"
 def cas(signature,meta,digest):
@@ -37,6 +45,7 @@ def new_objects_cas(ddl):
 def main():
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--manifest',required=True,type=Path);p.add_argument('--output-dir',required=True,type=Path);a=p.parse_args()
  m=json.loads(a.manifest.read_text());assert set(m)==set(SIGS)|{'claim-helper'},'EXACT_GUARDS_AND_CLAIM_HELPER_REQUIRED'
+ profile=supported_profile(m)
  patch=runpy.run_path(str(ROOT/'scripts/trip/core-member-access-patches.py'))['patch']
  before={};after={}
  for kind,sig in SIGS.items():
@@ -46,7 +55,6 @@ def main():
   allowed=['postgres=X/postgres','otr_trip_core_v2_gateway=X/postgres' if kind=='actor' else 'otr_trip_core_v2_writer=X/postgres']
   assert sorted(meta['acl'])==sorted(allowed),'UNEXPECTED_GUARD_ACL'
   assert sha(raw)==meta['definitionSHA256'],'PRIVATE_PREIMAGE_DRIFT'
-  if kind in REQUIRED:assert sha(raw)==REQUIRED[kind],'FIXED_PREIMAGE_OR_CLAIM_FIX_REQUIRED'
   before[kind]=raw;after[kind]=patch(raw,kind)
  helper=m['claim-helper'];helper_signature='public.trip_member_claim_read_state_allowed(uuid)'
  assert helper['owner']=='postgres' and helper['securityDefiner'] is True and helper['config']==['search_path=pg_catalog'] and helper['acl']==['postgres=X/postgres']
@@ -67,7 +75,7 @@ def main():
  COMMIT;
 '''
  a.output_dir.mkdir(mode=0o700,parents=True,exist_ok=True)
- result={'status':'OFFLINE_EXACT_PACKAGE_NOT_EXECUTION_AUTHORITY','ddlSHA256':sha(ddl.encode()),'preimages':{k:{'signature':SIGS[k],'beforeSHA256':sha(before[k]),'afterSHA256':sha(after[k]),'oid':m[k]['oid']} for k in SIGS},'files':{},'grantOrActivationIncluded':False,'claimNestedFixPreserved':True,'hostedActions':0}
+ result={'status':'OFFLINE_EXACT_PACKAGE_NOT_EXECUTION_AUTHORITY','preimageProfile':profile,'ddlSHA256':sha(ddl.encode()),'preimages':{k:{'signature':SIGS[k],'beforeSHA256':sha(before[k]),'afterSHA256':sha(after[k]),'oid':m[k]['oid']} for k in SIGS},'files':{},'grantOrActivationIncluded':False,'claimNestedFixPreserved':True,'hostedActions':0}
  for name,value in [('INSTALL.private.sql',install),('ROLLBACK_NO_HISTORY.private.sql',rollback)]:
   raw=value.encode();fd=os.open(a.output_dir/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
   with os.fdopen(fd,'wb') as f:f.write(raw)

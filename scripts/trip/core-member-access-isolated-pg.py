@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Network-none synthetic PG checks. No Hosted connection or credential access."""
 import argparse,subprocess,pathlib,json,time,uuid,hashlib,runpy,concurrent.futures
-p=argparse.ArgumentParser();p.add_argument('--preimages',type=pathlib.Path,required=True);p.add_argument('--artifacts',type=pathlib.Path,required=True);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--preimages',type=pathlib.Path);p.add_argument('--fresh-manifest',type=pathlib.Path);p.add_argument('--auth-fence-definition',type=pathlib.Path);p.add_argument('--artifacts',type=pathlib.Path,required=True);a=p.parse_args()
 ROOT=pathlib.Path(__file__).resolve().parents[2];OUT=a.artifacts;OUT.mkdir(parents=True,exist_ok=True,mode=0o700)
 D=['/opt/homebrew/bin/docker','--context','colima'];name='otr-member-revoke-'+uuid.uuid4().hex[:12];created=False;phase='start';checks=[]
 quote=lambda x:"'"+str(x).replace("'","''")+"'"
@@ -39,17 +39,31 @@ try:
  'INSERT INTO public.journey_members(id,trip_id,user_id,display_name,role,status) VALUES('+quote(person)+'::uuid,'+quote(trip)+'::uuid,'+quote(b)+"::uuid,'Synthetic B','group_member','linked');"+
  'INSERT INTO public.trip_core_read_state(trip_id,epoch,revision,access_revision) VALUES('+quote(trip)+'::uuid,'+quote(epoch)+'::uuid,10,7) ON CONFLICT(trip_id) DO UPDATE SET epoch=excluded.epoch,revision=10,access_revision=7;')
  phase='actual-guard-private-preimages'
- raw=(a.preimages/'function-67045.private.sql').read_text();sql('SET ROLE postgres;'+raw)
- # The Claim permission nesting fix is composed first; no old bytes replace it.
- repair=runpy.run_path(str(ROOT/'scripts/trip/core-read-state-claim-fence-repair.py'))['repair']
- patch=runpy.run_path(str(ROOT/'scripts/trip/core-member-access-patches.py'))['patch']
- state=repair((a.preimages/'function-65713.private.sql').read_bytes())
- write=(a.preimages/'function-65263.private.sql').read_bytes()
- actor_definition=sql("SELECT pg_get_functiondef('public.trip_core_lock_actor_scope(uuid,uuid)'::regprocedure);").stdout.rstrip()+'\n'
- # Load the unchanged exact originals before exercising the generated install/rollback CAS.
- for definition in [state,write,(a.preimages/'function-67419.private.sql').read_bytes()]:
-  sql('SET ROLE postgres;SET check_function_bodies=off;'+definition.decode())
- for signature,allowed in [('public.trip_core_guard_write()','otr_trip_core_v2_writer'),('public.trip_core_finite_read_state_guard()','otr_trip_core_v2_writer'),('public.trip_member_claim_read_state_allowed(uuid)',None)]:
+ if a.fresh_manifest:
+  assert a.auth_fence_definition,'EXACT_COMPOSITE_AUTH_FENCE_REQUIRED'
+  auth_fence=a.auth_fence_definition.read_bytes()
+  assert hashlib.sha256(auth_fence).hexdigest()=='844f7438e22d37ec9df7efb1b5d0adb39f6fb05f203b2f645bf0df4f2278dd01'
+  sql('SET ROLE postgres;'+auth_fence.decode()+';REVOKE ALL ON FUNCTION otr_auth_guest_composite.mutation_allowed() FROM PUBLIC,anon,authenticated,service_role,otr_trip_core_v2_gateway;GRANT EXECUTE ON FUNCTION otr_auth_guest_composite.mutation_allowed() TO otr_trip_core_v2_writer;GRANT USAGE ON SCHEMA otr_auth_guest_composite TO otr_trip_core_v2_writer;')
+  fresh=json.loads(a.fresh_manifest.read_text())
+  qualify_profile=runpy.run_path(str(ROOT/'scripts/trip/core-member-access-install-package.py'))['supported_profile']
+  assert qualify_profile(fresh)=='20261121'
+  for kind in ['actor','write','read-state','claim-helper']:
+   raw=pathlib.Path(fresh[kind]['privateDefinitionPath']).read_bytes()
+   assert hashlib.sha256(raw).hexdigest()==fresh[kind]['definitionSHA256']
+   sql('SET ROLE postgres;SET check_function_bodies=off;'+raw.decode())
+ else:
+  assert a.preimages,'PRIVATE_PREIMAGES_REQUIRED'
+  raw=(a.preimages/'function-67045.private.sql').read_text();sql('SET ROLE postgres;'+raw)
+  # The Claim permission nesting fix is composed first; no old bytes replace it.
+  repair=runpy.run_path(str(ROOT/'scripts/trip/core-read-state-claim-fence-repair.py'))['repair']
+  patch=runpy.run_path(str(ROOT/'scripts/trip/core-member-access-patches.py'))['patch']
+  state=repair((a.preimages/'function-65713.private.sql').read_bytes())
+  write=(a.preimages/'function-65263.private.sql').read_bytes()
+  actor_definition=sql("SELECT pg_get_functiondef('public.trip_core_lock_actor_scope(uuid,uuid)'::regprocedure);").stdout.rstrip()+'\n'
+  # Load the unchanged exact originals before exercising the generated install/rollback CAS.
+  for definition in [state,write,(a.preimages/'function-67419.private.sql').read_bytes()]:
+   sql('SET ROLE postgres;SET check_function_bodies=off;'+definition.decode())
+ for signature,allowed in [('public.trip_core_lock_actor_scope(uuid,uuid)','otr_trip_core_v2_gateway'),('public.trip_core_guard_write()','otr_trip_core_v2_writer'),('public.trip_core_finite_read_state_guard()','otr_trip_core_v2_writer'),('public.trip_member_claim_read_state_allowed(uuid)',None)]:
   sql('SET ROLE postgres;REVOKE ALL ON FUNCTION '+signature+' FROM PUBLIC,anon,authenticated,service_role,otr_trip_core_v2_gateway,otr_trip_core_v2_writer;'+('GRANT EXECUTE ON FUNCTION '+signature+' TO '+allowed+';' if allowed else ''))
  inputs={}
  sigs={'actor':'public.trip_core_lock_actor_scope(uuid,uuid)','write':'public.trip_core_guard_write()','read-state':'public.trip_core_finite_read_state_guard()','claim-helper':'public.trip_member_claim_read_state_allowed(uuid)'}
@@ -95,6 +109,16 @@ try:
  phase='closed-default'
  q=command();closed=call('EXECUTE',request(q),fail=True);assert closed.returncode and 'CORE_CAPABILITY_CLOSED' in closed.stderr;checks.append('DEFAULT_CLOSED')
  sql('SET ROLE postgres;UPDATE public.trip_core_activation_gate SET member_revoke_enabled=true,scope_actor_account_id='+quote(actor)+'::uuid,scope_trip_id='+quote(trip)+"::uuid,scope_started_at=clock_timestamp()-interval '1 minute',scope_expires_at=clock_timestamp()+interval '5 minutes';")
+ if a.fresh_manifest:
+  phase='existing-composite-auth-fence'
+  before_auth=sql("SELECT jsonb_build_object('denials',(SELECT count(*) FROM public.journey_removed_users),'receipts',(SELECT count(*) FROM public.trip_core_command_receipts),'state',(SELECT to_jsonb(s) FROM public.trip_core_read_state s WHERE trip_id="+quote(trip)+"::uuid));").stdout
+  sql("SET ROLE postgres;CREATE FUNCTION public.member_fixture_finalized_scope() RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$ BEGIN INSERT INTO otr_auth_guest_composite.transaction_scopes(adoption_id,backend_pid,transaction_id) VALUES ('00000000-0000-4000-8000-000000000099',pg_backend_pid(),pg_current_xact_id());INSERT INTO otr_auth_guest_composite.terminal_receipts(adoption_id) VALUES ('00000000-0000-4000-8000-000000000099');END $$;REVOKE ALL ON FUNCTION public.member_fixture_finalized_scope() FROM PUBLIC;GRANT EXECUTE ON FUNCTION public.member_fixture_finalized_scope() TO otr_trip_core_v2_gateway;")
+  denied_auth=call('EXECUTE',request(q),prefix='BEGIN;SELECT public.member_fixture_finalized_scope();',fail=True)
+  assert denied_auth.returncode
+  after_auth=sql("SELECT jsonb_build_object('denials',(SELECT count(*) FROM public.journey_removed_users),'receipts',(SELECT count(*) FROM public.trip_core_command_receipts),'state',(SELECT to_jsonb(s) FROM public.trip_core_read_state s WHERE trip_id="+quote(trip)+"::uuid));").stdout
+  assert before_auth==after_auth
+  sql('SET ROLE postgres;DROP FUNCTION public.member_fixture_finalized_scope();')
+  checks.append('EXISTING_COMPOSITE_AUTH_DENIAL_ROLLS_BACK_ALL_MEMBER_EFFECTS')
  phase='positive'
  out=json.loads(call('EXECUTE',request(q)).stdout);r=out['receipt'];assert r['outcome']=='APPLIED' and r['accessTransition']['before']['revision']==10 and r['accessTransition']['before']['accessRevision']==7 and r['accessTransition']['after']['revision']==11 and r['accessTransition']['after']['accessRevision']==8
  assert r['receiptSha256']==hashvalue('otr-trip-core-receipt-v2',{k:v for k,v in r.items() if k!='receiptSha256'});checks.append('APPLIED_ATOMIC_10_7_TO_11_8')

@@ -3,6 +3,8 @@
 from pathlib import Path
 import argparse, hashlib, json, os, re
 CLAIM_FIXED='15fb16411839879cb85995df484b24f71dacd1d287f491e020fc7a397ad74c97'
+# Reviewed read-state generations preserve the existing nested Claim permission fix.
+READ_STATE_PREIMAGES={CLAIM_FIXED,'1f1a14bd4e21d050e94dfbb9655a05167df4f2a8cc7e8007dbdb050b17053151'}
 sha=lambda b:hashlib.sha256(b).hexdigest()
 PREFIX="""
  IF current_user='postgres' AND session_user='otr_trip_core_v2_gateway' THEN
@@ -13,7 +15,7 @@ def patch(raw,kind):
  text=raw.decode()
  if 'trip_core_member_write_allowed' in text:raise ValueError('ALREADY_PATCHED')
  if kind=='read-state':
-  if sha(raw)!=CLAIM_FIXED:raise ValueError('CLAIM_NESTED_FIX_REQUIRED_EXACT_PREIMAGE')
+  if sha(raw) not in READ_STATE_PREIMAGES:raise ValueError('CLAIM_NESTED_FIX_REQUIRED_EXACT_PREIMAGE')
   anchor=" trip:=(to_jsonb(coalesce(new,old))->>'trip_id')::uuid;\n"
  elif kind=='write':
   anchor=" if tg_op='UPDATE' then old_json:=to_jsonb(old);end if;\n"

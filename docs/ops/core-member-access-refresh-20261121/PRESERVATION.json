@@ -1,0 +1,23 @@
+[
+  {
+    "kind": "actor",
+    "allOriginalBytesPreserved": true,
+    "insertedBytes": 466,
+    "beforeSHA256": "e25bc2c9d3901b39baa572734dae669d2dbf77433157e85615b51f84698e8b8b",
+    "afterSHA256": "9508f40d2d7108444b53cf0096c9c8e280174ee7239e8adf969676b99031b71b"
+  },
+  {
+    "kind": "write",
+    "allOriginalBytesPreserved": true,
+    "insertedBytes": 211,
+    "beforeSHA256": "a9deadb27ae359532800924944996c79111173658f752f893e8dcfd390fd8f5a",
+    "afterSHA256": "c7002363e20cf69e992a58d12cda3fb380371d2fd37a9b4e47ea7fa3f622dd47"
+  },
+  {
+    "kind": "read-state",
+    "allOriginalBytesPreserved": true,
+    "insertedBytes": 211,
+    "beforeSHA256": "1f1a14bd4e21d050e94dfbb9655a05167df4f2a8cc7e8007dbdb050b17053151",
+    "afterSHA256": "72f24c005285eebe1a8e76faa87285254190726035188b9095848c69b61f9bce"
+  }
+]

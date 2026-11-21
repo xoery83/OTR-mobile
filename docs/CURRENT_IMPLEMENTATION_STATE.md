@@ -1,3 +1,7 @@
+# Root1 BETA08 fresh Member Access install candidate — 21 November 2026
+
+Existing Core Member Access v2 port remains unchanged. Root2 confirmed NOT_INSTALLED / NO_EXECUTION_AUTH at02:33:58Z. Offline renderer now pins current actor e25bc2c9/write a9deadb2/read-state1f1a14bd as one full profile, preserves original bytes and e2b8 Claim helper, retains no-history-only inverse protections. Three offline checks +30 isolated PG checks with exact existing Auth fence844f7438 PASS; independent Review NO_BLOCKER. No Main/Hosted/install/activation/Provider actions. Reviewable package: `docs/ops/core-member-access-refresh-20261121/EXECUTION_BOUNDARY.md` and MANIFEST.json. Native must supply exact Synthetic A/B target/operation/reference/time tuple for Owner authorization; Root2 owns any later protected installation and independent readback. Compatible denial/receipt readers remain after write closure; accepted denial protection never reverses.
+
 # Unified Beta delivery — 21 November 2026 NZDT
 
 Native is the sole Beta Delivery Lead. Ordinary approved fixes may merge/push Main after checks and actual journey verification. Protected authority/financial contracts and publication retain existing gates. Unique backlog: `docs/BETA_PRODUCT_ACCEPTANCE.md`.

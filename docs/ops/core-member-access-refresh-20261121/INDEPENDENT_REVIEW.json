@@ -1,0 +1,17 @@
+{
+  "reviewer": "/root/directed_reader_review",
+  "status": "NO_BLOCKER_SOURCE_AND_OFFLINE_PACKAGE_ONLY",
+  "priorFinding": "P2: legacy profile did not pin actor fingerprint",
+  "resolution": "Both supported profiles pin the exact unchanged e25bc2c9 actor; unknown actor and mixed write/read-state generations fail closed.",
+  "verified": [
+    "3 offline profile checks",
+    "single contiguous insertion per fresh guard; original bytes and Claim helper preserved",
+    "Auth fence remains before Member proof",
+    "exact844f7438 Auth dependency and terminal-scope rollback negative",
+    "30 local isolated PG checks"
+  ],
+  "limits": [
+    "No Hosted installation authorization",
+    "No Hosted or Native E2E claim"
+  ]
+}

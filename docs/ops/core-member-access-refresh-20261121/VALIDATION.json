@@ -1,0 +1,16 @@
+{
+  "status": "SOURCE_CANDIDATE_LOCAL_PG_PASS_NOT_INSTALLED",
+  "base": "9d711ea60aaeb274a3b5508d6f754b4af77d43e5",
+  "profileTests": 3,
+  "isolatedPgChecks": 30,
+  "existingAuthFenceSHA256": "844f7438e22d37ec9df7efb1b5d0adb39f6fb05f203b2f645bf0df4f2278dd01",
+  "authFencePositionPreserved": true,
+  "allOriginalGuardBytesPreserved": true,
+  "claimHelperUnchanged": true,
+  "businessSqlChanged": false,
+  "hostedInstall": false,
+  "mainChanged": false,
+  "providerCalls": 0,
+  "protectedAuthorityGranted": false,
+  "sensitiveArtifacts": "private sibling directory; no function bodies in Git"
+}
