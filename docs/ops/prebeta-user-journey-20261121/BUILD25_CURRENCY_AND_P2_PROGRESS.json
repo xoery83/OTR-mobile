@@ -1,0 +1,68 @@
+{
+  "build": 25,
+  "source": "9e3f66d2",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundle": "art.xoery.otr",
+  "installation": "in-place; original SQLite81/Session retained",
+  "public_build_flags": {
+    "EXPO_PUBLIC_OTR_MANUAL_P2_FORMAL_ENABLED": true,
+    "EXPO_PUBLIC_OTR_QA_BACKEND_OFFLINE": false,
+    "EXPO_PUBLIC_OTR_P3_RECEIPT_READ_ONLY_QA": false
+  },
+  "currency_fix": {
+    "tests": 28,
+    "types": "PASS",
+    "ui_guard": "PASS",
+    "lint": "PASS",
+    "review": "NO_BLOCKER",
+    "actual_device": [
+      "new local Trip remains usable",
+      "pre-acceptance currency syncing hint displayed",
+      "after acceptance normal USD preview succeeds",
+      "Back/Cancel returns to original NZD; no Commit"
+    ],
+    "precision_limit": "Pending selection retained and no-POST branch proven by deterministic tests; acceptance won the device race before selecting USD, so no exact physical race claim"
+  },
+  "qa_trip": "dafcd1de-3895-4d44-b2e4-ea5a6803c484",
+  "trip_create": "b10bb6a1-e157-4aac-b40b-4bbba2c0fde2",
+  "p2": {
+    "item": "ef0bd2a9-0971-47e1-b73c-2007bff9c22a",
+    "flight": "NZ9002",
+    "departure_date": "2026-11-21",
+    "participants": "Everyone",
+    "unknown_fields": "airports/time/timezone remain unknown",
+    "create": "2afa01f8-b368-4349-869b-8d360d043b4d",
+    "dependent_authored_details": "8ea4049c-6013-43e6-8439-d4aa5d6bdab3",
+    "queue_kind": "TRIP_CORE_V2",
+    "status": "CREATE_EDIT_SERVER_VERIFIED_COLD_RECOVERY_PASS_SPARSE_ONLY",
+    "old_local_journal_promoted": false,
+    "provider_called": false,
+    "create_receipt": "08b6da48\u2026",
+    "create_authored_receipt": "3ec967ef\u2026",
+    "edit_operations": [
+      "aa280289-b247-4914-8fe3-7f66fc8fd52e",
+      "e6f6186d-3bce-4518-9183-5f8e357ec9a6"
+    ],
+    "edit_receipts": [
+      "6923ec70\u2026",
+      "b280ad3c\u2026"
+    ],
+    "latest_flight": "NZ9003",
+    "latest_revision": 4,
+    "cold_details": [
+      "NZ9003",
+      "Nov 21, 2026",
+      "Everyone",
+      "no pending dot"
+    ],
+    "edit_after_cold": "Initially disabled during initialization, then enabled without action; not a persistent unavailable result",
+    "visibility": "PRIVATE explicitly supplied by current member defaults; WHOLE_GROUP participation is separate",
+    "shared_visibility_pass": false,
+    "independent_evidence": [
+      "BETA_FORMAL_P2_ENDPOINTS_AND_VISIBILITY_READBACK.json",
+      "BETA_FORMAL_P2_EDIT_CHAIN_READBACK.json",
+      "BETA_FORMAL_P2_NATIVE_ACL_CLARIFICATION.md"
+    ]
+  },
+  "next": "Trip Home quick-setup wiring review; Import/current Hosted qualification; minimum access-loss safety; final physical delivery"
+}
