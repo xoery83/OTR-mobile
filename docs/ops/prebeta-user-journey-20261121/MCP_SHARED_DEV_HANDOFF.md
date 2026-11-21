@@ -15,4 +15,4 @@ Reproduction: with the standing policy and an approved email QA connection, requ
 - 13:50:14 NZDT: same Consent lease event at 7071 ms, then `mcp_backend_request_unavailable` for GET. Client received HTTP 503. Neither event emitted a PostgreSQL SQLSTATE.
 - Apple Web authorize returned HTTP 400 `validation_failed` and reported a missing OAuth secret. Native Apple system sign-in and cold recovery in Build14 are separate accepted evidence. Google browser authorize reached the actual provider. Full Google DEV login/read is pending.
 
-Use the [unified Beta backlog](../../BETA_PRODUCT_ACCEPTANCE.md) for open items. Promotion follows the ordinary-account validation. Production and real user Trips are outside this handoff.
+Use the [unified Beta backlog](../../BETA_PRODUCT_ACCEPTANCE.md) for open items. Owner accepted Main integration with the remaining ordinary-account checks tracked under BETA-14. Native is the only Beta delivery lead. BETA-08 remains a separate Hosted membership access-loss check; expiry or an ordinary HTTP 404 does not prove authoritative revocation. Production and real user Trips are outside this handoff.

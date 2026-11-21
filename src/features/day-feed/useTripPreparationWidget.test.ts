@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   resolveSource: vi.fn(),
   setup: vi.fn(),
   effects: [] as (() => () => void)[],
+  editCleanups: [] as (() => void)[],
   completion: null as
     | ((event: { accountId: string; generation: number; journeyIds: string[] }) => void)
     | null,
@@ -46,6 +47,9 @@ vi.mock("react", async (original) => ({
     if (!previous || deps.some((value, index) => !Object.is(value, previous.deps[index])))
       state.callbacks[i] = { deps, fn };
     return state.callbacks[i].fn;
+  },
+  useLayoutEffect: (fn: () => () => void) => {
+    state.editCleanups.push(fn());
   },
   useEffect: (fn: () => () => void) => {
     state.effects.push(fn);
@@ -120,6 +124,7 @@ beforeEach(() => {
   state.resolveSource.mockReset();
   state.setup.mockReset();
   state.effects = [];
+  state.editCleanups = [];
   state.active = null;
   vi.mocked(router.push).mockReset();
 });
@@ -580,3 +585,68 @@ it("drops an edited Recent read completing after the actor generation changes", 
   for (let i = 0; i < 16; i++) await Promise.resolve();
   expect(state.values[0]).toBe(view.read);
 });
+
+function MetadataHarness(onEdit?: () => void, tripId = "trip", canPlan?: boolean) {
+  state.cursor = 0;
+  state.values = [
+    canPlan === undefined
+      ? null
+      : {
+          scope: { tripId, accountId: "actor", generation: state.generation },
+          epoch: "epoch",
+          canPlan,
+          preparation: { itemCount: 0, counts: [], recent: [] },
+        },
+    "UNAVAILABLE",
+    null,
+  ];
+  const widget = useTripPreparationWidget({
+    tripId,
+    undated: true,
+    onEdit,
+    onImport: vi.fn(),
+    onBuild: vi.fn(),
+    metadata: { startDate: null, endDate: null, destination: null },
+  });
+  return (
+    widget!.content as import("react").ReactElement<{
+      onEdit?: () => void;
+      onImport?: () => void;
+      onBuildItinerary?: () => void;
+    }>
+  ).props;
+}
+it.each([undefined, false])(
+  "uses the parent's Metadata editor without Core planning authority: canPlan=%s",
+  (canPlan) => {
+    const edit = vi.fn(),
+      props = MetadataHarness(edit, "trip", canPlan);
+    expect(props.onEdit).toBeTypeOf("function");
+    props.onEdit!();
+    expect(edit).toHaveBeenCalledExactlyOnceWith();
+    expect(state.read).not.toHaveBeenCalled();
+    expect(state.resolveSource).not.toHaveBeenCalled();
+    expect(state.setup).not.toHaveBeenCalled();
+    expect(props.onImport).toBeUndefined();
+    expect(props.onBuildItinerary).toBeUndefined();
+  },
+);
+it("does not expose Metadata editing when the parent did not qualify it", () => {
+  expect(MetadataHarness().onEdit).toBeUndefined();
+});
+it.each(["account", "trip", "unmount"])(
+  "rejects a retained Metadata action after %s changes",
+  (change) => {
+    const edit = vi.fn(),
+      action = MetadataHarness(edit).onEdit!;
+    if (change === "account") state.generation++;
+    else {
+      state.editCleanups.forEach((cleanup) => cleanup());
+      if (change === "trip") MetadataHarness(vi.fn(), "other");
+    }
+    action();
+    expect(edit).not.toHaveBeenCalled();
+    expect(state.read).not.toHaveBeenCalled();
+    expect(state.resolveSource).not.toHaveBeenCalled();
+  },
+);

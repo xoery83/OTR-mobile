@@ -1,6 +1,12 @@
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { AppState } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import {
@@ -61,6 +67,20 @@ export function useTripPreparationWidget({
   const [state, setState] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const [setup, setSetup] = useState<TripPreparationSetup | null>(null);
   const request = useRef(0);
+  const metadataEdit = useRef<{
+    tripId: string | null;
+    generation: number;
+    onEdit?: () => void;
+    active: boolean;
+  } | null>(null);
+  useLayoutEffect(() => {
+    const current = { tripId, generation, onEdit, active: true };
+    metadataEdit.current = current;
+    return () => {
+      current.active = false;
+    };
+  }, [tripId, generation, onEdit]);
+
   const load = useCallback(async () => {
     const ticket = ++request.current;
     if (!tripId) return;
@@ -229,9 +249,16 @@ export function useTripPreparationWidget({
         setup={visibleSetup}
         metadata={metadata}
         onEdit={
-          visible?.canPlan && onEdit
+          onEdit
             ? () => {
-                void act(onEdit, true);
+                const current = metadataEdit.current;
+                if (
+                  current?.active &&
+                  current.tripId === tripId &&
+                  current.generation === generation &&
+                  generation === getAccountGeneration()
+                )
+                  current.onEdit?.();
               }
             : undefined
         }
