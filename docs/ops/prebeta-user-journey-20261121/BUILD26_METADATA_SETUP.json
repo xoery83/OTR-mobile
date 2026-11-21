@@ -1,0 +1,32 @@
+{
+  "build": 26,
+  "source": "2c32f931b5bac68fedc14ffeed8b9d833c91ef6e",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundle": "art.xoery.otr",
+  "sqlite": 81,
+  "session": "retained",
+  "tests": 44,
+  "types": "PASS",
+  "ui_guard": "PASS",
+  "lint": "PASS",
+  "independent_review": "NO_BLOCKER",
+  "actual": [
+    "same accepted Trip dafcd1de opened",
+    "dates shortcut enabled \u2192 original EditTrip \u2192 Cancel",
+    "destination shortcut enabled \u2192 original EditTrip \u2192 Cancel",
+    "same NZ9003/NZD/undecided dates retained"
+  ],
+  "mutation_performed": false,
+  "main": "safe non-force push2c32f931",
+  "remaining": [
+    "current V3 Import Published Reader integration",
+    "ordinary-account MCP physical acceptance",
+    "focused shared Core lease wait diagnosis",
+    "P2 default visibility UX qualification"
+  ],
+  "not_changed": [
+    "Parent metadata authorization",
+    "Import/Build/Item canPlan qualification",
+    "Core/SQL/financial semantics"
+  ]
+}
