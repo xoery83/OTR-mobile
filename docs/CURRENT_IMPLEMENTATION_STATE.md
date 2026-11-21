@@ -4,11 +4,15 @@ Native is the sole Beta Delivery Lead. Ordinary approved fixes may merge/push Ma
 
 ## Current source and runtime
 
-- Native delivery commit `9363055a` and its acceptance evidence are on Main `825907f3`. Preserve other Agent work and re-fetch before serial integration.
+- Branch `codex/native-unified-prebeta-20261121`, Main `825907f37e9955fd2e1d1620094db690c42eff6b` safely pushed and independently matched by ls-remote. Candidate HEAD matches; installed source9363055a differs only by later evidence commit. Pending pre-acceptance UI changes are not in Main. Preserve other Agent work and re-fetch before serial integration.
 - Forms QA C0 `C0C23E00-5016-4289-B806-92C5484BD5BA`, Bundle `art.xoery.otr`, Team `3K49Z2Q5X7`: Build24/source9363055a installed in place. SQLite81, original Session/history retained. Phone remains Build14 untouched.
-- Shared DEV `https://api-dev.xoery.art`, Managed Supabase `tuqigdxrvrerfewsxqgm`. The standing MCP candidate `0ef6d0c8` admits verified DEV Accounts under the registered OAuth client. OTR Consent uses the one-hour standing policy, Core stays at one connection, and private approval execution is enabled. The prior Native Backend c89a4e06 is available for rollback.
-- Synthetic account real Email/Consent and existing Trip read passed. Google reached the configured provider. The Apple Web issuer requires an Apple OAuth secret. Normal-account ChatGPT/Trip acceptance remains pending. Native's previously accepted iOS sign-in and journey evidence are retained.
+- Shared DEV `https://api-dev.xoery.art`, Managed Supabase `tuqigdxrvrerfewsxqgm`. Root2 deployed reviewed narrow capability restoration: containerc89a4e06/image2f25e788, asset93fd2892; Gateway7da083fa unchanged. TTL600, Core connlimit1, Layer1 OFF, ApprovalGateway NOLOGIN. No Native SQL/role/authority changes. Root2 owns Hosted operations; no active Native write window.
+- Current normal Backend restoration maps only the exact known22-command profile to the existing13-command Manual/Docs capabilities; nine lifecycle/link commands remain off. Root1 confirmed existing approved capability restoration. Independent review and tests passed.
 
+### MCP standing Shared DEV
+
+- Live Backend `4388a2d6aec22c08950f5db645c92a4c1ed8fb8e`. Standing account admission, Email QA Consent and independent synthetic Trip readback accepted by Owner.
+- Native owns Beta follow-up in the unified backlog. Ordinary-account write/device acceptance and Google login/read are outstanding. Apple Web configuration and Consent lease timeouts are separately tracked.
 
 ## Actual current journey results
 
@@ -27,11 +31,11 @@ Owner explicitly narrowed Ledger acceptance to Trip/Account/Member/Currency wiri
 - QA Harbour lunch NZD24/two12 shares is COMPLETED/SYNCEDrev1 and independently server verified, same expense, one object, correct payer and split identity. Cold UI retained.
 - Legitimate empty canonical display names were rejected by response schemas; six response-only labels now allow empty and UI uses existing Traveller fallback. Build23 actual Preview/coverage UI succeeds. Raw DTO/digests/financial validation unchanged.
 - Currency AccountScope repair9363055a fences old Account/Trip loads, previews, retained confirmations, requests and cache refresh.45 focused tests/full types/UI guard/scoped lint PASS; independent NO_BLOCKER. Build24 contains it.
-- Actual normal UI created one empty owned QA Trip14f64824-794a-44c4-a4d8-6e6796c7bb20 (QA Currency Wiring1121). Create0462c1e3 and readback8c2ad911 COMPLETED. EditTrip→JourneyCurrency shows correct Trip/NZD; selecting USD returns permission failure. No currency Commit, expense or settlement created. Native diagnoses owner/Account/ledger qualification, Root2 independently reads original scope only. Do not weaken authorization.
+- Actual normal UI created one empty owned QA Trip14f64824-794a-44c4-a4d8-6e6796c7bb20 (QA Currency Wiring1121). Create0462c1e3 and readback8c2ad911 COMPLETED. EditTrip→JourneyCurrency shows correct Trip/NZD; selecting USD returns permission failure. First preview00:31:59 preceded Create completion00:32:11. Explicit preview after acceptance succeeds, normal CommitUSDrevision2 independently verified (one receipt/audit, no expense/settlement); cold TripUSD and new expense draftUSD/You PASS. Original Trip remainsNZD. Minimal pre-acceptance feedback repair is in progress; no authorization weakening.
 
 ## Remaining Beta work and safety
 
-1. Fix the current currency permission failure and retry same Trip/path. Then verify settings independent readback/cold, expense draft currency/payer/roster Cancel and original Trip NZD unchanged.
+1. Finish/review the pre-acceptance currency timing/feedback repair and device retry. Normal settings server/cold/draft wiring and original Trip isolation now PASS; native Expense Cancel is not AX-accessible, no UI Cancel PASS claimed.
 2. New minimal formal P2 path; preserve old local journal. No Qualified/Booking/Ticket or Provider expansion.
 3. Import local TEXT custody/reopen/cold already PASS; current real processing/review/confirmation not verified, no Provider invoked. Use only legal current capability/budget.
 4. Hosted authoritative access-loss qualification remains BLOCKED; ordinary404 is not revocation proof. Client consumer exists; Member Removal UI deferred. No complete collaborative-security PASS until formal boundary validated.
