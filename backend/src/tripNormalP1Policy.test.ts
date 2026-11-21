@@ -7,6 +7,7 @@ import {
   normalP4Commands,
   normalP5P6Commands,
   normalP2SparseCommands,
+  normalBetaCommands,
 } from "./tripNormalP1Policy";
 it("requires a separately matching single-family reviewed capability for P3", () => {
   const gate = {
@@ -225,4 +226,32 @@ it("recognizes only exact additive Manual Sparse P2 profile, never qualification
   ])
     expect(normalManualCapabilities(altered)).toBeNull();
   expect(isReviewedP1Gate(gate, "P2")).toBe(false);
+});
+
+it("projects only existing Manual commands from the exact live shared profile while Layer1 stays off", () => {
+  const documents = ["CREATE_DOCUMENT_METADATA", "RECONCILE_ITEM_DOCUMENTS"];
+  const gate = {
+    runtime_enabled: true,
+    enabled_commands: [...normalBetaCommands, ...documents],
+    enabled_families: ["P1", "P2", "P3", "P4", "P5", "P6"],
+    enabled_admission_modes: ["MANUAL", "IMPORT"],
+  };
+  const manual = normalManualCapabilities(gate, false);
+  expect(manual).toEqual({
+    commands: [...normalP2SparseCommands, ...documents],
+    families: gate.enabled_families,
+    importEnabled: true,
+  });
+  for (const dormant of normalBetaCommands.filter((c) => !normalP2SparseCommands.some((base) => base === c)))
+    expect(manual!.commands).not.toContain(dormant);
+  expect(normalManualCapabilities(gate, true)?.commands).toEqual(gate.enabled_commands);
+  for (const changed of [
+    { ...gate, runtime_enabled: false },
+    { ...gate, enabled_commands: [...gate.enabled_commands, "UNKNOWN_COMMAND"] },
+    ...documents.map((name) => ({ ...gate, enabled_commands: [...gate.enabled_commands, name] })),
+    { ...gate, enabled_commands: gate.enabled_commands.filter((c) => c !== "DELETE_ITEM") },
+    { ...gate, enabled_commands: gate.enabled_commands.map((c) => c === "SET_ITEM_STATUS" ? "CREATE_ITEM" : c) },
+    { ...gate, enabled_families: ["P1", "P3"] },
+    { ...gate, enabled_admission_modes: ["MANUAL", "REVIEWED_SOURCE"] },
+  ]) expect(normalManualCapabilities(changed, false)).toBeNull();
 });

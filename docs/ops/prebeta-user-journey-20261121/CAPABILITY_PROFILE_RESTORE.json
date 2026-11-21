@@ -1,0 +1,19 @@
+{
+  "requestId": "NATIVE-BETA-CAP-PROJECTION-20261121",
+  "state": "SOURCE_REVIEW_PASS_HOSTED_PENDING",
+  "failure": "fresh P4/P5/P6 CORE_FAMILY_CLOSED; P3 owning recheck closed despite currentDB normaleditpredicate",
+  "independentFacts": "Root2 live22commands=existing20Beta+2Docs, sixfamilies, MANUAL+IMPORT, activeBlinkedOwner/notremoved, gatewaylimit1, Layer1false; currentmatcherstripDocs thenexpects11 andreturnsnull",
+  "minimalChange": "exactknownoriginal22 and stripped20 profile only, whenLayer1false, exposeexisting11Manual+2Docs, exclude9dormantcommands; unknown/missing/duplicate/runtimeoff/mode/family failclosed",
+  "authority": "Root1review: restorationofapprovednormalManualprofile, noSQL/RLS/GRANT/role/Scope/lifecycleactivation changes; underlyingActorTripPGchecksunchanged",
+  "validation": {
+    "integrationSuites": 3,
+    "integrationTests": 124,
+    "finalAliasPolicyTests": 10,
+    "typecheck": "PASS exit0",
+    "lint": "PASS",
+    "independentReview": "beta_hosted_lease_review NO_BLOCKER afterduplicateDocnegativefix"
+  },
+  "deployment": "Root2 freshpreimage active83db/f8a; narrowsoftwarebackport only, preserveGateway/config/flags/TTL600/role1/scopes androllback. VerifyactualSourcecompatbeforebuilding; nofullMainreplace",
+  "acceptance": "normaloriginaloperationsreceipt-first\u2192independentreadback\u2192sameItem/cold; do notresendUNKNOWNorcreateIDs",
+  "ledgerOwnerSteering": "reusehistoricalfinancialdomainPASS; focusAccountTripMembercurrencywiring. ZeroPreviewbeforeUTCmidnightmatchedexistingdate-onlycutoff, nofinancialmath/datecorrection orconfirmationperformed"
+}

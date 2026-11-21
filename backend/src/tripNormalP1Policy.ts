@@ -58,6 +58,15 @@ export function normalManualCapabilities(
     };
   }
   const documents = localDocuments ? localDocumentCommands : [];
+  // A known shared DB profile may contain dormant Layer1 commands; expose only existing Manual work.
+  if (
+    !betaLifecycle && localDocuments && importEnabled && gate.runtime_enabled === true &&
+    configured.length === normalBetaCommands.length + localDocumentCommands.length &&
+    JSON.stringify(gate.enabled_families) === '["P1","P2","P3","P4","P5","P6"]' &&
+    Array.isArray(gate.enabled_commands) &&
+    gate.enabled_commands.length === normalBetaCommands.length &&
+    normalBetaCommands.every((name) => configured.includes(name))
+  ) gate = { ...gate, enabled_commands: [...normalP2SparseCommands] };
   if (
     betaLifecycle &&
     gate.runtime_enabled === true &&
