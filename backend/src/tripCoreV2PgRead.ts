@@ -111,9 +111,9 @@ export function createCorePgReader(
       try {
         await lease.query("BEGIN ISOLATION LEVEL REPEATABLE READ");
         began = true;
-        await lease.query("SET LOCAL statement_timeout='5000ms'");
-        await lease.query("SET LOCAL lock_timeout='1000ms'");
-        await lease.query("SET LOCAL TIME ZONE 'UTC'");
+        await lease.query(
+          "SET LOCAL statement_timeout='5000ms'; SET LOCAL lock_timeout='1000ms'; SET LOCAL TIME ZONE 'UTC'",
+        );
         await setCoreReadIdentity(lease, actorAccountId, tripId);
         if (gateMode?.sustainedDev)
           await lease.query("SELECT set_config('otr.core.manual_compat','READ',true)");

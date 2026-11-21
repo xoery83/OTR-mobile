@@ -1,0 +1,11 @@
+# BETA09 bounded Core snapshot round-trip reduction
+
+Base c5173d0a7f45d39cf04dae699650be8b02ed1388. Source-only; Native is sole Beta Lead, Root2 owns software deployment.
+
+Actual first failure: collection d002cefa-b655-48ab-8cda-f995791b7f93 spent15000ms waiting for the single Core lease, then CORE_CONNECTION_BUSY without connect or SQL. Root2's same-window supplement proves8 successful collections each used12 setup calls totaling3775–4486ms; TLS2048–2124ms each, lease waits0–12916ms. pg_read_result includes nested SQL timing; do not sum it twice. Existing logs do not identify holder request/SQL, so neither MCP nor writes are proven culprits. See Root2 BETA09_CORE_COLLECTION_PHASE_SUPPLEMENT.json and original BETA09_V3_REVIEW_CORE_READ_CONTENTION.json in native-prebeta-receipt-20261121 artifacts.
+
+Minimal change: combine three existing constant SET LOCAL statements into one query, after the separate successful REPEATABLE READ BEGIN and began=true. Same statement/lock timeouts, timezone, Actor/Trip checks, transaction, graph projection, revalidation and Receipt behavior. No pool size, connlimit1, reuse, timeout extension, caching, schema or authority change. Eliminates exactly two setup round trips per snapshot; actual wall-time gain and complete contention resolution remain unverified.
+
+Focused RED: new setup test failed against original code,23 passed. Final reader+connection suites62 PASS; scoped lint and whitespace checks PASS. Failure test verifies combined setup failure issues ROLLBACK before Actor or graph reads. No Hosted call or new interpretation.
+
+Native's independently owned V3 Results currently reopens Review and reads capabilities+fresh collection every5seconds after each cycle. Reduce redundant reads through its existing consumer lifecycle without caching Authority or weakening final server checks. This Core patch alone is not proof of complete E2E repair. Retry only original published Batch/Task; no new DeepSeek call. On the same input validate Review→Confirm→original Core receipt→independent readback/cold restore, preserving UNKNOWN identities. Root2 should compare same-window lease waits and setup counts after an independently authorized software deployment.

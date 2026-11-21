@@ -455,3 +455,28 @@ it("derives an authorized version through the same qualified collection snapshot
     f.reader.authorizedVersion(f.actor.accountId, f.actor.tripId),
   ).rejects.toThrow("CORE_CAPABILITY_CLOSED");
 });
+
+it("sets identical read transaction budgets in one round trip before Actor or graph reads", async () => {
+  const f = fixture();
+  await f.reader.collection(f.actor.accountId, f.actor.tripId);
+  const sql = f.lease.query.mock.calls.map(([text]) => text);
+  expect(sql[0]).toBe("BEGIN ISOLATION LEVEL REPEATABLE READ");
+  expect(sql[1]).toBe("SET LOCAL statement_timeout='5000ms'; SET LOCAL lock_timeout='1000ms'; SET LOCAL TIME ZONE 'UTC'");
+  expect(sql.filter(q => q.startsWith("SET LOCAL statement_timeout") || q.startsWith("SET LOCAL lock_timeout") || q.startsWith("SET LOCAL TIME ZONE"))).toHaveLength(1);
+  expect(sql.at(-1)).toBe("COMMIT");
+});
+
+it("rolls back failed combined setup before exposing any Actor or graph", async () => {
+  const f = fixture();
+  const query = f.lease.query;
+  f.lease.query.mockImplementation(async (sql) => {
+    if (sql.startsWith("SET LOCAL statement_timeout")) throw Error("SETUP_FAILED");
+    return { rows: [] };
+  });
+  await expect(f.reader.collection(f.actor.accountId, f.actor.tripId)).rejects.toThrow("SETUP_FAILED");
+  expect(query.mock.calls.map(([sql]) => sql)).toEqual([
+    "BEGIN ISOLATION LEVEL REPEATABLE READ",
+    "SET LOCAL statement_timeout='5000ms'; SET LOCAL lock_timeout='1000ms'; SET LOCAL TIME ZONE 'UTC'",
+    "ROLLBACK",
+  ]);
+});

@@ -1,0 +1,13 @@
+{
+  "status": "LOCAL_PASS_NOT_DEPLOYED",
+  "tests": 62,
+  "suites": 2,
+  "lint": "PASS",
+  "sqlStatementSemanticsChanged": false,
+  "setupRoundTripsRemovedPerSnapshot": 2,
+  "specificHolderRequest": "UNKNOWN_IN_EXISTING_LOGS",
+  "permissionsTransactionsReceiptsUnchanged": true,
+  "hostedActions": 0,
+  "providerCalls": 0,
+  "fullContentionResolution": "NOT_VERIFIED"
+}

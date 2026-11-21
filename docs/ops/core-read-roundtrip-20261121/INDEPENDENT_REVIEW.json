@@ -1,0 +1,11 @@
+{
+  "reviewer": "/root/directed_reader_review",
+  "status": "NO_BLOCKER",
+  "verified": [
+    "Same three static parameter-free SET LOCAL statements",
+    "BEGIN separately succeeds before began=true; setup failure rolls back; rollback failure still retires",
+    "PgConnection supports parameter-free multi-statement query; unused rows do not affect caller",
+    "No permissions/isolation/TTL/Receipt change"
+  ],
+  "limit": "Source correctness and two removed round trips only; not Hosted performance or full contention PASS"
+}
