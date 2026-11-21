@@ -1,0 +1,39 @@
+{
+  "build": 24,
+  "source": "9363055a",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "installation": "in-place; same Session/SQLite81",
+  "recovery": {
+    "original_seven_edits": "COMPLETED; independent APPLIED receipts verified",
+    "cold_ui": [
+      "P1 Edit1",
+      "P3 Harbour Hotel Edit1",
+      "P4 QA1121",
+      "P5 Harbour Train Edit1",
+      "P6 Harbour Museum Edit1",
+      "P3 Backend Outage Edit1"
+    ],
+    "outage_target_matches": "d1e9d2f9-3f3d-4b17-8814-7e2743dfbf20",
+    "p1_target_matches": "e7086247-8f7e-4312-9c83-664390e9f33a",
+    "physical_network_offline": false
+  },
+  "currency": {
+    "status": "BUG_REPRODUCED",
+    "trip": "14f64824-794a-44c4-a4d8-6e6796c7bb20",
+    "name": "QA Currency Wiring 1121",
+    "create": "0462c1e3-2b51-4e7c-b317-c2a764c6ae8d",
+    "create_status": "COMPLETED",
+    "readback": "8c2ad911-2f1a-42c3-8724-2770b16fde3f",
+    "readback_status": "COMPLETED",
+    "path": "Edit Trip \u2192 Journey Currency \u2192 USD",
+    "actual": "You do not have permission to change Journey Currency.",
+    "mutation_committed": false,
+    "expense_or_settlement_created": false
+  },
+  "remaining": [
+    "currency owner/account authorization diagnosis and same-path retry",
+    "P2 formal new-item slice",
+    "Import current processing and minimum collaborative access-loss qualification",
+    "safe Main integration after affected paths"
+  ]
+}
