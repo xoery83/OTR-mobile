@@ -1,3 +1,5 @@
+import { UiButton } from "@/ui/controls";
+import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { t } from "@/ui/locale";
@@ -74,11 +76,16 @@ const previewFailureMessages: Record<
 type CurrencyLane = {
   generation: number;
   journeyId?: string;
+  tripId?: string;
   active: boolean;
   scope?: AccountScope;
   valid(): boolean;
 };
 type JourneySetting = { journeyId: string; settlementCurrency: string; title: string };
+async function tripCurrencyCloudReady(tripId: string) {
+  const trip = await (await readLocalTripRepository()).getTrip(tripId);
+  return trip === null || trip.serverId === tripId;
+}
 
 export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
   const colors = useUiTheme();
@@ -105,6 +112,8 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
     getAccountGeneration,
   );
   const [loadedGeneration, setLoadedGeneration] = useState<number | null>(null);
+  const [cloudReady, setCloudReady] = useState<boolean | null>(null);
+  const [pendingCurrency, setPendingCurrency] = useState<string | null>(null);
   const lane = useRef<CurrencyLane | null>(null);
   const journey =
     loadedGeneration === generation &&
@@ -132,6 +141,24 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
         getAccountGeneration() === generation,
     };
     lane.current = current;
+    const stopSync = subscribeLedgerOperationalSyncCompletion((event) => {
+      if (
+        !current.valid() ||
+        !current.scope ||
+        !current.tripId ||
+        event.accountId !== current.scope.accountId ||
+        event.generation !== generation ||
+        !event.journeyIds.includes(current.tripId)
+      )
+        return;
+      void tripCurrencyCloudReady(current.tripId)
+        .then((ready) => {
+          if (current.valid()) setCloudReady(ready);
+        })
+        .catch(() => {
+          if (current.valid()) setCloudReady(null);
+        });
+    });
     void (async () => {
       await Promise.resolve();
       if (!current.valid()) return null;
@@ -139,6 +166,8 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
       setJourney(null);
       setPreview(null);
       setOperationId(null);
+      setCloudReady(null);
+      setPendingCurrency(null);
       setCanChange(false);
       setLocked(false);
       setGuestLocal(false);
@@ -188,6 +217,7 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
           journeys.find((item) => item.journeyId === activeJourneyId) ?? null;
         setJourney(selected);
         if (selected) {
+          current.tripId = selected.journeyId;
           const [actor, settlement] = await Promise.all([
             repository.getActorContext(selected.journeyId),
             getDefaultLedgerSettlementRepository(),
@@ -201,7 +231,9 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
           try {
             const trips = await (await readLocalTripRepository()).listTrips();
             if (!current.valid()) return;
-            const name = trips.find((trip) => trip.id === selected.journeyId)?.name;
+            const local = trips.find((trip) => trip.id === selected.journeyId);
+            setCloudReady(!local || local.serverId === selected.journeyId);
+            const name = local?.name;
             if (name) setJourney({ ...selected, title: name });
           } catch {
             // A Ledger without a local Trip retains its existing caption.
@@ -219,6 +251,7 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
       });
     return () => {
       current.active = false;
+      stopSync();
       if (lane.current === current) guestRead.current = null;
     };
   }, [journeyId, generation]);
@@ -238,6 +271,7 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
     setPickerOpen(false);
     setPreview(null);
     setOperationId(null);
+    setPendingCurrency(null);
     if (!journey || currency === journey.settlementCurrency) return;
     if (guestLocal) {
       const before = guestRead.current;
@@ -276,7 +310,14 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
     if (!online || !current.scope) return;
     setWorking(true);
     setMessage(null);
+    setPendingCurrency(currency);
+    let readinessRead = false;
     try {
+      const ready = await tripCurrencyCloudReady(journey.journeyId);
+      if (!current.valid()) return;
+      setCloudReady(ready);
+      readinessRead = true;
+      if (!ready) return;
       const next = await ledgerCurrencyRepository.preview(
         journey.journeyId,
         currency,
@@ -284,12 +325,18 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
       );
       if (!current.valid()) return;
       setPreview(next);
+      setPendingCurrency(null);
       setOperationId(createLocalId("journeyCurrency"));
     } catch (error) {
       if (!current.valid()) return;
-      setMessage(
-        t(previewFailureMessages[classifyJourneyCurrencyPreviewFailure(error).kind]),
-      );
+      if (!readinessRead) {
+        setCloudReady(null);
+        setMessage(t("currencySettings.loadFailed"));
+      } else {
+        setMessage(
+          t(previewFailureMessages[classifyJourneyCurrencyPreviewFailure(error).kind]),
+        );
+      }
     } finally {
       if (current.valid()) setWorking(false);
     }
@@ -435,6 +482,23 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
           )}
         </View>
         {working ? <ActivityIndicator /> : null}
+        {journey && !guestLocal && cloudReady === false ? (
+          <Text style={styles.detail}>{t("tripCreate.pendingTrip")}</Text>
+        ) : null}
+        {journey && !guestLocal && pendingCurrency && !preview ? (
+          <View style={styles.preview}>
+            <Text style={styles.label}>
+              {t("currencySettings.copy14")}: {journey.settlementCurrency} →{" "}
+              {pendingCurrency}
+            </Text>
+            <UiButton
+              variant="text"
+              label={t(cloudReady ? "currencySettings.copy14" : "common.tryAgain")}
+              disabled={working || !online || locked || !canChange}
+              onPress={() => void selectCurrency(pendingCurrency)}
+            />
+          </View>
+        ) : null}
         {preview ? (
           <View style={styles.preview}>
             <Text accessibilityRole="header" style={styles.label}>

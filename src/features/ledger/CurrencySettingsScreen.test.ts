@@ -8,6 +8,8 @@ const state = vi.hoisted(() => ({
   cleanups: [] as (() => void)[],
   reporting: vi.fn(),
   trips: vi.fn(),
+  tripRead: vi.fn(),
+  sync: null as null | ((event: any) => void),
   settlement: vi.fn(),
   preview: vi.fn(),
   commit: vi.fn(),
@@ -71,12 +73,24 @@ vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}), useThemedStyles: () => ({
 vi.mock("@/ui/locale", () => ({ t: (s: string) => s }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/domainLabels", () => ({ systemMessage: (s: string) => s }));
+vi.mock("@/ui/controls", () => ({ UiButton: "UiButton" }));
+vi.mock("@/data/operations/ledgerActivity", () => ({
+  subscribeLedgerOperationalSyncCompletion: (listener: (event: any) => void) => {
+    state.sync = listener;
+    return () => {
+      if (state.sync === listener) state.sync = null;
+    };
+  },
+}));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("./CurrencyPicker", () => ({ CurrencyPicker: "CurrencyPicker" }));
 vi.mock("./ExchangeRateLookup", () => ({ ExchangeRateLookup: "ExchangeRateLookup" }));
 vi.mock("@/data/repositories/tripRepository", () => ({
-  readLocalTripRepository: async () => ({ listTrips: state.trips }),
+  readLocalTripRepository: async () => ({
+    listTrips: state.trips,
+    getTrip: state.tripRead,
+  }),
 }));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   getDefaultLedgerReportingRepository: () => state.reporting(),
@@ -142,6 +156,8 @@ beforeEach(() => {
   state.guestRead.mockReset();
   state.guestSave.mockReset();
   state.trips.mockReset().mockResolvedValue([]);
+  state.tripRead.mockReset().mockResolvedValue(null);
+  state.sync = null;
   state.values = [];
   state.cursor = 0;
   state.mount = true;
@@ -213,7 +229,9 @@ it.each(failures)(
     await render("b")
       .find((n) => n.type === "CurrencyPicker")!
       .props.onSelect("EUR");
+    await flush();
     const v = render("b");
+    expect(state.tripRead).toHaveBeenCalledWith("b");
     expect(state.preview).toHaveBeenCalledExactlyOnceWith("b", "EUR", {
       accountId: "account-a",
       generation: 1,
@@ -365,6 +383,7 @@ async function prepareConfirmation() {
   await render("b")
     .find((n) => n.type === "CurrencyPicker")!
     .props.onSelect("AUD");
+  await flush();
   const button = render("b").find(
     (n) =>
       n.type === "Pressable" &&
@@ -426,6 +445,7 @@ it.each(["switch", "unmount"])("discards a pending preview after %s", async (rea
   const request = render("b")
     .find((n) => n.type === "CurrencyPicker")!
     .props.onSelect("AUD");
+  await flush();
   if (reason === "switch") switchAccount();
   else state.cleanups.forEach((cleanup) => cleanup());
   finish(currencyPreview);
@@ -493,4 +513,92 @@ it("never dispatches a retained confirmation or picker tap for another provided 
     title: "Current A",
     settlementCurrency: "NZD",
   });
+});
+
+it("retains a selected currency until the same Trip accepts, then explicitly previews without auto-commit", async () => {
+  const local = {
+    id: "b",
+    name: "Local Trip",
+    serverId: null,
+    syncStatus: "PENDING_CREATE",
+  };
+  state.trips.mockResolvedValue([local]);
+  state.tripRead.mockResolvedValue(local);
+  state.preview.mockResolvedValue({ ...currencyPreview, proposedCurrency: "USD" });
+  render("b");
+  await flush();
+  await render("b")
+    .find((n) => n.type === "CurrencyPicker")!
+    .props.onSelect("USD");
+  await flush();
+  expect(state.values[2].settlementCurrency).toBe("NZD");
+  expect(state.values[13]).toBe("USD");
+  expect(render("b").some((n) => n.props.children === "tripCreate.pendingTrip")).toBe(
+    true,
+  );
+  expect(state.preview).not.toHaveBeenCalled();
+  expect(state.classify).not.toHaveBeenCalled();
+  const reads = state.tripRead.mock.calls.length;
+  for (const event of [
+    { accountId: "other", generation: 1, journeyIds: ["b"] },
+    { accountId: "account-a", generation: 2, journeyIds: ["b"] },
+    { accountId: "account-a", generation: 1, journeyIds: ["other"] },
+  ])
+    state.sync!(event);
+  await flush();
+  expect(state.tripRead).toHaveBeenCalledTimes(reads);
+  state.tripRead.mockResolvedValue({
+    ...local,
+    serverId: "b",
+    syncStatus: "PENDING_UPDATE",
+  });
+  state.sync!({ accountId: "account-a", generation: 1, journeyIds: ["b"] });
+  await flush();
+  expect(state.preview).not.toHaveBeenCalled();
+  const continueButton = render("b").find(
+    (n) => n.type === "UiButton" && n.props.label === "currencySettings.copy14",
+  )!;
+  continueButton.props.onPress();
+  await flush();
+  expect(state.preview).toHaveBeenCalledExactlyOnceWith("b", "USD", {
+    accountId: "account-a",
+    generation: 1,
+  });
+  expect(state.values[13]).toBeNull();
+  expect(state.commit).not.toHaveBeenCalled();
+});
+it("keeps the local Trip and currency intent available when readiness cannot be read", async () => {
+  state.tripRead.mockRejectedValue(Error("LOCAL_READ_UNAVAILABLE"));
+  render("b");
+  await flush();
+  await render("b")
+    .find((n) => n.type === "CurrencyPicker")!
+    .props.onSelect("USD");
+  await flush();
+  expect(state.preview).not.toHaveBeenCalled();
+  expect(state.values[2]).toMatchObject({ journeyId: "b", settlementCurrency: "NZD" });
+  expect(state.values[13]).toBe("USD");
+  expect(
+    render("b").some((n) => n.props.children === "currencySettings.loadFailed"),
+  ).toBe(true);
+  expect(state.classify).not.toHaveBeenCalled();
+});
+it("drops a waiting selection and its sync callback when the Account changes", async () => {
+  state.tripRead.mockResolvedValue({ id: "b", serverId: null });
+  render("b");
+  await flush();
+  await render("b")
+    .find((n) => n.type === "CurrencyPicker")!
+    .props.onSelect("USD");
+  await flush();
+  const oldSync = state.sync!;
+  switchAccount();
+  restartPage();
+  await flush();
+  expect(state.values[13]).toBeNull();
+  state.tripRead.mockClear();
+  oldSync({ accountId: "account-a", generation: 1, journeyIds: ["b"] });
+  await flush();
+  expect(state.tripRead).not.toHaveBeenCalled();
+  expect(state.preview).not.toHaveBeenCalled();
 });

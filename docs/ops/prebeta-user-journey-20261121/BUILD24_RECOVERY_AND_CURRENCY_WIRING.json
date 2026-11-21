@@ -18,7 +18,7 @@
     "physical_network_offline": false
   },
   "currency": {
-    "status": "BUG_REPRODUCED",
+    "status": "NORMAL_SAVE_SERVER_VERIFIED_COLD_AND_DRAFT_PASS; PRE_ACCEPTANCE_UI_BUG_OPEN",
     "trip": "14f64824-794a-44c4-a4d8-6e6796c7bb20",
     "name": "QA Currency Wiring 1121",
     "create": "0462c1e3-2b51-4e7c-b317-c2a764c6ae8d",
@@ -27,13 +27,38 @@
     "readback_status": "COMPLETED",
     "path": "Edit Trip \u2192 Journey Currency \u2192 USD",
     "actual": "You do not have permission to change Journey Currency.",
-    "mutation_committed": false,
-    "expense_or_settlement_created": false
+    "mutation_committed": true,
+    "expense_or_settlement_created": false,
+    "first_preview_at": "2026-11-21T00:31:59.743Z",
+    "create_completed_at": "2026-11-21T00:32:11.243Z",
+    "finding": "Initial preview preceded Create acceptance; explicit new preview after acceptance succeeds",
+    "currency": "USD",
+    "revision": 2,
+    "operation": "journeyCurrency_mwpoi3ip_mzohuiub5i",
+    "audit": "51d7e6a5-bcf3-4cd0-a866-1a78f1520d63",
+    "independent_readback": "BETA_LEDGER_CURRENCY_COMMIT_READBACK.json (Root2)",
+    "cold_trip_currency": "USD",
+    "ledger_trip_title": "QA Currency Wiring 1121",
+    "expense_draft_default_currency": "USD",
+    "sharing_payer": "You",
+    "sharing_participants": [
+      "You"
+    ],
+    "expense_saved": false,
+    "draft_exit": "No amount/title entered or expense saved; native Cancel absent from AX; process restarted safely instead, no UI Cancel PASS claimed",
+    "original_trip_currency": "NZD revision1 unchanged"
   },
   "remaining": [
-    "currency owner/account authorization diagnosis and same-path retry",
+    "Fix pre-acceptance currency preview timing/feedback using existing Trip acceptance state; do not block local Trip or relax authority",
     "P2 formal new-item slice",
     "Import current processing and minimum collaborative access-loss qualification",
     "safe Main integration after affected paths"
-  ]
+  ],
+  "queue_snapshot": {
+    "COMPLETED": 27,
+    "DEPENDENCY_BLOCKED": 1,
+    "remaining_operation": "8a4e8292-937f-437d-bb6b-6a45a9de983b",
+    "remaining_kind": "TRIP_CORE_LOCAL; historical P2 local-only intent, not a failed Cloud command",
+    "legacy_intent_promoted": false
+  }
 }
