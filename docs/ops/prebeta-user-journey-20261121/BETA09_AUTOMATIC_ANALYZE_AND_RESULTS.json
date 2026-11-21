@@ -1,0 +1,53 @@
+{
+  "status": "DEVICE_PREVIEW_PASS_SAVE_PENDING_CORE_CONTENTION",
+  "sourceCommits": [
+    "2c55ac65",
+    "c5173d0a",
+    "bc123d29",
+    "98e318e4",
+    "90591079",
+    "7c73d053"
+  ],
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundleId": "art.xoery.otr",
+  "lastObservedBuild": 31,
+  "nextBuild": 32,
+  "batchId": "ef88ec6e-81f9-4c85-a126-0059f3abc388",
+  "tripId": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
+  "taskId": "c5353917-35f1-89e8-9ea9-d6ee31c64fc4",
+  "provider": {
+    "verifiedBy": "Root2 independent readback",
+    "calls": 1,
+    "model": "DeepSeek Flash",
+    "inputTokens": 508,
+    "cachedTokens": 0,
+    "outputTokens": 71,
+    "totalTokens": 579,
+    "cost": "NOT_INDEPENDENTLY_AVAILABLE",
+    "taskState": "PUBLISHED",
+    "attemptState": "TERMINAL_SUCCEEDED_INSTALLED"
+  },
+  "device": {
+    "automaticAnalyze": "PASS original retained Submit, no manual Analyze",
+    "preview": "PASS title Beta V3 Harbour walk 1121/date2026-11-23",
+    "confirmation": "clicked Add plans to trip once; original intent retained",
+    "save": "PENDING not Cloud PASS",
+    "coldRecovery": "NOT_YET_TESTED_AFTER_SAVE"
+  },
+  "operations": {
+    "create": "85e5bda0-dded-8d0a-a337-b1e3f5ef45ba",
+    "link": "f1afcc7e-0fed-8026-a959-6c88a90ce816",
+    "item": "8266b878-e541-89d0-8a02-aba0bbea5820",
+    "firstRequest": "4490ba9c-a3c9-4962-acc4-919b1aad9d74",
+    "lastNativeRead": "CREATE RETRYABLE attempt1 SERVER/SYNC_FAILED; LINK DEPENDENCY_BLOCKED attempt0"
+  },
+  "blocker": "Core single lease busy: original CREATE HTTP503 after15.658s; earlier Review collection/capabilities also busy. No provider rerun/new operation IDs.",
+  "checks": {
+    "focusedCombinedTests": "6 suites97 PASS before scoped owner reuse; latest owner reuse 2 suites16 PASS",
+    "types": "PASS",
+    "uiGuard": "PASS",
+    "lint": "PASS",
+    "independentReview": "NO_BLOCKER including explicit UNKNOWN regression"
+  },
+  "safety": "App normally stopped for safe software repair; queue/session/data retained; Root2 requires no active/unknown transaction before deployment. No new authority or Provider call."
+}
