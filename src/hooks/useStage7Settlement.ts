@@ -550,7 +550,15 @@ export function useStage7Settlement(journeyId?: string, reviewMode = false) {
         }
       } catch (error) {
         setPreview(null);
-        setMessage(error instanceof Error ? error.message : "Settlement preview failed.");
+        setMessage(
+          error instanceof Error &&
+            error.message === "Sync pending Ledger changes before preparing settlement."
+            ? "Sync pending financial changes before confirming."
+            : error instanceof Error &&
+                error.message === "Saved Ledger data does not yet match the current Settlement source."
+              ? error.message
+              : "Settlement preview failed.",
+        );
       } finally {
         setBusy(false);
       }

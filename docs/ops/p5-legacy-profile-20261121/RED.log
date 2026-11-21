@@ -1,0 +1,80 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/root1-p5-legacy-profile-20261121
+
+ ❯ src/domain/trip/p5Identity.test.ts (12 tests | 3 failed) 31ms
+   × accepts original five exact blank facts without changing intent bytes 3ms
+   × reads the approved legacy P5 NAME/empty stored shape without changing canonical bytes and accepts its original legal command 4ms
+   × preserves the legacy profile on a full edit and rejects descriptor downgrade 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/domain/trip/p5Identity.test.ts > accepts original five exact blank facts without changing intent bytes
+ZodError: [
+  {
+    "code": "custom",
+    "path": [],
+    "message": "INVALID_TRANSPORT_IDENTITY"
+  }
+]
+ ❯ validateCoreCommand src/domain/trip/tripCoreV2Commands.ts:545:49
+    543| export function validateCoreCommand(input: unknown): CoreCommand {
+    544|   const q = coreCommandSchema.parse(input);
+    545|   const payload = corePayloadSchemas[q.command].parse(q.payload);
+       |                                                 ^
+    546|   const expectedKind =
+    547|     q.command === "SET_ORDINARY_ORDER"
+ ❯ src/domain/trip/p5Identity.test.ts:98:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/domain/trip/p5Identity.test.ts > reads the approved legacy P5 NAME/empty stored shape without changing canonical bytes and accepts its original legal command
+AssertionError: expected [Function] to not throw an error but '[\n  {\n    "code": "custom",\n    "p…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"[
+  {
+    \"code\": \"custom\",
+    \"path\": [],
+    \"message\": \"INVALID_TRANSPORT_IDENTITY\"
+  }
+]"
+
+ ❯ src/domain/trip/p5Identity.test.ts:224:9
+    222|   expect(() =>
+    223|     validateCoreCommand(fixture({ ...known(), operator_issuer: "" }).c…
+    224|   ).not.toThrow();
+       |         ^
+    225| });
+    226|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/domain/trip/p5Identity.test.ts > preserves the legacy profile on a full edit and rejects descriptor downgrade
+ZodError: [
+  {
+    "code": "custom",
+    "path": [],
+    "message": "INVALID_TRANSPORT_IDENTITY"
+  }
+]
+ ❯ validateCoreCommand src/domain/trip/tripCoreV2Commands.ts:545:49
+    543| export function validateCoreCommand(input: unknown): CoreCommand {
+    544|   const q = coreCommandSchema.parse(input);
+    545|   const payload = corePayloadSchemas[q.command].parse(q.payload);
+       |                                                 ^
+    546|   const expectedKind =
+    547|     q.command === "SET_ORDINARY_ORDER"
+ ❯ applyCoreCommand src/domain/trip/tripCoreV2Mutation.ts:137:5
+ ❯ src/domain/trip/p5Identity.test.ts:294:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  12:22:54
+   Duration  271ms (transform 96ms, setup 10ms, import 152ms, tests 31ms, environment 0ms)
+

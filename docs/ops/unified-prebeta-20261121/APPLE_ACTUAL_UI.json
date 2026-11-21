@@ -1,0 +1,17 @@
+{
+  "sourceSha": "b10178c1f2d9cbe20e0ec6473a39ee66dccce06b",
+  "deviceBuild": "14",
+  "route": "Account > Add / Login another account > Continue with Apple",
+  "nativeSystemSheetReached": true,
+  "systemSheetApp": "OTR Mobile",
+  "login": "ACTUAL_OWNER_NORMAL_LOGIN_PASS",
+  "settingsLinkIdentityUsed": false,
+  "rawUserIdentityOrCredentialsPersisted": false,
+  "privateRuntimeOrPermissionChanged": false,
+  "currentAppleAccountUiConfirmed": true,
+  "accountSpecificHistoricalTripListObserved": true,
+  "googleAndSyntheticQaTripListsAbsent": true,
+  "processRestartAndTripRecovery": "PASS",
+  "rawUserIdentityOrTripDetailsPersisted": false,
+  "note": "Owner performed Apple system confirmation. Normal login, not Settings identity linking; no JWT/Subject extraction or independent server identity query."
+}

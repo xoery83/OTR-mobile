@@ -46,6 +46,22 @@ export function validTransportIdentity(row: Record<string, unknown>): boolean {
     return false;
   return true;
 }
+// Keep the pre-v1 Manual profile byte-for-byte; a supplied descriptor never falls back.
+export function validTransportCommandIdentity(row: Record<string, unknown>): boolean {
+  if (row.identity_state !== undefined) return validTransportIdentity(row);
+  return (
+    validTransportIdentity(row) ||
+    (row.operator_namespace === "NAME" &&
+      ["TRAIN", "BUS", "FERRY", "WATER_TAXI", "SHUTTLE", "TRANSFER"].includes(
+        String(row.transport_subtype),
+      ) &&
+      p5IdentityFields.every(
+        (key) =>
+          typeof row[key] === "string" &&
+          (row[key] === "" || Boolean((row[key] as string).trim())),
+      ))
+  );
+}
 export const unknownP5Identity = () => ({
   operator_namespace: null,
   operator_issuer: null,
@@ -71,8 +87,15 @@ export function p5IdentityPatch(
   previous: Record<string, unknown>,
   supplied: Record<string, unknown>,
 ) {
-  const baseline = upgradeLegacyP5Identity(previous);
-  if (!validTransportIdentity({ ...baseline, ...supplied }))
+  const legacy =
+    previous.identity_state === undefined && supplied.identity_state === undefined;
+  const baseline = legacy ? previous : upgradeLegacyP5Identity(previous);
+  if (
+    !(legacy ? validTransportCommandIdentity : validTransportIdentity)({
+      ...baseline,
+      ...supplied,
+    })
+  )
     throw new Error("INVALID_TRANSPORT_IDENTITY");
   const changes = Object.fromEntries(
     Object.entries(supplied).filter(

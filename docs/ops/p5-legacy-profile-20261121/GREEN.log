@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/xoery/Project/otr-mobile-import/root1-p5-legacy-profile-20261121
+
+
+ Test Files  5 passed (5)
+      Tests  144 passed (144)
+   Start at  12:26:20
+   Duration  836ms (transform 142ms, setup 15ms, import 347ms, tests 174ms, environment 0ms)
+

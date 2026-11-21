@@ -1,0 +1,21 @@
+{
+  "sourceSha": "dead5960ec1b25763b082e47c905e6fecc58495f",
+  "bundle": "art.xoery.otr",
+  "build": "12",
+  "team": "3K49Z2Q5X7",
+  "applicationIdentifier": "3K49Z2Q5X7.art.xoery.otr",
+  "appleSignIn": [
+    "Default"
+  ],
+  "profileUuid": "5354cae5-c833-48b6-8367-fe00dcbf6b87",
+  "jsSha256": "e3d78ce34cf9910c554e903649b99709c93238cb3001914bcf55c151f7860207",
+  "simulatorJsMatches": false,
+  "googleIosClientInBundle": true,
+  "googleWebAudienceInBundle": true,
+  "sharedDevInBundle": true,
+  "signatureVerifyExit": 0,
+  "deviceInstalled": false,
+  "metroInputIdentical": true,
+  "metroInputSha256": "9059a68762329dba740c53c8c24ef5233fda2a1a1c3c0485fe1e1bb4914051e3",
+  "hermesStringDifferenceOnlyBuildInputFilename": true
+}

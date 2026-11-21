@@ -3,7 +3,16 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 export default function appConfig({ config }: ConfigContext): ExpoConfig {
   const appleConfig = {
     ...config,
-    ios: { ...config.ios, usesAppleSignIn: true },
+    ios: {
+      ...config.ios,
+      usesAppleSignIn: true,
+      infoPlist: {
+        ...config.ios?.infoPlist,
+        ...(process.env.OTR_BUILD_SOURCE_SHA
+          ? { OTRBuildCommit: process.env.OTR_BUILD_SOURCE_SHA }
+          : {}),
+      },
+    },
     plugins: [
       ...(config.plugins ?? []).filter(
         (plugin) =>
@@ -22,12 +31,6 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
       appleTeamId: "3K49Z2Q5X7",
       usesAppleSignIn: true,
     },
-    plugins: [
-      ...(appleConfig.plugins ?? []).filter(
-        (plugin) =>
-          (Array.isArray(plugin) ? plugin[0] : plugin) !==
-          "@react-native-google-signin/google-signin",
-      ),
-    ],
+    plugins: appleConfig.plugins,
   } as ExpoConfig;
 }

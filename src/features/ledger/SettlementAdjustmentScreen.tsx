@@ -136,7 +136,8 @@ export function SettlementAdjustmentScreen() {
                     {titles[input.expenseId] || t("health.expense")}
                   </Text>
                   <Text style={styles.meta}>
-                    {t("ui.paidBy")} {input.payer.displayNameSnapshot}
+                    {t("ui.paidBy")}{" "}
+                    {input.payer.displayNameSnapshot || t("common.traveller")}
                   </Text>
                 </View>
                 <Text style={styles.version}>

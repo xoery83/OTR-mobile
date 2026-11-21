@@ -1,0 +1,11 @@
+# Native unified Build14 final receipt — dispatched
+
+Destination: MC chat01a19a2c-de35-72d2-96b7-e66333286e13. Owner subsequently explicitly authorized this exact destination and scope. The final receipt was successfully sent through send_message_to_thread on21 November2026 NZDT; independent MC ACK remains pending. The earlier automatic-review rejection is retained as historical context, not a current block. No token, credential, real user identity or private Trip content is in this proposed handoff.
+
+Product source b10178c1f2d9cbe20e0ec6473a39ee66dccce06b, origin/main baseline41de43927fd9869673c1ca929e911f58d1f6f96d. Build14, art.xoery.otr, paid Team3K49Z2Q5X7, Shared DEV/Managed Supabase. Existing C0 and original physical iPhone installed in place; exact Metro input SHA206d2d27d8de0bac0df6feb76ed67f28e3daefe71f319e54d69317f4638e938d.
+
+Normal Google/Apple native login, account-specific Trip read and separate process-restart recovery PASS with Owner system confirmation. Representative QA B→Google→Apple UI list isolation PASS. Final normal Data & Sync check completed9s/Everything is up to date. No new Manual Cloud mutation/independent provider-subject or exhaustive RLS claim. Original QA Session and Trip were verified preserved before normal Owner account switches. Current phone is the Owner-selected Apple Account; do not treat it as signed into QA B.
+
+Includes MCP foreground/Home delta, Profile route/additive SQLite80, below-hero alert repair, restored approved normal Cloud Sync build flag, registered Google client/Apple entitlement and removal of stale Google UI bundle suppression. Incremental Auth Reviews NO_BLOCKER; targeted20/49/102 tests, lint and UI guard PASS. Full TypeScript retains only3 baseline errors. No main merge/push, Hosted/SQL/paid AI Provider operation or explicit retry of original UNKNOWN.
+
+Signed archive: ignored ios/unified-artifacts/OTR-Unified-Build14-b10178c1-device.zip; SHA2566a6ae3fb9e75ee1d67d728c9ad4ab1c18d7064136da1692a49189b6ae4d9af62. Evidence FINAL_NATIVE_ACCEPTANCE.json and INTEGRATION.md. Preserve Native sole official iOS build ownership. Phone has no ongoing Native automation task; Owner personal use has priority. Separate isolated Beta/App Attest first-registration remains frozen/unclaimed.

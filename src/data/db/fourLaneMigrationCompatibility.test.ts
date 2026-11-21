@@ -43,15 +43,15 @@ it.each(["fresh", "import78", "auth76"])("preserves both lane stores across %s u
     await runMigrations(adapter());
     expect(db.prepare("SELECT * FROM sync_operations").all()).toEqual(before);
     expect(db.prepare("SELECT * FROM local_trip_metadata_confirmations").all()).toEqual(proof);
-    expect(db.prepare("SELECT MAX(id) AS id FROM schema_migrations").get()).toEqual({id:79});
+    expect(db.prepare("SELECT MAX(id) AS id FROM schema_migrations").get()).toEqual({id:81});
     expect(db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name IN ('trip_core_trip_operational_documents','capture_photo_import_decisions','local_trip_metadata_confirmations')").all()).toHaveLength(3);
     expect(db.prepare("SELECT sql FROM sqlite_schema WHERE name='capture_photo_decision_scope_insert'").get()?.sql).toContain("image/gif");
     // Parent proof can now be server-only, without manufacturing a local Create.
     db.exec("INSERT INTO local_trip_metadata_confirmations VALUES('A','server-trip','remote-proof','SNAPSHOT',2,'{}','{}')");
     expect(db.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
-    expect(await isKnownGuestSqliteSchema(adapter(),79)).toBe(true);
+    expect(await isKnownGuestSqliteSchema(adapter(),81)).toBe(true);
     db.exec("UPDATE schema_migrations SET name='unknown' WHERE id=76");
-    expect(await isKnownGuestSqliteSchema(adapter(),79)).toBe(false);
+    expect(await isKnownGuestSqliteSchema(adapter(),81)).toBe(false);
     expect(() => db.exec("UPDATE local_trip_containers SET id='other'")).toThrow("TRIP_METADATA_PARENT_IDENTITY_IMMUTABLE");
   } finally { db.close(); rmSync(dir,{recursive:true,force:true}); }
 });

@@ -1,0 +1,13 @@
+{
+  "state": "BLOCKED_HOSTED_QUALIFICATION",
+  "reviewer": "beta_hosted_lease_review",
+  "source": "4a64eeb0 / Main bedf24dc",
+  "ordinaryRemovalOrLeaveEnabled": false,
+  "composition": "tripCreateRuntime.ts196\u2013213 does not enable memberAccess; absent port returns CORE_CAPABILITY_CLOSED",
+  "nativeConsumer": "tripDownstreamCoordinator.ts35\u201348,409 / memberAccessLossAdapter.ts / tripCoreV2Repository.ts2207",
+  "safeBehavior": "only authoritative matching Account/Trip/generation access-loss revokes own local scope; ordinary404/network errors are not revocation proof; confirmed revoke blocks old queue/graph",
+  "existingEvidence": "deterministic Account generation and SQLite cold reopen tests; not fresh Hosted revocation E2E",
+  "minimumGap": "Auth/Core qualify current actor-scope denial and own access-loss port; Root2 verify exact installed functions/ACL; Native same original Synthetic revoked B read/cache/pending/cold A-B-A test",
+  "protectedBoundary": "no new revoke write or protected installation without exact authorization",
+  "betaClaim": "do not claim collaborative security PASS"
+}

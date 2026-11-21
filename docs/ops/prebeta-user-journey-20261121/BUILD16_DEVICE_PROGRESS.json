@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-11-20T21:28:17.882138+00:00",
+  "build": "16",
+  "commit": "6dde1bb9c411a0daffc51f8bf7c6218c0c37a901",
+  "bundle": "art.xoery.otr",
+  "js_sha256": "1962823d4d2ca36bacc17099b3cc43c21f446aa644a1394b7d927e9953115856",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "installation": "IN_PLACE",
+  "phone_touched": false,
+  "P6_gutter_visual": "PASS",
+  "P3_Edit1_cold_feed": "PASS",
+  "P6_Edit1_cold_feed_details": "PASS",
+  "P1_Edit_Save_Details": "PASS",
+  "P5_Edit_Save_Details": "PASS",
+  "P2_Edit_Cancel_original_NZ9001": "PASS",
+  "independent_cloud_readback": "PENDING_HOSTED_RECEIPT_503_DIAGNOSIS",
+  "Import_original_progress_cold": "PASS: original09:55:47 batch,1saved/0notSaved/0waiting;noAnalyze",
+  "Ledger_cold": "PASS: QA Harbour lunch totalNZD24/self12",
+  "Settlement_summary_cold": "PASS: owed12/paid24/share12;final readiness unresolved",
+  "P4_Edit_Save_Details": "PASS: titleEdit1/plateQA1121,pickup-returnNov21-22 09:35/sameQAdepot retained",
+  "P4_P1_P5_latest_edit_cold": "PASS: fresh process MyTrips > sameTrip > Day Feed Edit1 titles and plateQA1121",
+  "independent_review": {
+    "agent": "prebeta_localfirst_review",
+    "result": "NO_BLOCKER",
+    "scope": [
+      "3d585cbf draft authorization/target/immutable retry boundaries",
+      "6dde1bb9 immersive-only gutter"
+    ],
+    "limits": "Static review; reused tests, no new Hosted or offline proof"
+  }
+}

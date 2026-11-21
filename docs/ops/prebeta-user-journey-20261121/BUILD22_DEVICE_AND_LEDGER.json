@@ -1,0 +1,38 @@
+{
+  "source": "3d2f16e1a4d1dc6777f0b7784222b7c7d2b18089",
+  "build": 22,
+  "jsSha256": "90cfecf876cb1fd11057836ec68b961bf5d66cecd11c0f9bf844ec16678f63fa",
+  "sameC0Bundle": "art.xoery.otr",
+  "inPlaceMigration": {
+    "from": 80,
+    "to": 81,
+    "operationCountBefore": 26,
+    "operationCountAfter": 26,
+    "foreignKeyViolations": 0
+  },
+  "nativeGoldenSlice": "sameB Account \u2192 originalTrip \u2192 allP1-P6 and outageP3 Edit1 visible \u2192 processrestart \u2192 sameTrip/sameDayItemsPASS",
+  "normalSyncCheck": "one CheckAgain completed19s/3localissues repaired; original P3/P4 pending notadvanced; notCloudPASS",
+  "settlementFeedback": "Loading disabled\u2192safe genericfailure shown outsideDebug\u2192retryenabled; actualreadinessFAIL nofinalization/transfer",
+  "expenseIndependentReadback": {
+    "state": "PASS",
+    "source": "Root2 linkedPG READONLY",
+    "operation": "ledger-operation_mwpgeuaj_yhnsqv1wu2",
+    "receipt": "4f02ea28-37f4-4656-9699-a7bbb95f8429",
+    "http": 200,
+    "result": "APPLIED",
+    "expenseId": "d09e664e-aaa6-5499-8edf-4e9317f5a3da",
+    "revision": 1,
+    "activeMatchingCount": 1,
+    "currency": "NZD",
+    "minor": 2400,
+    "split": "EQUAL_PERSON",
+    "shareMinor": [
+      1200,
+      1200
+    ],
+    "creatorAndPayer": "B",
+    "memberRows": 2
+  },
+  "ledgerEvidence": "/Users/xoery/Project/otr-mobile-import/mcp-managed-final-integration-20261119/artifacts/native-prebeta-receipt-20261121/LEDGER_QA_HARBOUR_LUNCH_READBACK.md",
+  "next": "Root1 formallegacycompat nowintegrated d2f0e084; simplify duplicate readparser, Build23 originalreceipt-first recovery"
+}

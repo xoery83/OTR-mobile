@@ -2184,8 +2184,16 @@ async function useRegisteredSchema76() {
   });
 }
 
-it("installs and cold-restores a normal local Session from an empty migrated schema76 Guest", async () => {
-  await useRegisteredSchema76();
+async function useRegisteredSchema80() {
+  const actual = await vi.importActual<typeof import("../db/migrations")>("../db/migrations");
+  expect(actual.migrations.at(-1)).toMatchObject({ id: 80, name: "account_private_profile_local" });
+  const previous = migrations.splice(0, migrations.length, ...actual.migrations);
+  cleanups.push(() => { migrations.splice(0, migrations.length, ...previous); });
+}
+
+it.each([76, 80])("installs and cold-restores a normal local Session from an empty migrated schema%i Guest", async (version) => {
+  if (version === 76) await useRegisteredSchema76();
+  else await useRegisteredSchema80();
   const { createAuthRepository } = await import("./authSessionRepository");
   const { createAccountSwitchCoordinator } = await import("./accountSwitchCoordinator");
   const f = fixture();
@@ -2213,7 +2221,7 @@ it("installs and cold-restores a normal local Session from an empty migrated sch
   const workspace = await open();
   const observer = await open.readInitializedGuestOwner();
   expect(await observer.readEmptySessionInstallMetadata()).toEqual({
-    sqliteVersion: 76,
+    sqliteVersion: version,
     knownLayout: true,
     nonBookkeepingTableCount: expect.any(Number),
     anyNonempty: false,
@@ -2222,9 +2230,9 @@ it("installs and cold-restores a normal local Session from an empty migrated sch
   expect(
     f.opened[0].sql.prepare("SELECT id, name FROM schema_migrations ORDER BY id").all(),
   ).toEqual(migrations.map(({ id, name }) => ({ id, name })));
-  expect(
-    (await workspace.readCensus(completeExternalInventory(workspace))).blockers,
-  ).toContain("SQLITE_SCHEMA_UNSUPPORTED");
+  const blockers = (await workspace.readCensus(completeExternalInventory(workspace))).blockers;
+  if (version === 76) expect(blockers).toContain("SQLITE_SCHEMA_UNSUPPORTED");
+  else expect(blockers).not.toContain("SQLITE_SCHEMA_UNSUPPORTED");
 
   const accountId = randomUUID();
   const coordinator = createAccountSwitchCoordinator({
@@ -2753,4 +2761,47 @@ it("readonly owner never retries a failed initialization", async () => {
   await expect(opener()).rejects.toThrow("SYNTHETIC_OPEN_FAILED");
   await expect(opener.readInitializedGuestOwner()).rejects.toThrow("DATABASE_NOT_INITIALIZED");
   expect(open).toHaveBeenCalledTimes(1);
+});
+
+
+it.each(["wrong name", "missing table", "wrong columns", "missing79", "unknown81"])(
+  "rejects unqualified Profile80 layout: %s", async (kind) => {
+    await useRegisteredSchema80();
+    const f = fixture(), opener = f.newOpener(), workspace = await opener();
+    const { sql } = f.opened[0];
+    if (kind === "wrong name") sql.exec("UPDATE schema_migrations SET name='unqualified' WHERE id=80");
+    if (kind === "missing table") sql.exec("DROP TABLE account_private_profile_local");
+    if (kind === "wrong columns") sql.exec("DROP TABLE account_private_profile_local; CREATE TABLE account_private_profile_local(account_id TEXT,accepted_snapshot_json TEXT,draft_json TEXT,updated_at TEXT)");
+    if (kind === "missing79") sql.exec("DELETE FROM schema_migrations WHERE id=79");
+    if (kind === "unknown81") sql.exec("INSERT INTO schema_migrations VALUES(81,'unknown','2026-11-21T00:00:00Z')");
+    expect((await (await opener.readInitializedGuestOwner()).readEmptySessionInstallMetadata()).knownLayout).toBe(false);
+    await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow("PREFLIGHT_REQUIRED");
+  },
+);
+it("retains another Account private Profile and refuses empty Guest installation", async () => {
+  await useRegisteredSchema80();
+  const f = fixture(), opener = f.newOpener(), workspace = await opener();
+  const { sql } = f.opened[0];
+  sql.prepare("INSERT INTO account_private_profile_local VALUES(?,NULL,'{}','2026-11-21T00:00:00Z')").run(randomUUID());
+  const before = sql.prepare("SELECT * FROM account_private_profile_local").all();
+  expect(await (await opener.readInitializedGuestOwner()).readEmptySessionInstallMetadata()).toMatchObject({knownLayout:true,anyNonempty:true});
+  await expect(workspace.prepareEmptySessionInstall()).rejects.toThrow("PREFLIGHT_REQUIRED");
+  expect((await workspace.readCensus(completeExternalInventory(workspace))).readyForServerPreflight).toBe(false);
+  expect(sql.prepare("SELECT * FROM account_private_profile_local").all()).toEqual(before);
+});
+it("upgrades existing schema79 without changing its retained rows or old migration markers", async () => {
+  await useRegisteredSchema80();
+  const profile = migrations.pop()!;
+  const f = fixture();
+  await f.newOpener()();
+  const { sql } = f.opened[0];
+  sql.exec("CREATE TABLE retained_qa(value TEXT); INSERT INTO retained_qa VALUES('original local intent')");
+  const before = sql.prepare("SELECT * FROM schema_migrations ORDER BY id").all();
+  f.close();
+  migrations.push(profile);
+  await f.newOpener()();
+  const reopened = f.opened[0].sql;
+  expect(reopened.prepare("SELECT * FROM schema_migrations WHERE id<80 ORDER BY id").all()).toEqual(before);
+  expect(reopened.prepare("SELECT * FROM retained_qa").all()).toEqual([{value:"original local intent"}]);
+  expect(reopened.prepare("SELECT name FROM schema_migrations WHERE id=80").get()).toEqual({name:"account_private_profile_local"});
 });

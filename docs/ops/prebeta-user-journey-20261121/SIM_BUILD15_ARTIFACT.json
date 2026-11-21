@@ -1,0 +1,8 @@
+{
+  "CFBundleIdentifier": "art.xoery.otr",
+  "CFBundleVersion": "15",
+  "OTRBuildCommit": "3d585cbf087446a0e18eda0d84a0f556e4c89076",
+  "jsSha256": "94985d9b01cb62f2d7502cd7063147217b6f6242b14a003bfc58a9b583506e2f",
+  "targetSimulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "phoneUpdated": false
+}

@@ -1,0 +1,64 @@
+{
+  "at": "2026-11-20T21:08:08.665456+00:00",
+  "certificate": [
+    {
+      "epoch": "10e44448-75eb-4f3f-92f4-ae1a276ce09f",
+      "revision": "5.0",
+      "access_revision": 3,
+      "applied_generation": 4,
+      "manifest_sha256": "75b515028f6c9b16ac8fa761f54fed975f4900ff6f8929a313b44a379fd2aa24"
+    }
+  ],
+  "operationStates": [
+    {
+      "id": "0bad7daf-69c7-4023-8a05-5a808d2e6684",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "0febbef3-0d4f-4ff9-a2b4-a9686a153571",
+      "status": "RETRYABLE",
+      "last_error_code": "SYNC_FAILED"
+    },
+    {
+      "id": "1338cbd1-2480-46f5-98c2-9be7db5dcede",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "2ee5525a-6a5e-469f-a01e-12a39ea8687b",
+      "status": "RETRYABLE",
+      "last_error_code": "SYNC_FAILED"
+    },
+    {
+      "id": "4b32ea44-6a0c-4cf3-b31b-dc8ee2977d0a",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "518e46e3-a202-4e3c-a0ce-13b8f06eac34",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "58fd1026-a8f5-4ba9-bd6f-c9ae18592095",
+      "status": "COMPLETED",
+      "last_error_code": null
+    },
+    {
+      "id": "8a4e8292-937f-437d-bb6b-6a45a9de983b",
+      "status": "DEPENDENCY_BLOCKED",
+      "last_error_code": null
+    },
+    {
+      "id": "becfbc29-9147-4039-b62e-3e3ffe3f057e",
+      "status": "RETRYABLE",
+      "last_error_code": "SYNC_FAILED"
+    },
+    {
+      "id": "ledger-operation_mwpgeuaj_yhnsqv1wu2",
+      "status": "COMPLETED",
+      "last_error_code": null
+    }
+  ]
+}

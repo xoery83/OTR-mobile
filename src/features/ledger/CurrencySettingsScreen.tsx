@@ -3,7 +3,13 @@ import type { UiColors } from "@/ui/palette";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { systemMessage } from "@/ui/domainLabels";
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -34,9 +40,22 @@ import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
 import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
 import { SheetHeader } from "@/components/SheetHeader";
-import { readCommittedLocalPrincipal } from "@/data/auth/authRepository";
-import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import { readGuestTripCurrencyRepository, type GuestTripCurrency } from "@/data/repositories/guestTripCurrencyRepository";
+import {
+  requireActiveUserId,
+  readCommittedLocalPrincipal,
+} from "@/data/auth/authRepository";
+import {
+  getAccountGeneration,
+  subscribeAccountGeneration,
+} from "@/data/auth/accountGeneration";
+import {
+  captureAccountScope,
+  type AccountScope,
+} from "@/data/auth/accountRequestContext";
+import {
+  readGuestTripCurrencyRepository,
+  type GuestTripCurrency,
+} from "@/data/repositories/guestTripCurrencyRepository";
 
 const previewFailureMessages: Record<
   JourneyCurrencyPreviewFailure["kind"],
@@ -52,6 +71,13 @@ const previewFailureMessages: Record<
   UNKNOWN: "currencySettings.previewUnknown",
 };
 
+type CurrencyLane = {
+  generation: number;
+  journeyId?: string;
+  active: boolean;
+  scope?: AccountScope;
+  valid(): boolean;
+};
 type JourneySetting = { journeyId: string; settlementCurrency: string; title: string };
 
 export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
@@ -62,31 +88,72 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [journeyRead, setJourney] = useState<JourneySetting | null>(null);
-  const journey =
-    journeyRead && (journeyId === undefined || journeyRead.journeyId === journeyId)
-      ? journeyRead
-      : null;
   const [locked, setLocked] = useState(false);
   const [canChange, setCanChange] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [preview, setPreview] = useState<JourneyCurrencyPreview | null>(null);
+  const [previewRead, setPreview] = useState<JourneyCurrencyPreview | null>(null);
   const [operationId, setOperationId] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const committing = useRef(false);
   const locale = useUiLocale();
   const [guestLocal, setGuestLocal] = useState(false);
   const guestRead = useRef<GuestTripCurrency | null>(null);
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration,
+    getAccountGeneration,
+    getAccountGeneration,
+  );
+  const [loadedGeneration, setLoadedGeneration] = useState<number | null>(null);
+  const lane = useRef<CurrencyLane | null>(null);
+  const journey =
+    loadedGeneration === generation &&
+    journeyRead &&
+    (journeyId === undefined || journeyRead.journeyId === journeyId)
+      ? journeyRead
+      : null;
+  const preview = journey ? previewRead : null;
+
+  useLayoutEffect(
+    () => () => {
+      if (lane.current) lane.current.active = false;
+    },
+    [generation, journeyId],
+  );
 
   useEffect(() => {
-    let active = true;
+    const current: CurrencyLane = {
+      generation,
+      journeyId,
+      active: true,
+      valid: () =>
+        current.active &&
+        lane.current === current &&
+        getAccountGeneration() === generation,
+    };
+    lane.current = current;
     void (async () => {
+      await Promise.resolve();
+      if (!current.valid()) return null;
+      setLoading(true);
+      setJourney(null);
+      setPreview(null);
+      setOperationId(null);
+      setCanChange(false);
+      setLocked(false);
+      setGuestLocal(false);
+      setMessage(null);
+      setPickerOpen(false);
+      setHelpOpen(false);
+      setWorking(false);
+      committing.current = false;
       const principal = await readCommittedLocalPrincipal();
-      if (!active) return null;
+      if (!current.valid()) return null;
       if (principal?.kind === "GUEST") {
         if (!journeyId) throw Error("GUEST_CURRENCY_UNAVAILABLE");
         const value = await (await readGuestTripCurrencyRepository()).read(journeyId);
-        if (!active || value.context.generation !== getAccountGeneration()) return null;
+        if (!current.valid() || value.context.generation !== getAccountGeneration())
+          return null;
         guestRead.current = value;
         setGuestLocal(true);
         setJourney({ journeyId, title: value.title, settlementCurrency: value.code });
@@ -94,15 +161,19 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
         setLocked(Boolean(value.historyLocked));
         return null;
       }
+      if (principal?.kind !== "ACCOUNT") throw Error("CURRENCY_ACCOUNT_REQUIRED");
+      current.scope = await captureAccountScope(requireActiveUserId);
+      if (!current.valid() || current.scope.accountId !== principal.accountId)
+        return null;
       return getDefaultLedgerReportingRepository();
     })()
       .then(async (repository) => {
-        if (!repository || !active) return;
+        if (!repository || !current.valid()) return;
         const [selectedId, journeys] = await Promise.all([
           repository.getSelectedJourneyId(),
           repository.listJourneys(),
         ]);
-        if (!active) return;
+        if (!current.valid()) return;
         const now = new Date();
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
         const entry = chooseJourneyEntry(journeys, today, selectedId);
@@ -121,15 +192,15 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
             repository.getActorContext(selected.journeyId),
             getDefaultLedgerSettlementRepository(),
           ]);
-          if (!active) return;
+          if (!current.valid()) return;
           setCanChange(actor?.role === "owner");
           const finalized = await settlement.hasFinalized(selected.journeyId);
-          if (!active) return;
+          if (!current.valid()) return;
           setLocked(finalized);
           // The local Trip owns its authored name; Ledger identity/authority stay unchanged.
           try {
             const trips = await (await readLocalTripRepository()).listTrips();
-            if (!active) return;
+            if (!current.valid()) return;
             const name = trips.find((trip) => trip.id === selected.journeyId)?.name;
             if (name) setJourney({ ...selected, title: name });
           } catch {
@@ -138,15 +209,32 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
         }
       })
       .catch(() => {
-        if (active) setMessage(t("currencySettings.loadFailed"));
+        if (current.valid()) setMessage(t("currencySettings.loadFailed"));
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (current.valid()) {
+          setLoadedGeneration(generation);
+          setLoading(false);
+        }
       });
-    return () => { active = false; guestRead.current = null; };
-  }, [journeyId]);
+    return () => {
+      current.active = false;
+      if (lane.current === current) guestRead.current = null;
+    };
+  }, [journeyId, generation]);
 
   const selectCurrency = async (currency: string) => {
+    const current = lane.current;
+    if (
+      !current?.valid() ||
+      current.generation !== generation ||
+      current.journeyId !== journeyId ||
+      !journey ||
+      !canChange ||
+      locked ||
+      working
+    )
+      return;
     setPickerOpen(false);
     setPreview(null);
     setOperationId(null);
@@ -157,36 +245,74 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
       setWorking(true);
       setMessage(null);
       try {
-        const value = await (await readGuestTripCurrencyRepository()).save(before, currency);
-        if (guestRead.current !== before || value.context.generation !== getAccountGeneration()) return;
+        const value = await (
+          await readGuestTripCurrencyRepository()
+        ).save(before, currency);
+        if (
+          !current.valid() ||
+          guestRead.current !== before ||
+          value.context.generation !== getAccountGeneration()
+        )
+          return;
         guestRead.current = value;
-        setJourney({ journeyId: value.context.tripId, title: value.title, settlementCurrency: value.code });
+        setJourney({
+          journeyId: value.context.tripId,
+          title: value.title,
+          settlementCurrency: value.code,
+        });
         setMessage(t("currencySettings.copy6"));
       } catch {
-        if (guestRead.current === before) setMessage(`${t("ui.couldNotSave")} · ${t("common.tryAgain")}`);
+        if (current.valid() && guestRead.current === before)
+          setMessage(`${t("ui.couldNotSave")} · ${t("common.tryAgain")}`);
       } finally {
-        if (guestRead.current?.context.generation === getAccountGeneration()) setWorking(false);
+        if (
+          current.valid() &&
+          guestRead.current?.context.generation === getAccountGeneration()
+        )
+          setWorking(false);
       }
       return;
     }
-    if (!online) return;
+    if (!online || !current.scope) return;
     setWorking(true);
     setMessage(null);
     try {
-      const next = await ledgerCurrencyRepository.preview(journey.journeyId, currency);
+      const next = await ledgerCurrencyRepository.preview(
+        journey.journeyId,
+        currency,
+        current.scope,
+      );
+      if (!current.valid()) return;
       setPreview(next);
       setOperationId(createLocalId("journeyCurrency"));
     } catch (error) {
+      if (!current.valid()) return;
       setMessage(
         t(previewFailureMessages[classifyJourneyCurrencyPreviewFailure(error).kind]),
       );
     } finally {
-      setWorking(false);
+      if (current.valid()) setWorking(false);
     }
   };
 
   const confirmChange = () => {
-    if (!journey || !preview || !operationId || working || committing.current) return;
+    const current = lane.current;
+    const scope = current?.scope;
+    if (
+      !current?.valid() ||
+      current.generation !== generation ||
+      current.journeyId !== journeyId ||
+      !scope ||
+      !journey ||
+      !canChange ||
+      locked ||
+      !online ||
+      !preview ||
+      !operationId ||
+      working ||
+      committing.current
+    )
+      return;
     if (
       preview.finalizedSettlementCount > 0 ||
       preview.openSettlementCount > 0 ||
@@ -204,6 +330,7 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
           text: t("currencySettings.copy5"),
           onPress: () =>
             void (async () => {
+              if (!current.valid()) return;
               committing.current = true;
               setWorking(true);
               try {
@@ -211,16 +338,21 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
                   journey.journeyId,
                   preview,
                   operationId,
+                  scope,
                 );
+                if (!current.valid()) return;
                 setJourney({ ...journey, settlementCurrency: preview.proposedCurrency });
                 setPreview(null);
                 setMessage(t("currencySettings.copy6"));
               } catch {
+                if (!current.valid()) return;
                 setPreview(null);
                 setMessage(t("currencySettings.copy7"));
               } finally {
-                committing.current = false;
-                setWorking(false);
+                if (current.valid()) {
+                  committing.current = false;
+                  setWorking(false);
+                }
               }
             })(),
         },
@@ -228,7 +360,7 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
     );
   };
 
-  if (loading)
+  if (loading || loadedGeneration !== generation)
     return (
       <View style={styles.center}>
         <ActivityIndicator />
@@ -273,7 +405,13 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
                 <Text style={styles.label}>{journey.title}</Text>
                 <Text style={styles.detail}>{t("currencySettings.copy8")}</Text>
                 {locked ? (
-                  <Text style={styles.detail}>{guestLocal ? t("tripForm.currencyReadOnly", { code: journey.settlementCurrency }) : t("currencySettings.copy9")}</Text>
+                  <Text style={styles.detail}>
+                    {guestLocal
+                      ? t("tripForm.currencyReadOnly", {
+                          code: journey.settlementCurrency,
+                        })
+                      : t("currencySettings.copy9")}
+                  </Text>
                 ) : null}
                 {!canChange && !locked ? (
                   <Text style={styles.detail}>{t("currencySettings.copy10")}</Text>

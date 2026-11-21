@@ -5,7 +5,7 @@ import { authenticateSupabaseDevProvider } from "./devSupabaseAuth";
 import type { SignInAdapter } from "./provisionalSignIn";
 
 export const googleSignInConfiguration = {
-  iosClientId: "580120713844-sone6c0f8bd6srkr25v6fvnc8jmjj824.apps.googleusercontent.com",
+  iosClientId: "580120713844-qgv0ptkgnn80h1f7qlg0nahard5qgmcu.apps.googleusercontent.com",
   webClientId: "580120713844-t44tea8s903dbflo0oqfk35gq4dto5rm.apps.googleusercontent.com",
   offlineAccess: false,
 };
@@ -31,8 +31,8 @@ export function createGoogleNonce(bytes?: Uint8Array) {
 function loadNativeGoogle(): GoogleSdk | null {
   const { default: Constants } =
     require("expo-constants") as typeof import("expo-constants");
-  // The retained Google iOS Client belongs to com.xoery.otrmobile only.
-  if (Constants.expoConfig?.ios?.bundleIdentifier === "art.xoery.otr") return null;
+  // This Client is registered for the unified signed iOS identity only.
+  if (Constants.expoConfig?.ios?.bundleIdentifier !== "art.xoery.otr") return null;
   const { Platform, TurboModuleRegistry } =
     require("react-native") as typeof import("react-native");
   if (Platform.OS !== "ios" || !TurboModuleRegistry.get("RNGoogleSignin")) return null;

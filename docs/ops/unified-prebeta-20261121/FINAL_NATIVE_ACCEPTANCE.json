@@ -1,0 +1,37 @@
+{
+  "productSourceSha": "b10178c1f2d9cbe20e0ec6473a39ee66dccce06b",
+  "remoteMainBaseline": "41de43927fd9869673c1ca929e911f58d1f6f96d",
+  "build": "14",
+  "bundle": "art.xoery.otr",
+  "team": "3K49Z2Q5X7",
+  "environment": "Shared DEV / Managed Supabase",
+  "physicalDevice": "00008140-001C2980269B001C",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "metroInputSha256": "206d2d27d8de0bac0df6feb76ed67f28e3daefe71f319e54d69317f4638e938d",
+  "google": {
+    "normalNativeLogin": "PASS",
+    "accountTripUi": "PASS",
+    "processRestartRecovery": "PASS"
+  },
+  "apple": {
+    "normalNativeLogin": "PASS",
+    "accountTripUi": "PASS",
+    "processRestartRecovery": "PASS"
+  },
+  "crossAccountVisibleListSwitch": "PASS_REPRESENTATIVE_UI_ONLY",
+  "normalSyncGateCompiledEnabled": true,
+  "dataSyncNormalCheck": {
+    "result": "Data check complete / Everything is up to date",
+    "durationSeconds": 9,
+    "isPureReadOnly": false,
+    "doesNotReplaceCloudMutationE2E": true
+  },
+  "tripHomeNotice": "LOCAL_SIMULATOR_UI_PASS",
+  "originalDataUninstalledResetCopied": false,
+  "rowLevelDraftQueueCounts": "NOT_OBSERVED",
+  "mainMergedOrPushed": false,
+  "finalPhoneAccount": "Owner-selected Apple Account",
+  "privateUserIdentityOrTripDetailsPersisted": false,
+  "productionProtectedSqlPaidProviderTouched": false,
+  "mcFinalReceiptDelivery": "SENT_OWNER_EXPLICITLY_AUTHORIZED_ACK_PENDING"
+}

@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "status": "NOT_FOUND",
+  "outcome": null,
+  "elapsedMs": 7472,
+  "diagnostic_build": "17",
+  "source": "d01d9c2c43b6c5418d5f17e5e83a5cefb4dee71f",
+  "js_sha256": "ceb5033d4cbf375dd63727d4c4356023b7f2281671d58beb6ea6e93a98471bb3",
+  "request_finished_utc": "2026-11-20T21:45:02.248391Z",
+  "logical_receipt_reads": 1,
+  "mutation_submissions_by_probe": 0,
+  "normal_trip_runner": "CLOSED_BEFORE_DISPATCH",
+  "receipt_transport_404_semantics": "null; not proof of APPLIED",
+  "independent_hosted_readback": "PENDING"
+}

@@ -66,7 +66,7 @@ it("queues snapshots and receipts through the read lease, never updates", async 
   const lease = { query, retire: vi.fn() };
   const withReadLease = vi.fn<CorePgConnection["withLease"]>(async (work) => work(lease));
   const withLease = vi.fn<CorePgConnection["withLease"]>(async (work) => work(lease));
-  const storage = createTripMetadataV2PgStorage({ withLease, withReadLease });
+  const storage = createTripMetadataV2PgStorage({ withLease: withLease as CorePgConnection["withLease"], withReadLease: withReadLease as CorePgConnection["withLease"] });
   expect(await storage.snapshot(actor, tripId, operationId)).toEqual(snapshot);
   expect(await storage.receipt(actor, operationId)).toEqual(result);
   expect(await storage.update(actor, request)).toEqual(result);

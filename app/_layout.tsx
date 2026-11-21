@@ -6,6 +6,7 @@ import { useUiTheme } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { t } from "@/ui/locale";
 import { hydrateUiLocale } from "@/native/uiLocalePreference";
+import { hydrateUiAppearance } from "@/native/uiAppearancePreference";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { readCommittedLocalPrincipal } from "@/data/auth/authRepository";
@@ -40,6 +41,7 @@ export default function RootLayout() {
   const nativeTheme = scheme === "dark" ? DarkTheme : DefaultTheme;
   useEffect(() => {
     void hydrateUiLocale().catch(() => undefined);
+    void hydrateUiAppearance().catch(() => undefined);
   }, []);
   const [queryClient] = useState(
     () =>
@@ -200,6 +202,10 @@ export default function RootLayout() {
             <Stack.Screen
               name="settings"
               options={{ headerShown: true, headerTitle: t("navigation.settings") }}
+            />
+            <Stack.Screen
+              name="profile"
+              options={{ headerShown: true, headerTitle: t("privateProfile.title") }}
             />
             <Stack.Screen
               name="data-sync"

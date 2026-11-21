@@ -44,7 +44,10 @@ import {
 } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import { createTripCoreV2Repository, type CoreDatabase } from "./tripCoreV2Repository";
-import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
+import {
+  localManualDraftScope,
+  readLocalManualSnapshotWithinTransaction,
+} from "./tripLocalManualReadRepository";
 import { readLocalTripPersonRosterWithinTransaction } from "./localTripPersonRepository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 
@@ -193,6 +196,7 @@ type DraftState = {
   guestRestoreScope?: GuestDraftScope;
   context: AccountRequestContext;
   fingerprint: string;
+  authorization: string;
   actor: string;
   revision: number | null;
   freshAcceptedEdit?: boolean;
@@ -637,6 +641,7 @@ export function createManualItemRepository(
           guestRestoreScope: recovery?.scope,
           context,
           fingerprint: snapshot.fingerprint,
+          authorization: json(localManualDraftScope(snapshot)),
           actor: json(snapshot.actor),
           revision: row ? (row.semantic_revision as number) : null,
           freshAcceptedEdit,
@@ -859,13 +864,25 @@ export function createManualItemRepository(
             };
           }
         }
-        if (snapshot.fingerprint !== state.fingerprint && !acceptedCreatorRead)
-          throw new Error("MANUAL_PLAN_CONFLICT");
         const row =
           draft.mode === "EDIT"
             ? editable(snapshot, draft.itemId, state.context.accountId, family)
             : null;
         if (row && row.semantic_revision !== state.revision)
+          throw new Error("MANUAL_PLAN_CONFLICT");
+        // Another Item syncing does not change this draft's facts or authorization.
+        const unchangedDraft =
+          !state.attempt &&
+          json(localManualDraftScope(snapshot)) === state.authorization &&
+          (row
+            ? json(fieldsFor(row, snapshot, family, family === "P3")) ===
+              json(state.original)
+            : !snapshot.graph.itinerary_events.some((item) => item.id === draft.itemId));
+        if (
+          snapshot.fingerprint !== state.fingerprint &&
+          !acceptedCreatorRead &&
+          !unchangedDraft
+        )
           throw new Error("MANUAL_PLAN_CONFLICT");
         const instructionCommands: Command[] = [];
         if (state.instructionRead) {

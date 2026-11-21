@@ -1,0 +1,14 @@
+--- a/src/data/api/client.ts
++++ b/src/data/api/client.ts
+@@ -67,7 +67,10 @@
+   const baseUrl = apiBaseUrlSchema.parse(
+     options.baseUrl ?? process.env.EXPO_PUBLIC_OTR_API_BASE_URL,
+   );
+-  const fetchImplementation = options.fetchImplementation ?? fetch;
++  const fetchImplementation =
++    process.env.EXPO_PUBLIC_OTR_QA_BACKEND_OFFLINE === "1"
++      ? (() => Promise.reject(new TypeError("Network request failed")))
++      : options.fetchImplementation ?? fetch;
+   const timeoutMs = options.timeoutMs ?? 15_000;
+ 
+   async function request<T>(

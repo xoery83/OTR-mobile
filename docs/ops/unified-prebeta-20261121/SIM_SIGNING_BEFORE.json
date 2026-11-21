@@ -1,0 +1,11 @@
+{
+  "application-identifier": null,
+  "com.apple.developer.team-identifier": null,
+  "keychain-access-groups": null,
+  "com.apple.developer.applesignin": null,
+  "get-task-allow": null,
+  "signature": "adhoc",
+  "teamIdentifier": "not set",
+  "entitlementCompatibility": "NOT_PROVEN",
+  "source": "codesign -dvv existing simulator App"
+}

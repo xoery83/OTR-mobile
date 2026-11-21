@@ -382,3 +382,8 @@ force adoption. Final Owner acceptance uses a fixed integrated-main Native build
 ## Guest local Stay — bounded V-N05 source slice, 4 November 2026
 
 The Owner V-N05 Guest entry slice exposes only the existing local P1/P3 factories. Guest Stay Create/Edit uses the isolated Guest database, existing Core/Repository/Reader and original identities. Guest P2/P4/P5/P6, real Source Scan, Cloud publication and P3 Adoption remain closed. A saved P3 must continue to make the authoritative Guest census reject Adoption as UNSUPPORTED_CORE_FAMILY; no P1 snapshot disguise or inventory omission is allowed. An unsaved P3 registers a pure failing beforeAuth blocker and may retain its original draft/attempt only in-process across exceptional modal remount. This does not promise unsaved process-cold restore. Explicit discard or verified durable Save plus blocking census can release the in-memory lease; saved data must cold reopen under the same identity. No schema, Session, Canonical authority or sync entitlement is added. Device and Owner UX acceptance remain separate.
+
+
+### Guest entry after sign-in — Owner clarification, 21 November 2026
+
+A user who has already signed in cannot return to Guest access. Do not add a Guest entry after logout/account switching, or clear retained account data to manufacture a fresh Guest state for QA. Fresh Guest coverage applies only to the legitimate never-signed-in initial state; return-to-Guest is not an applicable acceptance scenario for an existing signed-in QA user. Existing account data and Auth ownership remain unchanged.

@@ -171,3 +171,15 @@ describe("sync operation repository", () => {
     expect(push).not.toHaveBeenCalled();
   });
 });
+
+
+it("retains fixed Core dependency reasons without storing arbitrary error content", async () => {
+  const runAsync = vi.fn().mockResolvedValue({ changes: 1 });
+  const queue = createSyncOperationRepository({
+    getAllAsync: vi.fn().mockResolvedValue([]), runAsync,
+  } as unknown as SyncQueueDatabase, async () => "qa-account");
+  await queue.markDependencyBlocked("qa-operation", undefined, "CORE_CAPABILITY_CLOSED");
+  expect(runAsync.mock.calls[0][2]).toBe("CORE_CAPABILITY_CLOSED");
+  await queue.markDependencyBlocked("qa-operation", undefined, "Bearer PRIVATE_VALUE");
+  expect(runAsync.mock.calls[1][2]).toBe("Waiting for an earlier operation.");
+});

@@ -5,15 +5,16 @@ import { LedgerReviewFindingScreen } from "./LedgerReviewFindingScreen";
 import { SettlementAdjustmentScreen } from "./SettlementAdjustmentScreen";
 import { SettlementStatementScreen } from "./SettlementStatementScreen";
 import { PersonalSettlementReviewScreen } from "./PersonalSettlementReviewScreen";
-import { getUiLocale, setUiLocale } from "@/ui/locale";
+import { getUiLocale, setUiLocale, t } from "@/ui/locale";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(element: ReactNode): string;
 };
-const state = vi.hoisted(() => ({ appearance: "dark", human: false }));
+const state = vi.hoisted(() => ({ appearance: "dark", human: false, statement: false }));
 const original = getUiLocale();
 afterEach(() => {
   setUiLocale(original);
   state.human = false;
+  state.statement = false;
 });
 vi.mock("@react-native-community/datetimepicker", () => ({ default: "input" }));
 vi.mock("react-native", () => ({
@@ -34,7 +35,11 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("expo-router", () => ({
   router: { push: vi.fn() },
-  useLocalSearchParams: () => ({ id: "f", journeyId: "j" }),
+  useLocalSearchParams: () => ({
+    id: "f",
+    journeyId: "j",
+    view: state.statement ? "statement" : undefined,
+  }),
   Stack: { Screen: () => null },
 }));
 vi.mock("@/data/repositories/defaultLedgerExpenseRepository", () => ({}));
@@ -78,6 +83,7 @@ vi.mock("@/hooks/useStage7Settlement", () => ({
       balances: [
         {
           memberId: "m",
+          displayNameSnapshot: "",
           netMinor: 12345,
           paidMinor: 15000,
           owedMinor: 2655,
@@ -158,4 +164,14 @@ it("retains populated English copy and Light surface inheritance", () => {
   expect(html).toContain("What we observed");
   expect(html).toContain("background-color:#FFFFFF");
   state.appearance = "dark";
+});
+
+it("renders an empty response balance label as localized traveller copy", () => {
+  state.statement = true;
+  for (const locale of ["en", "zh-Hans"] as const) {
+    setUiLocale(locale);
+    expect(renderToStaticMarkup(createElement(SettlementStatementScreen))).toContain(
+      t("common.traveller"),
+    );
+  }
 });

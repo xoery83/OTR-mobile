@@ -120,7 +120,7 @@ it.each([true, false])(
         ...q.config,
         authOrigin: "https://tuqigdxrvrerfewsxqgm.supabase.co/",
         publishableKey: "sb_publishable_synthetic_managed_dev_test_only",
-        managedNativeOAuth: true,
+        managedNativeOAuth: true as const,
         managedDev: { accountId: actor, clientId: client, redirectUri: callback },
         consentPolicy: { ...pin, policy: { ...pin.policy, resource: managedResource } },
       },

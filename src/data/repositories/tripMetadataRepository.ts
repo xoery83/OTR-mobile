@@ -1,3 +1,4 @@
+import { recordQaMetadataTiming } from "../sync/recordQaMetadataTiming";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import { createTripDeferredMetadataRepository } from "./tripDeferredMetadataRepository";
@@ -702,6 +703,7 @@ export async function readServerParentMetadataEditBase(
   await access.account();
   const { createUuid } = await import("@/domain/localId");
   await access.repository.retainMetadataSnapshot(snapshot, createUuid(), access.parent);
+  recordQaMetadataTiming(snapshot.tripId, "SQLITE_COMMIT", snapshot.metadataRevision);
   const base = await access.repository.readMetadataEditBase(access.scope.tripId);
   await access.account();
   if (!base.confirmed || base.pendingOperationIds.length)

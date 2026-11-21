@@ -12,13 +12,13 @@ export const settlementMoneySchema = z
   .refine((value) => isIso4217Money(value.currency, value.scale));
 const member = z.object({
   memberId: uuid,
-  displayNameSnapshot: z.string().min(1).max(200),
+  displayNameSnapshot: z.string().max(200),
 });
 const balance = z.object({
   memberId: uuid,
   currency: z.string().regex(/^[A-Z]{3}$/),
   scale: z.number().int().min(0).max(4),
-  displayNameSnapshot: z.string().min(1).max(200),
+  displayNameSnapshot: z.string().max(200),
   paidMinor: z.number().int().nonnegative(),
   owedMinor: z.number().int().nonnegative(),
   transferredMinor: z.literal(0),
@@ -195,7 +195,7 @@ export const personalSettlementReviewResponseSchema = z.object({
   coverage: z.array(
     z.object({
       memberId: uuid,
-      displayName: z.string().min(1).max(200),
+      displayName: z.string().max(200),
       reviewedAt: z.string().nullable(),
       reviewState: personalSettlementCoverageStateSchema,
     }),
@@ -314,7 +314,7 @@ export const finalizedSettlementSchema = z.object({
     .array(
       z.object({
         memberId: uuid,
-        displayNameSnapshot: z.string().min(1).max(200),
+        displayNameSnapshot: z.string().max(200),
         deltaMinor: z.number().int(),
         currency: z.string().regex(/^[A-Z]{3}$/),
         scale: z.number().int().min(0).max(4),
@@ -329,7 +329,7 @@ export const finalizedSettlementSchema = z.object({
     .array(
       z.object({
         memberId: uuid,
-        displayNameSnapshot: z.string().min(1).max(200),
+        displayNameSnapshot: z.string().max(200),
         amount: settlementMoneySchema,
       }),
     )
@@ -368,7 +368,7 @@ export const settlementFinalizeResponseSchema = z.object({
 
 const adjustmentVector = z.object({
   memberId: uuid,
-  displayNameSnapshot: z.string().min(1).max(200),
+  displayNameSnapshot: z.string().max(200),
   currency: z.string().regex(/^[A-Z]{3}$/),
   scale: z.number().int().min(0).max(4),
   sealedMinor: z.number().int(),

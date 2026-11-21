@@ -146,9 +146,9 @@ function createOwningPgConnection(
   }
   return {
     discardIdle,
-    close() {
+    async close() {
       closed = true;
-      return discardIdle();
+      await discardIdle();
     },
     async withLease<T>(work: (lease: CorePgLease) => Promise<T>, queuedAdmission = false) {
       if (closed) throw new Error("CORE_CONNECTION_RETIRED");

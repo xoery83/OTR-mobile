@@ -654,7 +654,7 @@ const createStyles = (c: UiColors) =>
     meta: { ...visual.type.meta, color: c.textSecondary },
     caption: { ...visual.type.action, color: c.textPrimary },
     kicker: { ...visual.type.action, color: c.accent },
-    immersive: { gap: visual.space.row, padding: visual.space.page },
+    immersive: { gap: visual.space.row, paddingVertical: visual.space.page },
     identity: { gap: visual.space.heading, paddingVertical: visual.space.row },
     section: { gap: visual.space.heading },
     expansion: { gap: 8, marginTop: 8 },

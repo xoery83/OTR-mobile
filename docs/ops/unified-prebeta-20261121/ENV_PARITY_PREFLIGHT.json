@@ -1,0 +1,30 @@
+{
+  "mcpEnvPresent": false,
+  "fields": {
+    "EXPO_PUBLIC_OTR_API_BASE_URL": {
+      "presentInUnified": true,
+      "presentInMcp": false,
+      "equal": null
+    },
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_URL": {
+      "presentInUnified": true,
+      "presentInMcp": false,
+      "equal": null
+    },
+    "EXPO_PUBLIC_OTR_SYNC_TRANSPORT": {
+      "presentInUnified": true,
+      "presentInMcp": false,
+      "equal": null
+    },
+    "EXPO_PUBLIC_OTR_NORMAL_CLOUD_SYNC_ENABLED": {
+      "presentInUnified": true,
+      "presentInMcp": false,
+      "equal": null
+    },
+    "EXPO_PUBLIC_OTR_DEV_SUPABASE_PUBLISHABLE_KEY": {
+      "presentInUnified": true,
+      "presentInMcp": false,
+      "equal": null
+    }
+  }
+}

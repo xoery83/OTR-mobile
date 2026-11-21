@@ -1,0 +1,40 @@
+{
+  "checks": {
+    "accountTripCount": true,
+    "accountBatchCount": true,
+    "qaOperationIds": true,
+    "qaExpenseCount": true,
+    "qaImportInputs": true,
+    "maxMigration": true
+  },
+  "after": {
+    "accountTripCount": 1,
+    "accountBatchCount": 1,
+    "qaOperationIds": [
+      "0bad7daf-69c7-4023-8a05-5a808d2e6684",
+      "0febbef3-0d4f-4ff9-a2b4-a9686a153571",
+      "1338cbd1-2480-46f5-98c2-9be7db5dcede",
+      "2ee5525a-6a5e-469f-a01e-12a39ea8687b",
+      "4b32ea44-6a0c-4cf3-b31b-dc8ee2977d0a",
+      "518e46e3-a202-4e3c-a0ce-13b8f06eac34",
+      "58fd1026-a8f5-4ba9-bd6f-c9ae18592095",
+      "8a4e8292-937f-437d-bb6b-6a45a9de983b",
+      "becfbc29-9147-4039-b62e-3e3ffe3f057e",
+      "ledger-operation_mwpgeuaj_yhnsqv1wu2"
+    ],
+    "qaExpenseCount": 1,
+    "qaImportInputs": [
+      {
+        "input_id": "a2f47de2-b930-4b1a-9b39-62cc5bf5f5d4",
+        "content_sha256": "40c881034d7e631e4519013b599a3140f0643399d795891ebad02d4693d78637",
+        "acceptance_state": "ACCEPTED"
+      }
+    ],
+    "maxMigration": 80
+  },
+  "dataContainerManagedBySystem": true,
+  "credentialsOrSessionRead": false,
+  "databaseCopied": false,
+  "uiExistingQaTripHistoryRetained": true,
+  "uiNewTripAndSixTypesReopened": true
+}

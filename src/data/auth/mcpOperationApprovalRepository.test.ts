@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createMcpOperationApprovalRepository } from "./mcpOperationApprovalRepository";
-import intent from "../../../docs/mcp/beta-consumer-write-20261117/TEST_INTENT.json";
+import intent from "../../../backend/src/__fixtures__/mcpOperationApprovalIntent.json";
 const config = {
   authOrigin: "https://owned.invalid/",
   publishableKey: "x." + btoa(JSON.stringify({ role: "anon" })) + "." + "x".repeat(40),

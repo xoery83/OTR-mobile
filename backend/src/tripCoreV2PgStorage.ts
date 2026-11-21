@@ -228,7 +228,15 @@ async function persist(lease: CorePgLease, before: CoreGraph, mutation: CoreMuta
     for (const [key, row] of current) {
       const previous = old.get(key);
       if (previous && json(previous) === json(row)) continue;
-      const fields = columns(table),
+      const fields = columns(table).filter(
+          (k) =>
+            !(
+              table === "itinerary_transport_services" &&
+              k === "identity_state" &&
+              row.identity_state === undefined &&
+              previous?.identity_state === undefined
+            ),
+        ),
         values = fields.map((k) => row[k] ?? null);
       // pg arrays/objects must be JSON text for finite JSONB columns, not PostgreSQL array literals.
       for (let i = 0; i < values.length; i++)

@@ -454,7 +454,7 @@ export function createManagedOAuthConsent(
       try {
         session = verifiedManagedOAuthSessionSchema.parse(session);
         const current = policy();
-        const readApproval = async (lease: ManagedConsentQuery) => {
+        const readApproval = async (lease: ManagedOAuthReadPort) => {
           signal.throwIfAborted();
           const result = await lease.query(
             select +

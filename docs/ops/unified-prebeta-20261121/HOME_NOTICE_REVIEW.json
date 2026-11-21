@@ -1,0 +1,8 @@
+{
+  "candidate": "dead5960ec1b25763b082e47c905e6fecc58495f",
+  "reviewerChat": "01a1803b-c5a7-7ab0-a90f-fb4f87609201",
+  "result": "NO_BLOCKER",
+  "scope": "Notice position, alert accessibility, unchanged edit/permission guards",
+  "testsReused": 102,
+  "deviceProofStillRequired": true
+}

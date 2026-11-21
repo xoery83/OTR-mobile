@@ -1,0 +1,65 @@
+{
+  "observedAt": "2026-11-20T22:47:55.197985+00:00",
+  "build": 19,
+  "source": "6164e295",
+  "mode": "read-only local SQLite after normal Data & Sync recovery",
+  "operations": [
+    {
+      "id": "2005a186-3b0c-4c21-a766-c4da3a6b1f9f",
+      "entity_id": "d1e9d2f9-3f3d-4b17-8814-7e2743dfbf20",
+      "status": "COMPLETED",
+      "attempt_count": 4,
+      "last_error_code": null,
+      "last_error_message": null,
+      "last_request_id": null,
+      "updated_at": "2026-11-20T22:36:12.311Z"
+    },
+    {
+      "id": "2ee5525a-6a5e-469f-a01e-12a39ea8687b",
+      "entity_id": "7ca29d3e-c96e-462b-a0e3-ac0575c04ca5",
+      "status": "RETRYABLE",
+      "attempt_count": 10,
+      "last_error_code": "SYNC_FAILED",
+      "last_error_message": "CORE_RECEIPT_READ [http/503]: OTR API read is unavailable.",
+      "last_request_id": "37a84e2f-8d36-4390-9fce-9fad6ba07964",
+      "updated_at": "2026-11-20T22:32:23.916Z"
+    },
+    {
+      "id": "4aa434fa-f3f6-40dc-830b-c9bb70c00332",
+      "entity_id": "d1e9d2f9-3f3d-4b17-8814-7e2743dfbf20",
+      "status": "DEPENDENCY_BLOCKED",
+      "attempt_count": 0,
+      "last_error_code": "DEPENDENCY_BLOCKED",
+      "last_error_message": "CORE_CAPABILITY_CLOSED",
+      "last_request_id": null,
+      "updated_at": "2026-11-20T22:46:22.439Z"
+    },
+    {
+      "id": "5f7d0785-d519-44da-8852-342af47b806d",
+      "entity_id": "be50008a-5950-491d-a95c-2bfedda7c02f",
+      "status": "RETRYABLE",
+      "attempt_count": 9,
+      "last_error_code": "SYNC_FAILED",
+      "last_error_message": "CORE_CAPABILITIES_READ [http/503]: OTR API read is unavailable.",
+      "last_request_id": "500fb422-cade-4029-acc2-9baf48737b0c",
+      "updated_at": "2026-11-20T22:34:01.696Z"
+    }
+  ],
+  "independentServerReadback": {
+    "status": "PASS_CREATE_ONLY",
+    "source": "Root2 linked PostgreSQL read-only handoff in this chat",
+    "receiptId": "ec2f276d-ee1a-4ea5-891f-05dfebb09bf3",
+    "receiptState": "APPLIED",
+    "itemRevision": 1,
+    "matchingItemCount": 1,
+    "title": "QA P3 Backend Outage 1121",
+    "startDate": "2026-11-23",
+    "endDate": "2026-11-24",
+    "startTime": null,
+    "endTime": null,
+    "participants": "WHOLE_GROUP",
+    "kind": "STAY",
+    "editReceiptCount": 0
+  },
+  "scope": "transport fault test, not physical airplane mode"
+}

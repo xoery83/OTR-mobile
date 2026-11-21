@@ -3,6 +3,7 @@ import { it, expect, vi } from "vitest";
 import {
   createCorePgStorage,
   withCorePgStorageTransaction,
+  type CorePgConnection,
   type CorePgLease,
   type CorePgTransactionContext,
 } from "./tripCoreV2PgStorage";
@@ -14,11 +15,11 @@ import {
   normalP2SparseCommands,
   normalBetaCommands,
 } from "./tripNormalP1Policy";
-import { emptyCoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
+import { applyCoreCommand, emptyCoreGraph } from "../../src/domain/trip/tripCoreV2Mutation";
 import { validateCoreCommand } from "../../src/domain/trip/tripCoreV2Commands";
 import { coreHashValue } from "../../src/domain/trip/tripCoreV2Read";
 import { coreDateBoundary } from "../../src/domain/trip/tripCoreV2Temporal";
-import { coreDefaults } from "../../src/domain/trip/tripCoreV2";
+import { coreDefaults, corePlaceSchema } from "../../src/domain/trip/tripCoreV2";
 import { coreReceiptSchema } from "../../src/domain/trip/tripCoreV2Receipt";
 const actor = randomUUID(),
   trip = randomUUID(),
@@ -92,7 +93,7 @@ it("reads Managed Consent on the owning Core transaction without taking a second
   const f = fixture();
   const withLease = vi.fn(async <T>(work: (lease: CorePgLease) => Promise<T>) =>
     work(f.lease));
-  const storage = createCorePgStorage({ withLease }, hash);
+  const storage = createCorePgStorage({ withLease: withLease as CorePgConnection["withLease"] }, hash);
   const scope = { ...commandScope(), operationId: operation, managedMcp: true as const };
   await storage.withLockedCommand(scope, async (tx) => {
     expect(await tx.admitManagedWrite!(async (account, request, _body, consent) => {
@@ -1238,4 +1239,105 @@ it("preserves the authored-flight Item-owner boundary before admission or receip
   ).rejects.toThrow("NOT_VISIBLE");
   expect(verifyAdmission).not.toHaveBeenCalled();
   expect(commit).not.toHaveBeenCalled();
+});
+
+it.each(["insert", "update", "rekey"])(
+  "legacy transport SQL omits optional identity column, mode=%s",
+  async (mode) => {
+    const update = mode !== "insert";
+    const f = await manualSparseFixture();
+    const point = {
+      time: coreDateBoundary("2026-12-14"),
+      place: corePlaceSchema.parse(
+        Object.fromEntries(Object.keys(corePlaceSchema.shape).map((k) => [k, null])),
+      ),
+    };
+    const c = validateCoreCommand({
+      ...command(),
+      command: "CREATE_ITEM",
+      payload: {
+        family: "P5",
+        core: { title: "Legacy Bus" },
+        endpoints: { origin: point, destination: point },
+        service: {
+          service_key: "main",
+          transport_subtype: "BUS",
+          attribution: "UNSPECIFIED",
+          operator_namespace: "NAME",
+          operator_issuer: "",
+          operator_value: "",
+          operator_literal: "",
+          service_number: "",
+          service_literal: "",
+          codeshare_operating_key: null,
+        },
+        ...coreDefaults("member"),
+      },
+    });
+    const a = {
+      accountId: actor,
+      tripId: trip,
+      active: true,
+      canManageShared: false,
+      personId: null,
+      personIds: [],
+    };
+    const created = applyCoreCommand(emptyCoreGraph(), c, a, "2026-11-21T00:00:00Z");
+    const query = f.lease.query;
+    f.lease.query = async (sql, params) =>
+      sql.includes(") core_graph LIMIT") && update
+        ? {
+            rows: Object.entries(created.graph).flatMap(([core_table, rows]) =>
+              rows.map((fact) => ({ core_table, fact })),
+            ),
+          }
+        : query(sql, params);
+    const mutation = structuredClone(created);
+    if (update) mutation.graph.itinerary_transport_services[0].service_number = "12";
+    if (mode === "rekey") mutation.graph.itinerary_transport_services[0].service_key = "renamed";
+    await f.storage.withLockedCommand(
+      {
+        actorAccountId: actor,
+        tripId: trip,
+        operationId: operation,
+        baseVector: c.baseVector,
+      },
+      async (tx) => {
+        await tx.readLockedGraph(c);
+        await tx.commit(mutation, coreReceiptSchema.parse(f.receipt), JSON.stringify(c));
+      },
+    );
+    const writes = f.queries.filter((q) =>
+      /^(INSERT INTO|UPDATE) public."itinerary_transport_services"/.test(q.sql),
+    );
+    expect(writes).toHaveLength(1);
+    expect(writes[0].sql).not.toContain('"identity_state"');
+    expect(writes[0].params).toContain(update ? "12" : "");
+  },
+);
+it("explicit v1 transport SQL keeps identity_state instead of silently dropping it", async () => {
+  const f = await manualSparseFixture();
+  const graph = emptyCoreGraph();
+  graph.itinerary_transport_services.push({
+    trip_id: trip,
+    event_id: id,
+    service_key: "main",
+    identity_state: { version: 1, fields: Object.fromEntries(["operator_namespace", "operator_issuer", "operator_value", "operator_literal", "service_number", "service_literal"].map(k => [k, "UNKNOWN"])) },
+  });
+  await f.storage.withLockedCommand(
+    { actorAccountId: actor, tripId: trip, operationId: operation, baseVector: [] },
+    async (tx) => {
+      await tx.readLockedGraph(validateCoreCommand(command()));
+      await tx.commit(
+        { graph, changed: [] },
+        coreReceiptSchema.parse(f.receipt),
+        JSON.stringify(command()),
+      );
+    },
+  );
+  expect(
+    f.queries.find((q) =>
+      q.sql.startsWith('INSERT INTO public."itinerary_transport_services"'),
+    )?.sql,
+  ).toContain('"identity_state"');
 });

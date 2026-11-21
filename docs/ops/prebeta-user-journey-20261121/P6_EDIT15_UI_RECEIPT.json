@@ -1,0 +1,22 @@
+{
+  "observed_at": "2026-11-20T21:17:51.833444+00:00",
+  "source_sha": "3d585cbf087446a0e18eda0d84a0f556e4c89076",
+  "build": 15,
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundle": "art.xoery.otr",
+  "item_id": "587d6365-0ff0-45a3-99b9-c557f50aa1a7",
+  "path": "Day Feed > Activity Focus > Details > Edit > Save > Details",
+  "title": "QA P6 Harbour Museum - Edit1",
+  "retained_fields": [
+    "Nov 21, 2026",
+    "QA morning session",
+    "Auckland QA Museum",
+    "Entry location · QA north entrance",
+    "Show synthetic QA pass",
+    "Everyone"
+  ],
+  "local_ui_save": "PASS",
+  "independent_server_readback": "NOT_VERIFIED",
+  "cold_recovery_after_edit": "NOT_VERIFIED",
+  "reopen_edit": "NOT_VERIFIED"
+}

@@ -1,0 +1,20 @@
+{
+  "upstream": "bedf24dc",
+  "status": "CANDIDATE_COMPATIBILITY_PASS_NOT_DEVICE_PASS",
+  "checks": {
+    "typecheck": "PASS exit0",
+    "backendBuild": "PASS",
+    "affectedTests": {
+      "suites": 10,
+      "tests": 276,
+      "status": "PASS"
+    },
+    "uiGuard": "PASS",
+    "diffCheck": "PASS"
+  },
+  "independentReview": "prebeta_localfirst_review NO_BLOCKER, types/fixture/probe deletion",
+  "changes": "Narrow source typing, test-only synthetic fixture, official react-dom typings, obsolete probe removal; original Native fixes retained",
+  "hosted": "old formal baseline, software-only shared-lease candidate in progress Root2",
+  "mainPush": "NOT_DONE",
+  "device": "Build19; merged source not yet installed"
+}

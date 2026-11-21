@@ -7,6 +7,7 @@ import {
   googleSignInConfiguration,
 } from "./googleSignIn";
 import app from "../../../app.json";
+import appConfig from "../../../app.config";
 
 function setup() {
   const sdk = {
@@ -118,7 +119,8 @@ describe("native Google provisional credentials", () => {
   });
 
   it("binds the approved bundle, reversed scheme and server audience", () => {
-    expect(app.expo.ios.bundleIdentifier).toBe("com.xoery.otrmobile");
+    expect(app.expo.ios.bundleIdentifier).toBe("art.xoery.otr");
+    expect(app.expo.ios.appleTeamId).toBe("3K49Z2Q5X7");
     expect(app.expo.plugins).toContainEqual([
       "@react-native-google-signin/google-signin",
       {
@@ -128,6 +130,42 @@ describe("native Google provisional credentials", () => {
     expect(googleSignInConfiguration.webClientId).toBe(
       "580120713844-t44tea8s903dbflo0oqfk35gq4dto5rm.apps.googleusercontent.com",
     );
+  });
+  it("retains both Apple and the approved Google callback in the production config", () => {
+    vi.stubEnv("OTR_IOS_VARIANT", "production");
+    try {
+      const config = appConfig({ config: app.expo } as unknown as Parameters<typeof appConfig>[0]);
+      expect(config.ios?.bundleIdentifier).toBe("art.xoery.otr");
+      expect(config.ios?.usesAppleSignIn).toBe(true);
+      expect(config.plugins).toContain("expo-apple-authentication");
+      expect(config.plugins).toContainEqual(app.expo.plugins.find((plugin) =>
+        Array.isArray(plugin) && plugin[0] === "@react-native-google-signin/google-signin"));
+    } finally { vi.unstubAllEnvs(); }
+  });
+  it.each(["art.xoery.otr", "com.xoery.otrmobile"])("loads only the registered iOS identity: %s", async (bundleId) => {
+    const modules = Module as unknown as { _load(request: string, ...args: unknown[]): unknown };
+    const original = modules._load;
+    const bridgeSignIn = vi.fn(async () => ({ type: "success", data: { idToken: "synthetic-id-token" } }));
+    const bridgeLoad = vi.fn(() => ({ signIn: bridgeSignIn }));
+    const signOut = vi.fn(async () => undefined);
+    const load = vi.spyOn(modules, "_load").mockImplementation((request, ...args) => {
+      if (request === "expo-constants") return { default: { expoConfig: { ios: { bundleIdentifier: bundleId } } } };
+      if (request === "react-native") return { Platform: { OS: "ios" }, TurboModuleRegistry: { get: () => ({}) } };
+      if (request === "expo-modules-core") return { requireOptionalNativeModule: bridgeLoad };
+      if (request === "@react-native-google-signin/google-signin") return { GoogleSignin: { signOut } };
+      return original.call(modules, request, ...args);
+    });
+    try {
+      const exchange = vi.fn(async () => setup().session);
+      const nonce = createGoogleNonce(new Uint8Array(32).fill(7));
+      const adapter = createGoogleSignInAdapter(undefined, exchange, () => nonce);
+      expect((await adapter.capability()).available).toBe(bundleId === "art.xoery.otr");
+      if (bundleId === "art.xoery.otr") {
+        await adapter.verify({ provider: "google" }, new AbortController().signal);
+        expect(bridgeSignIn).toHaveBeenCalledWith(googleSignInConfiguration.iosClientId, googleSignInConfiguration.webClientId, nonce.digest);
+        expect(exchange).toHaveBeenCalledWith(expect.objectContaining({ nonce: nonce.raw }), expect.anything());
+      } else expect(bridgeLoad).not.toHaveBeenCalled();
+    } finally { load.mockRestore(); }
   });
   it("exchanges only the ID token after clearing provider-local state", async () => {
     const { sdk, exchange, session, adapter } = setup();

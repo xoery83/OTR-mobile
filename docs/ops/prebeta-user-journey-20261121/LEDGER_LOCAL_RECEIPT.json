@@ -1,0 +1,43 @@
+{
+  "readOnly": true,
+  "expense": {
+    "id": "ledger-expense_mwpg4auj_1dshq946g9",
+    "server_id": "d09e664e-aaa6-5499-8edf-4e9317f5a3da",
+    "journey_id": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
+    "creator_member_id": "22a3ee2b-72b8-4b68-991f-1d236793cd49",
+    "payer_member_id": "22a3ee2b-72b8-4b68-991f-1d236793cd49",
+    "original_amount_minor": 2400,
+    "original_currency": "NZD",
+    "original_scale": 2,
+    "revision": 1,
+    "server_revision": 1,
+    "sync_status": "SYNCED"
+  },
+  "independentServerReadback": false,
+  "actualUi": {
+    "totalNZD": "24.00",
+    "participantCount": 2,
+    "myShareNZD": "12.00",
+    "myBalanceNZD": "12.00"
+  },
+  "splits": [
+    {
+      "member_id": "22a3ee2b-72b8-4b68-991f-1d236793cd49",
+      "original_amount_minor": 1200,
+      "split_method": "EQUAL_PERSON"
+    },
+    {
+      "member_id": "ad8f2ba1-8029-4928-907d-33d4cc785827",
+      "original_amount_minor": 1200,
+      "split_method": "EQUAL_PERSON"
+    }
+  ],
+  "operations": [
+    {
+      "id": "ledger-operation_mwpgeuaj_yhnsqv1wu2",
+      "operation_type": "LEDGER_CREATE_EXPENSE",
+      "status": "COMPLETED",
+      "last_error_code": null
+    }
+  ]
+}

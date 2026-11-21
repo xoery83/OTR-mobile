@@ -942,8 +942,16 @@ function SummarySection({
           {t("settlement.waitingRates", { count: automaticWaiting })}
         </Text>
       ) : null}
-      {debugMode && settlement.message ? (
-        <Text style={styles.message}>{settlement.message}</Text>
+      {settlement.message &&
+      (debugMode ||
+        [
+          "Settlement preview failed.",
+          "Sync pending financial changes before confirming.",
+          "Saved Ledger data does not yet match the current Settlement source.",
+        ].includes(settlement.message)) ? (
+        <Text style={styles.message}>
+          {debugMode ? settlement.message : systemMessage(settlement.message)}
+        </Text>
       ) : null}
       {debugMode && settlement.refreshDiagnostic ? (
         <Text style={styles.meta}>
@@ -967,7 +975,8 @@ function SummarySection({
       ) : settlement.isOrganizer && !hasConfirmed ? (
         <UiButton
           variant="text"
-          label={t("settlement.checkReadiness")}
+          label={t(settlement.busy ? "common.loading" : "settlement.checkReadiness")}
+          disabled={settlement.busy}
           onPress={() => void settlement.prepare()}
         />
       ) : null}
@@ -1084,7 +1093,9 @@ function ExpenseSection({
                   style={styles.memberMenuItem}
                 >
                   <Text style={[styles.memberMenuText, selected && styles.bold]}>
-                    {member.id === actorMemberId ? t("common.me") : member.label}
+                    {member.id === actorMemberId
+                      ? t("common.me")
+                      : memberName(members, member.id)}
                   </Text>
                   {selected ? <Text style={styles.memberMenuCheck}>✓</Text> : null}
                 </Pressable>
@@ -1543,7 +1554,7 @@ function GroupReviewStatus({
             {coverage.map((member) => (
               <View key={member.memberId} style={styles.reviewMemberRow}>
                 <Text style={styles.body}>
-                  {member.displayName}
+                  {member.displayName || t("common.traveller")}
                   {member.memberId === actorMemberId ? t("settlement.youSuffix") : ""}
                 </Text>
                 <Text

@@ -1,0 +1,25 @@
+{
+  "readOnly": true,
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
+  "batches": [
+    {
+      "batchId": "cda66d73-934c-41c3-bf33-bc9b656e384c",
+      "jobId": "174683ae-a738-41b0-9fad-976111aa2ef2",
+      "createdAt": "2026-11-20T20:55:47.261Z",
+      "manifestSha256": "9611495b5cbfb2870951408fd889d7338c44b072d3bbb27c747e118f843e6ee1",
+      "inputs": [
+        {
+          "input_id": "a2f47de2-b930-4b1a-9b39-62cc5bf5f5d4",
+          "kind": "TEXT",
+          "acceptance_state": "ACCEPTED",
+          "content_sha256": "40c881034d7e631e4519013b599a3140f0643399d795891ebad02d4693d78637",
+          "content_byte_count": 102
+        }
+      ]
+    }
+  ],
+  "analyzeClicked": false,
+  "providerCalled": false,
+  "deviceUi": "On this device: 1 saved \u00b7 0 not saved \u00b7 0 waiting"
+}

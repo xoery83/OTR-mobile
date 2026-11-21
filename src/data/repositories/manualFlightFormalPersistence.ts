@@ -19,7 +19,10 @@ import {
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import type { CoreDatabase, createTripCoreV2Repository } from "./tripCoreV2Repository";
-import { readLocalManualSnapshotWithinTransaction } from "./tripLocalManualReadRepository";
+import {
+  localManualDraftScope,
+  readLocalManualSnapshotWithinTransaction,
+} from "./tripLocalManualReadRepository";
 import { hasAcceptedManualCreate } from "./acceptedManualCreate";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import type {
@@ -69,6 +72,8 @@ export function createFormalManualFlightPersistence(
     {
       actor: string;
       fingerprint: string;
+      authorization: string;
+      original: string | null;
       attempt?: { fields: string; commands: Command[] };
     }
   >();
@@ -192,6 +197,19 @@ export function createFormalManualFlightPersistence(
       origin: endpoint("ORIGIN"),
       destination: endpoint("DESTINATION"),
     });
+  }
+  function targetFacts(snapshot: Snapshot, itemId: string) {
+    const item = snapshot.graph.itinerary_events.find((row) => row.id === itemId);
+    return item
+      ? json({
+          item,
+          details: detailsFor(snapshot, itemId),
+          participants: snapshot.graph.trip_item_participants
+            .filter((row) => row.item_id === itemId && row.active)
+            .map((row) => row.person_id)
+            .sort(),
+        })
+      : null;
   }
   function ids(draft: ManualFlightDraft) {
     const values = draft.formalOperationIds;
@@ -329,6 +347,8 @@ export function createFormalManualFlightPersistence(
           states.set(draft, {
             actor: json(snapshot.actor),
             fingerprint: snapshot.fingerprint,
+            authorization: json(localManualDraftScope(snapshot)),
+            original: row ? targetFacts(snapshot, draft.itemId) : null,
           });
         });
         return draft;
@@ -401,16 +421,19 @@ export function createFormalManualFlightPersistence(
         if (!state) throw Error("MANUAL_FLIGHT_FORMAL_DRAFT_UNAVAILABLE");
         if (state.attempt && state.attempt.fields !== normalized)
           throw Error("LOCAL_MANUAL_DRAFT_FROZEN");
-        if (
-          state.actor !== json(snapshot.actor) ||
-          state.fingerprint !== snapshot.fingerprint
-        )
+        if (state.actor !== json(snapshot.actor))
           throw Error("MANUAL_FLIGHT_READ_CHANGED");
         const row =
           draft.expectedRevision === undefined
             ? null
             : await editable(snapshot, ctx, draft.itemId);
         if (row && row.semantic_revision !== draft.expectedRevision)
+          throw Error("MANUAL_FLIGHT_READ_CHANGED");
+        const unchangedDraft =
+          !state.attempt &&
+          json(localManualDraftScope(snapshot)) === state.authorization &&
+          targetFacts(snapshot, draft.itemId) === state.original;
+        if (state.fingerprint !== snapshot.fingerprint && !unchangedDraft)
           throw Error("MANUAL_FLIGHT_READ_CHANGED");
         const details = authoredFlightDetailsSchema.parse({
           flightNumberLiteral: fields.flightNumberLiteral,

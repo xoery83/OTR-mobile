@@ -4,11 +4,14 @@ import {
   classifyJourneyCurrencyPreviewFailure,
   ledgerCurrencyRepository,
 } from "./ledgerCurrencyRepository";
+vi.mock("@/data/auth/authRepository", () => ({
+  requireActiveUserId: async () => "10000000-0000-4000-8000-000000000002",
+}));
 
 const token = vi.hoisted(() => vi.fn());
 vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: token }));
 vi.mock("@/data/sync/ledgerReportingCoordinator", () => ({
-  refreshJourneyLedger: vi.fn(),
+  refreshJourneyLedgerWithStatus: vi.fn(),
   revalidateJourneyLedger: vi.fn(),
 }));
 vi.mock("./defaultLedgerExpenseRepository", () => ({

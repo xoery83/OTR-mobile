@@ -1,3 +1,4 @@
+import type { ManagedConsentConnection } from "./managedOAuthConsent";
 import { expect, it, vi } from "vitest";
 import { createManagedConsentRequest, createManagedOAuthConsent } from "./managedOAuthConsent";
 
@@ -237,7 +238,7 @@ it("starts the finite standing Consent at approval and preserves it across same-
         },
     };
     const withLease = vi.fn(async <T>(work: (port: typeof lease) => Promise<T>) => work(lease));
-    const adapter = createManagedOAuthConsent({ withLease }, () => policy);
+    const adapter = createManagedOAuthConsent({ withLease: withLease as ManagedConsentConnection["withLease"] }, () => policy);
     const signal = new AbortController().signal;
     clock.mockReturnValue(now + 5000);
     await adapter.decideById({ kind: "FIRST_PARTY", accountId: native.accountId }, id, true, signal);

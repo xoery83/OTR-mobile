@@ -208,23 +208,27 @@ function fieldType(schema: any): string {
   return schema.def.type;
 }
 const encode = (schema: any, value: unknown): SQLite.SQLiteBindValue =>
-  value === null
+  value === undefined && schema.isOptional()
     ? null
-    : fieldType(schema) === "boolean"
-      ? value
-        ? 1
-        : 0
-      : ["object", "record", "array"].includes(fieldType(schema))
-        ? canonicalCoreJson(value as Json)
-        : (value as SQLite.SQLiteBindValue);
+    : value === null
+      ? null
+      : fieldType(schema) === "boolean"
+        ? value
+          ? 1
+          : 0
+        : ["object", "record", "array"].includes(fieldType(schema))
+          ? canonicalCoreJson(value as Json)
+          : (value as SQLite.SQLiteBindValue);
 const decode = (schema: any, value: unknown) =>
-  value === null
-    ? null
-    : fieldType(schema) === "boolean"
-      ? value === 1
-      : ["object", "record", "array"].includes(fieldType(schema))
-        ? JSON.parse(value as string)
-        : value;
+  schema.isOptional() && (value === undefined || (value === null && !schema.isNullable()))
+    ? undefined
+    : value === null
+      ? null
+      : fieldType(schema) === "boolean"
+        ? value === 1
+        : ["object", "record", "array"].includes(fieldType(schema))
+          ? JSON.parse(value as string)
+          : value;
 export function createTripCoreV2Repository(
   database: CoreDatabase,
   getAccountId: () => Promise<string>,
@@ -280,7 +284,9 @@ export function createTripCoreV2Repository(
       );
       graph[table as CoreTable] = rows.map((row) =>
         Object.fromEntries(
-          Object.entries(schema.shape).map(([key, s]) => [key, decode(s, row[key])]),
+          Object.entries(schema.shape)
+            .map(([key, s]) => [key, decode(s, row[key])])
+            .filter(([, value]) => value !== undefined),
         ),
       );
     }

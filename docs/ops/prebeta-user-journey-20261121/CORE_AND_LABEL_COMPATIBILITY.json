@@ -1,0 +1,23 @@
+{
+  "state": "SOURCE_REVIEW_PASS_DEVICE_PENDING",
+  "coreCandidate": "18e2356dd7cafdb6b28094071265d2d7ab14123c",
+  "integrated": "d2f0e084",
+  "coreContract": "restore frozen exact-empty legacy P5; explicitv1 strict/no downgrade; no absentoptionalPGcolumn references",
+  "nativeCleanup": "remove redundantlocalreplayparser; one formal validateCoreCommand forread/pending/receipt/dispatch; rawintent andhash unchanged",
+  "combinedTests": {
+    "suites": 6,
+    "tests": 228,
+    "typecheck": "PASS"
+  },
+  "labelFix": "six response-only display labels accept rawemptymax200; currentcanonicalPerson mayunnamed; UIcommon.traveller fallback only; input/name/UUID/money/digest authority unchanged",
+  "labelTests": {
+    "suites": 3,
+    "tests": 38,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "uiGuard": "PASS"
+  },
+  "independentReview": "beta_hosted_lease_review NO_BLOCKER incl completedFinalized/Adjustment chain",
+  "hosted": "current83db/f8a alreadylegacycompatible; noextraSQLorProviderorautomaticdeployment",
+  "next": "Build23\u2192originalDay/P3/P5 receipt-first recovery\u2192independent readback"
+}

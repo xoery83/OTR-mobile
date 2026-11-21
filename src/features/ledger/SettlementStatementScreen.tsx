@@ -203,7 +203,7 @@ export function SettlementStatementScreen() {
           {(finalized.outstandingBalances ?? []).map((balance) => (
             <View key={balance.memberId} style={[styles.row, largeText && styles.stack]}>
               <Text style={[styles.rowTitle, styles.grow]}>
-                {balance.displayNameSnapshot}
+                {balance.displayNameSnapshot || t("common.traveller")}
               </Text>
               <MoneyText
                 style={styles.amount}
@@ -238,7 +238,8 @@ export function SettlementStatementScreen() {
               </Text>
               {(selected.adjustmentDeltas ?? []).map((delta) => (
                 <Text key={delta.memberId} style={styles.meta}>
-                  {delta.displayNameSnapshot}: {delta.deltaMinor >= 0 ? "+" : ""}
+                  {delta.displayNameSnapshot || t("common.traveller")}:{" "}
+                  {delta.deltaMinor >= 0 ? "+" : ""}
                   {formatLedgerMoney(delta.deltaMinor, delta.currency, delta.scale)}
                 </Text>
               ))}
@@ -268,7 +269,9 @@ export function SettlementStatementScreen() {
           </Text>
           {row.balances.map((balance) => (
             <View key={balance.memberId} style={styles.card}>
-              <Text style={styles.rowTitle}>{balance.displayNameSnapshot}</Text>
+              <Text style={styles.rowTitle}>
+                {balance.displayNameSnapshot || t("common.traveller")}
+              </Text>
               <Text style={styles.meta}>
                 {t("settlement.paid")}{" "}
                 {formatLedgerMoney(balance.paidMinor, balance.currency, balance.scale)}{" "}
@@ -280,7 +283,7 @@ export function SettlementStatementScreen() {
           {row.inputs.map((input) => (
             <View key={input.expenseId} style={styles.card}>
               <Text style={styles.rowTitle}>
-                {input.payer.displayNameSnapshot} {t("ui.paid")}{" "}
+                {input.payer.displayNameSnapshot || t("common.traveller")} {t("ui.paid")}{" "}
                 {formatLedgerMoney(
                   input.original.minor,
                   input.original.currency,
@@ -300,7 +303,7 @@ export function SettlementStatementScreen() {
               </Text>
               {input.splits.map((split) => (
                 <Text key={split.member.memberId} style={styles.meta}>
-                  {split.member.displayNameSnapshot}:{" "}
+                  {split.member.displayNameSnapshot || t("common.traveller")}:{" "}
                   {formatLedgerMoney(
                     split.settlementMinor,
                     input.settlement.currency,

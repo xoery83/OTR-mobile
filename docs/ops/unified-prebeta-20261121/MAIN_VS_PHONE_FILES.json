@@ -1,0 +1,252 @@
+{
+  "main": "41de43927fd9869673c1ca929e911f58d1f6f96d",
+  "phone_source_head": "7beac08c0469d8c8d2684a5cf485b731491ccf5f",
+  "phone_source_dirty": true,
+  "comparison": "tracked production paths, content only; not installed bytes proof",
+  "rows": [
+    {
+      "path": "app.json",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/components/AccountManagementScreen.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/components/GlobalMenu.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/api/client.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/api/nativeQaReadBudget.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/authRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/defaultAccountSwitchCoordinator.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/defaultAccountSwitchCoordinator.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/devProvisionalSignIn.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/devProvisionalSignIn.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/devSupabaseAuth.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/googleSignIn.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/guestRecoveryFiles.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/auth/sessionAccessToken.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/bootstrap/defaultBootstrapDependencies.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/bootstrap/defaultBootstrapDependencies.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/db/database.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/files/importOriginalFileStore.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/files/localFileCache.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/files/receiptFileStore.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/files/settlementExportFileStore.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/files/tripPhotoFileStore.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/operations/captureMixedQaManifest.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/operations/ledgerMaintenance.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/operations/openReceiptAsset.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/captureDraftRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/dayNavigationBookmarkRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/importSubmissionRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/importUpdateReadStateRepository.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/importUpdateReadStateRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/manualPlanRepository.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/manualPlanRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/memberClaimRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/searchRecentRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/tripCoreV2Repository.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/tripMetadataRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/tripPersonCloudCreateRepository.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/repositories/tripPersonCloudCreateRepository.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/sync/tripDownstreamAccessLoss.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/sync/tripDownstreamCoordinator.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/sync/tripDownstreamCoordinator.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/data/sync/tripMetadataTransport.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/domain/auth/guestP1Draft.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/domain/auth/localSession.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/P1PlanEditor.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/P1PlanEditor.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/TripMembersSheet.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/TripScreen.homeWidgets.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/TripScreen.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/TripSetupRows.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/day-feed/TripSetupRows.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/features/people/ServerParentTripPeople.tsx",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/native/importOriginalPreview.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/native/importWorkbenchDevCaller.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/native/tripPersonEditorDraft.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/native/tripPersonEditorDraft.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/ui/forms.placeholder.test.ts",
+      "status": "DIFFERENT"
+    },
+    {
+      "path": "src/ui/forms.tsx",
+      "status": "DIFFERENT"
+    }
+  ]
+}

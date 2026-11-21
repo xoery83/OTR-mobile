@@ -655,11 +655,12 @@ export async function runUniversalContinuationFixture(
           },
         };
         const legacy = projectUniversalResponse(plan, response, "ISO_ONLY");
-        assert.equal(legacy.candidates[0]?.presentationTier, "INCOMPLETE");
-        assert.notEqual(
-          projectUniversalResponse(plan, response).candidates[0]?.presentationTier,
-          "INCOMPLETE",
-        );
+        const legacyCandidate = legacy.candidates[0];
+        const civilCandidate = projectUniversalResponse(plan, response).candidates[0];
+        assert.ok(legacyCandidate && typeof legacyCandidate === "object" && "presentationTier" in legacyCandidate);
+        assert.ok(civilCandidate && typeof civilCandidate === "object" && "presentationTier" in civilCandidate);
+        assert.equal(legacyCandidate.presentationTier, "INCOMPLETE");
+        assert.notEqual(civilCandidate.presentationTier, "INCOMPLETE");
         await createUniversalContinuationHost({
           context,
           batchId: batch,

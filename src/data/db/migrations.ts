@@ -1,3 +1,5 @@
+import { tripCoreTransportIdentityMigration } from "./migrations/tripCoreTransportIdentity";
+import { privateAccountProfileMigration } from "./privateAccountProfileMigration";
 import { captureV3PhotoDecisionsMigration } from "./migrations/captureV3PhotoDecisions";
 import { tripCoreLocalDocumentMigration } from "./migrations/tripCoreLocalDocument";
 import { captureFilePngPhotoDecisionsDefinition } from "./migrations/captureFilePngPhotoDecisions";
@@ -1741,4 +1743,6 @@ export const migrations: Migration[] = [
   tripCoreLocalDocumentMigration,
   captureV3PhotoDecisionsMigration,
   { id: 79, name: "server_parent_metadata_confirmations", sql: serverParentMetadataConfirmationsSql },
+  privateAccountProfileMigration,
+  tripCoreTransportIdentityMigration,
 ];

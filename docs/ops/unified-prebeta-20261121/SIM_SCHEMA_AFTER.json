@@ -1,0 +1,50 @@
+[
+  {
+    "file": "otr-guest-62648f98-d21a-45af-8a6c-4f42eaf8001f.db",
+    "migrationMarkers": [
+      [
+        76,
+        "capture_file_png_photo_decisions"
+      ],
+      [
+        77,
+        "trip_core_local_document_metadata"
+      ],
+      [
+        78,
+        "capture_v3_photo_decisions"
+      ],
+      [
+        79,
+        "server_parent_metadata_confirmations"
+      ]
+    ],
+    "profileTablePresent": false
+  },
+  {
+    "file": "otr-mobile.db",
+    "migrationMarkers": [
+      [
+        76,
+        "capture_file_png_photo_decisions"
+      ],
+      [
+        77,
+        "trip_core_local_document_metadata"
+      ],
+      [
+        78,
+        "capture_v3_photo_decisions"
+      ],
+      [
+        79,
+        "server_parent_metadata_confirmations"
+      ],
+      [
+        80,
+        "account_private_profile_local"
+      ]
+    ],
+    "profileTablePresent": true
+  }
+]

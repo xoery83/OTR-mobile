@@ -1,0 +1,24 @@
+{
+  "device": "00008140-001C2980269B001C",
+  "bundle": "art.xoery.otr",
+  "build": "13",
+  "sourceSha": "6e0a891cd17059328788aa6d447c351536fdd520",
+  "install": "IN_PLACE_COREDEVICE_SUCCESS",
+  "sameOriginalSyntheticQaAccountHeader": true,
+  "oldTripReadback": {
+    "name": "MCP Synthetic Nelson QA 20261031 \u2014 Managed DEV",
+    "startDate": "2026-12-10",
+    "endDate": "2026-12-18",
+    "plans": 1,
+    "stays": 2,
+    "activities": 1
+  },
+  "settingsProfileEntryVisible": true,
+  "appleNativeCapabilityAvailable": true,
+  "appleProviderLogin": "NOT_YET_VERIFIED",
+  "googleProviderLogin": "NOT_YET_VERIFIED",
+  "oldSqliteFilesRetained": 3,
+  "uninstallOrReset": false,
+  "credentialsCopied": false,
+  "rowLevelQueueDraftCounts": "NOT_OBSERVED"
+}

@@ -1,0 +1,14 @@
+{
+  "state": "LOCAL_TEST_PASS_DEVICE_PENDING",
+  "scope": [
+    "useStage7Settlement.prepare failure",
+    "SettlementReadinessScreen safe normal-mode feedback"
+  ],
+  "change": "Only three existing local messages are shown/localized outside Debug; arbitrary backend text stays hidden. Unknown prepare errors map to existing generic message. Financial/receipt semantics unchanged.",
+  "validation": {
+    "focusedTests": 5,
+    "uiGuard": "PASS",
+    "independentReview": "beta_hosted_lease_review NO_BLOCKER"
+  },
+  "device": "Pending next unified build; do not claim readiness/confirmation PASS"
+}
