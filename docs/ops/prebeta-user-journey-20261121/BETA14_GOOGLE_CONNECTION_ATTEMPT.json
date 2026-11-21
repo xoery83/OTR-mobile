@@ -1,0 +1,24 @@
+{
+  "state": "CONNECTION_NOT_CONFIRMED",
+  "ownerAuthorized": "normal OAuth switch to Google QA even if replacing local EmailQA credential slot; no Revoke/Disconnect/deletion",
+  "consumer": "existing ChatGPT OTR DEV QA plugin settings",
+  "endpoint": "https://api-dev.xoery.art/mcp",
+  "googleExpectedAccountId": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+  "syntheticTripId": "fb3e6c7f-5a14-4539-9258-9797e2097039",
+  "observed": "one Continue connection attempt returned cannot-confirm toast; no Google/Consent page observed",
+  "consoleClue": "Failed to finish app OAuth callback Object; exact per-request attribution not captured",
+  "callbackRoute": "NOT_CAPTURED",
+  "callbackHttpStatus": "NOT_CAPTURED",
+  "callbackErrorCode": "NOT_CAPTURED",
+  "hostedReadback": "/Users/xoery/Project/otr-mobile-import/mcp-managed-final-integration-20261119/artifacts/native-prebeta-receipt-20261121/BETA14_GOOGLE_CONNECT_PREAUTH_READBACK.json",
+  "known": "current existing client/redirect/issuer configuration qualified; no measured DCR attempt or SQL/lease failure for this action",
+  "notDone": [
+    "no token/Session export",
+    "no callback Object expansion",
+    "no disconnect/revoke",
+    "no blind OAuth retry",
+    "no new OAuth Client or DCR configuration",
+    "no business mutation"
+  ],
+  "next": "existing consumer callback route/status/error projection if safely observable; otherwise preserve exact evidence gap"
+}
