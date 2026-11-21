@@ -81,7 +81,9 @@ async function start() {
     root.render(
       <McpOAuthConsent
         repository={repository}
-        showUnavailableProviders={Boolean("managedDev" in config && config.managedNativeOAuth && !managedId)}
+        showUnavailableProviders={Boolean(
+          "managedDev" in config && config.managedNativeOAuth && !config.browserProviders && !managedId,
+        )}
         openProvider={() => openMcpProviderPopup(window)}
         navigate={(target) => location.replace(target)}
       />,

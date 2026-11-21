@@ -19,11 +19,12 @@ and match the same OAuth session, account, client and policy. A new session or
 an expired Consent requires a fresh decision. See the Managed section of
 `docs/mcp/MCP_AUTH_CONTRACT.md` for the DEV role capacity and acceptance scope.
 
-Shared DEV general-account MCP activation is under review. The Gateway can
-bind the configured OAuth client to each verified account, and the existing
-owning database eligibility, Trip ACL, and first-party confirmation still
-apply. Do not promote this candidate as full activation while ordinary
-account admission and the protected write approval runtime are unverified.
+Shared DEV general-account MCP activation uses the registered OAuth client
+and binds each connection to its verified account. The Managed consent page
+uses the existing Supabase PKCE login for Google and Apple and retains
+email sign-in. All business calls still require OTR Consent, existing
+database admission, Trip ACL and applicable first-party confirmation.
+Live normal-account acceptance is tracked in the Shared DEV release packet.
 
 ## Current checkpoint
 

@@ -117,7 +117,7 @@ export const mcpBetaConsentConfigSchema = z
         ? new URL(v.authOrigin).origin === devOrigin &&
           v.consentPolicy?.policy.resource === "https://api-dev.xoery.art/mcp" &&
           isSupabaseDevPublicKey(v.publishableKey) &&
-          !v.browserProviders
+          !v.identityLinkEnabled
         : new URL(v.authOrigin).origin !== devOrigin &&
           !v.publishableKey.startsWith("sb_publishable_") &&
           (!v.consentPolicy ||
@@ -627,12 +627,15 @@ export function createMcpOAuthConsentRepository(
       let attempt: AbortController | undefined;
       try {
         return await run(async () => {
-          if (!beta?.browserProviders?.includes(provider) || !consentPin)
+          if (!beta?.browserProviders?.includes(provider) || !beta.consentPolicy)
             throw new McpConsentError("CLOSED");
           presentedConsent = undefined;
           presentedWriteAccount = undefined;
           attempt = providerAttempt = new AbortController();
-          const returnUrl = origin + mcpProviderCallbackPath;
+          const callbackOrigin = beta.managedDev
+            ? new URL(beta.consentPolicy.policy.resource).origin
+            : origin;
+          const returnUrl = callbackOrigin + mcpProviderCallbackPath;
           const { data, error } = await client.auth.signInWithOAuth({
             provider,
             options: { redirectTo: returnUrl, skipBrowserRedirect: true },
@@ -646,7 +649,7 @@ export function createMcpOAuthConsentRepository(
           )
             throw new McpConsentError("UNAVAILABLE");
           const url = new URL(data.url);
-          if (!isMcpProviderAuthorizeUrl(url, origin, [provider]))
+          if (!isMcpProviderAuthorizeUrl(url, origin, [provider], callbackOrigin))
             throw new McpConsentError("REQUEST_CHANGED");
           const code = await interaction.receive(url.href, providerAttempt.signal);
           current();
