@@ -4,9 +4,9 @@ Native is the sole Beta Delivery Lead. Ordinary approved fixes may merge/push Ma
 
 ## Current source and runtime
 
-- Branch `codex/native-unified-prebeta-20261121`, Main `825907f37e9955fd2e1d1620094db690c42eff6b` safely pushed and independently matched by ls-remote. Candidate HEAD matches; installed source9363055a differs only by later evidence commit. Pending pre-acceptance UI changes are not in Main. Preserve other Agent work and re-fetch before serial integration.
+- Native latest verified remote Main is `9e3f66d2`. Preserve concurrent work and re-fetch before serial integration.
 - Forms QA C0 `C0C23E00-5016-4289-B806-92C5484BD5BA`, Bundle `art.xoery.otr`, Team `3K49Z2Q5X7`: Build24/source9363055a installed in place. SQLite81, original Session/history retained. Phone remains Build14 untouched.
-- Shared DEV `https://api-dev.xoery.art`, Managed Supabase `tuqigdxrvrerfewsxqgm`. Root2 deployed reviewed narrow capability restoration: containerc89a4e06/image2f25e788, asset93fd2892; Gateway7da083fa unchanged. TTL600, Core connlimit1, Layer1 OFF, ApprovalGateway NOLOGIN. No Native SQL/role/authority changes. Root2 owns Hosted operations; no active Native write window.
+- Shared DEV `https://api-dev.xoery.art`, Managed Supabase `tuqigdxrvrerfewsxqgm`. Active release and QA state below. The previously accepted Native capability recovery remains available as rollback.
 - Current normal Backend restoration maps only the exact known22-command profile to the existing13-command Manual/Docs capabilities; nine lifecycle/link commands remain off. Root1 confirmed existing approved capability restoration. Independent review and tests passed.
 
 ### MCP standing Shared DEV

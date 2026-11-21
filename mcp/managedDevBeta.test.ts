@@ -573,6 +573,15 @@ it("uses the same signed native session for live user and private Consent and st
   const revokedRequest = call();
   expect(await native.authorize(revokedRequest)).toBeNull();
   expect(await native.unapproved(revokedRequest, revokedRequest.signal)).toBeNull();
+
+  getUser.mockImplementationOnce(async (url, options) => {
+    expect(url).toBe(managedDevBetaIssuer + "/oauth/userinfo");
+    expect(new Headers(options?.headers).get("authorization")).toBe(`Bearer ${otherToken}`);
+    return Response.json({ error_code: "session_not_found" }, { status: 403 });
+  });
+  const revokedGeneralRequest = call(otherToken);
+  expect(await general.authorize(revokedGeneralRequest)).toBeNull();
+  expect(await general.unapproved(revokedGeneralRequest, revokedGeneralRequest.signal)).toBeNull();
   expect(adapter.readBinding).not.toHaveBeenCalled();
 });
 

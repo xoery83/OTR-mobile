@@ -4,11 +4,11 @@ Owner direction: 21 November 2026. Native is the single delivery lead after the 
 
 ## Baseline and execution
 
-- Remote Main verified after safe push: `825907f3` (previousbedf24dc remains ancestor; includes Managed MCP/c138470d and verified Native fixes).
-- Native candidate: `codex/native-unified-prebeta-20261121`; candidate HEAD825907f3 safely pushed to Main; remoteSHA verified. Pending pre-acceptance currency changes remain outside Main. Main/Hosted Writer returned by MC.
+- Remote Main last verified at `9e3f66d2`, including the latest Native currency handling.
+- The isolated standing MCP candidate contains that Native baseline and the verified Managed MCP integration.
 - One QA target: Forms QA `C0C23E00-5016-4289-B806-92C5484BD5BA`, `art.xoery.otr`; retain Session/SQLite81/history. Phone remains Build14 until MCP handoff.
 - Installed client: Build24/source9363055a, same Session and SQLite81 retained; latest original-item edits recovered on cold start. Phone Build14 unchanged.
-- Shared DEV current Root2 release c89a4e06/image2f25e788; shared lease and exact normal capability profile restored without SQL/authority changes.
+- Shared DEV standing MCP release `4388a2d6`; consistent Consent policy, Core role limit 1, and scoped private approval enabled. Prior Root2 container c89a4e06 is retained for recovery.
 - Ordinary approved fixes may be merged/pushed after focused checks and actual journey validation. No force push, Production, new authority, protected SQL or financial contract changes. TestFlight/App Store publication requires Owner approval.
 
 ## Prioritized journey backlog
