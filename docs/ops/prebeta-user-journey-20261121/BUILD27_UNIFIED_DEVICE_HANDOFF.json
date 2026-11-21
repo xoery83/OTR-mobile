@@ -10,7 +10,19 @@
   "installation": "IN_PLACE_PASS",
   "jsBundleSha256": "e7bf024fd95236cd864b8b22b7e83b85751c23c3045ff24c8765536240645ff0",
   "sessionAndCachedTrips": "retained after update; normal Google login completed by Owner and My Trips observed",
-  "googleColdRecovery": "PENDING: CoreDevice initialization timeout; normal foreground/background is not process cold recovery",
+  "googleColdRecovery": {
+    "status": "PASS",
+    "restartMethod": "Owner confirmed App Switcher termination and reopening; Native subsequently inspected actual Device Hub UI",
+    "observedAtLocal": "2026-11-21 15:24 NZDT",
+    "observations": [
+      "My Trips restored without login prompt",
+      "same dedicated Beta Google MCP QA 1121 Trip retained",
+      "Trip Home shows exactly one plan",
+      "P1 Details QA Google sync check, Nov21, Everyone, no pending dot",
+      "Edit entry available"
+    ],
+    "limits": "UI and prior independent server IDs correlate the same unique QA object; no SQLite/Session copied or raw device database inspection"
+  },
   "googleSyntheticTrip": {
     "status": "SERVER_VERIFIED",
     "tripId": "fb3e6c7f-5a14-4539-9258-9797e2097039",
