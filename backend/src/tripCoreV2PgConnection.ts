@@ -96,6 +96,20 @@ function createOwningPgConnection(
 ) {
   const config = configSchema.parse(input);
   let occupied = false;
+  let holder: { started: number; phase: "SETUP" | "SQL" | "APPLICATION" | "RETIRE" } | undefined;
+  const boundedMs = (value: number) => Math.min(120_000, Math.max(0, Math.trunc(value)));
+  function annotate(error: unknown, started: number, observed = holder, waitMs = boundedMs(Date.now() - started)) {
+    if (error instanceof Error && !Object.hasOwn(error, "coreLeaseDiagnostic")) {
+      try {
+        Object.defineProperty(error, "coreLeaseDiagnostic", { value: {
+          waitMs,
+          waiterCount: waiters.size,
+          ...(observed ? { holderAgeMs: boundedMs(Date.now() - observed.started), holderPhase: observed.phase } : {}),
+        } });
+      } catch { /* Diagnostics must never change the original failure. */ }
+    }
+    return error;
+  }
   let closed = false;
   let idle: { client: Client; retire(): Promise<void>; isRetired(): boolean } | undefined;
   let closingIdle: Promise<void> | undefined;
@@ -114,7 +128,7 @@ function createOwningPgConnection(
   }
   const waiters = new Set<() => void>();
   // The Core principal has one connection: bound contention without reusing actor sessions.
-  async function acquire(queuedAdmission = false) {
+  async function acquire(queuedAdmission = false, started = Date.now()) {
     if (!occupied) {
       occupied = true;
       return;
@@ -124,7 +138,7 @@ function createOwningPgConnection(
         !(queuedAdmission &&
           (principal === "otr_trip_create_gateway" || principal === "otr_trip_metadata_gateway"))) ||
       waiters.size >= 4
-    ) throw new Error("CORE_CONNECTION_BUSY");
+    ) throw annotate(new Error("CORE_CONNECTION_BUSY"), started);
     await new Promise<void>((resolve, reject) => {
       const wake = () => {
         clearTimeout(timer);
@@ -132,7 +146,7 @@ function createOwningPgConnection(
       };
       const timer = setTimeout(() => {
         waiters.delete(wake);
-        reject(new Error("CORE_CONNECTION_BUSY"));
+        reject(annotate(new Error("CORE_CONNECTION_BUSY"), started));
       }, 15_000);
       waiters.add(wake);
     });
@@ -152,7 +166,12 @@ function createOwningPgConnection(
     },
     async withLease<T>(work: (lease: CorePgLease) => Promise<T>, queuedAdmission = false) {
       if (closed) throw new Error("CORE_CONNECTION_RETIRED");
-      await measureSourcePdfPhase("pg_lease_wait", () => acquire(queuedAdmission));
+      const queuedAt = Date.now();
+      await measureSourcePdfPhase("pg_lease_wait", () => acquire(queuedAdmission, queuedAt));
+      const waitMs = boundedMs(Date.now() - queuedAt);
+      const held: NonNullable<typeof holder> = { started: Date.now(), phase: "RETIRE" };
+      holder = held;
+      const diagnose = (error: unknown) => annotate(error, queuedAt, held, waitMs);
       const prior = idle;
       const reused = prior && !prior.isRetired() ? prior : undefined;
       clearTimeout(idleTimer);
@@ -163,6 +182,7 @@ function createOwningPgConnection(
         await closingIdle;
         if (!reused) await prior?.retire();
         if (closed) throw new Error("CORE_CONNECTION_RETIRED");
+        held.phase = "SETUP";
         if (reused) session = reused;
         else {
           const client = new Client({
@@ -191,7 +211,10 @@ function createOwningPgConnection(
           session = { client, retire, isRetired: () => ending !== undefined };
         }
       } catch (error) {
+        diagnose(error);
+        held.phase = "RETIRE";
         await reused?.retire();
+        if (holder === held) holder = undefined;
         release();
         throw error;
       }
@@ -204,8 +227,9 @@ function createOwningPgConnection(
       try {
         const deadline = new Promise<never>((_, reject) => {
           timeout = setTimeout(() => {
+            const error = diagnose(new Error("CORE_CONNECTION_TIMEOUT"));
             retire();
-            reject(new Error("CORE_CONNECTION_TIMEOUT"));
+            reject(error);
           }, budget.leaseMs);
         });
         const operation = async () => {
@@ -233,13 +257,18 @@ function createOwningPgConnection(
             )
               throw new Error("CORE_PRINCIPAL_UNAVAILABLE");
           }
+          held.phase = "APPLICATION";
           const lease: CorePgLease = {
-            retire,
+            retire() {
+              held.phase = "RETIRE";
+              return retire();
+            },
             ...(budget.reuse ? { verifiedSourceSession: true as const } : {}),
             async query(sql, parameters = []) {
               if (isRetired() || querying || finished)
                 throw new Error("CORE_CONNECTION_RETIRED");
               querying = true;
+              held.phase = "SQL";
               try {
                 const phase = sql.startsWith(
                   "SELECT public.trip_source_universal_pdf_enter(",
@@ -264,6 +293,7 @@ function createOwningPgConnection(
                 if (sql === "COMMIT" || sql === "ROLLBACK") finished = true;
                 return { rows: result.rows };
               } catch (error) {
+                diagnose(error);
                 failed = true;
                 if (
                   (error as { message?: string }).message?.includes("Query read timeout")
@@ -272,6 +302,7 @@ function createOwningPgConnection(
                 throw error;
               } finally {
                 querying = false;
+                if (!isRetired()) held.phase = "APPLICATION";
               }
             },
           };
@@ -284,13 +315,18 @@ function createOwningPgConnection(
           return result;
         };
         return await Promise.race([operation(), deadline]);
+      } catch (error) {
+        diagnose(error);
+        throw error;
       } finally {
+        held.phase = "RETIRE";
         if (timeout) clearTimeout(timeout);
         if (budget.reuse && !closed && reusable && !isRetired()) {
           idle = session;
           idleTimer = setTimeout(discardIdle, 15000);
           idleTimer.unref();
         } else await retire();
+        if (holder === held) holder = undefined;
         release();
       }
     },

@@ -258,3 +258,32 @@ it("starts the finite standing Consent at approval and preserves it across same-
     clock.mockRestore();
   }
 });
+
+it.each([
+  { aborted: false, invalid: false, category: "OTHER" },
+  { aborted: true, invalid: false, category: "OTHER" },
+  { aborted: false, invalid: true, category: "CORE_CONNECTION_BUSY" },
+])("logs only bounded lease metadata on consent read failure ($category, aborted=$aborted)", async ({ aborted, invalid, category }) => {
+  const signal = new AbortController();
+  const error = Object.assign(new Error(invalid ? "CORE_CONNECTION_BUSY" : "PRIVATE_SQL_TOKEN_ACCOUNT"), {
+    coreLeaseDiagnostic: { waitMs: invalid ? 120_001 : 15_000, holderAgeMs: 20_000, holderPhase: "SQL", waiterCount: 2, sql: "PRIVATE_SQL" },
+  });
+  const log = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    const adapter = createManagedOAuthConsent({ async withLease() {
+      if (aborted) signal.abort();
+      throw error;
+    } }, () => ({ policyId: "unit", policyVersion: "1", policyHash: "a".repeat(64), expiresAt: Date.now() + 120_000 }));
+    await expect(adapter.readBinding({
+      issuer: "https://tuqigdxrvrerfewsxqgm.supabase.co/auth/v1",
+      accountId: "11111111-1111-4111-8111-111111111111",
+      clientId: "22222222-2222-4222-8222-222222222222",
+      sessionId: "33333333-3333-4333-8333-333333333333", expiresAt: Date.now() + 120_000,
+    }, signal.signal)).rejects.toThrow("MCP_CONSENT_STORE_UNAVAILABLE");
+    expect(log).toHaveBeenCalledTimes(1);
+    const entry = JSON.parse(log.mock.calls[0][0]);
+    expect(entry).toEqual({ event: "mcp_managed_consent_read_unavailable", stage: "lease", category, aborted,
+      ...(invalid ? {} : { waitMs: 15_000, holderAgeMs: 20_000, holderPhase: "SQL", waiterCount: 2 }), durationMs: expect.any(Number) });
+    expect(JSON.stringify(entry)).not.toContain("PRIVATE");
+  } finally { log.mockRestore(); }
+});

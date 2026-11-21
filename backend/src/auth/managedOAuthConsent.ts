@@ -64,6 +64,22 @@ function sameSecret(expected: string, secret: string) {
   return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(hash(secret), "hex"));
 }
 
+const leaseDiagnosticSchema = z.object({
+  waitMs: z.number().int().min(0).max(120_000),
+  holderAgeMs: z.number().int().min(0).max(120_000).optional(),
+  holderPhase: z.enum(["SETUP", "SQL", "APPLICATION", "RETIRE"]).optional(),
+  waiterCount: z.number().int().min(0).max(4),
+});
+function readFailureDiagnostic(error: unknown) {
+  const value = error as { message?: unknown; code?: unknown; name?: unknown; coreLeaseDiagnostic?: unknown } | null;
+  const parsed = leaseDiagnosticSchema.safeParse(value?.coreLeaseDiagnostic);
+  const categories = ["CORE_CONNECTION_BUSY", "CORE_CONNECTION_TIMEOUT", "CORE_CONNECTION_RETIRED", "CORE_PRINCIPAL_UNAVAILABLE", "CORE_TRANSACTION_UNFINISHED"];
+  const category = typeof value?.message === "string" && categories.includes(value.message)
+    ? value.message : value?.code === "53300" ? "POSTGRES_CONNECTION_LIMIT"
+      : value?.name === "AbortError" ? "ABORTED" : "OTHER";
+  return { category, ...(parsed.success ? parsed.data : {}) };
+}
+
 export function createManagedOAuthConsent(
   connection: ManagedConsentConnection,
   currentPolicy: () => ManagedConsentPolicy,
@@ -128,6 +144,8 @@ export function createManagedOAuthConsent(
         const code = (error as { code?: unknown } | null)?.code;
         console.info(JSON.stringify({
           event: "mcp_managed_consent_read_unavailable",
+          ...readFailureDiagnostic(error),
+          aborted: signal.aborted,
           stage,
           sqlstate: typeof code === "string" && /^[0-9A-Z]{5}$/.test(code) ? code : undefined,
           durationMs: Date.now() - started,

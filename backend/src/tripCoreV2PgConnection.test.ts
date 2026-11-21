@@ -200,9 +200,10 @@ it("serves concurrent Core requests FIFO through fresh isolated sessions", async
 it("returns the slot if fresh client construction fails", async () => {
   const connection = createCorePgConnection(config);
   f.constructorFailure = true;
-  await expect(connection.withLease(vi.fn())).rejects.toThrow(
-    "client initialization failed",
-  );
+  await expect(connection.withLease(vi.fn())).rejects.toMatchObject({
+    message: "client initialization failed",
+    coreLeaseDiagnostic: { holderPhase: "SETUP", waiterCount: 0, waitMs: expect.any(Number) },
+  });
   f.constructorFailure = false;
   await connection.withLease(async (lease) => {
     await lease.query("BEGIN");
@@ -266,11 +267,17 @@ it("bounds Core waiters and never runs an expired queued callback", async () => 
     void waiting.then(() => {
       expired = true;
     });
-    await expect(connection.withLease(work)).rejects.toThrow("CORE_CONNECTION_BUSY");
+    await expect(connection.withLease(work)).rejects.toMatchObject({
+      message: "CORE_CONNECTION_BUSY",
+      coreLeaseDiagnostic: { waitMs: 0, holderAgeMs: 0, holderPhase: "APPLICATION", waiterCount: 4 },
+    });
     await vi.advanceTimersByTimeAsync(14_999);
     expect(expired).toBe(false);
     await vi.advanceTimersByTimeAsync(2);
     const outcomes = await waiting;
+    expect(outcomes[0]).toMatchObject({ status: "rejected", reason: {
+      coreLeaseDiagnostic: { waitMs: 15_000, holderAgeMs: 15_000, holderPhase: "APPLICATION", waiterCount: 3 },
+    } });
     expect(
       outcomes.every(
         (outcome) =>
@@ -409,12 +416,14 @@ it("retires Core at its 60s hard deadline and rejects any late COMMIT", async ()
       })
       .then(
         () => "unexpected",
-        (error: Error) => error.message,
+        (error: Error) => error,
       );
     await vi.advanceTimersByTimeAsync(59999);
     expect(f.destroy).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
-    expect(await outcome).toBe("CORE_CONNECTION_TIMEOUT");
+    expect(await outcome).toMatchObject({ message: "CORE_CONNECTION_TIMEOUT", coreLeaseDiagnostic: {
+      waitMs: 0, holderAgeMs: 60_000, holderPhase: "APPLICATION", waiterCount: 0,
+    } });
     release();
     await vi.advanceTimersByTimeAsync(0);
     expect(f.queries).not.toContain("COMMIT");
@@ -793,4 +802,17 @@ it("never connects or dispatches queued Trip reads after adapter close", async (
   expect(work).not.toHaveBeenCalled();
   expect(f.connect).toHaveBeenCalledOnce();expect(f.end).toHaveBeenCalledOnce();
   await expect(connection.withReadLease(work)).rejects.toThrow("CORE_CONNECTION_RETIRED");
+});
+
+it("captures SQL failure phase without copying query text or parameters", async () => {
+  f.parentSqlState = "42501";
+  const error = await createCorePgConnection(config).withLease(async (lease) => {
+    await lease.query("BEGIN");
+    await lease.query("SELECT public.trip_create_parent_result($1)", ["PRIVATE_ACCOUNT"]);
+  }).catch((error: unknown) => error);
+  expect(error).toMatchObject({ code: "42501", coreLeaseDiagnostic: {
+    holderPhase: "SQL", waiterCount: 0, waitMs: expect.any(Number), holderAgeMs: expect.any(Number),
+  } });
+  expect(Object.keys((error as { coreLeaseDiagnostic: object }).coreLeaseDiagnostic).sort())
+    .toEqual(["holderAgeMs", "holderPhase", "waitMs", "waiterCount"]);
 });
