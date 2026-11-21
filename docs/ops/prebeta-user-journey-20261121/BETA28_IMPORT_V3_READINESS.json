@@ -1,0 +1,31 @@
+{
+  "source": "9d711ea6",
+  "productSource": "31e20eef",
+  "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundleId": "art.xoery.otr",
+  "packageBuild": 28,
+  "profileDelta": {
+    "EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED": true,
+    "EXPO_PUBLIC_OTR_IMPORT_CONFIRM_BEFORE_SAVE": true
+  },
+  "jsBundleSha256": "2dff8ad8ef3e7d976560cd82109dff2a2d46135e1fdcec182c25c6dfde314c96",
+  "checks": {
+    "scopedSuites": 3,
+    "scopedTests": 93,
+    "xcodeSimulator": "PASS",
+    "signature": "PASS",
+    "inPlaceStart": "PASS",
+    "existingSessionAndTrips": "retained"
+  },
+  "phone": "unchanged Build27",
+  "state": "IMPORT_EMPTY_DRAFT_INPUT_TOOL_BLOCKED",
+  "batchCreated": false,
+  "analyzeCalls": 0,
+  "providerCalls": 0,
+  "failure": "Device Hub AX works, Magic Input only Group; pixel input noWindowsAvailable after Raise; no submitted text",
+  "limits": [
+    "Not real V3 Analyze/Review/Save PASS",
+    "Existing batch routing and Provider dollar cost not freshly verified",
+    "No historical UNKNOWN replay"
+  ]
+}
