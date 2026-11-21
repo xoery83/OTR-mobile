@@ -1,5 +1,9 @@
 # Unified Beta latest — 21 November 2026 NZDT
 
+BETA11 Backend76ea5694 and reviewed Native consumer649f060c now locally integrated/default closed. Parent113 tests and types PASS. Normal UI/Hosted Join/Revoke NOT_RUN; Device Hub menu coordinate action noWindowsAvailable, no new fixture created. Reuse frozen9c5 normal UI narrowly, not old Sync/Root/raw storage. See ops/beta11-native-consumer-20261121.
+
+AI Form V2 frozen handoff queued: `fbbc01573e91ad30eed22fc43cba5e0ccb0f6d8d` / baseline `f5ca1edb`. Git object and frozen Phase C instructions located; validation remains owning-lane reported, not Native Hosted/device PASS. Integrate at next safe pause after current P0 security/MCP, with fresh Main/Guard/SQLite81→82→83 checks. No immediate deployment, migration or Provider activation. Cursor: `docs/ops/ai-form-v2-frozen-candidate-20261121.json`.
+
 Native is sole Beta Delivery Lead. Candidate5370d1c1 includes frontend244d78f1; Main before final push1a6ac965. C0 Forms QA Build33/source244d78f1, art.xoery.otr, Team3K49Z2Q5X7, SQLite81, original Session/history retained. HBCb42558fdcdde32a9881e33e7b96dbdaeceb97a7f198131a1b01356e9219a55f3. Phone remains Build27, currently unavailable. No independent Beta/AppAttest ZIP may overwrite unified SharedDEV App without a new coordinated build.
 
 BETA09 minimal TEXT real journey PASS: original Batch ef88ec6e-81f9-4c85-a126-0059f3abc388 on synthetic B/Trip a0bcf637 auto-analyzed once (DeepSeek Flash508in/71out/579total; cost not independently available). Taskc5353917 PUBLISHED, no rerun. Result preview shows recognized title/date, no developer wording/manual Analyze; one Add plans to trip confirmation. CREATE85e5bda0 APPLIED receipt06491756 at16:23:07NZDT; LINKf1afcc7e APPLIED affc1fb1 at16:24:10. One Item8266b878, Nov23/no time or place/PRIVATE SELF, original162B text document preserved. Native Completed/Day/Details/process-cold PASS.

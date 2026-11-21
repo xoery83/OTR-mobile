@@ -1,0 +1,41 @@
+{
+  "status": "OWNER_FROZEN_QUEUED_NOT_DEPLOYED",
+  "branch": "codex/ai-form-v2-phase-c-20261121",
+  "commit": "fbbc01573e91ad30eed22fc43cba5e0ccb0f6d8d",
+  "verifiedMainBaseline": "f5ca1edb",
+  "reportedValidation": {
+    "focusedTests": 762,
+    "sqliteMigration": "81→83",
+    "isolatedPostgres": "Save/Receipt/Recovery PASS",
+    "types": "PASS",
+    "backendBuild": "PASS",
+    "iosReleaseBuild": "PASS"
+  },
+  "evidenceLevel": "Owner handoff; Native has not independently revalidated this package",
+  "priority": "After current P0 security and MCP acceptance, next safe unified integration window",
+  "beforeIntegration": [
+    "recheck latest Main and source compatibility",
+    "recheck Shared DEV Guard and actual resource locks",
+    "verify SQLite migration prerequisites and in-place recovery",
+    "read frozen integration instructions"
+  ],
+  "requiredNativeAcceptance": [
+    "Hosted Provider qualified real calls",
+    "P2–P5 Manual Multi-Object",
+    "Flight Search",
+    "Documents",
+    "device cold recovery",
+    "Import/Auth/MCP/Ledger/Sync preservation"
+  ],
+  "safety": "No current Shared DEV switch, Provider call, Main merge or SQLite83 installation. Ordinary repairs autonomous; protected permission/provider gates remain. TestFlight requires Owner.",
+  "nativeIntake": {
+    "gitObjectPresent": true,
+    "integrationInstructions": "docs/ai-form-simplification/v2/PHASE_C_NATIVE_INTEGRATION.md at frozen commit",
+    "preconditions": [
+      "SQLite82 Journey then SQLite83 Documents; preserve pending intents and accepted data",
+      "Canonical Journey SQL and sustained guard overlay require exact protected qualification; no implied install approval",
+      "Provider and Journey flags remain off until qualified; preserve current BETA08/BETA11 guard changes",
+      "Rollback must retain additive data and compatible receipt readers; no pre-Journey binary rollback after accepted writes"
+    ]
+  }
+}

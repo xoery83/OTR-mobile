@@ -119,3 +119,32 @@ export async function readBoundedJson(
     throw new RequestBoundaryError("INVALID_RESPONSE");
   }
 }
+
+// Re-encode an already bounded JSON value as one in-memory body; no platform Response/stream constructor.
+export function boundedJsonResponse(
+  value: unknown,
+  options: { status?: number; headers?: HeadersInit } = {},
+): Response {
+  const status = options.status ?? 200;
+  let bytes: Uint8Array | undefined = new TextEncoder().encode(JSON.stringify(value));
+  if (bytes.byteLength > 8192) throw new RequestBoundaryError("BODY_LIMIT");
+  const cancel = async () => { bytes = undefined; };
+  return {
+    status, ok: status >= 200 && status < 300,
+    headers: new Headers(options.headers),
+    body: {
+      cancel,
+      getReader() {
+        return {
+          async read() {
+            const value = bytes;
+            bytes = undefined;
+            return value ? { done: false, value } : { done: true, value: undefined };
+          },
+          cancel,
+          releaseLock() {},
+        };
+      },
+    },
+  } as unknown as Response;
+}

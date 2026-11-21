@@ -1,0 +1,11 @@
+{
+  "status": "LOCAL_INTEGRATED_DEFAULT_CLOSED",
+  "parentBase": "76ea5694",
+  "patchSha256": "649f060c975432c127123eeb68279d4597deca5bb0f985854babafaaa0b157de",
+  "focusedTests": "8 suites /113 PASS",
+  "typecheck": "PASS",
+  "normalUI": "NOT_YET_WIRED",
+  "hostedJoinRevoke": "NOT_RUN",
+  "preservation": "Original UNKNOWN slots retained; no Hosted, SQL, policy, Provider or session actions",
+  "deviceBlocker": "Device Hub coordinate menu action noWindowsAvailable; no fresh Trip/Person created"
+}

@@ -52,3 +52,7 @@ Every journey records PASS / BUG / BLOCKED / TODO and an actual source/build/env
 Execution order: BETA08 authoritative Hosted revoke boundary; BETA14 same-Google MCP→SharedDEV→iPhone; BETA09 one real-material Analyze→Review→Confirm→Save using existing Provider; BETA11 normal two-account Invite/Join; remaining Build27 matrix/P2 visibility/Cancel/probe cleanup. Track BETA15 actual failure concurrently; preserve all prior PASS/UNKNOWN.
 
 Independent integration candidates (not Native daily coding ownership): Phase A P2–P5 Manual Multi-Object, prioritized foundational integration candidate; Phase B/C AI Form and Flight Enrichment, independent and do not consume P0 resources. Native owns final Main compatibility and Beta user acceptance. Candidate SHA/actual readiness pending owning-lane handoff; no invented completion or scope expansion.
+
+## Frozen AI Form V2 integration queue — Owner21Nov
+
+Candidate `fbbc01573e91ad30eed22fc43cba5e0ccb0f6d8d`, branch `codex/ai-form-v2-phase-c-20261121`, reported Main baseline `f5ca1edb`, SQLite81→83. Owner reports762 checks/isolatedPG/types/Backend/iOSRelease PASS; Native Hosted/device qualification NOT_RUN. Queue at next safe unified integration window after current P0 security/MCP; recheck currentMain/Guard/migration before integration. No current Runtime/DB/Provider change. Full cursor: `ops/ai-form-v2-frozen-candidate-20261121.json`.

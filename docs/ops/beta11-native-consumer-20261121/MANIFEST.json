@@ -1,0 +1,174 @@
+{
+  "status": "FROZEN_MANAGED_DEV_DATA_ADAPTER_CANDIDATE_REQUIRES_AUTH_REVIEW",
+  "nativeBase": "5370d1c16f6281b26bf619c80804120d35c37421",
+  "frozenBackendPatchSha256": "8aa1104abcc12f289c15fee2e3fe7dca3bdace402de47968b19ef0ddf2698532",
+  "frozenBackendTree": "2f206aedb36d0b88d6c392ab36b005c3ada4dd7b",
+  "authSource": "a3a366515f2551e57049308f6787d3cbf95baa32",
+  "handoffSha256": "c9b296f3cf70552e2ad628d95b3a7905829eec5e4369cb31a09040224e8d987b",
+  "patchSha256": "649f060c975432c127123eeb68279d4597deca5bb0f985854babafaaa0b157de",
+  "files": [
+    {
+      "path": "src/data/api/requestBoundary.ts",
+      "sha256": "debac8d48b9ef5448df127e4a76d09d5c90d904114f0db8566d3f4f103db7846",
+      "baseSha256": "9d410399104b6d97188d25de60733d438b5ea3583c7b79ca7c017bb46f0209be",
+      "authSourceSha256": "9d410399104b6d97188d25de60733d438b5ea3583c7b79ca7c017bb46f0209be",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/api/requestBoundary.test.ts",
+      "sha256": "7072fad82699e744e9e2e140ce885616563075c300c97b8ae866d9efcef5fa65",
+      "baseSha256": null,
+      "authSourceSha256": null,
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/repositories/memberClaimRepository.ts",
+      "sha256": "8d79f1e49d6c90988b2cb9c8f2d718f62ddef54d80e2e6a131bca8514c9403f6",
+      "baseSha256": "a09dfdef0004cd7b98f1dd2859c448ef31839d3bfb925d86978890372dbb4e19",
+      "authSourceSha256": "67f6cda89f3fb29b39e357f94c5ec41ec6de20da1801a64644e9d0bc4b36ce57",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/repositories/directedInviteReadRepository.ts",
+      "sha256": "d15fcc287ac32886b6ebff488c267276b073628adcb1558506bad0b523fc1e94",
+      "baseSha256": null,
+      "authSourceSha256": "d15fcc287ac32886b6ebff488c267276b073628adcb1558506bad0b523fc1e94",
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/repositories/directedInviteReadRepository.test.ts",
+      "sha256": "190f2a79487d28c81b365907b9558a6149e5f1607943d93130e82d3b12f7a2a6",
+      "baseSha256": null,
+      "authSourceSha256": "190f2a79487d28c81b365907b9558a6149e5f1607943d93130e82d3b12f7a2a6",
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/repositories/claimResolutionRepository.ts",
+      "sha256": "8fa7b6ac3b14ae27e0bf2bbeb3e7da5acacd3f156e674f3596a126963d0fb265",
+      "baseSha256": null,
+      "authSourceSha256": "976457ee66e0808b290c4666acbab3e9fc892975532c8628c3400197e43eb02e",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/repositories/claimResolutionRepository.test.ts",
+      "sha256": "92f5fd5e883e544fe017158d7244c9cdbdcb9deeb1a1cd6fbe109e047a33ffc8",
+      "baseSha256": null,
+      "authSourceSha256": "537f2481768069eb92782d57c275c7c5a1f571a626b13e5ec000cda9eb1c523a",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/repositories/generalInviteRepository.ts",
+      "sha256": "b114a4e476ac572e92966cae9efabd9213bc9fd31cbe4ea1c0b605335454655d",
+      "baseSha256": null,
+      "authSourceSha256": "fdadc9db238f7c8c37a51544d80e85d8e42e93e0de3ca4adb649ebcab3c127b2",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/repositories/generalInviteRepository.test.ts",
+      "sha256": "684f49bc104856fd6ccaabb782eb9805236dbbf8068163176a482e33f91b3330",
+      "baseSha256": null,
+      "authSourceSha256": "69a196ddb508a6b2b474dede327b56ecdae794ff326316e6dc61a407ca15ce1b",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/repositories/memberClaimAttemptRepository.ts",
+      "sha256": "8ad8e2fdc08d4bd45853495452153e45cc48b80c0f230f16594869af83fa2c34",
+      "baseSha256": null,
+      "authSourceSha256": "4d114eee533bdb08c6deeaa0bcb616e5048ff4ad2c1b8a8f5163715fb244ee2e",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/repositories/memberClaimAttemptRepository.test.ts",
+      "sha256": "96d87e74afc29b716ef9a8ae88c9b306474eabc0774ab15ebebb330d7c2feb70",
+      "baseSha256": null,
+      "authSourceSha256": "96d87e74afc29b716ef9a8ae88c9b306474eabc0774ab15ebebb330d7c2feb70",
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/repositories/incomingInvitationSelection.ts",
+      "sha256": "5daa51925df186cd37ffee95d209852c9559cc9a37823a25f6e3d0978c30f604",
+      "baseSha256": null,
+      "authSourceSha256": "5daa51925df186cd37ffee95d209852c9559cc9a37823a25f6e3d0978c30f604",
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/repositories/incomingInvitationSelection.test.ts",
+      "sha256": "f6b0514f1d4b436b0499d6b8fe65d9b862bda94bc8c8da4d09de92872a2b0a79",
+      "baseSha256": null,
+      "authSourceSha256": "f6b0514f1d4b436b0499d6b8fe65d9b862bda94bc8c8da4d09de92872a2b0a79",
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/repositories/generalClaimIntake.ts",
+      "sha256": "018499c34956d2abc19d91025070d8d917a1ff18db95bbf599da55195a53a441",
+      "baseSha256": null,
+      "authSourceSha256": "018499c34956d2abc19d91025070d8d917a1ff18db95bbf599da55195a53a441",
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/repositories/generalClaimIntake.test.ts",
+      "sha256": "6881305d54d13ae8e273259ae8d5ddf13cedf113a3a8957e2413b59ca6b2cce3",
+      "baseSha256": null,
+      "authSourceSha256": "6881305d54d13ae8e273259ae8d5ddf13cedf113a3a8957e2413b59ca6b2cce3",
+      "exactAuthSource": true
+    }
+  ],
+  "validation": {
+    "targetedTests": "8 suites / 113 PASS",
+    "fullTypecheckExit": 0,
+    "scopedLintExit": 0,
+    "iosMetroDependencyBundleExit": 0,
+    "metroModuleCount": 974,
+    "patchApplyCheckAgainstFrozenBackendTreeExit": 0
+  },
+  "compatibilityDeltas": [
+    "Existing Native memberClaimRepository gains exact same-source MemberClaimNoCommitError and initial-execution-only strict typed refusal extraction. Generic HTTP errors and all recovery errors do not become no-commit.",
+    "Already bounded parsed JSON is exposed as a one-chunk in-memory body with an8KiB UTF-8 limit; no Response.json or new ReadableStream. Native Expo57 default fetch remains installed Expo fetch; no fetch/global monkeypatch.",
+    "Recovery CONFLICT without a bound formal receipt no longer creates no-mutation evidence. New v2/v3 initial explicit refusals carry optional INITIAL_EXECUTION provenance. Old absent-provenance refusals remain active and byte-identical on inconclusive recovery, and only a matching original terminal receipt may complete them.",
+    "No active attempt overwrite, ID replacement, automatic resend, migration or historical cleanup. Existing v1 slot/archive keys and original bytes are unchanged.",
+    "Trimmed upstream General repository test UI-controller-only section rather than importing unrelated people UI/controller."
+  ],
+  "environmentCallerContract": {
+    "implementation": "Injected SecureSessionStorage only. No raw default Native caller or Root/Session configuration is added.",
+    "currentScope": "Unified pinned Native is ManagedDEV; this BETA11 candidate is restricted to an already qualified DEV storage caller. Beta realm wiring is NOT qualified or enabled.",
+    "futureBeta": "Reuse the separately approved issuer-isolation-source.bundle in the parent native-app-attest-20261119 worktree if Beta wiring is later selected; no new isolation architecture is introduced here.",
+    "legacyDev": "Preserve the original DEV active-slot/key access and UNKNOWN recovery; no cleanup or migration.",
+    "betaRuntimeEnvironmentIsolationQualified": false,
+    "noRootOrAuthSessionConfigChanged": true
+  },
+  "protocolDigestBoundary": {
+    "resolutionV2": "Original command plus owning canonical resolutionIntentDigest is persisted before POST; receipt must match.",
+    "legacyV1AndGeneralV3": "Preserve original command/operation and original Receipt scope/parameter binding under existing protocols. No new General digest is guessed. Server-defined digest/client canonical-function absence is an Auth Review focus, not a request for a new protocol."
+  },
+  "notIncluded": [
+    "nativeDirectedInvitePorts.ts",
+    "UI/Connected qualification",
+    "Sync/bootstrap/Root configuration",
+    "Hosted/policy/SQL/Provider/device actions",
+    "credentials or token acquisition"
+  ],
+  "logs": [
+    "/private/tmp/otr-beta11-native-consumer-tests-final.log",
+    "/private/tmp/otr-beta11-native-consumer-types-final.log",
+    "/private/tmp/otr-beta11-native-consumer-lint.log",
+    "/private/tmp/otr-beta11-native-consumer-bundle.log"
+  ],
+  "frozenLogs": [
+    {
+      "path": "/private/tmp/otr-beta11-native-consumer-review-5370d1c1/tests-final.log",
+      "sha256": "915128ca080e22e63d8dda9ccb930daeec50c4d98df4fdc31dab538570dec716"
+    },
+    {
+      "path": "/private/tmp/otr-beta11-native-consumer-review-5370d1c1/types-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/private/tmp/otr-beta11-native-consumer-review-5370d1c1/lint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/private/tmp/otr-beta11-native-consumer-review-5370d1c1/bundle.log",
+      "sha256": "b00bd840f6ed340af84f96a5bf04480221620da0ef45ff8bc7d3e14039b116c2"
+    }
+  ]
+}
