@@ -386,3 +386,32 @@ it("bounds normalized Enrichment paths before buffering or Auth", async () => {
   ).toBe(413);
   expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
 });
+
+it.each([
+  ["POST", "/claim-requests/preview", 8193, 413],
+  ["POST", "/claim-request-operations", 8193, 413],
+  ["POST", "/general-invite-operations", 8193, 413],
+  ["GET", "/claim-requests", 1, 400],
+  ["POST", "/claim-origins/verify", 0, 503],
+])("bounds Auth composition ingress without a socket: %s %s", async (method, suffix, size, status) => {
+  const { createServer } = await import("node:http");
+  let listener!: RequestListener;
+  const server = { on: vi.fn(), listen: vi.fn() };
+  vi.mocked(createServer).mockImplementationOnce(((callback: RequestListener) => {
+    listener = callback;
+    return server;
+  }) as unknown as typeof createServer);
+  const { startDevBackend } = await import("./serverStartup");
+  startDevBackend();
+  const incoming = {
+    url: `/v2/trips/${randomUUID()}${suffix}`, method,
+    headers: { authorization: "Bearer valid" },
+    async *[Symbol.asyncIterator]() { if (size) yield Buffer.alloc(size); },
+  } as unknown as Parameters<RequestListener>[0];
+  const outgoing = { on: vi.fn(), off: vi.fn(), setHeader: vi.fn(), end: vi.fn(), statusCode: 0 };
+  await listener(incoming, outgoing as unknown as Parameters<RequestListener>[1]);
+  expect(outgoing.statusCode).toBe(status);
+  expect(outgoing.setHeader).toHaveBeenCalledWith(size ? "Cache-Control" : "cache-control", "private, no-store");
+  if (size) expect(fixtures.validateAccessToken).not.toHaveBeenCalled();
+  else expect(fixtures.validateAccessToken).toHaveBeenCalledOnce();
+});

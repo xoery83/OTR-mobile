@@ -55,6 +55,10 @@ export function startDevBackend(
     | "tripCreatePort"
     | "tripPersonCloudCreatePort"
     | "memberClaimPort"
+    | "claimResolutionPort"
+    | "claimOriginPort"
+    | "generalInvitePort"
+    | "directedInviteReadPort"
     | "selfTripNicknamePort"
     | "tripMetadataPort"
     | "tripMetadataV2Port"
@@ -134,6 +138,10 @@ export function startDevBackend(
     tripCreatePort: startOptions.tripCreatePort,
     tripPersonCloudCreatePort: startOptions.tripPersonCloudCreatePort,
     memberClaimPort: startOptions.memberClaimPort,
+    claimResolutionPort: startOptions.claimResolutionPort,
+    claimOriginPort: startOptions.claimOriginPort,
+    generalInvitePort: startOptions.generalInvitePort,
+    directedInviteReadPort: startOptions.directedInviteReadPort,
     selfTripNicknamePort: startOptions.selfTripNicknamePort,
     tripMetadataPort: startOptions.tripMetadataPort,
     tripMetadataV2Port: startOptions.tripMetadataV2Port,
@@ -175,6 +183,7 @@ export function startDevBackend(
     outgoing.on("close", onClose);
     try {
       const incomingUrl = new URL(incoming.url ?? "/", "http://127.0.0.1");
+      const claimResolutionRoute = /^\/v2\/trips\/[^/]+\/(?:claim-requests(?:\/.*)?|claim-request-operations(?:\/recovery)?|general-invite-operations(?:\/(?:recovery|delivery))?|claim-origins\/(?:verify|[^/]+\/requests\/[^/]+\/people))$/.test(incomingUrl.pathname);
       const v3 = universalV3IntakePath.exec(incomingUrl.pathname);
       const v3File = incoming.method === "PUT" && !!v3?.[2];
       const chunks: Buffer[] = [];
@@ -218,6 +227,13 @@ export function startDevBackend(
       let byteCount = 0;
       for await (const chunk of v3File ? [] : incoming) {
         byteCount += chunk.length;
+        if (claimResolutionRoute && (byteCount > 8192 || (incoming.method === "GET" && byteCount > 0))) {
+          outgoing.statusCode = incoming.method === "GET" ? 400 : 413;
+          outgoing.setHeader("Cache-Control", "private, no-store");
+          outgoing.setHeader("Vary", "Authorization");
+          outgoing.end();
+          return;
+        }
         if (v3 && byteCount > 65536) {
           outgoing.statusCode = 413;
           outgoing.setHeader("Cache-Control", "private, no-store");

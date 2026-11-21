@@ -96,11 +96,19 @@ async function main() {
         process.env.OTR_DEV_UNIVERSAL_P1_SOURCE_REVIEW === "enabled"
           ? continuous?.readPublished
           : undefined;
-      if (continuous?.retainedPng)
+      const directedInviteRead = process.env.OTR_DEV_AUTH_DIRECTED_INVITE_READ_ENABLED === "1";
+      const claimResolution = process.env.OTR_DEV_AUTH_CLAIM_RESOLUTION_ENABLED === "1";
+      const claimGeneralOrigin = process.env.OTR_DEV_AUTH_CLAIM_GENERAL_ORIGIN_ENABLED === "1";
+      if (continuous?.retainedPng || directedInviteRead || claimResolution || claimGeneralOrigin)
         trip = await loadDevTripCreateWithMemberClaimQaRuntime(
           process.env,
           readPublished,
-          { retainedPng: continuous.retainedPng },
+          {
+            ...(continuous?.retainedPng ? { retainedPng: continuous.retainedPng } : {}),
+            ...(directedInviteRead ? { directedInviteRead: true } : {}),
+            ...(claimResolution ? { claimResolution: true } : {}),
+            ...(claimGeneralOrigin ? { claimGeneralOrigin: true } : {}),
+          },
         );
       else if (readPublished)
         trip = await loadDevTripCreateWithMemberClaimQaRuntime(process.env, readPublished);
@@ -210,6 +218,10 @@ async function main() {
       ...(trip && "memberClaimPort" in trip
         ? { memberClaimPort: trip.memberClaimPort }
         : {}),
+      ...(trip && "claimResolutionPort" in trip ? { claimResolutionPort: trip.claimResolutionPort } : {}),
+      ...(trip && "claimOriginPort" in trip ? { claimOriginPort: trip.claimOriginPort } : {}),
+      ...(trip && "generalInvitePort" in trip ? { generalInvitePort: trip.generalInvitePort } : {}),
+      ...(trip && "directedInviteReadPort" in trip ? { directedInviteReadPort: trip.directedInviteReadPort } : {}),
       tripCreatePort: trip?.tripCreatePort,
       ...(trip && "tripPersonCloudCreatePort" in trip
         ? { tripPersonCloudCreatePort: trip.tripPersonCloudCreatePort }

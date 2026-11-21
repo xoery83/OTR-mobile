@@ -1,0 +1,31 @@
+{
+  "status": "SCOPED_AUTH_SOURCE_REVIEW_PASS_DEFAULT_CLOSED",
+  "requestId": "NATIVE-BETA11-MISSING-OWNING-20261121-01",
+  "nativeBase": "5370d1c16f6281b26bf619c80804120d35c37421",
+  "patchSha256": "8aa1104abcc12f289c15fee2e3fe7dca3bdace402de47968b19ef0ddf2698532",
+  "blockingFindings": [],
+  "independentChecks": [
+    "Exact patch and all30file SHA256 verified;22same-source files match Auth a3a366515f2551e57049308f6787d3cbf95baa32 via original Auth repository",
+    "99 targeted tests PASS across normal-session Directed/Resolution wiring, runtime and flag selectors",
+    "5 no-socket Startup ingress tests PASS;16existing socket cases intentionally skipped",
+    "git diff --check PASS"
+  ],
+  "reviewed": [
+    "Trusted getUser normal-account classification;Actor derived from Session rather than request;resource OAuth and anonymous negatives",
+    "Trip/request/Account/receipt/digest bindings; distinct execute and original receipt recovery; no automatic retry",
+    "Same existing Core PG connection/transaction and SQL authority; no role,ACL,receipt semantics rewrite",
+    "Exact1 selectors/default absent ports; unpublished provisional Reader removed from outward runtime port",
+    "Internal issueProvisional effect unchanged and still owning SQL policy controlled; this review does not authorize enabling it",
+    "Current ManagedConsent/MCP/Import/Parent/Ledger composition preserved by incremental shared-source diff; no old shared-file replacement",
+    "Bounded8KiB ingress/private no-store/Authorization vary and fail-closed unavailable responses"
+  ],
+  "limits": [
+    "Source integration candidate only; no Hosted,SQL,policy,Provider,device or business execution",
+    "No whole Native UX review or new Core SQL audit; prior independent Core evidence reused",
+    "No independent full typecheck/build rerun; Native supplied successful results",
+    "Current exact Person/invite/operation/window scope and protected runtime qualification remain missing; Golden Slice NOT_RUN",
+    "Internal provisional grant issuance remains SQL-governed; hiding Reader alone is not a substitute for keeping protected policy disabled"
+  ],
+  "executionAuthorized": false,
+  "mainMergeAuthorized": false
+}

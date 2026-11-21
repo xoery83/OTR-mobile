@@ -1,3 +1,7 @@
+import { composeClaimResolutionPg, composeClaimOriginPg, composeGeneralInvitePg } from "./tripClaimResolutionPg";
+import { createDirectedClaimResolutionSqlEffects, createClaimResolutionSqlEffects } from "./tripClaimResolutionCore";
+import { composeDirectedInviteReader } from "./tripDirectedInviteReadPg";
+import type { DirectedInviteReadPort } from "./tripDirectedInviteReadHttp";
 import { createManagedOAuthConsent } from "./auth/managedOAuthConsent";
 import {
   createTripPersonSelfNicknamePgPort,
@@ -102,6 +106,9 @@ export async function loadDevTripCreateRuntime(
   readUniversalP1?: PublishedUniversalP1Reader,
   options?: Readonly<{
     memberClaim?: Readonly<{ inviteExpiresAt: string }>;
+    directedInviteRead?: true;
+    claimResolution?: true;
+    claimGeneralOrigin?: true;
     selfTripNickname?: true;
     retainedPng?: import("./tripCoreV2RetainedPngRead").RetainedPngReader;
   }>,
@@ -235,6 +242,47 @@ export async function loadDevTripCreateRuntime(
     const claimGuard = () => {
       if (closed) throw Error("MEMBER_CLAIM_RUNTIME_CLOSED");
     };
+    const resolution = options?.claimResolution === true
+      ? composeClaimResolutionPg(rawCoreConnection, options?.claimGeneralOrigin === true
+        ? createClaimResolutionSqlEffects(true) : createDirectedClaimResolutionSqlEffects(true), true, claimGuard)
+      : undefined;
+    // Provisional reads remain unavailable in this composition; owning SQL effects are unchanged.
+    const claimResolutionPort = resolution && (() => {
+      const { readProvisionalView: _readProvisionalView, ...port } = resolution;
+      return port;
+    })();
+    const claimOriginPort = options?.claimGeneralOrigin === true
+      ? composeClaimOriginPg(rawCoreConnection, true, claimGuard) : undefined;
+    const generalInvitePort = options?.claimGeneralOrigin === true
+      ? composeGeneralInvitePg(rawCoreConnection, true, claimGuard) : undefined;
+    const reader = options?.directedInviteRead === true
+      ? composeDirectedInviteReader(rawCoreConnection, { enabled: true })
+      : undefined;
+    const readGuard = () => {
+      if (closed) throw Error("DIRECTED_INVITE_READ_CLOSED");
+    };
+    const directedInviteReadPort: DirectedInviteReadPort | undefined = reader && {
+      ...(reader.incoming ? {
+        async incoming(scope: { accountId: string }) {
+          readGuard();
+          const result = await reader.incoming!(scope);
+          readGuard();
+          return result;
+        },
+      } : {}),
+      async recipients(scope) {
+        readGuard();
+        const result = await reader.recipients(scope);
+        readGuard();
+        return result;
+      },
+      async invitation(scope) {
+        readGuard();
+        const result = await reader.invitation(scope);
+        readGuard();
+        return result;
+      },
+    };
     const memberClaimPort: MemberClaimAuthorityPort | undefined = claim && {
       async atomic(scope, work) {
         claimGuard();
@@ -269,6 +317,10 @@ export async function loadDevTripCreateRuntime(
       managedTripLifecycleForGrant,
       guestAdoptionRuntime,
       ...(memberClaimPort ? { memberClaimPort } : {}),
+      ...(claimResolutionPort ? { claimResolutionPort } : {}),
+      ...(claimOriginPort ? { claimOriginPort } : {}),
+      ...(generalInvitePort ? { generalInvitePort } : {}),
+      ...(directedInviteReadPort ? { directedInviteReadPort } : {}),
       ...(selfTripNicknamePort ? { selfTripNicknamePort } : {}),
       tripPersonCloudCreatePort,
       async close() {

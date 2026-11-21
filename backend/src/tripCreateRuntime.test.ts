@@ -77,7 +77,7 @@ function fixture() {
     readFile: async () => JSON.stringify(config),
     close,
   });
-  const connection = { withLease: vi.fn() };
+  const connection = { withLease: vi.fn(), close: vi.fn(async () => {}) };
   f.pg.mockReturnValue(connection);
   f.storage.mockReturnValue({ create: f.create, receipt: f.receipt });
   const result = {
@@ -487,4 +487,23 @@ it("finite runtime does not acquire or export nickname even with explicit select
   expect(runtime).not.toHaveProperty("selfTripNicknamePort");
   expect(f.nickname).not.toHaveBeenCalled();
   expect(f.pg).toHaveBeenCalledOnce();
+});
+
+it("keeps optional Auth ports absent without explicit composition", async () => {
+  claimFixture();
+  const runtime = await loadDevTripCreateRuntime(environment);
+  for (const port of ["directedInviteReadPort", "claimResolutionPort", "claimOriginPort", "generalInvitePort"])
+    expect(runtime).not.toHaveProperty(port);
+});
+it("composes existing Auth authorities without exposing provisional reads or querying PG", async () => {
+  const fixture = claimFixture();
+  const runtime = await loadDevTripCreateRuntime(environment, undefined, {
+    directedInviteRead: true, claimResolution: true, claimGeneralOrigin: true,
+  });
+  expect(runtime).toHaveProperty("directedInviteReadPort");
+  expect(runtime).toHaveProperty("claimOriginPort");
+  expect(runtime).toHaveProperty("generalInvitePort");
+  expect(runtime).toHaveProperty("claimResolutionPort");
+  expect(runtime).not.toHaveProperty("claimResolutionPort.readProvisionalView");
+  expect(fixture.connection.withLease).not.toHaveBeenCalled();
 });

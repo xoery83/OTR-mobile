@@ -1,0 +1,247 @@
+{
+  "status": "LOCAL_DEFAULT_CLOSED_CANDIDATE_REQUIRES_AUTH_CORE_REVIEW",
+  "nativeBase": "5370d1c16f6281b26bf619c80804120d35c37421",
+  "authSource": "a3a366515f2551e57049308f6787d3cbf95baa32",
+  "patchSha256": "8aa1104abcc12f289c15fee2e3fe7dca3bdace402de47968b19ef0ddf2698532",
+  "files": [
+    {
+      "path": "backend/src/app.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "c8230778b338ba8e92b03f7ea65ba065e1e5ed196708a68c8c4ad26f6c3dc5cc",
+      "baseSha256": "79d02bd7e2c319cf3b0db4fee2f19e3c5e4060bb0a4b22927edb22bf57096a8e",
+      "exactAuthSource": false
+    },
+    {
+      "path": "backend/src/serverCapture.test.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "40fd0671ceb8effefde5455656c7bcdde9d282c92f7e44cdc4dccbf97ff1470a",
+      "baseSha256": "a0458514ffd79193894a9881e4b5cc5f4a7c2d894f7f14714efd2a0373deb6a5",
+      "exactAuthSource": false
+    },
+    {
+      "path": "backend/src/serverCapture.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "e240c2e662d6daaae504d0df8daff141247c778c46a0ac410b93f1b48fa797f1",
+      "baseSha256": "b2e5c5a478f9bd990b6ad5b42bc90664f702012c9a4f4ef5ef990c695526311f",
+      "exactAuthSource": false
+    },
+    {
+      "path": "backend/src/serverStartup.test.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "8e0d419005b6922f5777e78b7e0e05d518101125fef1c5c277354de0e5828cdb",
+      "baseSha256": "887c1d5273b54b9884a71e6a414ab351cf7b5b076d7e843e0c8ef07fdb2fbe8f",
+      "exactAuthSource": false
+    },
+    {
+      "path": "backend/src/serverStartup.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "beb248a8a3fcf670d372222664a7703b46a1b45ad54c3c505ffb43424f8dab34",
+      "baseSha256": "e8d6e9548184509d288f0a8e3f96a7ac8141ae53125bbaa2f2f683a914845039",
+      "exactAuthSource": false
+    },
+    {
+      "path": "backend/src/tripClaimOriginHttp.test.ts",
+      "kind": "NEW",
+      "sha256": "e0134505a981392d0ec410c1fbb32601fcf3e55255202c65b911b9820c532528",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimOriginHttp.ts",
+      "kind": "NEW",
+      "sha256": "c03308884abf4361a2d47f130d65b333de86ce6e68d238cf687530fbd6691a87",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimProvisionalRead.ts",
+      "kind": "NEW",
+      "sha256": "17205ebfbe7c6784850261a9622fa2ffbb23629d99167cb22c8dd1f2c8edb3fe",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionAdapter.test.ts",
+      "kind": "NEW",
+      "sha256": "d1888738010f024881aa629b1539db7fce5ba6aa59bcd9b70a4a277b3f09f346",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionAdapter.ts",
+      "kind": "NEW",
+      "sha256": "f10b8de95db40ed385109d93dc8491594f7f251d00a29cedcc8197c37ba5b8aa",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionCore.ts",
+      "kind": "NEW",
+      "sha256": "f5b9ebd971b5d5d25c5cf4a1cbea751878a3997d777c8488bf531f098175040e",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionHttp.test.ts",
+      "kind": "NEW",
+      "sha256": "be3e4c973fb5a164817fe427175f4d731515b61c2fbcdf3212e2f3175b2a5ae7",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionHttp.ts",
+      "kind": "NEW",
+      "sha256": "1f589ac7fd7888033397cdc5aa536d05a3e65f744f62765acc9d7d212f2d0812",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionPg.test.ts",
+      "kind": "NEW",
+      "sha256": "0269967cae5bce916a35934fda7adb0ddda6c162ff9413bf7c6941699b6471dc",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionPg.ts",
+      "kind": "NEW",
+      "sha256": "7de11d8af7ae81a1d1fe7058d8ca41527ae65c1df703fad0b37ce5e2481f5671",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripClaimResolutionWiring.test.ts",
+      "kind": "NEW",
+      "sha256": "063c49d7a97ee138ab9f88814276fe537cc14dc16db6ee55ff32735c7b95a745",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripCreateRuntime.test.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "4eea3b0e4ad8602f570756deedab0dcff127684708cf49ba78a0f0ad5d1ef899",
+      "baseSha256": "611e36c877394ddd5fadbd6749aff075ab97b124f3c790954b25398e5ebc6a69",
+      "exactAuthSource": false
+    },
+    {
+      "path": "backend/src/tripCreateRuntime.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "27ead2688980f20139ddc043d71e62075e05f12c091d1fdc52db5742970874d8",
+      "baseSha256": "55e541d137450741a6770d70f293aebc1c0820f4941a8756b9478c6736212441",
+      "exactAuthSource": false
+    },
+    {
+      "path": "backend/src/tripDirectedInviteReadHttp.ts",
+      "kind": "NEW",
+      "sha256": "a3f9b65a2651883e7e9b865e9ab20db803849dc48935cfbda0d36b294663a409",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripDirectedInviteReadPg.test.ts",
+      "kind": "NEW",
+      "sha256": "aa42248b129cc3996c099ee2cda7a5411d14d6b8ef28296d933a0fa59a8ea20b",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripDirectedInviteReadPg.ts",
+      "kind": "NEW",
+      "sha256": "0e9b663111401f5df3a714cd7f579db799414c25ffc1aec484c12e9c7bc5ec1a",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripDirectedInviteReadWiring.test.ts",
+      "kind": "NEW",
+      "sha256": "264c8100db8e11bed208ed89a0adfa01d9822bba3fa01bb17ce8058d98a1a485",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripGeneralInviteHttp.test.ts",
+      "kind": "NEW",
+      "sha256": "2474c202d851bc072823b25f5a60efe85ce44b7ea2df6845bcb0cc1c502374e5",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripGeneralInviteHttp.ts",
+      "kind": "NEW",
+      "sha256": "cf776b4957a04e78e30db991628a7794780665a2229ac9d69b07ff22ed539705",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "backend/src/tripMemberClaimQaRuntime.ts",
+      "kind": "INCREMENTAL_CURRENT",
+      "sha256": "2a76ff730156436e441ce45d8bfb4480c03c0958c517387572a1d990eb6db3ac",
+      "baseSha256": "b89c6cc847d62706efab4732e1a3ee6fce7fde52cd6d6c4c9a7cd0d9ff680792",
+      "exactAuthSource": false
+    },
+    {
+      "path": "src/data/api/claimOriginContracts.ts",
+      "kind": "NEW",
+      "sha256": "365f1c6f1e56bb79d00e723457c04dd030716bc7ed90321ddc12af169816e7f9",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/api/claimProvisionalContracts.ts",
+      "kind": "NEW",
+      "sha256": "a8fee939c1ac9eecf6af4087ca47cc36bf2e734d3a52378680c12e666d23b554",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/api/claimResolutionContracts.ts",
+      "kind": "NEW",
+      "sha256": "5949d4929ff896c16b7e7d501a56edf281dceec423149983df3269da8dfd374c",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/api/directedInviteReadContracts.ts",
+      "kind": "NEW",
+      "sha256": "137f2eaec6ae7916144d35d69b8595962256ec338f2aea6cdec07aa07bbd4a72",
+      "baseSha256": null,
+      "exactAuthSource": true
+    },
+    {
+      "path": "src/data/api/generalInviteContracts.ts",
+      "kind": "NEW",
+      "sha256": "967447692ba642fe63ef56926264d6d67f21d2460aaad4c81262627988580d5c",
+      "baseSha256": null,
+      "exactAuthSource": true
+    }
+  ],
+  "defaultSelectors": {
+    "OTR_DEV_AUTH_DIRECTED_INVITE_READ_ENABLED": false,
+    "OTR_DEV_AUTH_CLAIM_RESOLUTION_ENABLED": false,
+    "OTR_DEV_AUTH_CLAIM_GENERAL_ORIGIN_ENABLED": false
+  },
+  "provisional": {
+    "readProvisionalViewExposed": false,
+    "owningIssueProvisionalChanged": false,
+    "policyActivated": false,
+    "note": "Same-source internal effect retained unchanged; symbol inclusion does not imply activation. SQL policy remains final authority."
+  },
+  "coreAbiChanges": [],
+  "validation": {
+    "focusedTests": "11 suites / 231 PASS",
+    "startupNoSocket": "5 PASS / 16 existing socket tests deliberately deselected",
+    "currentConsentMcpCoreParentCompatibility": "3 suites / 71 PASS",
+    "typecheckExit": 0,
+    "captureBuildExit": 0,
+    "scopedLintExit": 0,
+    "gitDiffCheckExit": 0,
+    "patchApplyCheckAgainstPinnedBaseExit": 0
+  },
+  "limits": [
+    "No current shared tree edits, Main action, commit, deployment, SQL/policy changes, Provider/device/business calls.",
+    "Initial socket startup run hit sandbox EPERM; no escalation attempted.",
+    "Upstream DirectedInviteReadHttp test mixes Native client repository not required by this Backend composition; excluded rather than importing another Native product slice. Existing wiring+PG tests retained.",
+    "Actual Person/invite/operation/finite policy scope still required before any execution; source preparation is not authorization or qualification PASS."
+  ],
+  "goldenSlice": "One normal directed A\u2192registered B flow: exact owning invitation\u2192B own preview/request\u2192A resolve/link\u2192original receipt/current membership and private visibility/cold readback. No General or provisional enablement inferred."
+}

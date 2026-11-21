@@ -1,3 +1,10 @@
+import { tripClaimResolutionBoundary } from "./tripClaimResolutionHttp";
+import { tripClaimOriginBoundary } from "./tripClaimOriginHttp";
+import { tripGeneralInviteBoundary } from "./tripGeneralInviteHttp";
+import type { GeneralInviteAuthority } from "../../src/data/api/generalInviteContracts";
+import type { ClaimResolutionAuthority } from "../../src/data/api/claimResolutionContracts";
+import type { ClaimOriginAuthority } from "../../src/data/api/claimOriginContracts";
+import { tripDirectedInviteReadBoundary, type DirectedInviteReadPort } from "./tripDirectedInviteReadHttp";
 import type { UniversalV3Execution } from "./universalV3Execution";
 import { universalV3IntakeBoundary, universalV3IntakePath, type UniversalV3Intake } from "./universalV3Intake";
 import { sourcePngPreparationBoundary, type SourcePngPreparationForRequest } from "./sourcePngPreparationHttp";
@@ -691,6 +698,10 @@ export type BackendDependencies = {
   captureRemoteProcessing?: CaptureRemoteProcessingPort;
   tripPersonCloudCreatePort?: TripPersonCloudCreatePort;
   memberClaimPort?: MemberClaimAuthorityPort;
+  claimResolutionPort?: ClaimResolutionAuthority;
+  claimOriginPort?: ClaimOriginAuthority;
+  generalInvitePort?: GeneralInviteAuthority;
+  directedInviteReadPort?: DirectedInviteReadPort;
   universalImportPort?: UniversalPort;
   universalV3Intake?: UniversalV3Intake;
   universalV3Execution?: UniversalV3Execution;
@@ -2617,6 +2628,10 @@ export function createDevBackendHandler({
   captureRemoteProcessing,
   tripPersonCloudCreatePort,
   memberClaimPort,
+  claimResolutionPort,
+  claimOriginPort,
+  generalInvitePort,
+  directedInviteReadPort,
   universalImportPort,
   universalV3Intake,
   universalV3Execution,
@@ -2925,6 +2940,25 @@ export function createDevBackendHandler({
           (a, t) => gateway.canReadTrip(a, t),
           runtime?.universalOriginalSourcePort ?? universalOriginalSourcePort,
         );
+      } else if (/^\/v2\/trips\/[^/]+\/general-invite-operations(?:\/(?:recovery|delivery))?$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/general-invite-operations/:resource";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await tripGeneralInviteBoundary(request, actor, generalInvitePort);
+      } else if (/^\/v2\/trips\/[^/]+\/claim-origins\/(?:verify|[^/]+\/requests\/[^/]+\/people)$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/claim-origins/verify";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await tripClaimOriginBoundary(request, actor, claimOriginPort);
+      } else if (/^\/v2\/trips\/[^/]+\/(?:claim-requests(?:\/(?:preview|[^/]+(?:\/(?:decision-view|create-person-context|provisional))?))?|claim-request-operations(?:\/recovery)?)$/.test(url.pathname)) {
+        route = "/v2/trips/:tripId/claim-requests/:resource";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await tripClaimResolutionBoundary(request, actor, claimResolutionPort);
+      } else if (
+        /^\/v2\/trips\/[^/]+\/directed-invite-recipients$/.test(url.pathname) ||
+        /^\/v1\/account\/directed-invitations(?:\/[^/]+)?$/.test(url.pathname)
+      ) {
+        route = url.pathname.startsWith("/v2/trips/") ? "/v2/trips/:tripId/directed-invite-recipients" : "/v1/account/directed-invitations/:inviteId";
+        const actor = await authenticateNormalAccount(request, gateway);
+        response = await tripDirectedInviteReadBoundary(request, actor, directedInviteReadPort);
       } else if (
         /^\/v2\/trips\/[^/]+\/member-claim-operations(?:\/recovery)?$/.test(url.pathname)
       ) {

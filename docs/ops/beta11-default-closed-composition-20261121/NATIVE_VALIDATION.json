@@ -1,0 +1,14 @@
+{
+  "status": "SOURCE_INTEGRATION_DEFAULT_CLOSED",
+  "baseMain": "f5ca1edba37191dd54d441ef0057d2700bb3a91d",
+  "sourcePatch": "8aa1104abcc12f289c15fee2e3fe7dca3bdace402de47968b19ef0ddf2698532",
+  "parentTests": "10suites216PASS + no-socketstartup5PASS",
+  "types": "PASS",
+  "captureBuild": "PASS",
+  "authIndependentReview": "PASS",
+  "coreIndependentReview": "NO_BLOCKER",
+  "runtimeFlags": "all3defaultOFF",
+  "provisional": "outward read port omitted, owning effects unchanged",
+  "execution": "NOT_RUN_NO_POLICY_GRANT_OR_HOST_DEPLOY",
+  "remaining": "Normal Native Consumer/attempt handoff being checked; actual Person/Invite IDs and fresh finite policy not ready; old UNKNOWN preserved."
+}

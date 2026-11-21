@@ -325,3 +325,25 @@ it("binds owning published P1 reads only with the explicit Source Review activat
   expect(mocks.trip).toHaveBeenCalledWith(process.env, readPublished, undefined);
   expect(readPublished).not.toHaveBeenCalled();
 });
+
+it.each([undefined, "0", "false"])("keeps Auth composition selectors closed by default (%s)", async (value) => {
+  for (const flag of ["OTR_DEV_AUTH_DIRECTED_INVITE_READ_ENABLED", "OTR_DEV_AUTH_CLAIM_RESOLUTION_ENABLED", "OTR_DEV_AUTH_CLAIM_GENERAL_ORIGIN_ENABLED"])
+    vi.stubEnv(flag, value);
+  await import("./serverCapture");
+  await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
+  expect(mocks.trip).toHaveBeenCalledWith(process.env, undefined, undefined);
+  for (const port of ["directedInviteReadPort", "claimResolutionPort", "claimOriginPort", "generalInvitePort"])
+    expect(mocks.start.mock.calls[0][0]).not.toHaveProperty(port);
+});
+it("passes exact explicit selectors and existing ports without executing them", async () => {
+  for (const flag of ["OTR_DEV_AUTH_DIRECTED_INVITE_READ_ENABLED", "OTR_DEV_AUTH_CLAIM_RESOLUTION_ENABLED", "OTR_DEV_AUTH_CLAIM_GENERAL_ORIGIN_ENABLED"])
+    vi.stubEnv(flag, "1");
+  const ports = { directedInviteReadPort: {}, claimResolutionPort: {}, claimOriginPort: {}, generalInvitePort: {} };
+  mocks.trip.mockResolvedValue({ ...ports, close: vi.fn() });
+  await import("./serverCapture");
+  await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
+  expect(mocks.trip).toHaveBeenCalledWith(process.env, undefined, {
+    directedInviteRead: true, claimResolution: true, claimGeneralOrigin: true,
+  });
+  expect(mocks.start.mock.calls[0][0]).toMatchObject(ports);
+});

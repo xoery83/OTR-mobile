@@ -11,7 +11,7 @@ import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 export async function loadDevTripCreateWithMemberClaimQaRuntime(
   environment: Record<string, string | undefined>,
   readUniversalP1?: PublishedUniversalP1Reader,
-  options?: Pick<NonNullable<Parameters<typeof loadDevTripCreateRuntime>[2]>, "selfTripNickname" | "retainedPng">,
+  options?: Pick<NonNullable<Parameters<typeof loadDevTripCreateRuntime>[2]>, "selfTripNickname" | "retainedPng" | "directedInviteRead" | "claimResolution" | "claimGeneralOrigin">,
 ) {
   let selected: MemberClaimQaCase | undefined;
   const raw = environment.OTR_DEV_AUTH_MEMBER_CLAIM_QA_CONFIG;
