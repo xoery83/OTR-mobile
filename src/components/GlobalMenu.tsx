@@ -317,6 +317,21 @@ export function GlobalMenu({
             },
           ]
         : []),
+      ...(identity?.userId
+        ? [
+            {
+              icon: "person.2" as const,
+              label: t("people.claimResolution.incomingInvitations"),
+              onPress: () => {
+                if (
+                  currentReturn.current === returnLease &&
+                  generation === getAccountGeneration()
+                )
+                  router.push("/directed-invitations");
+              },
+            },
+          ]
+        : []),
       {
         icon: "gearshape",
         label: t("navigation.settings"),
@@ -391,6 +406,20 @@ export function GlobalMenu({
           (membersRead === null || !!membersCurrent)
         }
         members={membersCurrent ? membersRead.members : null}
+        onInvitePerson={
+          membersCurrent
+            ? (personId) => {
+                if (
+                  currentReturn.current === returnLease &&
+                  generation === getAccountGeneration()
+                )
+                  router.push({
+                    pathname: "/directed-invite",
+                    params: { tripId: membersRead.context.tripId, personId },
+                  });
+              }
+            : undefined
+        }
         onClose={() => {
           membersRequest.current++;
           setMembersVisible(null);

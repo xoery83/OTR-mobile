@@ -1,6 +1,6 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { expect, it, vi } from "vitest";
-import { UiFormRow } from "./forms";
+import { UiFormRow, UiChoiceChip } from "./forms";
 import { UiTextInput } from "./textInput";
 import { lightPalette, darkPalette, type UiColors } from "./palette";
 const theme = vi.hoisted(() => ({ colors: {} as UiColors }));
@@ -31,4 +31,13 @@ it.each([lightPalette, darkPalette])("matches an empty date field to the canonic
   expect(emptyText.fontSize).toBe(inputStyle.fontSize);
   expect(emptyText.fontWeight).toBe(inputStyle.fontWeight);
   expect(flatten(empty.find((n) => n.type === "Pressable")!.props.style).paddingHorizontal).toBe(inputStyle.paddingHorizontal);
+});
+
+it.each([lightPalette, darkPalette])("keeps busy choice chips disabled for touch and accessibility", (colors) => {
+  theme.colors = colors;
+  const chip = UiChoiceChip({ label: "Synthetic choice", selected: true, disabled: true, onPress: vi.fn() });
+  expect(chip.props.disabled).toBe(true);
+  expect(chip.props.accessibilityState).toEqual({ selected: true, disabled: true });
+  expect(flatten(nodes(chip).find((node) => node.type === "Text")!.props.style).color).toBe(colors.disabled);
+  expect(UiChoiceChip({ label: "Synthetic choice", selected: false, onPress: vi.fn() }).props.disabled).toBe(false);
 });

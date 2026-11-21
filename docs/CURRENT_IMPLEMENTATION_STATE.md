@@ -1,5 +1,7 @@
 # Unified Beta latest — 21 November 2026 NZDT
 
+Current P0 continuation: normal Invite/Join UI routes, same-runtime injected storage, certified post-Claim Pull and old UNKNOWN recovery adapters now locally integrated/reviewed; device install still pending. New ordinary synthetic fixture Trip a1a6f569 / Person f7711ff6 created through Build33 normal UI; original Create/Readback/Person queue COMPLETED, Root2 independent PG readback PASS (two original Create receipts, one linked Owner and unlinked target, epoch87b0db90/rev3/access3). No Invite/Claim/Revoke executed. MCP Guide now returns CONSENT_REQUIRED; one normal Google parent error UNAVAILABLE, popup final NOT_CAPTURED, no attributed PG503. Details: ops/beta11-native-ui-20261121.
+
 BETA11 Backend76ea5694 and reviewed Native consumer649f060c now locally integrated/default closed. Parent113 tests and types PASS. Normal UI/Hosted Join/Revoke NOT_RUN; Device Hub menu coordinate action noWindowsAvailable, no new fixture created. Reuse frozen9c5 normal UI narrowly, not old Sync/Root/raw storage. See ops/beta11-native-consumer-20261121.
 
 AI Form V2 frozen handoff queued: `fbbc01573e91ad30eed22fc43cba5e0ccb0f6d8d` / baseline `f5ca1edb`. Git object and frozen Phase C instructions located; validation remains owning-lane reported, not Native Hosted/device PASS. Integrate at next safe pause after current P0 security/MCP, with fresh Main/Guard/SQLite81→82→83 checks. No immediate deployment, migration or Provider activation. Cursor: `docs/ops/ai-form-v2-frozen-candidate-20261121.json`.

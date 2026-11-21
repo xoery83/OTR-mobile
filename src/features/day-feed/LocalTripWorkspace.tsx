@@ -1496,6 +1496,19 @@ function LocalTripContent({
             }
             onClose={() => setMenuMembersTrip(null)}
             onAddTraveler={addTraveler}
+            onInvitePerson={(personId) => {
+              if (
+                !alive.current ||
+                generation !== getAccountGeneration() ||
+                setup?.context.tripId !== selected.id ||
+                setup.context.generation !== generation
+              )
+                return;
+              router.push({
+                pathname: "/directed-invite",
+                params: { tripId: selected.id, personId },
+              });
+            }}
           />
           <Modal
             visible={coverOpen}

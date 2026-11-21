@@ -1,0 +1,204 @@
+{
+  "status": "REVIEWED_MANAGED_DEV_UI_CANDIDATE_NOT_DEVICE_VERIFIED",
+  "base": "5bdae6f5",
+  "files": [
+    {
+      "path": "docs/CURRENT_IMPLEMENTATION_STATE.md",
+      "sha256": "15cdf992010754a7794a98be52f5481f8b99853d279d83b18fd5645222f6c0de"
+    },
+    {
+      "path": "src/components/GlobalMenu.tsx",
+      "sha256": "9f1576ff55acb98c528622f75e5b561bb0508629f7401276d257bf039da87b8c"
+    },
+    {
+      "path": "src/data/auth/authRepository.ts",
+      "sha256": "e1dd3306a99728a72c49e2696dbd0e5c0f1e77d47d284983dcfd3ee904c3720b"
+    },
+    {
+      "path": "src/data/sync/tripDownstreamCoordinator.test.ts",
+      "sha256": "6d3315af7b7d496fb6e63202d99b7ef9348b2994310e9e9e13e18d3378ceb209"
+    },
+    {
+      "path": "src/data/sync/tripDownstreamCoordinator.ts",
+      "sha256": "ad402d2cfc934dce309a3873f6c1dda61884d780dadf8a544336e0bea2e8d7ec"
+    },
+    {
+      "path": "src/features/day-feed/LocalTripWorkspace.tsx",
+      "sha256": "5be2930d982bb9e1932dd258603717c897296d19d6bab7e5e5129dee6b451007"
+    },
+    {
+      "path": "src/features/day-feed/TripEditorMembers.integration.test.ts",
+      "sha256": "8c2d1555274b923711aef26c74161fa81667449a04bfd59ccb5c6c3d75ef90d9"
+    },
+    {
+      "path": "src/features/day-feed/TripMembersSheet.tsx",
+      "sha256": "092f4f7d15c4847fbe55dda255588ece0bfd4004eaec76ffda8a64d7237b4fc2"
+    },
+    {
+      "path": "src/features/day-feed/TripSetupRows.test.ts",
+      "sha256": "4a40b249e4e8f762d166dd98baff411ee0b5f29f2a606e077e3ef5daed32d31e"
+    },
+    {
+      "path": "src/features/day-feed/TripSetupRows.tsx",
+      "sha256": "115acdf9858352cf7f357a8d744868c6d8daab71c811ccb6daaaa2384bb8b1a0"
+    },
+    {
+      "path": "src/ui/catalogs.ts",
+      "sha256": "bcde017fe14bd867fe7d28cd270ac68e8f8695938531672437dfca323ffc095c"
+    },
+    {
+      "path": "src/ui/forms.placeholder.test.ts",
+      "sha256": "7eab715e7bf22c3a9c6a76f59921b1bd36bb1ee0bd030cb1c5aafcd040547536"
+    },
+    {
+      "path": "src/ui/forms.tsx",
+      "sha256": "75ba73d3cc6a235916dc3664b054a0f4f44493a909435b48dcc5e2da9a9b056b"
+    },
+    {
+      "path": "app/claim-resolution.tsx",
+      "sha256": "bc880361fccfc062e8d697fd784612f0bd0bd0fb94f81f4f3879b76457968157"
+    },
+    {
+      "path": "app/directed-invitations.tsx",
+      "sha256": "7f2752365e16bd2c7532c6ce75d7ee8e3f8cef77d32ef2a9531bd4111d19a8bb"
+    },
+    {
+      "path": "app/directed-invite.tsx",
+      "sha256": "a0d6392a929179a3a4e9d1aab1bcfd81fb0c04bdd40e451f05aaf3c960735999"
+    },
+    {
+      "path": "app/pending-claim.tsx",
+      "sha256": "34e335e74431cd0b8091fdb0ed8100363b2535ddf65e2fb0385a24b307c8a168"
+    },
+    {
+      "path": "docs/ops/beta11-native-consumer-20261121/NORMAL_UI_READBACK_HANDOFF.json",
+      "sha256": "e4a91fc735f8b17c70050728617f38f159b827145799f17a922bb83a375457a5"
+    },
+    {
+      "path": "docs/ops/beta11-native-ui-20261121/AUTH_STORAGE_REVIEW.json",
+      "sha256": "548fe45903bce25776d5a7b64d661e7b9f5c578d67ddd175b3fdac7e932cf7e0"
+    },
+    {
+      "path": "docs/ops/beta11-native-ui-20261121/FRESH_QA_FIXTURE.json",
+      "sha256": "951136c2df640a90b19d672de5855ad87e8987a8ec4789ea7667be271b53b33a"
+    },
+    {
+      "path": "docs/ops/beta11-native-ui-20261121/INDEPENDENT_REVIEW.json",
+      "sha256": "a23cfe13f5d4d12077ded8824f3fe76c65658a91b5f64ecd4ca5a8526ad187c3"
+    },
+    {
+      "path": "docs/ops/beta11-native-ui-20261121/LOCAL_VALIDATION.json",
+      "sha256": "5146f3b1f333b6353121847c0530a03ce88d39b1cece278126fcb8f0bece08bc"
+    },
+    {
+      "path": "src/data/api/memberRemovalTransport.test.ts",
+      "sha256": "44804e65be7d0510c3238251ce5eed8c056a240ead0d87008c899cf921ad32e3"
+    },
+    {
+      "path": "src/data/api/memberRemovalTransport.ts",
+      "sha256": "c10a2dd682ff70799f83344688894a54babbcaff3c6552803ce756119322dc3a"
+    },
+    {
+      "path": "src/data/operations/nativeDirectedInvitePorts.test.ts",
+      "sha256": "a7a0d287a0bea7ebc93f78aa98d6697d5b1ea9b6a5738f4edb841ae7a7e7dbd8"
+    },
+    {
+      "path": "src/data/operations/nativeDirectedInvitePorts.ts",
+      "sha256": "88e167c8f8e84c731c4931bdae656ff6c57c0e5d2f6d96bac99abf5bf9ef7115"
+    },
+    {
+      "path": "src/features/people/ClaimResolutionRoute.test.ts",
+      "sha256": "e8dccd1c8711dfa88b1e306ce790ae4548763154f89a10d76df23d54d06b3f06"
+    },
+    {
+      "path": "src/features/people/DirectedClaimContent.test.ts",
+      "sha256": "8440074b868c9057f2c8a643a9adfdc106647d5ad66813c18b28cce7549e8750"
+    },
+    {
+      "path": "src/features/people/DirectedClaimContent.tsx",
+      "sha256": "adf7a598bc10b45e7ef6266991f5becddab5626edb6633a20e2248c4b4ad1479"
+    },
+    {
+      "path": "src/features/people/DirectedInviteRecipientsContent.test.ts",
+      "sha256": "5e133527f1fa5fe441ef0553a7f5ce3e1de10a8f3a484790d93462208302a8a7"
+    },
+    {
+      "path": "src/features/people/DirectedInviteRecipientsContent.tsx",
+      "sha256": "d63205d703c2b197e7472cfbe2492d003a7b282fe81cb26295358ffaf50bb9df"
+    },
+    {
+      "path": "src/features/people/DirectedInviteRoute.test.ts",
+      "sha256": "24b37450e16183c20f52e1f173047f1db234fc49fab100851b3ba01ab5475b81"
+    },
+    {
+      "path": "src/features/people/DirectedInviteScreens.test.ts",
+      "sha256": "e9294fe69f76243e2f0c5cd3b1fdb6cd7760d2196460043e842a614f1a979a6d"
+    },
+    {
+      "path": "src/features/people/DirectedInviteScreens.tsx",
+      "sha256": "6322699ce97dc39ee566cd106d5e0ee92504f82f3935e59069d7c4e9f37f82f4"
+    },
+    {
+      "path": "src/features/people/IncomingInvitationsRoute.test.ts",
+      "sha256": "0aa18c85c56d9bf26eed77d964f2fe9f1678c496c3c64038978d02ac91c6b818"
+    },
+    {
+      "path": "src/features/people/OrganizerClaimResolutionContent.test.ts",
+      "sha256": "5747c62fb06dd248c1ab44c2fe2f1d545d1adc86c57d5efeac26947591209333"
+    },
+    {
+      "path": "src/features/people/OrganizerClaimResolutionContent.tsx",
+      "sha256": "39240d556e1dd5576cf445dcf0af4b626b2ea37f3de10dc936cb9292bf664321"
+    },
+    {
+      "path": "src/features/people/OrganizerClaimResolutionScreen.test.ts",
+      "sha256": "209fd6eabb74ccaa5c41c11e88f4216e51e51fd0258381a0fe37ae747bf3c022"
+    },
+    {
+      "path": "src/features/people/OrganizerClaimResolutionScreen.tsx",
+      "sha256": "c4c10cd341b681496f4f85a92965aa1bdcfe915086d1fc848cb33ac7a3929f4f"
+    },
+    {
+      "path": "src/features/people/PendingClaimRoute.test.ts",
+      "sha256": "ea91d88fdd322200e87c81795317e49e7673e3df8dbdcf9b717718d10f3428bb"
+    },
+    {
+      "path": "src/features/people/PendingClaimSubmissionScreen.test.ts",
+      "sha256": "e7cc54fff446934797700068002083c99035a29a19cd12d5c6000cf9181ffc31"
+    },
+    {
+      "path": "src/features/people/PendingClaimSubmissionScreen.tsx",
+      "sha256": "2a4b4cec169d73916fdf5960b52bba456a489afc04854169d65cead2cec452c1"
+    },
+    {
+      "path": "src/features/people/claimResolutionController.test.ts",
+      "sha256": "94923e4e6ea5cbfa0300ad7f71382c53f06838396359ecb7686310713d8c1728"
+    },
+    {
+      "path": "src/features/people/claimResolutionController.ts",
+      "sha256": "d6fbc18d0b1c06aad45fdaf2df8de0bf4b15d6b71ed584e0f896ceb67e7b8cd5"
+    },
+    {
+      "path": "src/features/people/claimResolutionNativePorts.ts",
+      "sha256": "4b2153009cd1bfd8a1b6ed5c1c72451b294ef1763b406239c2dabb35d5d85715"
+    },
+    {
+      "path": "src/features/people/directedInviteControllers.test.ts",
+      "sha256": "13d4d94683d3c1e80fd08febdc6a7970c27d0d7e3be24b89ebff2488604b994e"
+    },
+    {
+      "path": "src/features/people/directedInviteControllers.ts",
+      "sha256": "5ccee913b29e16fa1f72a268726ce2ee82c94ae57034e9aae093e3cdc9591fa7"
+    },
+    {
+      "path": "src/features/people/pendingClaimSubmissionController.test.ts",
+      "sha256": "aee5daf1454fb6b21206e3bd19f0bc1f574c55032cb0c7edbe58e1982f521d5b"
+    },
+    {
+      "path": "src/features/people/pendingClaimSubmissionController.ts",
+      "sha256": "ce0a2c9ea8e8ecaf11c1856d23e4bb5041c8c4f9f61d5aed9a2905aa465c5deb"
+    }
+  ],
+  "authReviewScope": "authRepository exact postimage reviewed; factory formatted afterward and current Native independent review covers injected-only implementation",
+  "noHostedChanges": true
+}

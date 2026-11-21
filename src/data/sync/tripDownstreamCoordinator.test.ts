@@ -25,11 +25,20 @@ function fixture() {
     observeDiscovery: vi.fn(),
     now: () => now,
   };
+  const qualifiedDeps = {
+    ...deps,
+    pullAfterClaim: vi.fn(
+      async (context: import("../auth/accountRequestContext").AccountRequestContext) => {
+        await deps.pull(context, context.tripId);
+        return 17;
+      },
+    ),
+  };
   return {
-    deps,
+    deps: qualifiedDeps,
     first,
     second,
-    read: createTripDownstreamCoordinator(deps),
+    read: createTripDownstreamCoordinator(qualifiedDeps),
     tick(ms: number) {
       now += ms;
     },
@@ -435,4 +444,45 @@ it("failed discovery stays unavailable without replacing cache and old-generatio
   f.switchAccount();
   expect(f.read.discoveryObservation(scope)).toBeNull();
   expect(f.read.discoveryObservation(await f.deps.scope())).toBeNull();
+});
+
+it("Claim readback performs discovery and an actual collection despite successful cooldown", async () => {
+  const f = fixture();
+  await f.read.trip(f.first);
+  const context = { ...(await f.deps.scope()), tripId: f.first };
+  expect(await f.read.readAfterClaim(context)).toEqual({
+    status: "EXECUTED",
+    context,
+    refreshGeneration: 17,
+  });
+  expect(f.deps.discover).toHaveBeenCalledOnce();
+  expect(f.deps.pull).toHaveBeenCalledTimes(2);
+});
+it("Claim readback reports failure backoff as skipped without another collection", async () => {
+  const f = fixture();
+  const context = { ...(await f.deps.scope()), tripId: f.first };
+  f.deps.pull.mockRejectedValueOnce(Error("OFFLINE"));
+  expect((await f.read.readAfterClaim(context)).status).toBe("UNKNOWN");
+  expect((await f.read.readAfterClaim(context)).status).toBe("SKIPPED");
+  expect(f.deps.pull).toHaveBeenCalledOnce();
+});
+it("Claim readback never confirms a prior account", async () => {
+  const f = fixture();
+  const context = { ...(await f.deps.scope()), tripId: f.first };
+  f.switchAccount();
+  expect((await f.read.readAfterClaim(context)).status).toBe("UNKNOWN");
+  expect(f.deps.discover).not.toHaveBeenCalled();
+  expect(f.deps.pull).not.toHaveBeenCalled();
+});
+
+it("Claim readback never confirms a missing or invalid install generation", async () => {
+  const f = fixture();
+  const context = { ...(await f.deps.scope()), tripId: f.first };
+  const missing = createTripDownstreamCoordinator({
+    ...f.deps,
+    pullAfterClaim: undefined,
+  });
+  expect((await missing.readAfterClaim(context)).status).toBe("UNKNOWN");
+  f.deps.pullAfterClaim.mockResolvedValueOnce(0);
+  expect((await f.read.readAfterClaim(context)).status).toBe("UNKNOWN");
 });

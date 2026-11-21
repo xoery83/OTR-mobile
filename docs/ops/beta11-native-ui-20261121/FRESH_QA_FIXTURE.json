@@ -1,0 +1,28 @@
+{
+  "status": "NATIVE_CREATED_INDEPENDENT_PG_VERIFIED",
+  "device": "Forms QA C0 Build33",
+  "accountId": "1f3d7935-1bdc-4952-8d7f-0f72077368c1",
+  "tripId": "a1a6f569-cf61-4942-a152-7843451b14bf",
+  "tripCreateOperationId": "7a0139c0-be36-4d9d-b9c1-761409d10e37",
+  "tripReadbackOperationId": "ee5ea4c5-1213-4b48-9aa9-64ade947a57f",
+  "ownerPersonId": "1b228e23-d453-45a9-87d1-47663dd80a1c",
+  "unlinkedPersonId": "f7711ff6-ea9f-48d7-baca-73641aee76d2",
+  "personCreateOperationId": "d1e9d1c3-3acb-4f94-92fa-c0272a55b7c1",
+  "nativeQueue": "All three COMPLETED; no errors",
+  "actions": "Normal title-only Create and Add Traveler; no Invite/Claim/Revoke or old C04 edits",
+  "independentVerification": {
+    "writer": "Root2",
+    "readOnly": true,
+    "tripReceiptCount": 1,
+    "personReceiptCount": 1,
+    "targetUserId": null,
+    "memberRows": 2,
+    "inviteCount": 0,
+    "coreCommandReceiptCount": 0,
+    "epoch": "87b0db90-2490-4f76-ac24-f6b4c3a3dd77",
+    "revision": 3,
+    "accessRevision": 3,
+    "candidateSecondSyntheticAccountId": "26876e6e-a919-457d-bc00-78d76ba08043",
+    "executionAuthorized": false
+  }
+}

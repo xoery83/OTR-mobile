@@ -1,3 +1,5 @@
+import { router } from "expo-router";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
@@ -174,6 +176,17 @@ function ScopedMembersSummary({
         members={open ? (setup?.members ?? null) : null}
         onClose={() => setOpen(false)}
         onAddTraveler={onAddTraveler}
+        onInvitePerson={
+          setup
+            ? (personId) => {
+                if (setup.context.generation !== getAccountGeneration()) return;
+                router.push({
+                  pathname: "/directed-invite",
+                  params: { tripId: setup.context.tripId, personId },
+                });
+              }
+            : undefined
+        }
       />
     </View>
   );

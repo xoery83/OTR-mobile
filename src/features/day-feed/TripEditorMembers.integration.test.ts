@@ -1,3 +1,4 @@
+vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";

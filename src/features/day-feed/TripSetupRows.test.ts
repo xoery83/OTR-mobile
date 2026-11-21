@@ -3,6 +3,7 @@ import { TripPreparationWidget } from "./TripPreparationWidget";
 import { beforeEach, expect, it, vi } from "vitest";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripCurrencyRow, TripMembersSummary, TripSetupRows } from "./TripSetupRows";
+vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
 const state = vi.hoisted(() => ({ open: false, key: null as string | null }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),

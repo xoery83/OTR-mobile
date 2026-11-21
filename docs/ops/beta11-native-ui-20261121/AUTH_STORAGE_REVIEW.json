@@ -1,0 +1,20 @@
+{
+  "requestId": "NATIVE-BETA11-STORAGE-CALLER-20261121",
+  "status": "SCOPED_MANAGED_DEV_CALLER_PASS",
+  "blockingFindings": [],
+  "fileHashes": {
+    "src/data/auth/authRepository.ts": "e1dd3306a99728a72c49e2696dbd0e5c0f1e77d47d284983dcfd3ee904c3720b",
+    "src/data/operations/nativeDirectedInvitePorts.ts": "4a9ad0cd5e795d89e770de2bd3d8dbbe7d1efb870039c1bb637054822d07d03f"
+  },
+  "reviewed": [
+    "Only additive dynamic import/function; existing session storage methods/config unchanged",
+    "Passes private existing secureStoreAdapter to dependency-injected factory; no export of raw adapter or new store/service/realm",
+    "Factory only constructs existing account-bound repositories; no constructor dispatch/install/Session switch",
+    "requireAdoptedUserId remains current normal-account path; repository request context and original attempt protections reused"
+  ],
+  "limits": [
+    "Five-line caller and immediate factory review only; no Native UI/route/Sync review",
+    "No runtime/device test or Hosted action; no new test required for trivial forwarding",
+    "ManagedDEV only; future Beta caller and issuer isolation not qualified by this review"
+  ]
+}

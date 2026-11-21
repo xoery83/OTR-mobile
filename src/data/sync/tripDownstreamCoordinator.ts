@@ -95,6 +95,7 @@ type Dependencies = {
   account(): Promise<string>;
   discover(scope: AccountScope): Promise<string[]>;
   version?(scope: AccountScope, tripId: string): Promise<string>;
+  pullAfterClaim?(context: AccountRequestContext): Promise<number>;
   pull(
     scope: AccountScope,
     tripId: string,
@@ -218,14 +219,69 @@ export function createTripDownstreamCoordinator(deps: Dependencies) {
   }
   async function discover(scope: AccountScope, foreground?: () => boolean) {
     let ids: string[] = [];
-    await run(scope, "discovery", async () => {
-      ids = await deps.discover(scope);
-      await assertAccountRequestContext(scope, deps.account);
-      deps.notify(scope, [], true);
-    }, foreground !== undefined, foreground);
+    await run(
+      scope,
+      "discovery",
+      async () => {
+        ids = await deps.discover(scope);
+        await assertAccountRequestContext(scope, deps.account);
+        deps.notify(scope, [], true);
+      },
+      foreground !== undefined,
+      foreground,
+    );
     return ids;
   }
+  async function readAfterClaim(context: AccountRequestContext) {
+    let discoveryConfirmed = false;
+    let refreshGeneration: number | undefined;
+    try {
+      await assertAccountRequestContext(context, deps.account);
+      if (!deps.pullAfterClaim) return { status: "UNKNOWN" as const, context };
+      // A successful cooldown may be bypassed; failure backoff and coalescing remain owned by run.
+      await run(
+        context,
+        "discovery",
+        async () => {
+          await deps.discover(context);
+          await assertAccountRequestContext(context, deps.account);
+          deps.notify(context, [], true);
+          discoveryConfirmed = true;
+        },
+        true,
+      );
+      if (!discoveryConfirmed) return { status: "SKIPPED" as const, context };
+      await run(
+        context,
+        context.tripId,
+        async (state) => {
+          // Claim readback needs a real collection even when the cached version matches.
+          const applied = await deps.pullAfterClaim!(context);
+          await assertAccountRequestContext(context, deps.account);
+          if (!Number.isSafeInteger(applied) || applied < 1)
+            throw Error("CLAIM_REFRESH_UNPROVEN");
+          state.version = undefined;
+          deps.notify(context, [context.tripId], false);
+          refreshGeneration = applied;
+        },
+        true,
+      );
+      await assertAccountRequestContext(context, deps.account);
+      return refreshGeneration === undefined
+        ? { status: "SKIPPED" as const, context }
+        : { status: "EXECUTED" as const, context, refreshGeneration };
+    } catch (error) {
+      return {
+        status:
+          error instanceof ApiClientError && error.kind === "http"
+            ? ("FAILED" as const)
+            : ("UNKNOWN" as const),
+        context,
+      };
+    }
+  }
   return {
+    readAfterClaim,
     discoveryObservation(scope: AccountScope) {
       if (scope.generation !== getAccountGeneration()) return null;
       return (
@@ -380,6 +436,40 @@ async function nativeCoordinator() {
         .filter((row) => row.remoteListed)
         .map((row) => row.id);
     },
+    async pullAfterClaim(context) {
+      const [
+        { readInitializedDatabase },
+        { createTripCoreV2Repository },
+        { createCoreV2Transport },
+        { tripCoreSha256Hex },
+      ] = await Promise.all([
+        import("../db/database"),
+        import("../repositories/tripCoreV2Repository"),
+        import("../api/tripCoreV2Transport"),
+        import("../repositories/tripCoreSha256"),
+      ]);
+      await assertAccountRequestContext(context, requireAdoptedUserId);
+      const core = createTripCoreV2Repository(
+        await readInitializedDatabase(),
+        requireAdoptedUserId,
+        tripCoreSha256Hex,
+      );
+      const collection = await createCoreV2Transport(
+        requireAdoptedUserId,
+        tripCoreSha256Hex,
+        {
+          timeoutMs: 20_000,
+        },
+      ).collection(context);
+      await assertAccountRequestContext(context, requireAdoptedUserId);
+      const refresh = await core.beginRefresh(
+        context,
+        collection.manifest.accessRevision,
+      );
+      await core.install(refresh, collection.manifest, collection.pages);
+      await assertAccountRequestContext(context, requireAdoptedUserId);
+      return refresh.refreshGeneration;
+    },
     async pull(scope, tripId) {
       const [
         { readInitializedDatabase },
@@ -451,4 +541,37 @@ export async function refreshTripFromCloud(tripId: string) {
 // Unmounted until the owning private-subscription contract is qualified.
 export async function invalidateTripFromCloud(context: AccountRequestContext) {
   await (await nativeCoordinator()).invalidate(context);
+}
+
+// Used only after a formal Claim result; authority remains with the existing readers.
+export async function refreshDirectedClaimPeople(context: AccountRequestContext) {
+  const result = await (await nativeCoordinator()).readAfterClaim(context);
+  if (result.status !== "EXECUTED") return result;
+  const [
+    { requireAdoptedUserId },
+    { readInitializedDatabase },
+    { createTripCoreV2Repository },
+    { tripCoreSha256Hex },
+  ] = await Promise.all([
+    import("../auth/authRepository"),
+    import("../db/database"),
+    import("../repositories/tripCoreV2Repository"),
+    import("../repositories/tripCoreSha256"),
+  ]);
+  await assertAccountRequestContext(context, requireAdoptedUserId);
+  const core = createTripCoreV2Repository(
+    await readInitializedDatabase(),
+    requireAdoptedUserId,
+    tripCoreSha256Hex,
+  );
+  const accepted = await core.readAcceptedPeopleConnections(context);
+  await assertAccountRequestContext(context, requireAdoptedUserId);
+  if (!accepted || accepted.certificate.applied_generation !== result.refreshGeneration)
+    return { status: "UNKNOWN" as const, context };
+  return {
+    status: "EXECUTED" as const,
+    context,
+    refreshGeneration: result.refreshGeneration,
+    accepted,
+  };
 }

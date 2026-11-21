@@ -1,0 +1,67 @@
+{
+  "requestId": "NATIVE-BETA11-UI-RESUME-20261121",
+  "source": "a3a366515f2551e57049308f6787d3cbf95baa32",
+  "files": [
+    {
+      "path": "src/features/people/directedInviteControllers.ts",
+      "sha256": "5ccee913b29e16fa1f72a268726ce2ee82c94ae57034e9aae093e3cdc9591fa7"
+    },
+    {
+      "path": "src/features/people/DirectedInviteScreens.tsx",
+      "sha256": "6322699ce97dc39ee566cd106d5e0ee92504f82f3935e59069d7c4e9f37f82f4"
+    },
+    {
+      "path": "src/features/people/DirectedInviteRecipientsContent.tsx",
+      "sha256": "d63205d703c2b197e7472cfbe2492d003a7b282fe81cb26295358ffaf50bb9df"
+    },
+    {
+      "path": "src/features/people/DirectedClaimContent.tsx",
+      "sha256": "adf7a598bc10b45e7ef6266991f5becddab5626edb6633a20e2248c4b4ad1479"
+    },
+    {
+      "path": "src/features/people/pendingClaimSubmissionController.ts",
+      "sha256": "63e374df395604d83bb609210215f022ab8e11262e5e7ac84627ab5ad9bdf034"
+    },
+    {
+      "path": "src/features/people/PendingClaimSubmissionScreen.tsx",
+      "sha256": "2a4b4cec169d73916fdf5960b52bba456a489afc04854169d65cead2cec452c1"
+    },
+    {
+      "path": "src/features/people/claimResolutionController.ts",
+      "sha256": "b46f7fe5543d40bc6c7f1ffca89fb6d385f54ca17639da182c0234a1ced8a12d"
+    },
+    {
+      "path": "src/features/people/OrganizerClaimResolutionContent.tsx",
+      "sha256": "39240d556e1dd5576cf445dcf0af4b626b2ea37f3de10dc936cb9292bf664321"
+    },
+    {
+      "path": "src/features/people/OrganizerClaimResolutionScreen.tsx",
+      "sha256": "c4c10cd341b681496f4f85a92965aa1bdcfe915086d1fc848cb33ac7a3929f4f"
+    }
+  ],
+  "currentNativeReadBaseline": "76ea56943df43b2183a3f7ac951227aa3c4669a2",
+  "currentAcceptedPeoplePort": "createTripCoreV2Repository(...).readAcceptedPeopleConnections(context) exists; local certified projection only, not fresh network proof",
+  "currentFreshPeopleGap": "Current Native coordinator has no readAfterClaim/refreshDirectedClaimPeople. refreshAccountTripReads/refreshTripFromCloud return void and can skip/coalesce/version-hit. Do not assert EXECUTED from resolved Promise.",
+  "historicalReference": {
+    "source": "a3a366515f2551e57049308f6787d3cbf95baa32",
+    "file": "src/data/sync/tripDownstreamCoordinator.ts",
+    "sections": [
+      "Dependencies.pullAfterClaim",
+      "createTripDownstreamCoordinator.readAfterClaim",
+      "nativeCoordinator.pullAfterClaim",
+      "refreshDirectedClaimPeople"
+    ]
+  },
+  "minimalNativeSeam": "Adapt only these sections to current owning coordinator/transport/install flow; preserve foreground discovery changes, queues, version/backoff and Account generation. No full old Sync overwrite.",
+  "readbackContract": {
+    "EXECUTED": "context + positive refreshGeneration from actual collection read/install + accepted certificate applied_generation equal to that generation",
+    "other": "SKIPPED / UNKNOWN / FAILED; retain original Receipt and check readback only, never resubmit Claim"
+  },
+  "excluded": [
+    "Old nativeDirectedInvitePorts/raw SecureStore factory",
+    "Old Root/bootstrap/routes as drop-in replacements",
+    "General/provisional/Removal UI or capabilities",
+    "Any Hosted execution/policy/SQL activation"
+  ],
+  "status": "SOURCE_UI_REFERENCE_AND_EXACT_NATIVE_READ_GAP_NOT_CURRENT_UI_PASS"
+}

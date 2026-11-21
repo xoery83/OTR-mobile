@@ -1,0 +1,16 @@
+{
+  "status": "LOCAL_REVIEWED_NORMAL_UI_INTEGRATION_CANDIDATE",
+  "base": "5bdae6f5",
+  "sourceReference": "Auth a3a36651 and frozen App9c5c09aa; narrow adaptation, not whole-branch merge",
+  "checks": {
+    "consumer": "113 PASS retained from5bdae",
+    "UIControllersAndSeam": "12 suites/152 PASS",
+    "routesAndAffectedCallers": "11 suites/198 PASS",
+    "types": "PASS",
+    "uiGuard": "PASS",
+    "selectionSpecific": "2 suites/5 PASS"
+  },
+  "normalUI": "People\u2192registered recipient invite; account menu\u2192incoming\u2192pending request\u2192review; not yet device verified",
+  "scope": "ManagedDEV existing injected storage, existing Queue/Core/Readers; no new Hosted/SQL/policy/Provider changes",
+  "mcp": "Guide reached OTR_CONSENT_REQUIRED. One normal Google action parent busy\u2192UNAVAILABLE; popup NOT_CAPTURED. Same-window issuer_grant error not correlated. Do not replay or claim server503 cause."
+}

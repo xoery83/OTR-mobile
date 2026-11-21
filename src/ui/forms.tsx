@@ -141,11 +141,13 @@ export function UiChoiceChip({
   selected,
   onPress,
   compact = false,
+  disabled = false,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
   compact?: boolean;
+  disabled?: boolean;
 }) {
   const styles = useThemedStyles(createStyles);
   const { fontScale } = useWindowDimensions();
@@ -154,12 +156,14 @@ export function UiChoiceChip({
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={[
         styles.choiceChip,
         compact && styles.compactChip,
         selected && !compact && styles.choiceChipSelected,
+        disabled && styles.disabledSurface,
       ]}
     >
       <Text
@@ -170,6 +174,7 @@ export function UiChoiceChip({
           compact && styles.compactChipText,
           compact && selected && styles.compactSelected,
           selected && !compact && styles.choiceChipTextSelected,
+          disabled && styles.disabledText,
         ]}
       >
         {label}

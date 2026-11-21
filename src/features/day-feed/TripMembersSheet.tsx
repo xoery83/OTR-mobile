@@ -1,8 +1,8 @@
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
-import { useState } from "react";
+import { useState, useLayoutEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
-import { UiText } from "@/ui/controls";
+import { UiButton, UiText } from "@/ui/controls";
 import { formatUiNumber, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
@@ -19,16 +19,31 @@ type Props = {
   members: TripPreparationSetup["members"] | null;
   onClose(): void;
   onAddTraveler?(input: AddTravelerInput): Promise<void>;
+  onInvitePerson?(personId: string): void;
 };
 
 export function TripMembersSheet(props: Props) {
   return props.visible ? <VisiblePeopleSheet {...props} /> : null;
 }
 
-function VisiblePeopleSheet({ visible, members, onClose, onAddTraveler }: Props) {
+function VisiblePeopleSheet({
+  visible,
+  members,
+  onClose,
+  onAddTraveler,
+  onInvitePerson,
+}: Props) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const [adding, setAdding] = useState(false);
+  const frame = { members, onInvitePerson };
+  const latest = useRef<typeof frame | null>(frame);
+  useLayoutEffect(() => {
+    latest.current = frame;
+    return () => {
+      latest.current = null;
+    };
+  });
   const roster = visible && members?.state === "AVAILABLE" ? members : null;
   return (
     <Modal
@@ -74,6 +89,19 @@ function VisiblePeopleSheet({ visible, members, onClose, onAddTraveler }: Props)
                           {person.displayName.trim() ||
                             (person.isCurrentActor ? t("ui.you") : "")}
                         </UiText>
+                        {!person.isCurrentActor &&
+                        person.localState !== "LOCAL_PENDING" &&
+                        onInvitePerson ? (
+                          <UiButton
+                            variant="text"
+                            label={t("people.directedInvite.send")}
+                            onPress={() => {
+                              if (latest.current !== frame) return;
+                              onClose();
+                              onInvitePerson(person.personId);
+                            }}
+                          />
+                        ) : null}
                         {person.localState === "LOCAL_PENDING" ? (
                           <UiText style={styles.meta}>
                             {t("tripMembers.localPending")}

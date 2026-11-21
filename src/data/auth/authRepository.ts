@@ -82,3 +82,9 @@ export async function requireAdoptedUserId() {
   if (!userId) throw new Error("An adopted account identity is required.");
   return userId;
 }
+
+// Reuse this runtime's existing session storage; never construct a second store in UI.
+export async function readNativeDirectedInvitePorts() {
+  const { createNativeDirectedInvitePorts } = await import("../operations/nativeDirectedInvitePorts");
+  return createNativeDirectedInvitePorts(secureStoreAdapter);
+}
