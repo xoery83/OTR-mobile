@@ -92,7 +92,13 @@ const model = {
 const execution = {
   state: "REVIEW_READY",
   taskId: "original-task",
-  candidates: [{ candidateId: "a" }],
+  candidates: [
+    {
+      candidateId: "a",
+      kind: "P1",
+      fields: { title: "Harbour walk", "schedule.start.local_date": "2026-11-23" },
+    },
+  ],
 } as Extract<UniversalV3ExecutionStatus, { state: "REVIEW_READY" }>;
 function render(extra: Partial<Parameters<typeof UniversalV3Activity>[0]> = {}) {
   h.cursor = 0;
@@ -156,11 +162,15 @@ it("association-pending stays incomplete and only polls receipts; dismissal stop
   expect(h.check).toHaveBeenCalledTimes(2);
   expect(h.confirm).not.toHaveBeenCalled();
 });
-it("offline receipt reads show uncertainty, never a failure or automatic save", async () => {
+it("offline pre-confirmation reads retain recognized facts without inventing an UNKNOWN write", async () => {
   h.open.mockRejectedValue(Error("OFFLINE"));
   render();
   await vi.advanceTimersByTimeAsync(0);
-  expect(render()).toContain(t("capture.activityStatus.uncertain"));
+  const html = render();
+  expect(html).toContain(t("capture.activityStatus.checking"));
+  expect(html).toContain(t("capture.ux.reviewReadUnavailable"));
+  expect(html).toContain("Harbour walk");
+  expect(html).toContain("2026-11-23");
   expect(h.confirm).not.toHaveBeenCalled();
 });
 it("an invalidated account/sheet discards late results", async () => {
@@ -197,4 +207,21 @@ it("return navigation uses the Batch Trip/job identity and ignores invalidated c
   h.current = false;
   h.buttons.get(t("capture.results.day")).onPress();
   expect(go).not.toHaveBeenCalled();
+});
+
+vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
+vi.mock("./UniversalP1SourceReviewForm", () => ({
+  UniversalP1SourceReviewForm: () => null,
+}));
+
+it("an explicit execution UNKNOWN survives a previous pre-confirmation read failure", async () => {
+  h.open.mockRejectedValue(Error("OFFLINE"));
+  render();
+  await vi.advanceTimersByTimeAsync(0);
+  const html = render({
+    execution: { state: "OUTCOME_UNKNOWN" } as UniversalV3ExecutionStatus,
+  });
+  expect(html).toContain(t("capture.activityStatus.uncertain"));
+  expect(html).not.toContain(t("capture.ux.reviewReadUnavailable"));
+  expect(h.confirm).not.toHaveBeenCalled();
 });

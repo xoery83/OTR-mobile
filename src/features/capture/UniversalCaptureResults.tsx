@@ -312,14 +312,17 @@ export function UniversalV3Activity({
     formatUnavailable,
   );
   const progressState =
-    progress.state === "confirmation" &&
-    (intent?.confirmed ||
-      displayRows.every(
-        (row) =>
-          row.disposition === "REVIEW" && !intent?.resolutions[row.candidate.candidateId],
-      ))
-      ? "attention"
-      : progress.state;
+    result && readUnavailable && !intent?.confirmed && !Object.keys(observations).length
+      ? "checking"
+      : progress.state === "confirmation" &&
+          (intent?.confirmed ||
+            displayRows.every(
+              (row) =>
+                row.disposition === "REVIEW" &&
+                !intent?.resolutions[row.candidate.candidateId],
+            ))
+        ? "attention"
+        : progress.state;
   const reviewCount = rows.filter(
     (row) =>
       (row.disposition === "REVIEW" &&
@@ -398,26 +401,36 @@ export function UniversalV3Activity({
           : undefined
       }
     >
-      {intent && !intent.confirmed
-        ? displayRows.map((row) => {
-            const candidate =
-              intent.resolutions[row.candidate.candidateId]?.candidate ?? row.candidate;
-            const { title, start, end, startTime, endTime, place, endPlace } =
-              universalV3ReviewFields(candidate);
-            return (
-              <UiSection key={candidate.candidateId}>
-                <UiText accessibilityRole="header">
-                  {title || t("capture.results.item")}
-                </UiText>
-                <UiText>
-                  {[start, startTime, end, endTime, place, endPlace]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </UiText>
-              </UiSection>
-            );
-          })
+      {result && !intent?.confirmed
+        ? (rows.length ? displayRows.map((row) => row.candidate) : result.candidates).map(
+            (original) => {
+              const candidate =
+                intent?.resolutions[original.candidateId]?.candidate ?? original;
+              const { title, start, end, startTime, endTime, place, endPlace } =
+                universalV3ReviewFields(candidate);
+              return (
+                <UiSection key={candidate.candidateId}>
+                  <UiText accessibilityRole="header">
+                    {title || t("capture.results.item")}
+                  </UiText>
+                  <UiText>
+                    {[start, startTime, end, endTime, place, endPlace]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </UiText>
+                </UiSection>
+              );
+            },
+          )
         : null}
+      {result &&
+      readUnavailable &&
+      !intent?.confirmed &&
+      !Object.keys(observations).length ? (
+        <UiText accessibilityLiveRegion="polite">
+          {t("capture.ux.reviewReadUnavailable")}
+        </UiText>
+      ) : null}
       {intent &&
       !intent.confirmed &&
       rows.some(
