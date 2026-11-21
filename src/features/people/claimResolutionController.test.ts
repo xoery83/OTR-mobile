@@ -60,6 +60,36 @@ async function fixture() {
     switch() { accountId = randomUUID(); advanceAccountGeneration(); } };
 }
 
+it.each(["verified", "skipped", "wrong-person"])("freshly verifies claimant membership after organizer confirmation: %s", async kind => {
+  const f = await fixture(), old = f.view();
+  f.setView({ ...old, eligibleActions: [], snapshot: { ...old.snapshot,
+    claimantAccountId: f.context.accountId, state: "LINKED" } });
+  const read = await f.ports.readPeople(f.context);
+  if (read.status !== "EXECUTED" || !read.accepted) throw Error("FIXTURE_READ_REQUIRED");
+  f.ports.readPeople.mockClear();
+  f.ports.readPeople.mockResolvedValue(kind === "skipped"
+    ? { status: "SKIPPED", context: f.context, labels: [] }
+    : { ...read, accepted: { ...read.accepted, people: [{
+      personId: kind === "wrong-person" ? f.otherPersonId : f.personId,
+      connected: true, isCurrentActor: true,
+    }] } });
+  const c = f.open(); await c.load();
+  expect(f.ports.readPeople).toHaveBeenCalledOnce();
+  expect(c.getSnapshot().memberReadbackVerified).toBe(kind === "verified");
+  expect(c.getSnapshot().needsMemberReadback).toBe(kind !== "verified");
+  expect(f.execute).not.toHaveBeenCalled();
+  expect(f.rows.size).toBe(0);
+  if (kind !== "verified") {
+    f.ports.readPeople.mockResolvedValue({ ...read, accepted: { ...read.accepted,
+      people: [{ personId: f.personId, connected: true, isCurrentActor: true }] } });
+    await c.checkOriginal();
+    expect(c.getSnapshot()).toMatchObject({ memberReadbackVerified: true, needsMemberReadback: false });
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.recover).not.toHaveBeenCalled();
+    expect(f.rows.size).toBe(0);
+  }
+});
+
 it("requires actual scoped People read and formal action eligibility", async () => {
   const f = await fixture(), c = f.open();
   f.ports.readPeople.mockResolvedValueOnce({ status: "SKIPPED", context: f.context, labels: [] });

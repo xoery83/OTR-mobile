@@ -71,6 +71,17 @@ export function createClaimResolutionController(context: AccountRequestContext, 
     }
     if (value.snapshot.revision < minimumRevision || (value.snapshot.revision === minimumRevision &&
         expectedOutcome && value.snapshot.state !== expectedOutcome)) throw Error("CLAIM_RESOLUTION_STALE_READ");
+    if (value.snapshot.state === "LINKED" && value.snapshot.claimantAccountId === context.accountId) {
+      model.update({ view: value, needsMemberReadback: true, eligibleActions: [] });
+      const read = await certifiedPeople();
+      const proposal = value.snapshot.proposal;
+      const personId = proposal.kind === "EXISTING_PERSON" ? proposal.personId : proposal.create.personId;
+      const own = read.accepted.people.filter(person => person.isCurrentActor);
+      if (own.length !== 1 || own[0].personId !== personId || !own[0].connected)
+        throw Error("CLAIM_RESOLUTION_MEMBER_READ_REQUIRED");
+      model.update({ phase: "READY", people: [], memberReadbackVerified: true, needsMemberReadback: false });
+      return read;
+    }
     if (!value.eligibleActions.length) {
       model.update({ phase: "READY", view: value, people: [], eligibleActions: [] });
       return;
@@ -90,7 +101,8 @@ export function createClaimResolutionController(context: AccountRequestContext, 
       model.update({ phase: original?.original.requestId === requestId && !original.receipt && !(original.rejection && original.rejectionSource === "INITIAL_EXECUTION") ? "UNKNOWN" : "UNAVAILABLE",
         operationId: original?.original.requestId === requestId ? original.original.operationId : null,
         eligibleActions: [], memberReadbackVerified: false,
-        needsMemberReadback: original?.original.requestId === requestId && original.receipt?.outcome === "LINKED" });
+        needsMemberReadback: model.getSnapshot().needsMemberReadback ||
+          (original?.original.requestId === requestId && original.receipt?.outcome === "LINKED") });
     } catch { await model.fail({ phase: "UNAVAILABLE", eligibleActions: [], memberReadbackVerified: false, needsMemberReadback: false }); }
   }
   async function finish(operationId: string) {
@@ -100,9 +112,9 @@ export function createClaimResolutionController(context: AccountRequestContext, 
     if (!original?.receipt || original.original.operationId !== operationId) throw Error("CLAIM_RESOLUTION_RECEIPT_REQUIRED");
     const linked = original.receipt.outcome === "LINKED";
     model.update({ needsMemberReadback: linked, memberReadbackVerified: false });
-    await refresh(original.receipt.afterRevision, original.receipt.outcome);
+    const refreshed = await refresh(original.receipt.afterRevision, original.receipt.outcome);
     if (linked) {
-      const read = await certifiedPeople();
+      const read = refreshed ?? await certifiedPeople();
       const target = read.accepted.people.filter(person => person.personId === original.receipt!.effects.linkedPersonId && person.connected);
       const claimant = model.getSnapshot().view?.snapshot.claimantAccountId === context.accountId;
       const own = read.accepted.people.filter(person => person.isCurrentActor);
@@ -185,6 +197,7 @@ export function createClaimResolutionController(context: AccountRequestContext, 
     checkOriginal: () => exclusive(async () => {
       const retained = await ports.attempts.readResolution(model.context);
       await model.guard();
+      if (!retained && model.getSnapshot().needsMemberReadback) { await refresh(); return; }
       if (!retained || retained.original.requestId !== requestId) throw Error("CLAIM_RESOLUTION_ORIGINAL_REQUIRED");
       if (retained.rejection && retained.rejectionSource === "INITIAL_EXECUTION") {
         await conflict(retained.original.operationId, retained.rejection.currentRevision);

@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_PASS_DEVICE_AND_HOSTED_PENDING",
+  "base": "8d0ee701254ad7eaf68af1ae08d3e7c6375cbdcf",
+  "failure": "A confirmed LINKED request had no eligible actions; claimant B without an own LINKED resolution receipt skipped certified People Pull",
+  "repair": "Claimant LINKED refresh reuses existing certified Pull and verifies proposal Person is the unique connected current Actor. A failed read is retryable without an own resolution attempt; existing UNKNOWN still recovers its original operation. finish reuses the same read.",
+  "checks": {
+    "red": "Three new regression cases failed because readPeople was never called",
+    "focused": "3 suites / 41 PASS, including verified, skipped, wrong-person and read-only retry",
+    "types": "PASS",
+    "scopedLint": "PASS",
+    "diffCheck": "PASS",
+    "independentReview": "prebeta_localfirst_review NO_BLOCKER; static review only"
+  },
+  "limits": "No permission, SQL, Auth Session, Queue or Hosted change. Build34 remains installed; this source repair is not yet device or real Join PASS."
+}
