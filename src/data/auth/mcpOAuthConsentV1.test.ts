@@ -209,7 +209,7 @@ it.each(["google", "apple"] as const)(
       ...fixture().config,
       authOrigin: issuer + "/",
       publishableKey: "sb_publishable_" + "a".repeat(40),
-      managedNativeOAuth: true,
+      managedNativeOAuth: true as const,
       managedDev: { accountId: null, clientId: client, redirectUri: callback },
       consentPolicy: { ...pin, policy: { ...pin.policy, resource } },
       browserProviders: [provider],

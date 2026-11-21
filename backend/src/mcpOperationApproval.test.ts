@@ -79,7 +79,7 @@ it("binds a standing approval response to the current account", async () => {
     call: deleteCall, request: betaRequest(deleteCall, intent.operationId),
   });
   const store = vi.fn(async () => ({
-    ...row(), accountId, call: deleteCall, digest, kind: "TRIP_DELETE", targetName: "Unit",
+    ...row(), accountId, call: deleteCall, digest, kind: "TRIP_DELETE" as const, targetName: "Unit",
     managedConsent: { policyHash, evidenceId: randomUUID(), sessionId: randomUUID() },
   }));
   const service = createMcpOperationApprovalService({
