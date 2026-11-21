@@ -10,6 +10,7 @@ export function isMcpProviderAuthorizeUrl(
   url: URL,
   origin: string,
   providers: readonly McpBrowserProvider[],
+  callbackOrigin = origin,
 ) {
   const keys = ["provider", "redirect_to", "code_challenge", "code_challenge_method"];
   return (
@@ -21,7 +22,7 @@ export function isMcpProviderAuthorizeUrl(
     url.searchParams.size === keys.length &&
     keys.every((key) => url.searchParams.getAll(key).length === 1) &&
     providers.includes(url.searchParams.get("provider") as McpBrowserProvider) &&
-    url.searchParams.get("redirect_to") === origin + mcpProviderCallbackPath &&
+    url.searchParams.get("redirect_to") === callbackOrigin + mcpProviderCallbackPath &&
     url.searchParams.get("code_challenge_method") === "s256" &&
     /^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get("code_challenge") ?? "")
   );

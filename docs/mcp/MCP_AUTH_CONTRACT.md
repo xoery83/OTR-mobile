@@ -24,6 +24,15 @@ admission position and existing object privileges remain in effect.
 One bounded retry is available only for capacity error 53300 before the
 Consent transaction begins. A failed or ambiguous commit is never replayed.
 
+The Managed configuration may explicitly opt into account-per-connection
+binding using `managedDev.accountId: null` only on the persistent Native
+Consent runtime. The registered OAuth client and callback remain fixed.
+Gateway business calls use the verified OAuth subject, while browser
+decisions use the verified first-party subject. Approval storage and replies
+are checked against that subject. Existing fixed-account configurations
+remain supported. This option does not enroll an account into an owning
+database policy or activate the protected approval role.
+
 Finite Claude QA now has actual fresh Read/Edit Consent, controlled P3 Create
 and original-ID Edit, formal independent receipts/readback and Native cold restore
 PASS. The R recovery Gate is consumed and fully closed before deadline; it does

@@ -4,11 +4,11 @@ Owner direction: 21 November 2026. Native is the single delivery lead after the 
 
 ## Baseline and execution
 
-- Remote Main verified after safe push: `2c32f931` (previousbedf24dc remains ancestor; includes Managed MCP/c138470d and verified Native fixes).
+- Owner-final MCP Main received: `2f4c123e` (includesNative2c32f931); Native device/evidence follow-up integrated separately. Previous Native Main (previousbedf24dc remains ancestor; includes Managed MCP/c138470d and verified Native fixes).
 - Native candidate: `codex/native-unified-prebeta-20261121`; candidate HEAD2c32f931 safely pushed to Main. Build26 contains reviewed currency timing and Metadata setup repairs. Main/Hosted Writer returned by MC.
 - One QA target: Forms QA `C0C23E00-5016-4289-B806-92C5484BD5BA`, `art.xoery.otr`; retain Session/SQLite81/history. Phone remains Build14 until MCP handoff.
 - Installed client: Build26/source2c32f931, same Session and SQLite81 retained; latest original-item edits recovered on cold start. Phone Build14 unchanged.
-- Shared DEV current Root2 release c89a4e06/image2f25e788; shared lease and exact normal capability profile restored without SQL/authority changes.
+- Shared DEV standing release4388a2d6/container43715f/imageb4d460f. Earlierc89a is retained rollback only; do not restore stale config.
 - Ordinary approved fixes may be merged/pushed after focused checks and actual journey validation. No force push, Production, new authority, protected SQL or financial contract changes. TestFlight/App Store publication requires Owner approval.
 
 ## Prioritized journey backlog
@@ -34,6 +34,8 @@ Ledger acceptance focus (Owner clarification, 21 November): reuse the existing e
 | BETA-15 | P1 stability | MCP Consent connection wait / occasional503 | BUG | Existing shared lease waits15001ms/7071ms despite same-deployment successful get_trip. Holder not identified. Preserve one-connection, Consent and revocation contracts; focused owning-layer diagnosis, not a new pool. |
 | BETA-16 | P2 Auth | Apple browser OAuth | TODO, independent of Native Apple | Missing Web OAuth secret causes400validation_failed per handoff. Native Build14 Apple login/cold remains accepted. Auth owns existing Web configuration. |
 
+
+MCP evidence: [Shared DEV handoff](ops/prebeta-user-journey-20261121/MCP_SHARED_DEV_HANDOFF.md). Owner-final candidatea397 was merged/pushed as2f4c123e by MC; Native now owns follow-up.
 
 ## Current fixes retained for integration
 

@@ -34,7 +34,7 @@ const scopedApprovalSchema = z.discriminatedUnion("kind", [
   z.strictObject({
     kind: z.literal("TRIP_DELETE_STANDING"),
     policyHash: z.string().regex(/^[a-f0-9]{64}$/),
-    accountId: z.uuid(),
+    accountId: z.uuid().nullable(),
     clientId: z.uuid(),
     resource: z.url(),
   }),
@@ -158,6 +158,8 @@ export function createMcpOperationApprovalService(
     createHmac("sha256", csrfSecret).update("otr-operation-page-csrf/1").digest(),
   );
   const current = (signal: AbortSignal) => signal.throwIfAborted();
+  const allowsAccount = (accountId: string) =>
+    scope.accountId === null || scope.accountId === accountId;
   function binding(approval: ApprovalRequest, raw: unknown) {
     const { capability, call } = parseBetaCall(raw);
     const request = call.request as {
@@ -173,7 +175,7 @@ export function createMcpOperationApprovalService(
       capability.capabilityId !==
         (deleteScope ? "otr.trip.delete" : "otr.trip.update") ||
       (scope.kind === "TRIP_DELETE_STANDING" && approval.managedConsent?.policyHash !== scope.policyHash) ||
-      approval.accountId !== scope.accountId ||
+      !allowsAccount(approval.accountId) ||
       approval.clientId !== scope.clientId ||
       approval.resource !== scope.resource ||
       ("tripId" in scope && call.pathParams.tripId !== scope.tripId) ||
@@ -196,7 +198,7 @@ export function createMcpOperationApprovalService(
     )
       throw new OperationApprovalError(403, "OPERATION_APPROVAL_BINDING_MISMATCH");
     return {
-      accountId: scope.accountId,
+      accountId: approval.accountId,
       clientId: scope.clientId,
       resource: scope.resource,
       operationIds: [operationId],
@@ -205,11 +207,11 @@ export function createMcpOperationApprovalService(
       call,
     };
   }
-  function checkRecord(raw: unknown) {
+  function checkRecord(raw: unknown, accountId: string) {
     const row = recordSchema.parse(raw);
     if (
       (deleteScope && (row.kind !== "TRIP_DELETE" || !row.targetName)) ||
-      row.accountId !== scope.accountId ||
+      row.accountId !== accountId ||
       row.clientId !== scope.clientId ||
       row.resource !== scope.resource ||
       ("tripId" in scope && row.tripId !== scope.tripId) ||
@@ -241,6 +243,7 @@ export function createMcpOperationApprovalService(
           null,
           null,
         ),
+        approval.accountId,
       );
       current(signal);
       return link(row);
@@ -256,6 +259,7 @@ export function createMcpOperationApprovalService(
           null,
           null,
         ),
+        approval.accountId,
       );
       current(signal);
       return {
@@ -292,11 +296,12 @@ export function createMcpOperationApprovalService(
   ) {
     z.uuid().parse(id);
     z.uuid().parse(principal.sessionId);
-    if (principal.accountId !== scope.accountId)
+    if (!allowsAccount(principal.accountId))
       throw new OperationApprovalError(404, "OPERATION_APPROVAL_NOT_FOUND");
     current(signal);
     const row = checkRecord(
       await store("READ", principal.accountId, id, null, null, principal.sessionId),
+      principal.accountId,
     );
     current(signal);
     return row;
@@ -356,6 +361,7 @@ export function createMcpOperationApprovalService(
           decision,
           principal.sessionId,
         ),
+        principal.accountId,
       );
       current(signal);
       return decided;

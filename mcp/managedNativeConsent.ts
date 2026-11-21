@@ -112,7 +112,7 @@ const binding = z.object({
 export function managedNativeAuthorization(options: {
   key: OAuthOptions["key"];
   publishableKey: string;
-  principal: { accountId: string; clientId: string };
+  principal: { accountId: string | null; clientId: string };
   consent: ManagedNativeConsent;
   pin: McpConsentPolicyPin;
   closesAt: number;
@@ -124,6 +124,8 @@ export function managedNativeAuthorization(options: {
   lifecyclePort?: Parameters<typeof createMcpBetaAccountBinding>[3];
 }) {
   const pending = new WeakMap<Request, Session>();
+  const allowedAccount = (accountId: string) =>
+    options.principal.accountId === null || accountId === options.principal.accountId;
   const readAuth = async (
     token: string,
     path: "/oauth/userinfo" | "/user" | "/user/oauth/grants",
@@ -195,7 +197,7 @@ export function managedNativeAuthorization(options: {
           }),
         );
         const claims = firstPartyClaims.parse(signed.payload);
-        if (signed.protectedHeader.typ !== "JWT" || claims.sub !== options.principal.accountId)
+        if (signed.protectedHeader.typ !== "JWT" || !allowedAccount(claims.sub))
           return null;
         const current = user.parse(await readAuth(token, "/user", boundary));
         const live = classifySupabaseAuthAccount(current);
@@ -250,7 +252,7 @@ export function managedNativeAuthorization(options: {
           return reply(401, { error: "AUTH_REQUIRED" });
         const signedAccount = firstPartyClaims.parse(signed.payload);
         if (
-          signedAccount.sub !== options.principal.accountId ||
+          !allowedAccount(signedAccount.sub) ||
           signedAccount.iat > Math.floor(Date.now() / 1000)
         )
           return reply(401, { error: "AUTH_REQUIRED" });
@@ -355,7 +357,7 @@ export function managedNativeAuthorization(options: {
           return null;
         const c = claims.parse(payload);
         if (
-          c.sub !== options.principal.accountId ||
+          !allowedAccount(c.sub) ||
           c.client_id !== options.principal.clientId ||
           c.iat > Math.floor(Date.now() / 1000) ||
           (c.scope !== undefined && !isMcpOidcScopeSet(c.scope))

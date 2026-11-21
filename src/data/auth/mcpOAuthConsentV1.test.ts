@@ -173,6 +173,73 @@ it.each([true, false])(
   },
 );
 
+it.each(["google", "apple"] as const)(
+  "uses the Managed issuer and same-origin PKCE callback for %s",
+  async (provider) => {
+    const issuer = "https://tuqigdxrvrerfewsxqgm.supabase.co";
+    const resource = "https://api-dev.xoery.art/mcp";
+    const tokenRequests = vi.fn();
+    const request: typeof fetch = async (input, init) => {
+      const url = new URL(String(input));
+      expect(url.origin).toBe(issuer);
+      if (url.pathname === "/auth/v1/token") {
+        expect(url.searchParams.get("grant_type")).toBe("pkce");
+        tokenRequests(JSON.parse(String(init?.body)));
+        return Response.json({
+          access_token: "synthetic.memory.session",
+          refresh_token: "synthetic-memory-only",
+          expires_in: 600,
+          token_type: "bearer",
+          user: { id: actor, is_anonymous: false },
+        });
+      }
+      if (url.pathname === "/auth/v1/user")
+        return Response.json({ id: actor, is_anonymous: false });
+      if (url.pathname === "/auth/v1/oauth/authorizations/unit-authorization")
+        return Response.json({
+          authorization_id: "unit-authorization",
+          client: { id: client, name: "ChatGPT" },
+          user: { id: actor },
+          redirect_uri: callback,
+          scope: "openid email offline_access",
+        });
+      throw Error("unexpected auth request");
+    };
+    const repo = createMcpOAuthConsentRepository({
+      ...fixture().config,
+      authOrigin: issuer + "/",
+      publishableKey: "sb_publishable_" + "a".repeat(40),
+      managedNativeOAuth: true,
+      managedDev: { accountId: null, clientId: client, redirectUri: callback },
+      consentPolicy: { ...pin, policy: { ...pin.policy, resource } },
+      browserProviders: [provider],
+    }, "unit-authorization", undefined, request);
+    const popup = {
+      receive: vi.fn(async (href: string) => {
+        const url = new URL(href);
+        expect(url.origin + url.pathname).toBe(issuer + "/auth/v1/authorize");
+        expect(url.searchParams.get("provider")).toBe(provider);
+        expect(url.searchParams.get("redirect_to")).toBe(
+          "https://api-dev.xoery.art/oauth/consent/provider-callback",
+        );
+        expect(url.searchParams.get("code_challenge_method")).toBe("s256");
+        return "once-only-code";
+      }),
+      close: vi.fn(),
+    };
+    await expect(repo.signInProvider(provider, popup)).resolves.toMatchObject({
+      kind: "CONSENT",
+      accountId: actor,
+    });
+    expect(tokenRequests).toHaveBeenCalledOnce();
+    expect(tokenRequests).toHaveBeenCalledWith({
+      auth_code: "once-only-code",
+      code_verifier: expect.any(String),
+    });
+    expect(popup.close).toHaveBeenCalledOnce();
+  },
+);
+
 it.each([true, false])(
   "posts the displayed issuer decision once for allow=%s without a second code-issuing details GET",
   async (allow) => {
