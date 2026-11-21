@@ -1,0 +1,58 @@
+{
+  "status": "LOCAL_VALIDATED_DEFAULT_CLOSED_REVIEW_PENDING_NOT_DEPLOYED",
+  "base": "6aef6f1f",
+  "changes": [
+    "Existing Core Member Access port propagates only when OTR_DEV_CORE_MEMBER_ACCESS_ENABLED is exactly1; sustained wrapper retains own close fences",
+    "Existing reviewed Auth a3 Native original-ID finite admission replaces missing old-only composition, no Native hard-coded IDs",
+    "Existing Auth optional readers/resolution/general selectors retained; no implicit activation"
+  ],
+  "checks": {
+    "focusedComposition": "6 suites /135 PASS before additional shutdown test",
+    "types": "PASS",
+    "captureBuild": "PASS",
+    "nativeMemberTransport": "2 suites /10 PASS"
+  },
+  "authority": "No Schema/RLS/GRANT/runtime/policy/Hosted changes. Native finite admission is per-transaction UUID binding, not server-enforced max1/window. Actual precise Owner Gate still required.",
+  "files": [
+    {
+      "path": "backend/src/serverCapture.test.ts",
+      "sha256": "dce5049ae75d721011bf021566e9654ffffd849f975e32a295e38e8c32df81f2"
+    },
+    {
+      "path": "backend/src/serverCapture.ts",
+      "sha256": "a11d27220d66815cbba24615837acc4cdd3da2c9fb4a8e3efae2ce50d5b88e30"
+    },
+    {
+      "path": "backend/src/tripCreateRuntime.test.ts",
+      "sha256": "e1514c200a76e0bf48303b6932ac61a069b4ebbd96e7cf6727b14e0fd9092dc7"
+    },
+    {
+      "path": "backend/src/tripCreateRuntime.ts",
+      "sha256": "8590e5ce7b55d5963d90488f21a8d2ac6c33eed7d831c11699623e0a80c8c91d"
+    },
+    {
+      "path": "backend/src/tripMemberClaimQa.test.ts",
+      "sha256": "05581a3af15bf5e54b98b59b7b9f5ef2a05998da3bc4b61f4a4e4e6612c46717"
+    },
+    {
+      "path": "backend/src/tripMemberClaimQa.ts",
+      "sha256": "79caa8008c5cf5d5577582a2badb12f29fd808f68c1294965e32bedd617ca5f1"
+    },
+    {
+      "path": "backend/src/tripMemberClaimQaRuntime.test.ts",
+      "sha256": "bd882af81494b3efd4557e63bb978da6985b8b532318baab47354e9dca8af1bb"
+    },
+    {
+      "path": "backend/src/tripMemberClaimQaRuntime.ts",
+      "sha256": "ef8df084cb084509743891639a9bf4e73f18f8e10e0229d12663212bd09b64bb"
+    },
+    {
+      "path": "backend/src/tripSustainedRuntime.test.ts",
+      "sha256": "8113ffd5e9d0bc1cbbdeaf8e74630fd923731d7491b3944e80621b60afa92bf8"
+    },
+    {
+      "path": "backend/src/tripSustainedRuntime.ts",
+      "sha256": "46235a599d88e58343e0131de66b9583957205e65393eb2fa446e0a0f9e22226"
+    }
+  ]
+}

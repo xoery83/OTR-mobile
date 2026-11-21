@@ -30,6 +30,30 @@ const qaSchema = z
   );
 export type MemberClaimQaCase = z.infer<typeof qaSchema>;
 
+const nativeQaSchema = z
+  .strictObject({
+    projectRef: qaSchema.shape.projectRef,
+    tripId: qaSchema.shape.tripId,
+    personId: qaSchema.shape.personId,
+    ownerAccountId: qaSchema.shape.ownerAccountId,
+    claimantAccountId: qaSchema.shape.claimantAccountId,
+    opensAt: qaSchema.shape.opensAt,
+    closesAt: qaSchema.shape.closesAt,
+    inviteExpiresAt: qaSchema.shape.inviteExpiresAt,
+  })
+  .refine(
+    (v) =>
+      v.ownerAccountId !== v.claimantAccountId &&
+      Date.parse(v.opensAt) < Date.parse(v.inviteExpiresAt) &&
+      Date.parse(v.inviteExpiresAt) <= Date.parse(v.closesAt) &&
+      Date.parse(v.closesAt) - Date.parse(v.opensAt) <= 30 * 60 * 1000,
+  );
+export type NativeMemberClaimQaCase = z.infer<typeof nativeQaSchema>;
+
+export function parseNativeMemberClaimQaCase(raw: unknown): NativeMemberClaimQaCase {
+  return nativeQaSchema.parse(raw);
+}
+
 // Shape/policy only; the owning selector must independently verify the actual DEV endpoint and current window.
 export function parseMemberClaimQaCase(raw: unknown): MemberClaimQaCase {
   return qaSchema.parse(raw);
@@ -41,7 +65,24 @@ export function createMemberClaimQaAuthority(
   input: MemberClaimQaCase,
   now: () => number = Date.now,
 ) {
-  const qa = Object.freeze(parseMemberClaimQaCase(input));
+  return createScopedAuthority(underlying, parseMemberClaimQaCase(input), now);
+}
+
+// Unselected finite DEV restriction; normal Native retains its own original IDs.
+export function createNativeMemberClaimQaAuthority(
+  underlying: MemberClaimAuthorityPort,
+  input: NativeMemberClaimQaCase,
+  now: () => number = Date.now,
+) {
+  return createScopedAuthority(underlying, parseNativeMemberClaimQaCase(input), now);
+}
+
+function createScopedAuthority(
+  underlying: MemberClaimAuthorityPort,
+  input: MemberClaimQaCase | NativeMemberClaimQaCase,
+  now: () => number,
+) {
+  const qa = Object.freeze(input);
   let closed = false,
     lastInstant = -Infinity;
   const require = (ok: unknown) => {
@@ -72,14 +113,20 @@ export function createMemberClaimQaAuthority(
         scope.tripId === qa.tripId &&
           (owner || scope.actorAccountId === qa.claimantAccountId),
       );
-      const operationId = owner ? qa.issueOperationId : qa.claimOperationId;
+      let operationId =
+        "issueOperationId" in qa
+          ? owner
+            ? qa.issueOperationId
+            : qa.claimOperationId
+          : undefined;
+      const originalOperationId = () => coreUuid.parse(operationId);
       const checkReceipt = (raw: unknown) => {
         const r = memberClaimReceiptSchema.parse(raw);
         require(
           r.tripId === qa.tripId &&
             r.personId === qa.personId &&
             r.actorAccountId === scope.actorAccountId &&
-            r.operationId === operationId,
+            r.operationId === originalOperationId(),
         );
         require(
           owner
@@ -91,7 +138,7 @@ export function createMemberClaimQaAuthority(
               kind: "ISSUE_TARGETED_INVITE" as const,
               tripId: qa.tripId,
               personId: qa.personId,
-              operationId,
+              operationId: originalOperationId(),
               target: {
                 kind: "REGISTERED_ACCOUNT" as const,
                 accountId: qa.claimantAccountId,
@@ -101,7 +148,7 @@ export function createMemberClaimQaAuthority(
               kind: "CLAIM_PERSON" as const,
               tripId: qa.tripId,
               personId: qa.personId,
-              operationId,
+              operationId: originalOperationId(),
               inviteId: r.inviteId,
               explicitConsent: true as const,
             };
@@ -144,13 +191,15 @@ export function createMemberClaimQaAuthority(
                       );
                       break;
                     case "receipt":
-                      require(args[0] === operationId);
+                      operationId ??= coreUuid.parse(args[0]);
+                      require(args[0] === originalOperationId());
                       break;
                     case "invite":
                       coreUuid.parse(args[0]);
                       require(!owner);
                       break;
                     case "issue":
+                      originalOperationId();
                       require(
                         owner &&
                           args[0] === qa.personId &&
@@ -170,11 +219,11 @@ export function createMemberClaimQaAuthority(
                           seenInvites.has(String(args[2])) &&
                           z
                             .strictObject({
-                              operationId: z.literal(operationId),
+                              operationId: z.literal(originalOperationId()),
                               intentDigest: z.literal(
                                 memberClaimIntentDigest({
                                   kind: "CLAIM_PERSON",
-                                  operationId,
+                                  operationId: originalOperationId(),
                                   tripId: qa.tripId,
                                   personId: qa.personId,
                                   inviteId: coreUuid.parse(args[2]),

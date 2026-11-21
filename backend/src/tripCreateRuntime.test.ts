@@ -507,3 +507,12 @@ it("composes existing Auth authorities without exposing provisional reads or que
   expect(runtime).not.toHaveProperty("claimResolutionPort.readProvisionalView");
   expect(fixture.connection.withLease).not.toHaveBeenCalled();
 });
+
+it("Member Access is explicit sustained composition only; no SQL runs at construction", async () => {
+  const fxt = claimFixture();
+  await loadDevTripCreateRuntime(environment);
+  expect(f.core.mock.calls.at(-1)?.[5]).toBeUndefined();
+  await loadDevTripCreateRuntime(environment, undefined, { memberAccess: true });
+  expect(f.core.mock.calls.at(-1)?.[5]).toEqual({ memberAccess: true });
+  expect(fxt.connection.withLease).not.toHaveBeenCalled();
+});

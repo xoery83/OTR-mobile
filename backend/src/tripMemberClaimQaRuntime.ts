@@ -2,8 +2,11 @@ import { createMemberClaimQaRecoveryOnly } from "./tripMemberClaimQaRecoveryOnly
 import { loadDevTripCreateRuntime } from "./tripCreateRuntime";
 import {
   createMemberClaimQaAuthority,
+  createNativeMemberClaimQaAuthority,
   parseMemberClaimQaCase,
+  parseNativeMemberClaimQaCase,
   type MemberClaimQaCase,
+  type NativeMemberClaimQaCase,
 } from "./tripMemberClaimQa";
 import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 
@@ -11,12 +14,31 @@ import type { PublishedUniversalP1Reader } from "./universalP1SourcePg";
 export async function loadDevTripCreateWithMemberClaimQaRuntime(
   environment: Record<string, string | undefined>,
   readUniversalP1?: PublishedUniversalP1Reader,
-  options?: Pick<NonNullable<Parameters<typeof loadDevTripCreateRuntime>[2]>, "selfTripNickname" | "retainedPng" | "directedInviteRead" | "claimResolution" | "claimGeneralOrigin">,
+  options?: Pick<NonNullable<Parameters<typeof loadDevTripCreateRuntime>[2]>, "selfTripNickname" | "retainedPng" | "memberAccess" | "directedInviteRead" | "claimResolution" | "claimGeneralOrigin">,
 ) {
   let selected: MemberClaimQaCase | undefined;
+  let nativeSelected: NativeMemberClaimQaCase | undefined;
   const raw = environment.OTR_DEV_AUTH_MEMBER_CLAIM_QA_CONFIG;
   const mode = environment.OTR_DEV_AUTH_MEMBER_CLAIM_QA_MODE;
-  if (raw !== undefined) {
+  const nativeRaw = environment.OTR_DEV_AUTH_MEMBER_CLAIM_NATIVE_CONFIG;
+  const nativeMode = environment.OTR_DEV_AUTH_MEMBER_CLAIM_NATIVE_MODE;
+  if (nativeRaw !== undefined || nativeMode !== undefined) {
+    try {
+      if (raw !== undefined || mode !== undefined || nativeRaw === undefined ||
+        nativeMode !== "ORIGINAL_ID_FINITE" || Buffer.byteLength(nativeRaw) > 4096 ||
+        environment.OTR_DEV_BACKEND_NETWORK_MODE !== "host" ||
+        environment.OTR_DEV_SUPABASE_URL !== "https://tuqigdxrvrerfewsxqgm.supabase.co")
+        throw Error();
+      const candidate = parseNativeMemberClaimQaCase(JSON.parse(nativeRaw));
+      const now = Date.now();
+      if (!Number.isFinite(now) || now < Date.parse(candidate.opensAt) ||
+        now >= Date.parse(candidate.closesAt) || now >= Date.parse(candidate.inviteExpiresAt))
+        throw Error();
+      nativeSelected = candidate;
+    } catch {
+      console.info("MEMBER_CLAIM_NATIVE_SELECTION_CLOSED");
+    }
+  } else if (raw !== undefined) {
     try {
       if (
         (mode !== undefined && mode !== "RECOVERY_ONLY") ||
@@ -40,13 +62,14 @@ export async function loadDevTripCreateWithMemberClaimQaRuntime(
       console.info("MEMBER_CLAIM_QA_SELECTION_CLOSED");
     }
   }
+  const admission = nativeSelected ?? selected;
   const runtime = await loadDevTripCreateRuntime(
     environment,
     readUniversalP1,
-    selected || options
+    admission || options
       ? {
           ...options,
-          ...(selected ? { memberClaim: { inviteExpiresAt: selected.inviteExpiresAt } } : {}),
+          ...(admission ? { memberClaim: { inviteExpiresAt: admission.inviteExpiresAt } } : {}),
         }
       : undefined,
   );
@@ -57,16 +80,18 @@ export async function loadDevTripCreateWithMemberClaimQaRuntime(
     memberClaimPort: "memberClaimPort" in runtime ? runtime.memberClaimPort : undefined,
   };
   let qa: ReturnType<typeof createMemberClaimQaAuthority> | undefined;
-  if (selected && rawPort) {
+  if ((selected || nativeSelected) && rawPort) {
     try {
-      qa = createMemberClaimQaAuthority(rawPort, selected);
+      qa = nativeSelected
+        ? createNativeMemberClaimQaAuthority(rawPort, nativeSelected)
+        : createMemberClaimQaAuthority(rawPort, selected!);
     } catch {
       console.info("MEMBER_CLAIM_QA_SELECTION_CLOSED");
     }
   }
   return {
     ...ordinary,
-    ...(qa ? { memberClaimPort: mode === "RECOVERY_ONLY" ? createMemberClaimQaRecoveryOnly(qa.port, selected!) : qa.port } : {}),
+    ...(qa ? { memberClaimPort: selected && mode === "RECOVERY_ONLY" ? createMemberClaimQaRecoveryOnly(qa.port, selected) : qa.port } : {}),
     async close() {
       qa?.close();
       await runtime.close();

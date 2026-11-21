@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
 import {
   createMemberClaimQaAuthority,
+  createNativeMemberClaimQaAuthority,
+  parseNativeMemberClaimQaCase,
   parseMemberClaimQaCase,
   type MemberClaimQaCase,
 } from "./tripMemberClaimQa";
@@ -12,7 +14,7 @@ import {
 } from "./tripMemberClaimAuthority";
 import { recoverMemberClaimReceipt } from "./tripMemberClaimRecovery";
 
-function fixture() {
+function fixture(native = false) {
   const qa: MemberClaimQaCase = {
     projectRef: "tuqigdxrvrerfewsxqgm",
     tripId: randomUUID(),
@@ -62,7 +64,16 @@ function fixture() {
   const underlying: MemberClaimAuthorityPort = {
     atomic: vi.fn(async (_, work) => work(tx)),
   };
-  const authority = createMemberClaimQaAuthority(underlying, qa, () => instant);
+  const nativeScope = parseNativeMemberClaimQaCase(
+    Object.fromEntries(
+      Object.entries(qa).filter(
+        ([key]) => !["issueOperationId", "claimOperationId"].includes(key),
+      ),
+    ),
+  );
+  const authority = native
+    ? createNativeMemberClaimQaAuthority(underlying, nativeScope, () => instant)
+    : createMemberClaimQaAuthority(underlying, qa, () => instant);
   const issue = {
     kind: "ISSUE_TARGETED_INVITE" as const,
     operationId: qa.issueOperationId,
@@ -80,6 +91,7 @@ function fixture() {
   };
   return {
     qa,
+    nativeScope,
     tx,
     receipts,
     underlying,
@@ -103,7 +115,9 @@ it("exports the same pure case parser without constructing a port or selecting a
   f.qa.personId = randomUUID();
   expect(parsed.personId).toBe(originalPerson);
   expect(() => parseMemberClaimQaCase({ ...f.qa, unknownAuthority: true })).toThrow();
-  expect(() => parseMemberClaimQaCase({ ...f.qa, claimantAccountId: f.qa.ownerAccountId })).toThrow();
+  expect(() =>
+    parseMemberClaimQaCase({ ...f.qa, claimantAccountId: f.qa.ownerAccountId }),
+  ).toThrow();
   expect(f.underlying.atomic).not.toHaveBeenCalled();
 });
 
@@ -298,4 +312,99 @@ it("post-commit expiry leaves original operation recoverable, never claims rollb
   ).toBe("UNAVAILABLE");
   expect(f.receipts.get(f.qa.issueOperationId)?.outcome).toBe("ISSUED");
   expect(f.tx.issue).toHaveBeenCalledOnce();
+});
+
+it("Native originals issue, Claim and recover without injecting fixed QA operation IDs", async () => {
+  const f = fixture(true);
+  const issue = { ...f.issue, operationId: randomUUID() };
+  const claim = { ...f.claim, operationId: randomUUID() };
+  expect(issue.operationId).not.toBe(f.qa.issueOperationId);
+  expect(claim.operationId).not.toBe(f.qa.claimOperationId);
+  expect(
+    (await executeMemberClaim(issue, f.qa.ownerAccountId, f.authority.port)).status,
+  ).toBe("ISSUED");
+  expect(
+    (await executeMemberClaim(issue, f.qa.ownerAccountId, f.authority.port)).status,
+  ).toBe("ISSUED");
+  expect(
+    (await executeMemberClaim(claim, f.qa.claimantAccountId, f.authority.port)).status,
+  ).toBe("LINKED");
+  expect(
+    (await recoverMemberClaimReceipt(claim, f.qa.claimantAccountId, f.authority.port))
+      .status,
+  ).toBe("LINKED");
+  expect(f.tx.issue).toHaveBeenCalledOnce();
+  expect(f.tx.link).toHaveBeenCalledOnce();
+  expect([...f.receipts.keys()]).toEqual([issue.operationId, claim.operationId]);
+});
+it("Native scope rejects fixed IDs, foreign project, same actors and oversized windows", () => {
+  const f = fixture(true);
+  for (const raw of [
+    f.qa,
+    { ...f.nativeScope, projectRef: "production" },
+    { ...f.nativeScope, claimantAccountId: f.qa.ownerAccountId },
+    { ...f.nativeScope, closesAt: "2026-11-03T01:00:00Z" },
+  ])
+    expect(() => parseNativeMemberClaimQaCase(raw)).toThrow();
+});
+it.each(["actor", "trip", "person", "target"] as const)(
+  "Native scope refuses foreign %s before mutation",
+  async (kind) => {
+    const f = fixture(true);
+    const command = {
+      ...f.issue,
+      operationId: randomUUID(),
+      ...(kind === "trip" ? { tripId: randomUUID() } : {}),
+      ...(kind === "person" ? { personId: randomUUID() } : {}),
+      ...(kind === "target"
+        ? { target: { kind: "REGISTERED_ACCOUNT" as const, accountId: randomUUID() } }
+        : {}),
+    };
+    const result = await executeMemberClaim(
+      command,
+      kind === "actor" ? randomUUID() : f.qa.ownerAccountId,
+      f.authority.port,
+    );
+    expect(result.status).toBe("UNAVAILABLE");
+    expect(f.tx.issue).not.toHaveBeenCalled();
+    expect(f.tx.saveReceipt).not.toHaveBeenCalled();
+  },
+);
+it("Native transaction binds one original and refuses mutation without it", async () => {
+  const f = fixture(true),
+    scope = { tripId: f.qa.tripId, actorAccountId: f.qa.ownerAccountId };
+  await expect(
+    f.authority.port.atomic(scope, async (tx) => {
+      await tx.receipt(randomUUID());
+      await tx.receipt(randomUUID());
+    }),
+  ).rejects.toThrow("MEMBER_CLAIM_QA_CLOSED");
+  expect(f.tx.receipt).toHaveBeenCalledOnce();
+  await expect(
+    f.authority.port.atomic(scope, (tx) => tx.issue(f.qa.personId, f.issue.target)),
+  ).rejects.toThrow();
+  expect(f.tx.issue).not.toHaveBeenCalled();
+});
+it("Native expiry and close do not reopen when the clock returns", async () => {
+  const f = fixture(true);
+  f.clock(f.qa.closesAt);
+  expect(
+    (await executeMemberClaim(f.issue, f.qa.ownerAccountId, f.authority.port)).status,
+  ).toBe("UNAVAILABLE");
+  f.clock(f.qa.opensAt);
+  expect(
+    (await executeMemberClaim(f.issue, f.qa.ownerAccountId, f.authority.port)).status,
+  ).toBe("UNAVAILABLE");
+  expect(f.underlying.atomic).not.toHaveBeenCalled();
+});
+
+it("Native UNKNOWN readback never issues a replacement operation", async () => {
+  const f = fixture(true),
+    command = { ...f.issue, operationId: randomUUID() };
+  expect(
+    (await recoverMemberClaimReceipt(command, f.qa.ownerAccountId, f.authority.port))
+      .status,
+  ).toBe("ABSENT_UNCONFIRMED");
+  expect(f.tx.issue).not.toHaveBeenCalled();
+  expect(f.tx.saveReceipt).not.toHaveBeenCalled();
 });

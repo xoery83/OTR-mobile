@@ -96,15 +96,17 @@ async function main() {
         process.env.OTR_DEV_UNIVERSAL_P1_SOURCE_REVIEW === "enabled"
           ? continuous?.readPublished
           : undefined;
+      const memberAccess = process.env.OTR_DEV_CORE_MEMBER_ACCESS_ENABLED === "1";
       const directedInviteRead = process.env.OTR_DEV_AUTH_DIRECTED_INVITE_READ_ENABLED === "1";
       const claimResolution = process.env.OTR_DEV_AUTH_CLAIM_RESOLUTION_ENABLED === "1";
       const claimGeneralOrigin = process.env.OTR_DEV_AUTH_CLAIM_GENERAL_ORIGIN_ENABLED === "1";
-      if (continuous?.retainedPng || directedInviteRead || claimResolution || claimGeneralOrigin)
+      if (continuous?.retainedPng || memberAccess || directedInviteRead || claimResolution || claimGeneralOrigin)
         trip = await loadDevTripCreateWithMemberClaimQaRuntime(
           process.env,
           readPublished,
           {
             ...(continuous?.retainedPng ? { retainedPng: continuous.retainedPng } : {}),
+            ...(memberAccess ? { memberAccess: true } : {}),
             ...(directedInviteRead ? { directedInviteRead: true } : {}),
             ...(claimResolution ? { claimResolution: true } : {}),
             ...(claimGeneralOrigin ? { claimGeneralOrigin: true } : {}),

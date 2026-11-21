@@ -121,3 +121,32 @@ it("does not expose an absent parent reader and fences an injected parent reader
   expect(f.create).not.toHaveBeenCalled();
   expect(f.receipt).not.toHaveBeenCalled();
 });
+
+it("preserves explicit Member Access and fences its owning methods on close", async () => {
+  const f = fixture(), actor = randomUUID(), trip = randomUUID(), operation = randomUUID();
+  const memberAccess = { execute: vi.fn().mockResolvedValue({}), readOperation: vi.fn().mockResolvedValue(null), observeAccessLoss: vi.fn().mockResolvedValue(null) };
+  const runtime = createSustainedDevTripPorts({ ...f.ports, core: { ...f.ports.core, memberAccess } }, true)!;
+  expect(createSustainedDevTripPorts(f.ports, true)!.coreConnection.memberAccess).toBeUndefined();
+  const port = runtime.coreConnection.memberAccess!;
+  await port.readOperation(actor, trip, operation); await port.observeAccessLoss(actor, trip);
+  await runtime.close();
+  await expect(port.readOperation(actor, trip, operation)).rejects.toThrow("TRIP_SUSTAINED_DEV_CLOSED");
+  await expect(port.observeAccessLoss(actor, trip)).rejects.toThrow("TRIP_SUSTAINED_DEV_CLOSED");
+  await expect(port.execute(actor, trip, {} as never)).rejects.toThrow("TRIP_SUSTAINED_DEV_CLOSED");
+  expect(memberAccess.execute).not.toHaveBeenCalled();
+  expect(memberAccess.readOperation).toHaveBeenCalledOnce();
+  expect(memberAccess.observeAccessLoss).toHaveBeenCalledOnce();
+});
+
+it("does not publish an in-flight Member result after the runtime closes or resend it", async () => {
+  const f = fixture();
+  let finish!: (value: unknown) => void;
+  const execute = vi.fn(() => new Promise<any>((resolve) => { finish = resolve; }));
+  const memberAccess = { execute, readOperation: vi.fn(), observeAccessLoss: vi.fn() };
+  const runtime = createSustainedDevTripPorts({ ...f.ports, core: { ...f.ports.core, memberAccess } }, true)!;
+  const pending = runtime.coreConnection.memberAccess!.execute(randomUUID(), randomUUID(), {} as never);
+  await vi.waitFor(() => expect(execute).toHaveBeenCalledOnce());
+  runtime.close(); finish({});
+  await expect(pending).rejects.toThrow("TRIP_SUSTAINED_DEV_CLOSED");
+  expect(execute).toHaveBeenCalledOnce();
+});

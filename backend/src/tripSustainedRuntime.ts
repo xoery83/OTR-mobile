@@ -79,6 +79,18 @@ export function createSustainedDevTripPorts(
   };
   const core: CoreHttpConnection = {
     hash: ports.core.hash,
+    ...(ports.core.memberAccess ? {
+      memberAccess: {
+        async execute(actor, trip, command) {
+          guard(actor);
+          const result = await ports.core.memberAccess!.execute(actor, trip, command);
+          guard(actor);
+          return result;
+        },
+        readOperation: guardRead(ports.core.memberAccess.readOperation)!,
+        observeAccessLoss: guardRead(ports.core.memberAccess.observeAccessLoss)!,
+      },
+    } : {}),
     ...(ports.core.readRetainedPng
       ? {
           async readRetainedPng(scope, assertCurrent) {

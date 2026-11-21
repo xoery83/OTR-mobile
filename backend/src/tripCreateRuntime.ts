@@ -107,6 +107,7 @@ export async function loadDevTripCreateRuntime(
   options?: Readonly<{
     memberClaim?: Readonly<{ inviteExpiresAt: string }>;
     directedInviteRead?: true;
+    memberAccess?: true;
     claimResolution?: true;
     claimGeneralOrigin?: true;
     selfTripNickname?: true;
@@ -210,7 +211,10 @@ export async function loadDevTripCreateRuntime(
             ...(readUniversalP1 ? { reviewedP1: true as const } : {}),
           },
           readUniversalP1,
-          ...(options?.retainedPng ? [{ retainedPng: options.retainedPng }] as const : []),
+          ...(options?.retainedPng || options?.memberAccess === true ? [{
+            ...(options?.retainedPng ? { retainedPng: options.retainedPng } : {}),
+            ...(options?.memberAccess === true ? { memberAccess: true as const } : {}),
+          }] as const : []),
         ),
       },
       true,

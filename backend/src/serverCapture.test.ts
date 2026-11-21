@@ -347,3 +347,16 @@ it("passes exact explicit selectors and existing ports without executing them", 
   });
   expect(mocks.start.mock.calls[0][0]).toMatchObject(ports);
 });
+
+it.each([undefined, "0", "false", "enabled"])("keeps Member Access selector closed unless exact1 (%s)", async (value) => {
+  vi.stubEnv("OTR_DEV_CORE_MEMBER_ACCESS_ENABLED", value);
+  await import("./serverCapture");
+  await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
+  expect(mocks.trip).toHaveBeenCalledWith(process.env, undefined, undefined);
+});
+it("composes Member Access only on explicit selection without opening SQL gates", async () => {
+  vi.stubEnv("OTR_DEV_CORE_MEMBER_ACCESS_ENABLED", "1");
+  await import("./serverCapture");
+  await vi.waitFor(() => expect(mocks.start).toHaveBeenCalled());
+  expect(mocks.trip).toHaveBeenCalledWith(process.env, undefined, { memberAccess: true });
+});
