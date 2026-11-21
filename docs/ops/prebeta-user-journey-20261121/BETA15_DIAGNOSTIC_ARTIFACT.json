@@ -1,0 +1,19 @@
+{
+  "requestId": "NATIVE-BETA15-DIAG-20261121",
+  "source": "31e20eef",
+  "baseHosted": "4388a2d6",
+  "artifact": "/private/tmp/otr-native-beta15-31e20eef-20261121/server-capture.mjs",
+  "sha256": "14d2c21b1bac1225c0a27c3be24e72087d718c457f9621312411786dd564cf01",
+  "bytes": 5795595,
+  "productionSourceDelta": [
+    "backend/src/tripCoreV2PgConnection.ts",
+    "backend/src/auth/managedOAuthConsent.ts"
+  ],
+  "tests": 53,
+  "independentReview": "NO_BLOCKER",
+  "fullTypecheck": "PASS after literal-only test correction",
+  "backendCaptureBuild": "PASS",
+  "hostedState": "NOT_DEPLOYED_BY_NATIVE",
+  "execution": "Ops fresh Writer/CAS, one read-only bundle bind replacement, same image/env/all12existingbinds except intended asset; preserve standing policy and prior43715f rollback",
+  "samples": "Native at most3 original Synthetic EmailQA read-only MCP calls; no write/Provider/SQL"
+}

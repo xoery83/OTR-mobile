@@ -1,0 +1,37 @@
+{
+  "source": "31e20eefa701f33c43498e03ebaa35f7caa94df8",
+  "build": "27",
+  "bundleId": "art.xoery.otr",
+  "team": "3K49Z2Q5X7",
+  "devices": [
+    "Forms QA C0C23E00-5016-4289-B806-92C5484BD5BA",
+    "iPhone 00008140-001C2980269B001C"
+  ],
+  "installation": "IN_PLACE_PASS",
+  "jsBundleSha256": "e7bf024fd95236cd864b8b22b7e83b85751c23c3045ff24c8765536240645ff0",
+  "sessionAndCachedTrips": "retained after update; normal Google login completed by Owner and My Trips observed",
+  "googleColdRecovery": "PENDING: CoreDevice initialization timeout; normal foreground/background is not process cold recovery",
+  "googleSyntheticTrip": {
+    "status": "SERVER_VERIFIED",
+    "tripId": "fb3e6c7f-5a14-4539-9258-9797e2097039",
+    "createOperationId": "7ca794fe-91ca-4b4b-922f-d5011118e99a",
+    "itemId": "efded495-9e22-4778-9035-fc7a163135fc",
+    "itemOperationId": "3ea33876-0761-45ea-98ce-0ac205691430",
+    "receiptId": "c748f55d-03a3-424a-9bec-5316836b1d52",
+    "outcome": "APPLIED",
+    "revision": 1,
+    "independentReadback": "/Users/xoery/Project/otr-mobile-import/mcp-managed-final-integration-20261119/artifacts/native-prebeta-receipt-20261121/BETA27_GOOGLE_TRIP_P1_INDEPENDENT_READBACK.json",
+    "uniqueTripCount": 1,
+    "uniqueItemCount": 1,
+    "visibility": "GROUP",
+    "participation": "WHOLE_GROUP",
+    "date": "2026-11-21",
+    "clockAndLocation": "absent; not inferred",
+    "native": "Day Feed title/date correct; original pending dot disappeared"
+  },
+  "phoneAutomation": "Device Hub coordinate clicks and text input recovered by Owner; normal UI Trip/P1 save PASS. UIKit AX unavailable; App Switcher upward drag did not terminate app.",
+  "dataSafety": "no uninstall, reset, Session/Keychain/SQLite copy, or existing personal Trip edits",
+  "rollback": "Build14 schema80 is not a post-schema81 rollback; use compatible fix-forward",
+  "appAttest": "not newly verified in this round",
+  "providerCalls": 0
+}
