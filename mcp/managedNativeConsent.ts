@@ -222,6 +222,7 @@ export function managedNativeAuthorization(options: {
       const started = Date.now();
       let stage = "request";
       let decisionId: string | undefined;
+      let consentRequestId: string | undefined;
       const reply = (status: number, payload: unknown) =>
         Response.json(payload, {
           status,
@@ -265,6 +266,7 @@ export function managedNativeAuthorization(options: {
         const input = action.parse(
           await readBoundedJson(new Response(request.body), 4096, boundary),
         );
+        consentRequestId = input.id;
         if (input.action === "decide") decisionId = input.id;
         stage = "issuer_grant";
         // This endpoint accepts the authenticated first-party token only.
@@ -318,11 +320,19 @@ export function managedNativeAuthorization(options: {
           ? reply(200, result)
           : reply(409, { error: "OTR_CONSENT_UNAVAILABLE" });
       } catch (error) {
+        const unavailable = error instanceof Error &&
+          (error.message === "MCP_CONSENT_STORE_UNAVAILABLE" ||
+           error.message === "MCP_ISSUER_UNAVAILABLE");
         if (decisionId || stage === "issuer_grant" || stage === "consent_read") {
           console.info(JSON.stringify({
             event: "mcp_managed_consent_confirmation_failed",
             ...(decisionId ? { decisionId } : {}),
+            ...(consentRequestId ? { consentRequestId } : {}),
             stage,
+            status: unavailable ? 503 : 403,
+            failureCategory: error instanceof z.ZodError ? "INVALID_RESPONSE" :
+              error instanceof Error && ["MCP_CONSENT_STORE_UNAVAILABLE", "MCP_ISSUER_UNAVAILABLE", "MANAGED_CONSENT_UNAVAILABLE"].includes(error.message)
+                ? error.message : "OTHER",
             ...(error instanceof Error && (
               error.message === "MCP_ISSUER_GRANT_RESPONSE_INVALID" ||
               error.message === "MCP_ISSUER_ACTIVE_GRANT_MISSING"
@@ -331,9 +341,6 @@ export function managedNativeAuthorization(options: {
             durationMs: Date.now() - started,
           }));
         }
-        const unavailable = error instanceof Error &&
-          (error.message === "MCP_CONSENT_STORE_UNAVAILABLE" ||
-           error.message === "MCP_ISSUER_UNAVAILABLE");
         return reply(unavailable ? 503 : 403, { error: "OTR_CONSENT_UNAVAILABLE" });
       } finally {
         boundary.close();

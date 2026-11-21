@@ -435,6 +435,28 @@ it("uses the same signed native session for live user and private Consent and st
     decideCall(firstParty, { action: "inspect", id: attemptId }),
   );
   expect(await inspected.json()).toMatchObject({ id: attemptId, state: "PENDING" });
+  const diagnostics = vi.spyOn(console, "info").mockImplementation(() => {});
+  try {
+    for (const [message, status, failureCategory] of [
+      ["MCP_CONSENT_STORE_UNAVAILABLE", 503, "MCP_CONSENT_STORE_UNAVAILABLE"],
+      ["MANAGED_CONSENT_UNAVAILABLE", 403, "MANAGED_CONSENT_UNAVAILABLE"],
+      ["private error details must never appear", 403, "OTHER"],
+    ] as const) {
+      vi.mocked(adapter.inspectById).mockRejectedValueOnce(new Error(message));
+      const failed = await native.confirmation(decideCall(firstParty, { action: "inspect", id: attemptId }));
+      expect(failed.status).toBe(status);
+      expect(JSON.parse(diagnostics.mock.calls.at(-1)![0])).toEqual({
+        event: "mcp_managed_consent_confirmation_failed", consentRequestId: attemptId,
+        stage: "consent_read", status, failureCategory, aborted: false, durationMs: expect.any(Number),
+      });
+    }
+    vi.mocked(adapter.inspectById).mockResolvedValueOnce({ id: "invalid private response" });
+    expect((await native.confirmation(decideCall(firstParty, { action: "inspect", id: attemptId }))).status).toBe(403);
+    expect(JSON.parse(diagnostics.mock.calls.at(-1)![0])).toMatchObject({
+      consentRequestId: attemptId, failureCategory: "INVALID_RESPONSE", status: 403,
+    });
+    expect(JSON.stringify(diagnostics.mock.calls)).not.toContain("invalid private response");
+  } finally { diagnostics.mockRestore(); }
   const decided = await native.confirmation(decideCall(firstParty));
   expect(await decided.json()).toEqual({ id: attemptId, decision: "APPROVED" });
   expect(validateAccessToken).toHaveBeenCalledWith(firstParty);
