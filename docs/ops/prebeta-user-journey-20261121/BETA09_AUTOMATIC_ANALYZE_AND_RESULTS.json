@@ -1,17 +1,18 @@
 {
-  "status": "DEVICE_PREVIEW_PASS_SAVE_PENDING_CORE_CONTENTION",
+  "status": "TEXT_IMPORT_CREATE_EDIT_CANCEL_SERVER_VERIFIED_AND_COLD_PASS",
   "sourceCommits": [
     "2c55ac65",
     "c5173d0a",
     "bc123d29",
     "98e318e4",
     "90591079",
-    "7c73d053"
+    "7c73d053",
+    "244d78f1",
+    "5370d1c1"
   ],
   "simulator": "C0C23E00-5016-4289-B806-92C5484BD5BA",
   "bundleId": "art.xoery.otr",
-  "lastObservedBuild": 31,
-  "nextBuild": 32,
+  "lastObservedBuild": 33,
   "batchId": "ef88ec6e-81f9-4c85-a126-0059f3abc388",
   "tripId": "a0bcf637-4d71-4d8b-ba17-a998d8917fe0",
   "taskId": "c5353917-35f1-89e8-9ea9-d6ee31c64fc4",
@@ -31,8 +32,9 @@
     "automaticAnalyze": "PASS original retained Submit, no manual Analyze",
     "preview": "PASS title Beta V3 Harbour walk 1121/date2026-11-23",
     "confirmation": "clicked Add plans to trip once; original intent retained",
-    "save": "PENDING not Cloud PASS",
-    "coldRecovery": "NOT_YET_TESTED_AFTER_SAVE"
+    "save": "PASS original Core operations COMPLETED",
+    "coldRecovery": "PASS Build33 process-cold same Account/Trip, Day3 updated title, original Batch Completed Created1 displays latest Edit1, Details Nov23/OnlyMe/attachment1/Edit enabled; no pending dot or login prompt",
+    "editDelta": "PASS: own Imported P1 normal Edit, title only, immediate local pending projection; same ID, original date/SELF/document. Cancel→Discard retains saved title and no extra operation."
   },
   "operations": {
     "create": "85e5bda0-dded-8d0a-a337-b1e3f5ef45ba",
@@ -47,7 +49,38 @@
     "types": "PASS",
     "uiGuard": "PASS",
     "lint": "PASS",
-    "independentReview": "NO_BLOCKER including explicit UNKNOWN regression"
+    "independentReview": "NO_BLOCKER including explicit UNKNOWN regression",
+    "followupFocusedTests": "7suites181PASS/typesPASS/UIguardPASS/scopedlintPASS/independentCoreNO_BLOCKER"
   },
-  "safety": "App normally stopped for safe software repair; queue/session/data retained; Root2 requires no active/unknown transaction before deployment. No new authority or Provider call."
+  "safety": "App normally stopped for safe software repair; queue/session/data retained; Root2 requires no active/unknown transaction before deployment. No new authority or Provider call.",
+  "independentServer": {
+    "verifiedAt": "2026-11-21T03:26:10.238Z",
+    "createReceipt": "06491756-fd2c-4663-88c5-18a8121360d8",
+    "createCommittedAt": "2026-11-21T03:23:07.143472Z",
+    "linkReceipt": "affc1fb1-b7d3-4a2c-b4a7-da429bc0ecac",
+    "linkCommittedAt": "2026-11-21T03:24:10.916059Z",
+    "itemCount": 1,
+    "itemId": "8266b878-e541-89d0-8a02-aba0bbea5820",
+    "revision": 2,
+    "visibility": "PRIVATE",
+    "participation": "SELF",
+    "clockAndPlace": "absent, not inferred",
+    "document": "one exact original text/plain162B metadata linked; original SHA matched independently",
+    "edit": {
+      "operationId": "87faedd3-8e84-4fa5-9c66-9c2e87c85043",
+      "receiptId": "497a6cd7-fe4e-4892-ab4e-dcfdb432fada",
+      "command": "MANUAL SET_ITEM_TEXT",
+      "outcome": "APPLIED",
+      "committedAt": "2026-11-21T03:49:35.867200Z",
+      "revision": 3,
+      "oneLifetimeCreate": true,
+      "sameSourceDocumentAndAssociation": true
+    }
+  },
+  "followup": {
+    "build33": "source244d78f1; HBCb42558fdcdde32a9881e33e7b96dbdaeceb97a7f198131a1b01356e9219a55f3; installed/normal session preserved",
+    "localRead": "DEVICE PASS: same completed batch and edited title after process restart; implementation uses formal retained local evidence. Hosted logs are not exact per-batch correlated, so zero Core request count is not independently claimed.",
+    "CoreLease": "90591079 reduced setup12→10 verified. 5370d1c1 diagnostics deployed3e84722a; sample16:42:45–16:49:10 had11Core200/12Intake200/no503, no holder to attribute, no exact latency SLO claim. Busy/Consent503 remains open.",
+    "unrelatedBaselineTests": "manualTransportRepository 2 fixture canonical undefined errors reproduce with original HEAD acceptedManualCreate; not introduced by this change. /private/tmp/otr-import-edit-baseline-red.log"
+  }
 }
