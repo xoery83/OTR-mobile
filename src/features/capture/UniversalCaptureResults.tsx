@@ -227,6 +227,7 @@ export function UniversalV3Activity({
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let running = false;
+    let owner: Awaited<ReturnType<typeof openUniversalV3Review>> | undefined;
     const current = () => active && latest.current();
     const read = async () => {
       if (
@@ -246,7 +247,7 @@ export function UniversalV3Activity({
         const submitted = await readImportSubmission(model);
         if (!current()) return;
         setIntent(submitted);
-        const owner = await openUniversalV3Review(model, submitted ? "IMPORT" : "MANUAL");
+        owner ??= await openUniversalV3Review(model, submitted ? "IMPORT" : "MANUAL");
         if (!current()) return;
         setReview(owner);
         const plan = owner.batch(result.candidates);

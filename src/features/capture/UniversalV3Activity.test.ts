@@ -159,6 +159,7 @@ it("association-pending stays incomplete and only polls receipts; dismissal stop
   expect(render()).not.toContain(t("capture.activityStatus.complete"));
   await vi.advanceTimersByTimeAsync(5000);
   expect(h.check).toHaveBeenCalledTimes(2);
+  expect(h.open).toHaveBeenCalledOnce();
   h.slots.forEach((s) => s?.cleanup?.());
   await vi.advanceTimersByTimeAsync(20000);
   expect(h.check).toHaveBeenCalledTimes(2);

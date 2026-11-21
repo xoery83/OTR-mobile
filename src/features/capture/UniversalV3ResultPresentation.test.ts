@@ -155,16 +155,17 @@ it("manual recovery uses the existing form callback and never changes Batch resu
   expect(base.results).toHaveLength(1);
 });
 
-it.each(["en", "zh-Hans"] as const)(
-  "shows a readable unsaved preview before confirmation in %s",
-  (locale) => {
+it.each(["confirmation", "checking"] as const)(
+  "shows a readable unsaved preview during %s",
+  (state) => {
+    const locale = "en";
     setUiLocale(locale);
     const html = renderToStaticMarkup(
       createElement(
         UniversalV3ResultPresentation,
         {
           ...base,
-          state: "confirmation",
+          state,
           results: [],
           reviewCount: 0,
           abstainCount: 0,
@@ -176,7 +177,7 @@ it.each(["en", "zh-Hans"] as const)(
       ),
     );
     expect(html).toContain("Harbour walk");
-    expect(html).toContain(t("capture.activityStatus.confirmation"));
+    expect(html).toContain(t(`capture.activityStatus.${state}`));
     expect(html).not.toContain(t("capture.results.noNew"));
     expect(h.buttons.has(t("capture.results.addManually"))).toBe(false);
     expect(h.buttons.has(t("updates.relatedActivity"))).toBe(false);

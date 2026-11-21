@@ -66,6 +66,7 @@ export function UniversalV3ResultPresentation({
     [recovery, setRecovery] = useState(false);
   const tripId = model.batch.context.tripPrior?.id ?? model.assignedTripId;
   const saved = results.filter((item) => item.action);
+  const preparingSave = state === "confirmation" || state === "checking";
   const failed = operations.filter((row) => row.receipt?.outcome === "REJECTED");
   const accepted = model.inputs.filter(
     (file) => file.state === "ACCEPTED" && file.acceptedAt,
@@ -186,7 +187,7 @@ export function UniversalV3ResultPresentation({
                 {t("capture.ux.savedResults")}
               </UiText>
             </>
-          ) : state !== "confirmation" ? (
+          ) : !preparingSave ? (
             <UiText style={styles.meta}>{t("capture.results.noNew")}</UiText>
           ) : null}
           {results.map((item) => {
@@ -301,7 +302,7 @@ export function UniversalV3ResultPresentation({
               </View>
             );
           })}
-          {onAddManually && state !== "confirmation" ? (
+          {onAddManually && !preparingSave ? (
             <View style={styles.manual}>
               <UiText style={styles.meta}>{t("capture.results.manualReminder")}</UiText>
               <UiButton
@@ -313,7 +314,7 @@ export function UniversalV3ResultPresentation({
               />
             </View>
           ) : null}
-          {onUpdates && state !== "confirmation" ? (
+          {onUpdates && !preparingSave ? (
             <UiButton
               label={t("updates.relatedActivity")}
               variant="text"
@@ -377,7 +378,7 @@ export function UniversalV3ResultPresentation({
       ) : null}
       {onDone ? (
         <UiButton
-          variant={state === "confirmation" ? "text" : "primary"}
+          variant={preparingSave ? "text" : "primary"}
           label={t(resultReady ? "common.done" : "common.close")}
           onPress={() => {
             if (isCurrent()) onDone();
