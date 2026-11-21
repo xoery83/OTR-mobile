@@ -1,0 +1,26 @@
+{
+  "request": "NATIVE_P0_CLAIMANT_LINKED_READBACK_NARROW_REVIEW",
+  "status": "SCOPED_SOURCE_PASS",
+  "base": "8d0ee701254ad7eaf68af1ae08d3e7c6375cbdcf",
+  "fileHashes": {
+    "src/features/people/claimResolutionController.ts": "5452c1f143e489a385e19ad174293aecc4c9b7bbc8399257971557c9189ded43",
+    "src/features/people/claimResolutionController.test.ts": "d045e6933fd36543fd3222024adf29341567aeb2e4d5c4d1c396f2d4f41c3134"
+  },
+  "blockingFindings": [],
+  "independentValidation": [
+    "19controller tests PASS including3new claimant LINKED cases",
+    "diffcheckPASS for exact2files"
+  ],
+  "reviewed": [
+    "Plain linked claimant requires fresh scoped/generation-certified People read, matching positive applied_generation, unique currentActor,connected target matching authoritative proposalPerson",
+    "Without own resolution receipt does not invent one, create a checkpoint,execute or recover;readback-only retry refreshes view/People",
+    "Known own receipt still validates original outcome/CAS and exact target; reuses same actual refreshed certificate rather than extra unqualified read",
+    "Unresolved retained operation takes original receipt recovery path; missing/conflicting recovery cannot clear UNKNOWN via attempt guards",
+    "Failure/skip/wrong person leaves verifiedfalse;Account generation guard still gates publication"
+  ],
+  "limits": [
+    "Two-file narrow review only; no independent review of current actual Core/Hosted/Native network read implementation",
+    "No device,OTP,Session,Hosted/Revoke or main action",
+    "No turnkey Host Revoke runner for this fresh fixture found;generic normal-session primitive plus reviewed transport are reusable components only"
+  ]
+}

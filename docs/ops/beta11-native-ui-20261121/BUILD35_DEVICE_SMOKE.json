@@ -1,0 +1,17 @@
+{
+  "status": "DEVICE_DEFAULT_CLOSED_SMOKE_PASS_NOT_HOSTED_JOIN_REVOKE",
+  "sourceCommit": "b4925d450bfe8ab8dc342bdd74222e6e99c14d17",
+  "device": "C0C23E00-5016-4289-B806-92C5484BD5BA",
+  "bundleId": "art.xoery.otr",
+  "build": "35",
+  "hbcSha256": "eb42ea479374e7357ea67801613b266f571782cc77e827a0357d827469e8a6ff",
+  "xcode": "Release BUILD SUCCEEDED; adhoc deep strict signature PASS",
+  "observed": [
+    "Process-cold My Trips retains original history and Account without login prompt",
+    "Original Beta Invite Access QA 1121 and QA Invite Member 1121 retained",
+    "People Send invitation opens normal Choose a recipient route",
+    "Closed Hosted capability shows Invitations are not available; Back returns same Trip"
+  ],
+  "sqlite": "schema_migrations MAX(id)=81, independently read query-only; PRAGMA user_version is not this application's migration authority",
+  "limits": "No Invite, Claim, Revoke or Provider dispatch. New claimant-confirm readback has deterministic and independent review proof, not actual Hosted Join proof. Phone untouched."
+}
