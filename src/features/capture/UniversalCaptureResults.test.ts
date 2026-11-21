@@ -808,7 +808,7 @@ it("keeps real result evidence names and unprocessed warnings when the parent li
   expect(f.props.start).not.toHaveBeenCalled();
 });
 
-it("shows a new V3 batch as awaiting Analyze rather than a processing failure", () => {
+it("shows a new V3 batch as waiting without requiring a manual Analyze button", () => {
   vi.mocked(useUniversalCapture).mockReturnValue({
     localFirstSelected: true,
     localFirst: { state: "NEEDS_ACTION" },
@@ -899,6 +899,9 @@ it("shows a new V3 batch as awaiting Analyze rather than a processing failure", 
   );
   expect(html).toContain(t("capture.activityStatus.waiting"));
   expect(html).not.toContain(t("capture.ai.unavailable"));
+  expect(state.buttons.some((button) => button.label === t("capture.ai.process"))).toBe(
+    false,
+  );
 });
 
 it("offline capability discovery waits rather than showing endless processing or enabling Analyze", () => {
@@ -915,7 +918,6 @@ it("offline capability discovery waits rather than showing endless processing or
     createElement(UniversalCaptureResults, {
       model: { batch: { batchId: "offline", context: {} } } as CaptureJobReadModel,
       isCurrent: () => true,
-      processingDetails: true,
     }),
   );
   expect(html).toContain(t("capture.activityStatus.waiting"));
@@ -927,6 +929,39 @@ it("offline capability discovery waits rather than showing endless processing or
   expect(recover).toHaveBeenCalledOnce();
   expect(start).not.toHaveBeenCalled();
 });
+
+it.each(["OUTCOME_UNKNOWN", "PROCESSING"])(
+  "V3 %s never offers another Analyze",
+  (stage) => {
+    const start = vi.fn();
+    vi.mocked(useUniversalCapture).mockReturnValue({
+      localFirstSelected: true,
+      localFirst: { state: stage },
+      unavailable: false,
+      busy: false,
+      canStart: true,
+      start,
+      recover: vi.fn(),
+    } as never);
+    renderToStaticMarkup(
+      createElement(UniversalCaptureResults, {
+        model: {
+          batch: {
+            batchId: randomUUID(),
+            createdAt: "2026-11-21T00:00:00Z",
+            context: {},
+          },
+          inputs: [],
+        } as unknown as CaptureJobReadModel,
+        isCurrent: () => true,
+      }),
+    );
+    expect(state.buttons.some((button) => button.label === t("capture.ai.process"))).toBe(
+      false,
+    );
+    expect(start).not.toHaveBeenCalled();
+  },
+);
 
 vi.mock("@/data/operations/universalV3Review", () => ({
   openUniversalV3Review: vi.fn(async () => {

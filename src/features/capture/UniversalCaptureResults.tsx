@@ -85,7 +85,9 @@ export function UniversalCaptureResults({
       busy ||
       !canStart ||
       unavailable ||
-      (localFirst && localFirst.state !== "WAITING_INPUT") ||
+      (localFirst &&
+        localFirst.state !== "WAITING_INPUT" &&
+        localFirst.state !== "NEEDS_ACTION") ||
       !model.allInputsAccepted
     )
       return;
@@ -122,7 +124,7 @@ export function UniversalCaptureResults({
           {t(state.unavailable ? "capture.activityStatus.waiting" : "capture.jobLoading")}
         </UiText>
         {state.unavailable ? <UiText>{t("capture.activityHint.waiting")}</UiText> : null}
-        {processingDetails && state.unavailable ? (
+        {state.unavailable ? (
           <UiButton
             label={t("capture.ai.check")}
             variant="secondary"
@@ -134,9 +136,7 @@ export function UniversalCaptureResults({
     );
   }
   if (state.localFirstSelected) {
-    const processing = state.localFirst?.state === "PROCESSING";
     const unknown = state.localFirst?.state === "OUTCOME_UNKNOWN";
-    const result = state.localFirst?.state === "REVIEW_READY" ? state.localFirst : null;
     return (
       <>
         <UniversalV3Activity
@@ -153,15 +153,8 @@ export function UniversalCaptureResults({
           formatUnavailable={state.formatUnavailable}
           isCurrent={isCurrent}
         />
-        {processingDetails ? (
+        {processingDetails || state.unavailable || unknown ? (
           <UiSection title={t("capture.activityStatus.analysis")}>
-            {!result && !processing && !unknown ? (
-              <UiButton
-                label={t("capture.ai.process")}
-                disabled={state.busy || !state.canStart}
-                onPress={state.start}
-              />
-            ) : null}
             <UiButton
               label={t("capture.ai.check")}
               variant="secondary"
