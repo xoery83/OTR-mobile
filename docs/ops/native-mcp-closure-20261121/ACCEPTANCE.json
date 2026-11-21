@@ -1,0 +1,110 @@
+{
+  "status": "MINIMUM_GOOGLE_MCP_SHARED_DEV_IPHONE_COLD_PASS",
+  "mainBase": "e5b5824f67a5041530b9c4a1a91978dc032aaaf9",
+  "sourceOnly": [
+    "backend/src/tripCoreV2Http.ts",
+    "backend/src/tripCoreV2Http.test.ts",
+    "browser/auth-consent/main.tsx",
+    "src/data/auth/mcpConsentEntry.test.ts"
+  ],
+  "sourceReviews": {
+    "Root1": "NO_BLOCKER fixed timeout category",
+    "Auth": "NO_BLOCKER consent binding, final test mock-path and fetch type-parameter deltas verified"
+  },
+  "actualExecution": {
+    "state": "GOOGLE_MCP_TO_SHARED_DEV_TO_IPHONE_COLD_GOLDEN_SLICE_PASS",
+    "account": "38e4c610-4a53-4bd2-976e-42de679a8f9b",
+    "consent": "123a5b88-2b93-43e7-b9ad-4eb88840ea1f",
+    "trip": "fb3e6c7f-5a14-4539-9258-9797e2097039",
+    "item": "efded495-9e22-4778-9035-fc7a163135fc",
+    "operation": "298bc98b-e844-4269-ad78-1e244b708cc9",
+    "baseRevision": 1,
+    "title": "QA Google MCP sync verified",
+    "unchanged": "Title-only patch; preserve description, schedule, place, status, visibility and participation",
+    "request": {
+      "contractVersion": 2,
+      "intentVersion": 2,
+      "operationId": "298bc98b-e844-4269-ad78-1e244b708cc9",
+      "tripId": "fb3e6c7f-5a14-4539-9258-9797e2097039",
+      "baseVector": [
+        {
+          "kind": "ITEM",
+          "id": "efded495-9e22-4778-9035-fc7a163135fc",
+          "revision": 1
+        }
+      ],
+      "command": "SET_ITEM_TEXT",
+      "payload": {
+        "title": "QA Google MCP sync verified"
+      },
+      "admission": {
+        "mode": "MANUAL",
+        "sourceIntentId": null,
+        "policyVersion": null
+      },
+      "target": {
+        "kind": "ITEM",
+        "id": "efded495-9e22-4778-9035-fc7a163135fc"
+      }
+    },
+    "previewDigest": "d097e338c922a7d1b80be8d77c54559155c2bce73bf83f6be028942320ed14b1",
+    "applyCount": 1,
+    "replayed": false,
+    "lastResult": "tool call failed / Transport closed, no business result",
+    "receipt": {
+      "id": "0f5eb507-d39f-4700-aca7-da2a5c22d31c",
+      "sha256": "ecad7a460336e0069e1512553372e0e6e4d0a6a90446141fb1cd3903d0aa0a6a",
+      "projection": "FULL",
+      "outcome": "APPLIED",
+      "committedAt": "2026-11-21T09:20:41.690393Z",
+      "revision": 2,
+      "created": [],
+      "changed": [
+        "efded495-9e22-4778-9035-fc7a163135fc"
+      ]
+    },
+    "freshMcpVerify": {
+      "httpStatus": 200,
+      "title": "QA Google MCP sync verified",
+      "itemRevision": 2,
+      "allOtherRootFieldsUnchanged": true,
+      "allRelationsUnchanged": true
+    },
+    "independentPG": {
+      "status": "PASS_UNIQUE_APPLIED_TITLE_ONLY",
+      "evidence": "GOOGLE_MCP_ORIGINAL_APPLY_READBACK.json",
+      "sha256": "887ebcb4db21e045eda932044a35efb38062fdca4498fce4261d3ea5a32379fa",
+      "transportBoundary": "Nearby Core20016.058s/outerMCP20034.131s; no exact originalID/transport hop, Transport closed cause NOT_PROVEN; no observed Core503"
+    },
+    "phone": {
+      "visibleBeforeRestart": "PASS screenshot: updated unique title/dateNov21/Everyone/no pending dot",
+      "coldProcess": "terminate-existing ended App to Home but PID launch10004; separate normal launch succeeded and MyTrips/originalGoogle Trip restored",
+      "coldItemDetails": "PASS after process termination/Home and separate normal reopen; Owner normal UI navigation to same dedicated Trip/P1, DeviceHub fresh screenshot observed exact updated title, Nov21/Everyone/no pending dot",
+      "toolIssue": "DeviceHub application AX absent, coordinate noWindowsAvailable; no data/session copying or deep-link injection",
+      "testScope": "Actual connected iPhone16Pro existing art.xoery.otr; no reinstall/Session/SQLite copy, no literal latency claim"
+    }
+  },
+  "hosted": {
+    "container": "ec9afde6",
+    "captureSHA256": "bd55bbaf142242cf26cca01ca81f748a812619fb4f23d9f81deb710e449e53ef",
+    "consentSHA256": "61ec078a8b7a58ecf20a149312e3cf32672b628668f64cc7d0d155640824f5b8",
+    "releaseReceiptSHA256": "6d5ca2de11e90398291003688cddac846d6b7d99a34c104d1c532d1fd95b8808",
+    "scope": "Hosted includes prior default-closed AI candidate; Main integration is ordinary four-file fixes only, no implicit redeploy"
+  },
+  "open": [
+    "Underlying Core PG connect timeout cause; no Native-operation ID binding for historical sample",
+    "APPLY Transportclosed hop not located, original receipt recovery succeeded",
+    "AI V2 business activation/paid qualification and remaining E2E",
+    "C04 authoritative removal/revoke remains separate"
+  ],
+  "validation": {
+    "focused": "5 suites85PASS on fresh Main base",
+    "types": "PASS after linking existing separate MCP locked dependencies; initial missing dependency errors not source regression",
+    "scopedLint": "PASS",
+    "consentBuild": "PASS",
+    "captureBuild": "PASS",
+    "uiGuard": "PASS",
+    "sourceDiff": "Only reviewed four-file ordinary source patch; no AI schema/flag/Provider patch",
+    "deployment": "No new deployment during Main integration"
+  }
+}

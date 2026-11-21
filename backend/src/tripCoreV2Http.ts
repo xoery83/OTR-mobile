@@ -581,7 +581,9 @@ export async function coreHttpBoundary(
           "REVISION_CONFLICT",
         ].includes(code)
           ? code
-          : "OTHER";
+          : ["Connection terminated due to connection timeout", "timeout expired"].includes(code)
+            ? "CONNECT_TIMEOUT"
+            : "OTHER";
         const driverCode =
           error && typeof error === "object" && "code" in error ? error.code : null;
         const diagnostic = leaseDiagnosticSchema.safeParse(

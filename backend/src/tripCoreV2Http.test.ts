@@ -464,6 +464,8 @@ it.each([
 it.each([
   ["capabilities", "CAPABILITIES", "CORE_CONNECTION_BUSY", "OTHER", false],
   ["commands", "COMMAND", "CORE_CONNECTION_BUSY", "OTHER", false],
+  ["commands", "COMMAND", "timeout expired", "OTHER", false],
+  ["commands", "COMMAND", "Connection terminated due to connection timeout", "OTHER", false],
   [`operations/${operation}`, "RECEIPT", "PRIVATE_SQL_TOKEN", "53300", false],
   ["capabilities", "CAPABILITIES", "PRIVATE_SQL_TOKEN", "PRIVATE_CODE", false],
   [`operations/${operation}`, "RECEIPT", "CORE_CONNECTION_BUSY", "OTHER", true],
@@ -500,7 +502,11 @@ it.each([
         expect(JSON.parse(String(log.mock.calls[0][0]))).toEqual({
           event: "core_execution_failed",
           resource,
-          category: message === "CORE_CONNECTION_BUSY" ? message : "OTHER",
+          category: message === "CORE_CONNECTION_BUSY"
+            ? message
+            : ["timeout expired", "Connection terminated due to connection timeout"].includes(message as string)
+              ? "CONNECT_TIMEOUT"
+              : "OTHER",
           driverCode: driverCode === "53300" ? "53300" : "OTHER",
         });
         for (const privateValue of [

@@ -24,6 +24,13 @@ setUiLocale(resolveUiLocale(navigator.language));
 document.documentElement.lang = resolveUiLocale(navigator.language);
 document.title = t("oauthConsent.title");
 const root = createRoot(document.getElementById("root")!);
+let locationChanged = false;
+window.addEventListener("hashchange", () => {
+  if (location.pathname !== "/oauth/consent" || locationChanged) return;
+  locationChanged = true;
+  root.unmount();
+  location.reload();
+});
 async function start() {
   const boundary = createRequestBoundary(10000);
   try {
@@ -56,6 +63,7 @@ async function start() {
     );
     if (!response.ok) throw Error();
     const raw = await readBoundedJson(response, 16384, boundary);
+    if (locationChanged) return;
     const config =
       raw && typeof raw === "object" && "authOrigin" in raw
         ? mcpBetaConsentConfigSchema.parse(raw)
@@ -89,6 +97,7 @@ async function start() {
       />,
     );
   } catch {
+    if (locationChanged) return;
     root.render(
       location.pathname === "/mcp/approve" ? (
         <McpOperationApproval />
