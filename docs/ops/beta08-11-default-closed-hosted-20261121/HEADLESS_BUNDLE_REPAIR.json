@@ -1,0 +1,14 @@
+{
+  "status": "LOCAL_PASS_HOSTED_PENDING",
+  "base": "d9b398bf336166ab7e0aaac43da2c0ec21054ae4",
+  "actualFailure": "Root2 candidate exited ERR_MODULE_NOT_FOUND expo-sqlite; original service restored. Existing captureBundleBoundary reproduced two failing entries.",
+  "repair": "Build-only exact externals for the Native SQLite opener and Native directed-invite factory, following the existing guestLocalWorkspace boundary. No Source, Queue, Session, SQL or runtime business change.",
+  "bundleSHA256": "fde269650043f3707575cfa8cb3286c2669e248028f5d8f08f1a4d5a910172dc",
+  "checks": [
+    "3 suites / 33 PASS: capture bundle boundaries, Universal P2 bootstrap recovery and Flight Host boundary",
+    "Node24.18.0 actually executes standalone capture bundle without node_modules or credentials and reaches normal CAPTURE_RUNTIME_UNAVAILABLE configuration guard, not module-resolution failure",
+    "TypeScript, scoped ESLint, capture build and diff check PASS",
+    "Independent prebeta_localfirst_review NO_BLOCKER; no Hosted review claimed"
+  ],
+  "limits": "No configured Hosted startup or business PASS. Exploratory unchanged intelligenceContinuationRepository suite also exposed 11 stale latest-schema assertions (79 versus current81); not represented as passing and not changed by this packaging-only repair."
+}
