@@ -1,0 +1,13 @@
+{
+  "status": "ROOT2_INDEPENDENT_DEFAULT_CLOSED_DEPLOYMENT_PASS",
+  "source": "04499ef8a4753ba58a9d95677a01cac5bf8d3f2c",
+  "captureSHA256": "fde269650043f3707575cfa8cb3286c2669e248028f5d8f08f1a4d5a910172dc",
+  "container": "cf1dddd9ccb0b01078853efff1fc51c7ee9e31a5bf440a62f4988427929ca4e4",
+  "acceptedAtNZDT": "2026-11-21T19:30:17+13:00",
+  "verification": "Root2 independently verified unchanged Env/image, 12 mount targets with capture source only changed, eight related selectors unset, Health200/MCP401/anonymous Directed invite401; Writer released",
+  "protectedState": "Independent PG: Auth/Member closed, Member RPC Gateway EXEC false, CHECK OID65711. No SQL, password, grant or business activation.",
+  "rollback": "Original stopped3e847 with capturef6f5 retained; do not restore unrelated older configuration",
+  "owningReceipt": "/Users/xoery/Project/otr-mobile-import/mcp-managed-final-integration-20261119/artifacts/native-prebeta-receipt-20261121/beta08-default-closed-04499ef8/EXECUTION_RECEIPT.json",
+  "owningReceiptSHA256": "b6d72b1b98fcbcd597cb88fab832a73c52eb9b7f89d460bc859d1dcb76dc5fa8",
+  "limits": "Not Invite/Claim/Revoke/MCP business E2E or automatic cleanup PASS. Consent diagnostic78a48e4d was not included."
+}
