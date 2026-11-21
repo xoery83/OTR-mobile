@@ -58,7 +58,7 @@ export const en = {
   "capture.activityStatus.uncertain": "Outcome not yet confirmed",
   "capture.activityStatus.checking": "Recognition ready · checking save receipts",
   "capture.activityStatus.confirmation":
-    "Recognition ready · waiting for development confirmation",
+    "Review the plans below before adding them to your trip",
   "capture.activityStatus.applying": "Applying confirmed saves",
   "capture.activityStatus.association": "Item saved · Document association pending",
   "capture.activityStatus.complete": "Completed",
@@ -515,7 +515,7 @@ export const en = {
   "capture.ai.v3.documents": "Source documents: {count}",
   "capture.admission.confirmationHint":
     "Confirm this batch once to save eligible suggestions. Ambiguities remain in Review.",
-  "capture.admission.confirmBatch": "Confirm batch save",
+  "capture.admission.confirmBatch": "Add plans to trip",
   "capture.admission.needsReview": "Needs your review",
   "capture.admission.reviewHint":
     "Some suggestions need a decision about identity or missing or conflicting facts. Other eligible suggestions can continue.",
@@ -3656,7 +3656,7 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.activityStatus.analyzing": "正在分析旅行信息",
   "capture.activityStatus.uncertain": "状态未确定，等待对账",
   "capture.activityStatus.checking": "识别结果已就绪，正在核对保存回执",
-  "capture.activityStatus.confirmation": "识别结果已就绪，等待开发模式保存确认",
+  "capture.activityStatus.confirmation": "请核对下方计划，再添加到旅行",
   "capture.activityStatus.applying": "正在应用已确认的保存操作",
   "capture.activityStatus.association": "项目已保存，文档关联待完成",
   "capture.activityStatus.complete": "已完成",
@@ -4057,7 +4057,7 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.v3.documents": "来源文件：{count} 份",
   "capture.admission.confirmationHint":
     "确认此批次一次即可保存合格建议，有歧义的内容仍需审核。",
-  "capture.admission.confirmBatch": "确认保存此批次",
+  "capture.admission.confirmBatch": "添加计划到旅行",
   "capture.admission.needsReview": "需要你审核",
   "capture.admission.reviewHint":
     "部分建议存在身份歧义、缺失事实或信息冲突，需要你决定。其他合格建议可继续处理。",

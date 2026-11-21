@@ -28,6 +28,7 @@ import type { V3AdmissionRow } from "@/data/operations/universalV3Review";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
 import {
   openUniversalV3Review,
+  universalV3ReviewFields,
   applyUniversalV3Batch,
 } from "@/data/operations/universalV3Review";
 import type { UniversalV3ExecutionStatus } from "@/data/api/universalV3Contracts";
@@ -397,6 +398,26 @@ export function UniversalV3Activity({
           : undefined
       }
     >
+      {intent && !intent.confirmed
+        ? displayRows.map((row) => {
+            const candidate =
+              intent.resolutions[row.candidate.candidateId]?.candidate ?? row.candidate;
+            const { title, start, end, startTime, endTime, place, endPlace } =
+              universalV3ReviewFields(candidate);
+            return (
+              <UiSection key={candidate.candidateId}>
+                <UiText accessibilityRole="header">
+                  {title || t("capture.results.item")}
+                </UiText>
+                <UiText>
+                  {[start, startTime, end, endTime, place, endPlace]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </UiText>
+              </UiSection>
+            );
+          })
+        : null}
       {intent &&
       !intent.confirmed &&
       rows.some(

@@ -154,3 +154,32 @@ it("manual recovery uses the existing form callback and never changes Batch resu
   expect(manual).toHaveBeenCalledOnce();
   expect(base.results).toHaveLength(1);
 });
+
+it.each(["en", "zh-Hans"] as const)(
+  "shows a readable unsaved preview before confirmation in %s",
+  (locale) => {
+    setUiLocale(locale);
+    const html = renderToStaticMarkup(
+      createElement(
+        UniversalV3ResultPresentation,
+        {
+          ...base,
+          state: "confirmation",
+          results: [],
+          reviewCount: 0,
+          abstainCount: 0,
+          onAddManually: vi.fn(),
+          onUpdates: vi.fn(),
+          onDone: vi.fn(),
+        },
+        createElement("section", {}, "Harbour walk · 23 November 2026"),
+      ),
+    );
+    expect(html).toContain("Harbour walk");
+    expect(html).toContain(t("capture.activityStatus.confirmation"));
+    expect(html).not.toContain(t("capture.results.noNew"));
+    expect(h.buttons.has(t("capture.results.addManually"))).toBe(false);
+    expect(h.buttons.has(t("updates.relatedActivity"))).toBe(false);
+    expect(h.buttons.get(t("common.done")).variant).toBe("text");
+  },
+);

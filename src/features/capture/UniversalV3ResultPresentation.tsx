@@ -160,6 +160,7 @@ export function UniversalV3ResultPresentation({
           ) : null}
         </View>
       ) : null}
+      {children}
       {resultReady ? (
         <>
           {saved.length ? (
@@ -185,9 +186,9 @@ export function UniversalV3ResultPresentation({
                 {t("capture.ux.savedResults")}
               </UiText>
             </>
-          ) : (
+          ) : state !== "confirmation" ? (
             <UiText style={styles.meta}>{t("capture.results.noNew")}</UiText>
-          )}
+          ) : null}
           {results.map((item) => {
             const type = manualItineraryTypes.find((type) => type.id === item.family);
             const date = item.businessDate
@@ -300,7 +301,7 @@ export function UniversalV3ResultPresentation({
               </View>
             );
           })}
-          {onAddManually ? (
+          {onAddManually && state !== "confirmation" ? (
             <View style={styles.manual}>
               <UiText style={styles.meta}>{t("capture.results.manualReminder")}</UiText>
               <UiButton
@@ -312,7 +313,7 @@ export function UniversalV3ResultPresentation({
               />
             </View>
           ) : null}
-          {onUpdates ? (
+          {onUpdates && state !== "confirmation" ? (
             <UiButton
               label={t("updates.relatedActivity")}
               variant="text"
@@ -374,9 +375,9 @@ export function UniversalV3ResultPresentation({
           ) : null}
         </>
       ) : null}
-      {children}
       {onDone ? (
         <UiButton
+          variant={state === "confirmation" ? "text" : "primary"}
           label={t(resultReady ? "common.done" : "common.close")}
           onPress={() => {
             if (isCurrent()) onDone();
