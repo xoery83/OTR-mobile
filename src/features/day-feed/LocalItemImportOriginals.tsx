@@ -5,6 +5,7 @@ import type { localItemImportOriginals } from "@/data/operations/localItemImport
 import { UiButton, UiSection, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
+import { coreDocumentDisplayTitle } from "@/features/documents/documentListPresentation";
 
 type Reader = Awaited<ReturnType<typeof localItemImportOriginals>>;
 type Document = Awaited<ReturnType<Reader["list"]>>[number];
@@ -124,7 +125,7 @@ function ItemOriginals({
       {documents.map((document) => (
         <UiButton
           key={document.id}
-          label={document.title}
+          label={coreDocumentDisplayTitle(document, t("capture.ai.submittedText"))}
           variant="text"
           disabled={opening}
           onPress={() => void open(document)}
