@@ -123,6 +123,7 @@ export default function RootLayout() {
               headerTitleAlign: "center",
               headerTitleStyle: { color: colors.textPrimary },
               headerTintColor: colors.accent,
+              statusBarStyle: scheme === "dark" ? "light" : "dark",
               headerStyle: { backgroundColor: colors.surface },
               contentStyle: { backgroundColor: colors.background },
               orientation: "portrait",

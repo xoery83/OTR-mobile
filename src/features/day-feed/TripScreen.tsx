@@ -99,7 +99,7 @@ import {
 import { UiButton, UiText as ThemedText } from "@/ui/controls";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import { useThemedStyles, useUiAppearance, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { boundaryZone, viewContext } from "./presentation";
@@ -186,6 +186,7 @@ function TripContent({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
+  const appearance = useUiAppearance();
   const insets = useSafeAreaInsets();
   const measuredHeader = useHeaderHeight();
   const [retainedHeader, setRetainedHeader] = useState(
@@ -1563,7 +1564,8 @@ function TripContent({
                 right: "hidden",
               }
             : undefined,
-      statusBarStyle: immersiveHome && heroBehindStatus ? "light" : "auto",
+      statusBarStyle:
+        (immersiveHome && heroBehindStatus) || appearance === "dark" ? "light" : "dark",
       headerTitle: moveActive
         ? () => null
         : ({ onLayout }: { onLayout?: import("react-native").TextProps["onLayout"] }) =>
@@ -1595,6 +1597,7 @@ function TripContent({
     });
   }, [
     navigation,
+    appearance,
     params.importJobId,
     today,
     headerTitle,
