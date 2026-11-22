@@ -53,7 +53,11 @@ it("a historical Trip prior never moves a private original into Trip Documents",
   );
   const docs = createImportDocumentsRepository(f.db, f.getAccount, f.captures);
   const context = await captureAccountRequestContext(trip, f.getAccount);
+  const [privateOriginal] = await docs.list(context, "PERSONAL_INBOX");
   await expect(docs.list(context, "TRIP")).rejects.toThrow("TRIP_ACCESS");
+  await expect(
+    docs.readBatchMaterial(context, "TRIP", privateOriginal.captureId),
+  ).rejects.toThrow("TRIP_ACCESS");
   f.sql
     .prepare(
       "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'owner','{}',?)",
@@ -61,6 +65,9 @@ it("a historical Trip prior never moves a private original into Trip Documents",
     .run(context.accountId, trip, request.createdAt);
   expect(await docs.list(context, "TRIP")).toEqual([]);
   expect(await docs.list(context, "PERSONAL_INBOX")).toHaveLength(1);
+  expect(
+    await docs.readBatchMaterial(context, "TRIP", privateOriginal.captureId),
+  ).toEqual(privateOriginal);
 });
 it("explicit lawful assignment changes only document scope and retains real Batch linkage", async () => {
   const f = fixture(),
@@ -216,18 +223,21 @@ it("advances a real 30-row cursor across pages without duplicates or reading ori
   expect(original).not.toHaveBeenCalled();
 });
 
-
 it("retains explicit Files originals in their local directories across process reopen", async () => {
   const f = fixture(true);
   const docs = createImportDocumentsRepository(f.db, f.getAccount, f.captures);
   const save = createImportDocumentsLocalWriter(f.db, f.getAccount, {
-    now, sha256, newId: randomUUID,
+    now,
+    sha256,
+    newId: randomUUID,
   });
   const inbox = await captureAccountRequestContext("", f.getAccount);
   const trip = await captureAccountRequestContext(randomUUID(), f.getAccount);
-  f.sql.prepare(
-    "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'owner','{}',?)",
-  ).run(trip.accountId, trip.tripId, now());
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'owner','{}',?)",
+    )
+    .run(trip.accountId, trip.tripId, now());
   const bytes = new Uint8Array([37, 80, 68, 70, 13, 10]);
   await save(inbox, "private.pdf", "application/pdf", { bytes });
   await save(trip, "trip.pdf", "application/pdf", { bytes });
@@ -249,12 +259,20 @@ it("retains explicit Files originals in their local directories across process r
     });
     expect((await docs.original(context, scope, rows[0].captureId)).bytes).toEqual(bytes);
   }
-  expect(f.sql.prepare("SELECT count(*) AS n FROM capture_submission_batches").get()).toMatchObject({ n: 0 });
-  expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()).toMatchObject({ n: 0 });
-  expect(f.sql.prepare("SELECT count(*) AS n FROM local_capture_payloads").get()).toMatchObject({ n: 1 });
-  f.sql.prepare(
-    "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,2,1)",
-  ).run(trip.accountId, trip.tripId);
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM capture_submission_batches").get(),
+  ).toMatchObject({ n: 0 });
+  expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()).toMatchObject({
+    n: 0,
+  });
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_capture_payloads").get(),
+  ).toMatchObject({ n: 1 });
+  f.sql
+    .prepare(
+      "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,2,1)",
+    )
+    .run(trip.accountId, trip.tripId);
   await expect(docs.list(trip, "TRIP")).rejects.toThrow("DOCUMENTS_TRIP_ACCESS");
   expect(await docs.list(inbox, "PERSONAL_INBOX")).toHaveLength(1);
 });
@@ -262,19 +280,33 @@ it("retains explicit Files originals in their local directories across process r
 it("rejects Files intake after access revocation or account change without retaining bytes", async () => {
   const f = fixture();
   const save = createImportDocumentsLocalWriter(f.db, f.getAccount, {
-    now, sha256, newId: randomUUID,
+    now,
+    sha256,
+    newId: randomUUID,
   });
   const trip = await captureAccountRequestContext(randomUUID(), f.getAccount);
   const input = { bytes: new Uint8Array([1]) };
-  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow("DOCUMENTS_TRIP_ACCESS");
-  f.sql.prepare(
-    "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'owner','{}',?)",
-  ).run(trip.accountId, trip.tripId, now());
-  f.sql.prepare(
-    "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,2,1)",
-  ).run(trip.accountId, trip.tripId);
-  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow("DOCUMENTS_TRIP_ACCESS");
+  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow(
+    "DOCUMENTS_TRIP_ACCESS",
+  );
+  f.sql
+    .prepare(
+      "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'owner','{}',?)",
+    )
+    .run(trip.accountId, trip.tripId, now());
+  f.sql
+    .prepare(
+      "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,2,1)",
+    )
+    .run(trip.accountId, trip.tripId);
+  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow(
+    "DOCUMENTS_TRIP_ACCESS",
+  );
   await f.switchTo(randomUUID());
-  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow("Account changed");
-  expect(f.sql.prepare("SELECT count(*) AS n FROM local_capture_payloads").get()).toMatchObject({ n: 0 });
+  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow(
+    "Account changed",
+  );
+  expect(
+    f.sql.prepare("SELECT count(*) AS n FROM local_capture_payloads").get(),
+  ).toMatchObject({ n: 0 });
 });

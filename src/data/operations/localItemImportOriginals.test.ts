@@ -421,9 +421,10 @@ it("reads same-Batch results through the existing GET and formal Receipt project
     },
   ] as CaptureJobReadModel[];
   const scoped = await localItemImportOriginals(trip, undefined, 4);
-  expect(await scoped.batchResults(jobId, batchId)).toEqual({
+  expect(await scoped.batchResults(jobId, batchId)).toMatchObject({
     state: "REVIEW_READY",
     items: [],
+    observations: {},
   });
   expect(h.task).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({ accountId: account, tripId: trip }),

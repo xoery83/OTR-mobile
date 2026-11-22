@@ -17,6 +17,10 @@ import { CaptureActivityList, captureActivityTime } from "./CaptureActivity";
 import { t, setUiLocale } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
 vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
+vi.mock("./HistoricalImportBatchDetail", () => ({
+  HistoricalImportBatchDetail: () => createElement("aside", { id: "historical-detail" }),
+}));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
   buttons: [] as any[],
@@ -741,4 +745,25 @@ it("shows per-image controls only when the actual analysis route resolves to leg
   expect(render()).toContain("Local photo controls");
   state.universalViews.at(-1).onLegacyPhotoReview(false);
   expect(render()).not.toContain("Local photo controls");
+});
+
+it("keeps intake recovery and unattached batches on the original history flow", async () => {
+  vi.stubGlobal("__DEV__", false);
+  vi.stubEnv("EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED", "true");
+  const f = fixture();
+  const request = await f.submit();
+  const model = await f.submissions.reopen(request.jobId);
+  const defaults = {
+    model, historical: true, accountId: model.batch.accountId,
+    busy: false, reading: false, error: false, canRetry: false,
+    onRetry: vi.fn(), onRecover: vi.fn(), onOpenJob: vi.fn(),
+    onActivity: vi.fn(), onNewImport: vi.fn(), isCurrent: () => true,
+  };
+  expect(renderToStaticMarkup(createElement(CaptureProgress, defaults)))
+    .not.toContain("historical-detail");
+  const attached = { ...model, assignedTripId: randomUUID() };
+  expect(renderToStaticMarkup(createElement(CaptureProgress, { ...defaults, model: attached, canRetry: true })))
+    .not.toContain("historical-detail");
+  expect(renderToStaticMarkup(createElement(CaptureProgress, { ...defaults, model: attached })))
+    .toContain("historical-detail");
 });

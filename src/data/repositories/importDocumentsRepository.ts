@@ -16,7 +16,10 @@ import {
   type LocalCaptureDependencies,
   type createLocalCaptureInboxRepository,
 } from "./localCaptureInboxRepository";
-import { readCapturePayload, type CapturePayloadInput } from "../files/capturePayloadReader";
+import {
+  readCapturePayload,
+  type CapturePayloadInput,
+} from "../files/capturePayloadReader";
 
 const metadataSchema = z.object({
   captureId: captureIdSchema,
@@ -168,6 +171,26 @@ export function createImportDocumentsRepository(
     return document;
   }
   return {
+    async readBatchMaterial(
+      context: AccountRequestContext,
+      scope: ImportDocumentScope,
+      captureId: string,
+    ) {
+      try {
+        return await read(context, scope, captureId);
+      } catch (error) {
+        if (
+          scope !== "TRIP" ||
+          !(error instanceof Error) ||
+          error.message !== "DOCUMENTS_NOT_FOUND"
+        )
+          throw error;
+        // A trip import can retain its source in the same account's private inbox.
+        const original = await read(context, "PERSONAL_INBOX", captureId);
+        await authorize(context, scope);
+        return original;
+      }
+    },
     read,
     async list(
       context: AccountRequestContext,

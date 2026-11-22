@@ -194,6 +194,7 @@ export type V3SavedResult = {
   itemId: string;
   title: string;
   family: string;
+  eventType?: string;
   action?: "created" | "linked" | "updated";
   state: "complete" | "association" | "unknown" | "saving" | "failed" | "review";
   documentIds: string[];
@@ -299,6 +300,7 @@ export function projectUniversalV3Results(
       itemId,
       title: String(item.title),
       family: String(item.experience_family),
+      eventType: text(item.event_type),
       action: created ? "created" : updated ? "updated" : linked ? "linked" : undefined,
       state,
       documentIds: associated

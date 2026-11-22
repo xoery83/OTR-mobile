@@ -116,6 +116,8 @@ export function CaptureContent({
   const [documents, setDocuments] = useState<{
     scope: ImportDocumentScope;
     captureId?: string;
+    historyTripId?: string;
+    fromHistory?: boolean;
   } | null>(null);
   const [reading, setReading] = useState(!!jobId);
   const [readError, setReadError] = useState(false);
@@ -361,9 +363,98 @@ export function CaptureContent({
       const result = await staging.pick(source);
       if (current()) setDuplicate(!!result?.duplicates);
     };
+    const progressContent = accountId ? (
+      <CaptureProgress
+        historical={reopening && !attempted}
+        historicalTripName={
+          (model?.batch.context.tripPrior?.id ?? model?.assignedTripId) ===
+          selectedTripPrior
+            ? selectedTripName
+            : undefined
+        }
+        onOpenHistoricalMaterial={(captureId, tripId) => {
+          if (current())
+            setDocuments({
+              scope: tripId ? "TRIP" : "PERSONAL_INBOX",
+              captureId,
+              historyTripId: tripId,
+              fromHistory: true,
+            });
+        }}
+        photoRelevanceCopy={{
+          title: t("capture.photo.localTitle"),
+          localOnly: t("capture.photo.localOnly"),
+          notChecked: t("capture.photo.notChecked"),
+          relevant: t("capture.photo.relevant"),
+          uncertain: t("capture.photo.uncertain"),
+          irrelevant: t("capture.photo.irrelevant"),
+          originalChanged: t("capture.photo.originalChanged"),
+          unavailable: t("capture.photo.unavailable"),
+          continueSelected: t("capture.photo.continueSelected"),
+          skipSelected: t("capture.photo.skipSelected"),
+          screen: t("capture.photo.checkLocally"),
+          chooseAi: t("capture.photo.chooseAi"),
+          skip: t("capture.photo.skipAi"),
+        }}
+        readTripTargets={readTripTargets}
+        isCurrent={current}
+        model={model}
+        accountId={accountId}
+        busy={busy}
+        reading={reading}
+        error={readError || submitError}
+        canRetry={canRetryRetained}
+        onOpenAcceptedItem={
+          onOpenAcceptedItem
+            ? (target) => {
+                if (current()) onOpenAcceptedItem(target);
+              }
+            : undefined
+        }
+        onDone={hide}
+        onResultsReady={(ready) => setResultsJob(ready ? model?.batch.jobId : undefined)}
+        activityPositionsRef={positionsRef}
+        onReturnToTrip={onReturnToTrip}
+        onOpenDocument={(itemId, documentId) => {
+          const tripId = model?.batch.context.tripPrior?.id ?? model?.assignedTripId;
+          if (current() && tripId) setResultDocument({ tripId, itemId, documentId });
+        }}
+        onOpenReview={
+          onOpenReview
+            ? (id) => {
+                if (current()) {
+                  if (embeddedComposer) onOpenReview(id);
+                  else setReviewJob(id);
+                }
+              }
+            : undefined
+        }
+        onRetry={() => void submit()}
+        onRecover={(id) => void recover(id)}
+        onOpenJob={(id) => void openJob(id)}
+        onActivity={() => {
+          if (current() && !running.current) setActivity(true);
+        }}
+        onNewImport={() => {
+          if (!current() || running.current || reading) return;
+          ++readEpoch.current;
+          session.current = null;
+          recoveryActions.current.clear();
+          setActivity(false);
+          setModel(null);
+          setAttempted(false);
+          setReopening(false);
+          setSubmittedSelections(null);
+          setSubmitError(false);
+          setReadError(false);
+        }}
+      />
+    ) : null;
+    const historyViewer = documents?.fromHistory ? documents : null;
     return (
       <CaptureComposer
         embedded={embeddedComposer}
+        fixedHeight={reopening && !attempted && !activity && !documents && !resultDocument}
         visible={!reviewJob}
         onDismiss={() => {
           if (reviewJob && current()) onOpenReview?.(reviewJob);
@@ -521,9 +612,11 @@ export function CaptureContent({
         title={
           documents
             ? t(
-                documents.scope === "TRIP"
-                  ? "importDocuments.trip"
-                  : "importDocuments.inbox",
+                documents.fromHistory
+                  ? "capture.history.original"
+                  : documents.scope === "TRIP"
+                    ? "importDocuments.trip"
+                    : "importDocuments.inbox",
               )
             : accountId && (activity || attempted || reopening || model)
               ? t(
@@ -531,7 +624,7 @@ export function CaptureContent({
                     ? "capture.progress.activeImports"
                     : model?.batch.jobId === resultsJob
                       ? "capture.ux.resultsTitle"
-                      : reopening
+                      : reopening && !attempted
                         ? "capture.history.details"
                         : "capture.progress.title",
                 )
@@ -539,22 +632,60 @@ export function CaptureContent({
         }
         contextLabel={
           documents
-            ? documents.scope === "TRIP" && selectedTripName
-              ? `${t("importDocuments.private")} · ${selectedTripName}`
-              : t("importDocuments.private")
-            : accountId && (activity || attempted || reopening || model)
-              ? !activity &&
-                model &&
-                (model.batch.context.tripPrior?.id ?? model.assignedTripId) ===
-                  selectedTripPrior &&
-                selectedTripName
-                ? t("capture.context", { name: selectedTripName })
-                : t("capture.progress.accountScope")
-              : undefined
+            ? documents.fromHistory
+              ? ""
+              : documents.scope === "TRIP" && selectedTripName
+                ? `${t("importDocuments.private")} · ${selectedTripName}`
+                : t("importDocuments.private")
+            : reopening && !attempted
+              ? ""
+              : accountId && (activity || attempted || reopening || model)
+                ? !activity &&
+                  model &&
+                  (model.batch.context.tripPrior?.id ?? model.assignedTripId) ===
+                    selectedTripPrior &&
+                  selectedTripName
+                  ? t("capture.context", { name: selectedTripName })
+                  : t("capture.progress.accountScope")
+                : undefined
         }
         content={
           accountId ? (
-            resultDocument ? (
+            reopening &&
+            !attempted &&
+            !activity &&
+            !resultDocument &&
+            (!documents || historyViewer) ? (
+              <>
+                <View
+                  style={
+                    historyViewer ? captureLayout.hidden : captureLayout.historyViewport
+                  }
+                  accessibilityElementsHidden={!!historyViewer}
+                  importantForAccessibility={
+                    historyViewer ? "no-hide-descendants" : "auto"
+                  }
+                >
+                  {progressContent}
+                </View>
+                {historyViewer && model ? (
+                  <ImportDocumentsPanel
+                    accountId={accountId}
+                    tripId={historyViewer.historyTripId ?? null}
+                    scope={historyViewer.scope}
+                    captureId={historyViewer.captureId}
+                    originalBatchId={model.batch.batchId}
+                    onOriginalDismiss={() => {
+                      if (current()) setDocuments(null);
+                    }}
+                    showHistoricalLinks={false}
+                    isCurrent={current}
+                    onOpenDocument={() => {}}
+                    onOpenActivity={() => {}}
+                  />
+                ) : null}
+              </>
+            ) : resultDocument ? (
               <>
                 <UiButton
                   label={t("capture.results.back")}
@@ -603,80 +734,7 @@ export function CaptureContent({
                 onHide={hide}
               />
             ) : attempted || reopening || model ? (
-              <CaptureProgress
-                historical={reopening}
-                photoRelevanceCopy={{
-                  title: t("capture.photo.localTitle"),
-                  localOnly: t("capture.photo.localOnly"),
-                  notChecked: t("capture.photo.notChecked"),
-                  relevant: t("capture.photo.relevant"),
-                  uncertain: t("capture.photo.uncertain"),
-                  irrelevant: t("capture.photo.irrelevant"),
-                  originalChanged: t("capture.photo.originalChanged"),
-                  unavailable: t("capture.photo.unavailable"),
-                  continueSelected: t("capture.photo.continueSelected"),
-                  skipSelected: t("capture.photo.skipSelected"),
-                  screen: t("capture.photo.checkLocally"),
-                  chooseAi: t("capture.photo.chooseAi"),
-                  skip: t("capture.photo.skipAi"),
-                }}
-                readTripTargets={readTripTargets}
-                isCurrent={current}
-                model={model}
-                accountId={accountId}
-                busy={busy}
-                reading={reading}
-                error={readError || submitError}
-                canRetry={canRetryRetained}
-                onOpenAcceptedItem={
-                  onOpenAcceptedItem
-                    ? (target) => {
-                        if (current()) onOpenAcceptedItem(target);
-                      }
-                    : undefined
-                }
-                onDone={hide}
-                onResultsReady={(ready) =>
-                  setResultsJob(ready ? model?.batch.jobId : undefined)
-                }
-                activityPositionsRef={positionsRef}
-                onReturnToTrip={onReturnToTrip}
-                onOpenDocument={(itemId, documentId) => {
-                  const tripId =
-                    model?.batch.context.tripPrior?.id ?? model?.assignedTripId;
-                  if (current() && tripId)
-                    setResultDocument({ tripId, itemId, documentId });
-                }}
-                onOpenReview={
-                  onOpenReview
-                    ? (id) => {
-                        if (current()) {
-                          if (embeddedComposer) onOpenReview(id);
-                          else setReviewJob(id);
-                        }
-                      }
-                    : undefined
-                }
-                onRetry={() => void submit()}
-                onRecover={(id) => void recover(id)}
-                onOpenJob={(id) => void openJob(id)}
-                onActivity={() => {
-                  if (current() && !running.current) setActivity(true);
-                }}
-                onNewImport={() => {
-                  if (!current() || running.current || reading) return;
-                  ++readEpoch.current;
-                  session.current = null;
-                  recoveryActions.current.clear();
-                  setActivity(false);
-                  setModel(null);
-                  setAttempted(false);
-                  setReopening(false);
-                  setSubmittedSelections(null);
-                  setSubmitError(false);
-                  setReadError(false);
-                }}
-              />
+              progressContent
             ) : undefined
           ) : undefined
         }
@@ -696,6 +754,13 @@ export function CaptureContent({
             : undefined
         }
         onClose={hide}
+        onBack={
+          documents?.fromHistory
+            ? () => {
+                if (current()) setDocuments(null);
+              }
+            : undefined
+        }
         onFiles={() => void pick("files")}
         onPhotos={() => void pick("photos")}
         onCamera={() => void pick("camera")}
@@ -1052,6 +1117,10 @@ export function CaptureTray({
     </ScrollView>
   );
 }
+const captureLayout = StyleSheet.create({
+  hidden: { display: "none" },
+  historyViewport: { flexShrink: 1 },
+});
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },

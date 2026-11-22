@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DocumentActions } from "./CoreDocumentDetail";
-import { UiText } from "@/ui/controls";
+import { ScrollView } from "react-native";
+import { UiButton, UiSection, UiText } from "@/ui/controls";
+import { useUiTheme } from "@/ui/theme";
 import { t, formatUiDate } from "@/ui/locale";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
@@ -16,6 +18,8 @@ type Props = {
   tripId: string | null;
   scope: ImportDocumentScope;
   captureId?: string;
+  originalBatchId?: string;
+  onOriginalDismiss?(): void;
   showHistoricalLinks?: boolean;
   detailActions?: boolean;
   informationInitially?: boolean;
@@ -33,12 +37,13 @@ type Props = {
 export function ImportDocumentsPanel(props: Props) {
   return (
     <ScopedDocuments
-      key={`${props.accountId}:${props.scope}:${props.tripId ?? ""}:${props.captureId ?? ""}`}
+      key={`${props.accountId}:${props.scope}:${props.tripId ?? ""}:${props.captureId ?? ""}:${props.originalBatchId ?? ""}`}
       {...props}
     />
   );
 }
 function ScopedDocuments(props: Props) {
+  const colors = useUiTheme();
   const [linkedItems, setLinkedItems] = useState<number | null>(null);
   const [linksUnavailable, setLinksUnavailable] = useState(false);
   const [linksLoading, setLinksLoading] = useState(
@@ -96,7 +101,9 @@ function ScopedDocuments(props: Props) {
       setLoading(true);
       setError(false);
       if (props.captureId) {
-        const next = await repository.read(context, props.scope, props.captureId);
+        const next = props.originalBatchId
+          ? await repository.readBatchMaterial(context, props.scope, props.captureId)
+          : await repository.read(context, props.scope, props.captureId);
         if (current() && request === sequence.current) setDocument(next);
       } else {
         const tail = more ? documents.at(-1) : undefined;
@@ -136,7 +143,24 @@ function ScopedDocuments(props: Props) {
     let phase = "REPOSITORY_READ";
     try {
       const { context, repository } = await reader();
-      const retained = await repository.original(context, props.scope, captureId);
+      const batchDocument = props.originalBatchId
+        ? await repository.readBatchMaterial(context, props.scope, captureId)
+        : null;
+      if (!current() || request !== sequence.current) return;
+      if (props.originalBatchId && batchDocument?.batchId !== props.originalBatchId)
+        throw Error("DOCUMENTS_SCOPE_MISMATCH");
+      const scope = batchDocument?.tripId === null ? "PERSONAL_INBOX" : props.scope;
+      const retained = await repository.original(context, scope, captureId);
+      if (props.originalBatchId) {
+        const after = await repository.readBatchMaterial(context, props.scope, captureId);
+        if (
+          after.tripId !== retained.document.tripId ||
+          after.sha256 !== retained.document.sha256 ||
+          after.batchId !== props.originalBatchId ||
+          retained.document.batchId !== props.originalBatchId
+        )
+          throw Error("DOCUMENTS_ORIGINAL_CHANGED");
+      }
       if (!current() || request !== sequence.current) return;
       if (
         retained.document.kind === "TEXT" ||
@@ -166,6 +190,7 @@ function ScopedDocuments(props: Props) {
           () => current() && request === sequence.current,
           retained.document.originalFilename ?? t("capture.unnamed"),
         );
+        if (current() && request === sequence.current) props.onOriginalDismiss?.();
       }
     } catch (error) {
       if (process.env.EXPO_PUBLIC_OTR_IMPORT_ORIGINAL_PREVIEW_ENABLED === "true") {
@@ -213,7 +238,10 @@ function ScopedDocuments(props: Props) {
   }
   useEffect(() => {
     alive.current = true;
-    void Promise.resolve().then(() => load());
+    void Promise.resolve().then(() => {
+      if (props.originalBatchId && props.captureId) return openOriginal(props.captureId);
+      return load();
+    });
     return () => {
       alive.current = false;
     };
@@ -221,7 +249,8 @@ function ScopedDocuments(props: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    if (visible && !wasVisible.current) void Promise.resolve().then(() => load());
+    if (!props.originalBatchId && visible && !wasVisible.current)
+      void Promise.resolve().then(() => load());
     wasVisible.current = visible;
     // A retained view reloads only when it becomes visible again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,6 +258,7 @@ function ScopedDocuments(props: Props) {
   useEffect(() => {
     if (
       !document ||
+      document.tripId === null ||
       props.scope !== "TRIP" ||
       !visible ||
       props.showHistoricalLinks === false
@@ -264,6 +294,37 @@ function ScopedDocuments(props: Props) {
     // Parent scope remounts on Account/Trip/Capture identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document, visible, linksRetry]);
+  if (props.originalBatchId && props.captureId) {
+    return (
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <UiSection>
+          {original ? (
+            <UiText selectable style={{ color: colors.textPrimary }}>
+              {original.text}
+            </UiText>
+          ) : error ? (
+            <>
+              <UiText accessibilityRole="alert" style={{ color: colors.textPrimary }}>
+                {t("importDocuments.originalUnavailable")}
+              </UiText>
+              <UiButton
+                variant="text"
+                label={t("capture.history.retryOriginal")}
+                onPress={() => void openOriginal(props.captureId!)}
+              />
+            </>
+          ) : (
+            <UiText
+              accessibilityLiveRegion="polite"
+              style={{ color: colors.textSecondary }}
+            >
+              {t("common.loading")}
+            </UiText>
+          )}
+        </UiSection>
+      </ScrollView>
+    );
+  }
   if (props.captureId && document) {
     const detail = (
       <ImportDocumentDetail
@@ -276,7 +337,7 @@ function ScopedDocuments(props: Props) {
           if (current() && !linksLoading) setLinksRetry((value) => value + 1);
         }}
         accountId={props.accountId}
-        tripId={props.scope === "TRIP" ? props.tripId : null}
+        tripId={document.tripId}
         original={original}
         opening={opening}
         error={error}

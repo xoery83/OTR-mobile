@@ -66,9 +66,9 @@ export function UiSection({ title, children }: { title?: string; children: React
   return (
     <View style={styles.section}>
       {title ? (
-        <Text accessibilityRole="header" style={styles.heading}>
+        <UiText accessibilityRole="header" style={styles.heading}>
           {title}
-        </Text>
+        </UiText>
       ) : null}
       <View style={styles.surface}>{children}</View>
     </View>

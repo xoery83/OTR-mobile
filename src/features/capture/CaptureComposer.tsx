@@ -44,8 +44,10 @@ type Props = {
     isCurrent: () => boolean,
   ): Promise<boolean>;
   onClose(): void;
+  onBack?(): void;
   visible?: boolean;
   embedded?: boolean;
+  fixedHeight?: boolean;
   onDismiss?(): void;
   onFiles(): void;
   onPhotos(): void;
@@ -75,8 +77,10 @@ export function CaptureComposer({
   renderImagePaste,
   onTripTarget,
   onClose,
+  onBack,
   visible = true,
   embedded = false,
+  fixedHeight = false,
   onDismiss,
   onFiles,
   onPhotos,
@@ -197,7 +201,7 @@ export function CaptureComposer({
   const close = () => {
     if (page === "composer" || content != null) {
       voice.close();
-      onClose();
+      (onBack ?? onClose)();
     } else setPage("composer");
   };
   useEffect(() => {
@@ -244,6 +248,7 @@ export function CaptureComposer({
       ]}
     />
   );
+  const sheetHeight = Math.max(44, Math.min(height * 0.9, height - insets.top - 16));
   const sheet = (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.viewport}>
       <KeyboardAvoidingView
@@ -261,20 +266,23 @@ export function CaptureComposer({
             styles.sheet,
             { width: Math.min(width, 720), alignSelf: "center" },
             {
-              maxHeight: Math.max(44, Math.min(height * 0.9, height - insets.top - 16)),
+              maxHeight: sheetHeight,
+              height: fixedHeight ? sheetHeight : undefined,
               paddingBottom: keyboardVisible ? 0 : insets.bottom,
             },
           ]}
         >
           <SheetHeader
-            category="composer"
+            category={onBack ? "form" : "composer"}
+            leftLabel={onBack ? t("common.back") : undefined}
             safeTop={false}
             title={header}
+            wrapActions={content != null && contextLabel === ""}
             onLeft={close}
           />
           {content != null ? (
             <>
-              <UiText style={styles.context}>{context}</UiText>
+              {context ? <UiText style={styles.context}>{context}</UiText> : null}
               {errorMessage ? (
                 <UiText accessibilityRole="alert" style={styles.error}>
                   {errorMessage}

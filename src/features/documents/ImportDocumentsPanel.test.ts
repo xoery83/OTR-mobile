@@ -3,7 +3,13 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { ImportDocumentsPanel } from "./ImportDocumentsPanel";
 import { ImportDocumentsList, ImportDocumentDetail } from "./ImportDocuments";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
-vi.mock("@/ui/controls", () => ({ UiText: () => null }));
+vi.mock("@/ui/controls", () => ({
+  UiText: () => null,
+  UiSection: () => null,
+  UiButton: () => null,
+}));
+vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}) }));
+vi.mock("react-native", () => ({ ScrollView: "viewer" }));
 vi.mock("./CoreDocumentDetail", () => ({ DocumentActions: () => null }));
 const h = vi.hoisted(() => ({
   slots: [] as unknown[],
@@ -14,6 +20,7 @@ const h = vi.hoisted(() => ({
   accountId: "qa",
   list: vi.fn(),
   read: vi.fn(),
+  readBatchMaterial: vi.fn(),
   original: vi.fn(),
   associations: vi.fn(),
   preview: vi.fn(),
@@ -68,11 +75,13 @@ vi.mock("@/data/operations/defaultImportDocuments", () => ({
   getDefaultImportDocumentsRepository: async () => ({
     list: h.list,
     read: h.read,
+    readBatchMaterial: h.readBatchMaterial,
     original: h.original,
   }),
 }));
 const doc = {
   captureId: "capture-a",
+  batchId: "batch-a",
   accountId: "qa",
   tripId: null,
   kind: "TEXT",
@@ -84,6 +93,8 @@ function Harness(
   isCurrent = () => true,
   scope: "TRIP" | "PERSONAL_INBOX" = "PERSONAL_INBOX",
   showHistoricalLinks = true,
+  originalBatchId?: string,
+  onOriginalDismiss?: () => void,
 ) {
   h.cursor = 0;
   h.effects = [];
@@ -93,6 +104,8 @@ function Harness(
     scope,
     captureId,
     showHistoricalLinks,
+    originalBatchId,
+    onOriginalDismiss,
     isCurrent,
     onOpenDocument: vi.fn(),
     onOpenActivity: vi.fn(),
@@ -117,6 +130,7 @@ beforeEach(() => {
   h.accountId = "qa";
   h.list.mockResolvedValue([doc]);
   h.read.mockResolvedValue(doc);
+  h.readBatchMaterial.mockResolvedValue(doc);
   h.associations.mockReset().mockResolvedValue([]);
   h.preview.mockReset().mockRejectedValue(Error("IMPORT_PREVIEW_UNAVAILABLE"));
   h.original.mockResolvedValue({
@@ -504,4 +518,89 @@ it("new Documents surface can open retained metadata without invoking historical
   const view = Harness(doc.captureId, () => true, "TRIP", false);
   expect(h.associations).not.toHaveBeenCalled();
   expect(view.props.linksLoading).toBe(false);
+});
+
+it("opens same-Batch private text directly and never renders File Information", async () => {
+  const viewer = () => Harness(doc.captureId, undefined, "TRIP", false, "batch-a");
+  expect(viewer().type).toBe("viewer");
+  await vi.waitFor(() => {
+    const section = viewer().props.children as ReactElement<{
+      children: ReactElement<{ children: string }>;
+    }>;
+    expect(section.props.children.props.children).toBe("retained original");
+  });
+  expect(h.read).not.toHaveBeenCalled();
+  expect(h.original).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ accountId: "qa", tripId: "trip-a" }),
+    "PERSONAL_INBOX",
+    doc.captureId,
+  );
+  expect(h.readBatchMaterial).toHaveBeenCalledTimes(2);
+});
+
+it("does not expose original bytes for a different Batch", async () => {
+  Harness(doc.captureId, undefined, "TRIP", false, "batch-other");
+  await vi.waitFor(() => expect(h.readBatchMaterial).toHaveBeenCalled());
+  await settle();
+  expect(h.original).not.toHaveBeenCalled();
+});
+
+it("keeps a Batch original closed if its association changes while loading bytes", async () => {
+  const original = {
+    document: {
+      ...doc,
+      batchId: "batch-other",
+      kind: "FILE",
+      declaredContentType: "application/pdf",
+      originalFilename: "source.pdf",
+    },
+    bytes: new TextEncoder().encode("%PDF-1.7"),
+  };
+  let resolveOriginal!: (value: typeof original) => void;
+  h.original.mockImplementationOnce(
+    () =>
+      new Promise<typeof original>((resolve) => {
+        resolveOriginal = resolve;
+      }),
+  );
+  h.readBatchMaterial.mockResolvedValueOnce({ ...original.document, batchId: doc.batchId });
+  h.readBatchMaterial.mockResolvedValueOnce(original.document);
+  const back = vi.fn();
+  Harness(doc.captureId, undefined, "TRIP", false, "batch-a", back);
+  await vi.waitFor(() => expect(h.original).toHaveBeenCalledTimes(1));
+  expect(h.readBatchMaterial).toHaveBeenCalledTimes(1);
+
+  resolveOriginal(original);
+  await vi.waitFor(() => expect(h.readBatchMaterial).toHaveBeenCalledTimes(2));
+  await settle();
+  expect(h.preview).not.toHaveBeenCalled();
+  expect(back).not.toHaveBeenCalled();
+});
+
+it("opens the native viewer once for Batch media and returns only after dismissal", async () => {
+  const pdf = {
+    ...doc,
+    kind: "FILE",
+    declaredContentType: "application/pdf",
+    originalFilename: "source.pdf",
+  };
+  h.readBatchMaterial.mockResolvedValue(pdf);
+  h.original.mockResolvedValue({
+    document: pdf,
+    bytes: new TextEncoder().encode("%PDF-1.7"),
+  });
+  let dismiss!: () => void;
+  h.preview.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        dismiss = resolve;
+      }),
+  );
+  const back = vi.fn();
+  Harness(doc.captureId, undefined, "TRIP", false, "batch-a", back);
+  await vi.waitFor(() => expect(h.preview).toHaveBeenCalledTimes(1));
+  expect(back).not.toHaveBeenCalled();
+  dismiss();
+  await vi.waitFor(() => expect(back).toHaveBeenCalledTimes(1));
+  expect(h.read).not.toHaveBeenCalled();
 });

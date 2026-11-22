@@ -95,6 +95,7 @@ export function SheetHeader({
           {largeText ? (
             <>
               <Text
+                key={fontScale}
                 accessibilityRole="header"
                 numberOfLines={2}
                 style={styles.largeTitle}
@@ -109,7 +110,7 @@ export function SheetHeader({
           ) : (
             <>
               <View style={[styles.side, standard && styles.standardSide]}>{left}</View>
-              <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
+              <Text key={fontScale} accessibilityRole="header" numberOfLines={1} style={styles.title}>
                 {title}
               </Text>
               <View

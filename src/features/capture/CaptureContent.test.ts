@@ -14,6 +14,7 @@ const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/serve
 };
 // Directory native controls have their own owning tests.
 vi.mock("./ImportActivityList", () => ({ ImportActivityList: () => null }));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 const state = vi.hoisted(() => ({
   scheme: "light" as "light" | "dark",
   buttons: [] as Record<string, any>[],

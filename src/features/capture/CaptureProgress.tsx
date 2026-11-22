@@ -23,6 +23,7 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { captureActivityTime } from "./CaptureActivity";
 import type { OpenAcceptedImportItem } from "./useUniversalP1Admission";
+import { HistoricalImportBatchDetail } from "./HistoricalImportBatchDetail";
 const UniversalResults = lazy(() =>
   import("./UniversalCaptureResults").then((module) => ({
     default: module.UniversalCaptureResults,
@@ -32,6 +33,8 @@ const UniversalResults = lazy(() =>
 export function CaptureProgress({
   model,
   historical = false,
+  historicalTripName,
+  onOpenHistoricalMaterial,
   readTripTargets,
   accountId,
   busy,
@@ -55,6 +58,8 @@ export function CaptureProgress({
 }: {
   model: CaptureJobReadModel | null;
   historical?: boolean;
+  historicalTripName?: string;
+  onOpenHistoricalMaterial?(captureId: string, tripId?: string): void;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   accountId: string;
   busy: boolean;
@@ -122,6 +127,18 @@ export function CaptureProgress({
     !!trip &&
     process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED === "true";
   const showLegacyPhotoReview = !canSelectV3 || legacyPhotoScope === universalScope;
+  // Keep recovery, continuation and original-file paths on the existing flow
+  // until the replacement supports their full acceptance cases.
+  const useHistoricalDetail = historical && (
+    !model || (
+      canSelectV3 &&
+      !canRetry &&
+      model.inputs.length > 0 &&
+      model.inputs.every((input) => input.kind === "TEXT") &&
+      !activity?.recoveryInputIds.length &&
+      !activity?.currentInputs.some((input) => input.continuesFromJobId || input.continuedIn.length)
+    )
+  );
   const body = (
     <ScrollView
       ref={scroll}
@@ -157,6 +174,25 @@ export function CaptureProgress({
       style={styles.body}
       contentContainerStyle={styles.content}
     >
+      {useHistoricalDetail ? (
+        model && activity && !error && isCurrent ? (
+          <HistoricalImportBatchDetail
+          key={`${model.batch.accountId}:${model.batch.jobId}:${trip ?? ""}`}
+          model={model}
+          activity={activity}
+          tripName={historicalTripName}
+          isCurrent={isCurrent}
+          onOpenItem={onOpenAcceptedItem}
+          onOpenMaterial={onOpenHistoricalMaterial}
+          onReview={onOpenReview}
+          />
+        ) : (
+          <UiText accessibilityLiveRegion="polite" style={error ? styles.error : styles.copy}>
+            {t(error ? "capture.jobReadError" : "capture.jobLoading")}
+          </UiText>
+        )
+      ) : (
+      <>
       {!canSelectV3 && !historical ? (
         <UiText style={styles.secondary}>{t("capture.progress.closeHint")}</UiText>
       ) : null}
@@ -457,6 +493,8 @@ export function CaptureProgress({
           />
         </>
       ) : null}
+      </>
+      )}
     </ScrollView>
   );
   return (
