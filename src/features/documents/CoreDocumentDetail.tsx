@@ -19,6 +19,7 @@ import { visual } from "@/ui/visual";
 import type { UiColors } from "@/ui/palette";
 import { localItemImportOriginals } from "@/data/operations/localItemImportOriginals";
 import {
+  coreDocumentDisplayTitle,
   documentFormat,
   documentFormatLabel,
   documentSourceLabel as sourceKeys,
@@ -187,6 +188,8 @@ export function CoreDocumentDetail({
   }
   const at = (date: string) =>
     formatUiDate(new Date(date), { dateStyle: "medium", timeStyle: "short" });
+  const submittedText = t("capture.ai.submittedText");
+  const displayTitle = coreDocumentDisplayTitle(entry, submittedText);
   const summary = (
     <View style={styles.summary}>
       <View style={styles.identity}>
@@ -196,7 +199,7 @@ export function CoreDocumentDetail({
           color={colors.textSecondary}
         />
         <View style={styles.copy}>
-          <UiText style={styles.title}>{entry.title}</UiText>
+          <UiText style={styles.title}>{displayTitle}</UiText>
           <UiText style={styles.meta}>
             {t(documentFormatLabel[documentFormat(entry)])}
             {entry.byteCount
@@ -334,7 +337,7 @@ export function CoreDocumentDetail({
                         <UiButton
                           key={doc.id}
                           variant="text"
-                          label={doc.title}
+                          label={coreDocumentDisplayTitle(doc, submittedText)}
                           onPress={() => openDocument(doc)}
                         />
                       ))}
@@ -387,7 +390,13 @@ export function CoreDocumentDetail({
                     </UiText>
                     {item.date || item.time ? (
                       <UiText style={styles.meta}>
-                        {[item.date, item.time].filter(Boolean).join(" · ")}
+                        {[
+                          item.date && formatUiDate(new Date(`${item.date}T00:00:00Z`), {
+                            dateStyle: "medium",
+                            timeZone: "UTC",
+                          }),
+                          item.time,
+                        ].filter(Boolean).join(" · ")}
                       </UiText>
                     ) : null}
                     {item.place ? (
@@ -415,7 +424,7 @@ export function CoreDocumentDetail({
             />
             {!available ? (
               <UiText style={styles.meta}>
-                {t("documents.originalMissingHelp", { name: entry.title })}
+                {t("documents.originalMissingHelp", { name: displayTitle })}
               </UiText>
             ) : null}
             {originalError ? (

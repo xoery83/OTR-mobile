@@ -52,6 +52,7 @@ import { visual } from "@/ui/visual";
 import type { UiColors } from "@/ui/palette";
 import {
   captureDocumentRow,
+  coreDocumentDisplayTitle,
   documentFormat,
   documentFormatLabel,
   documentSourceLabel as sourceKey,
@@ -1029,7 +1030,9 @@ function DocumentDirectory({
               <Pressable
                 style={styles.rowMain}
                 accessibilityRole="button"
-                accessibilityLabel={entry.title}
+                accessibilityLabel={entry.origin === "CORE"
+                    ? coreDocumentDisplayTitle(entry, t("capture.ai.submittedText"))
+                    : entry.title}
                 onPress={() => {
                   if (active()) {
                     openDetail(entry);
@@ -1058,7 +1061,9 @@ function DocumentDirectory({
                 </View>
                 <View style={styles.rowCopy}>
                   <UiText style={styles.title}>
-                    {entry.title}
+                    {entry.origin === "CORE"
+                    ? coreDocumentDisplayTitle(entry, t("capture.ai.submittedText"))
+                    : entry.title}
                   </UiText>
                   <UiText style={styles.meta}>
                     {t("documents.rowMetadata", {

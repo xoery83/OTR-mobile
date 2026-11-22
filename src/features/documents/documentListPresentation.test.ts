@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import {
+  coreDocumentDisplayTitle,
   documentFormat,
   documentReadFailure,
   documentChromeAfterScroll,
@@ -133,4 +134,11 @@ it("does not report a denied, unavailable offline or failed read as an empty dir
   );
   expect(documentReadFailure(Error("IO_ERROR"), true)).toBe("OFFLINE_UNKNOWN");
   expect(documentReadFailure(Error("IO_ERROR"), false)).toBe("FAILED");
+});
+
+it("uses the readable name only for the imported Core text fallback", () => {
+  const original = row("text/plain", "text/plain");
+  expect(coreDocumentDisplayTitle(original, "Submitted text")).toBe("Submitted text");
+  expect(original.title).toBe("text/plain");
+  expect(coreDocumentDisplayTitle(row("Travel note.txt", "text/plain"), "Submitted text")).toBe("Travel note.txt");
 });

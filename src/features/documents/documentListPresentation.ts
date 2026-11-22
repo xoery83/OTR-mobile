@@ -20,6 +20,15 @@ export type DocumentListEntry = {
   visibility: "PRIVATE" | "GROUP" | "SELECTED_PERSONS";
 };
 export type DocumentFormat = "ALL" | "PDF" | "IMAGE" | "TEXT" | "PRIVATE" | "OFFLINE";
+export function coreDocumentDisplayTitle(
+  entry: Pick<DocumentListEntry, "title" | "mediaType">,
+  submittedTextLabel: string,
+) {
+  return entry.mediaType === "text/plain" && entry.title === entry.mediaType
+    ? submittedTextLabel
+    : entry.title;
+}
+
 export function documentFormat(entry: Pick<DocumentListEntry, "mediaType">) {
   return entry.mediaType === "application/pdf"
     ? "PDF"
