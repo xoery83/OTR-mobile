@@ -352,7 +352,7 @@ export function CoreDocumentDetail({
                         onPress={() => {
                           if (current.current())
                             router.push({
-                              pathname: "/capture",
+                              pathname: "/import-plans",
                               params: { tripId, jobId: batch.jobId },
                             });
                         }}
