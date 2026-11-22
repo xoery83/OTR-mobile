@@ -231,3 +231,11 @@ it("failed sharing still cleans up the temporary copy without deleting the origi
   expect(exported.files.size).toBe(0);
   expect(bytes[0]).toBe(37);
 });
+it("uses a user-facing name for the verified temporary copy when supplied", async () => {
+  exported.share.mockImplementationOnce(async (uri: string) => {
+    expect(uri.endsWith("/Submitted text.txt")).toBe(true);
+    expect(exported.files.get(uri)).toEqual(bytes);
+  });
+  await shareImportOriginal(original, () => true, "Submitted text.txt");
+  expect(exported.files.size).toBe(0);
+});

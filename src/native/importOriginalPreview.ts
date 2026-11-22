@@ -94,6 +94,7 @@ export async function shareImportOriginal(
     bytes: Uint8Array;
   },
   isCurrent: () => boolean,
+  displayName = original.document.originalFilename,
 ) {
   const { bytes, document } = original;
   if (!isCurrent()) return;
@@ -112,8 +113,8 @@ export async function shareImportOriginal(
     throw Error("IMPORT_PREVIEW_UNAVAILABLE");
   const directory = new Directory(Paths.cache, `document-export-${randomUUID()}`);
   const name = (
-    document.originalFilename && ![".", ".."].includes(document.originalFilename)
-      ? document.originalFilename
+    displayName && ![".", ".."].includes(displayName)
+      ? displayName
       : "original"
   ).replace(/[/\\\x00-\x1f]/g, "_");
   const file = new File(directory, name);

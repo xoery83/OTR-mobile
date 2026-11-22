@@ -174,7 +174,14 @@ export function CoreDocumentDetail({
       if (!current.current()) return;
       if (!original) throw Error("IMPORT_ORIGINAL_UNAVAILABLE");
       const native = await import("@/native/importOriginalPreview");
-      if (exporting) await native.shareImportOriginal(original, () => current.current());
+      if (exporting) {
+        const { originalFilename, mediaType } = original.document;
+        const fileName = mediaType === "text/plain" &&
+          (!originalFilename || originalFilename === mediaType)
+          ? `${t("capture.ai.submittedText")}.txt`
+          : originalFilename;
+        await native.shareImportOriginal(original, () => current.current(), fileName);
+      }
       else if (original.document.mediaType === "text/plain")
         setText(new TextDecoder("utf-8", { fatal: true }).decode(original.bytes));
       else await native.previewImportOriginal(original, () => current.current());
