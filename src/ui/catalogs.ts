@@ -369,7 +369,7 @@ export const en = {
   "documents.resultLinked": "Linked",
   "documents.resultUpdated": "Updated",
 
-  "documents.activityTab": "Activity",
+  "documents.activityTab": "Import Activity",
   "documents.searchFilters": "Search filters",
   "documents.privacyFilter": "Privacy",
   "documents.storageFilter": "On this device",
