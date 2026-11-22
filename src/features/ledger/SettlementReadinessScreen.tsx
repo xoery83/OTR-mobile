@@ -1,6 +1,6 @@
 import { segmentedControlTokens } from "@/ui/segmented";
 import { categoryLabel, systemMessage } from "@/ui/domainLabels";
-import { UiButton } from "@/ui/controls";
+import { UiButton, UiText } from "@/ui/controls";
 import { t, formatUiDate } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -1480,9 +1480,9 @@ function GroupReviewStatus({
   };
   return (
     <View style={styles.summaryBlock}>
-      <Text accessibilityRole="header" style={styles.summaryHeading}>
+      <UiText accessibilityRole="header" style={styles.summaryHeading}>
         {t("settlement.groupReview")}
-      </Text>
+      </UiText>
       <View style={styles.card}>
         <View style={styles.reviewCounts}>
           {(
@@ -1493,8 +1493,8 @@ function GroupReviewStatus({
             ] as const
           ).map(([state, label]) => (
             <View key={state} style={styles.reviewCount}>
-              <Text style={styles.reviewCountValue}>{counts[state]}</Text>
-              <Text style={styles.meta}>{label}</Text>
+              <UiText style={styles.reviewCountValue}>{counts[state]}</UiText>
+              <UiText style={styles.meta}>{label}</UiText>
             </View>
           ))}
         </View>
@@ -1516,14 +1516,13 @@ function GroupReviewStatus({
                       : styles.reviewControlChecking),
                 ]}
               >
-                <Text
-                  numberOfLines={1}
+                <UiText
                   style={[styles.reviewControlText, selected && styles.bold]}
                 >
                   {state === "LOOKS_GOOD"
                     ? t("settlement.looksGood")
                     : t("settlement.stillChecking")}
-                </Text>
+                </UiText>
               </Pressable>
             );
           })}
@@ -1533,9 +1532,9 @@ function GroupReviewStatus({
               accessibilityState={{ disabled: true, selected: true }}
               style={[styles.reviewControl, styles.reviewControlNeutral]}
             >
-              <Text numberOfLines={1} style={[styles.reviewControlText, styles.bold]}>
+              <UiText style={[styles.reviewControlText, styles.bold]}>
                 {t("settlement.notReviewed")}
-              </Text>
+              </UiText>
             </View>
           ) : null}
         </View>
@@ -1543,21 +1542,21 @@ function GroupReviewStatus({
           accessibilityRole="button"
           accessibilityState={{ expanded }}
           onPress={onExpand}
-          style={styles.summaryLink}
+          style={[styles.summaryLink, styles.reviewDisclosure]}
         >
-          <Text style={styles.link}>
+          <UiText style={styles.link}>
             {expanded ? t("settlement.hideStatus") : t("settlement.viewStatus")}
-          </Text>
+          </UiText>
         </Pressable>
         {expanded ? (
           <View style={styles.reviewMembers}>
             {coverage.map((member) => (
               <View key={member.memberId} style={styles.reviewMemberRow}>
-                <Text style={styles.body}>
+                <UiText style={[styles.body, styles.reviewMemberName]}>
                   {member.displayName || t("common.traveller")}
                   {member.memberId === actorMemberId ? t("settlement.youSuffix") : ""}
-                </Text>
-                <Text
+                </UiText>
+                <UiText
                   style={[
                     styles.reviewTag,
                     member.reviewState === "LOOKS_GOOD"
@@ -1568,7 +1567,7 @@ function GroupReviewStatus({
                   ]}
                 >
                   {reviewStateLabel(member.reviewState)}
-                </Text>
+                </UiText>
               </View>
             ))}
           </View>
@@ -1896,7 +1895,7 @@ const createStyles = (colors: UiColors) => {
       borderWidth: 1,
       flex: 1,
       justifyContent: "center",
-      minHeight: 42,
+      minHeight: 44,
       paddingHorizontal: 8,
     },
     reviewControlChecking: {
@@ -1908,7 +1907,13 @@ const createStyles = (colors: UiColors) => {
       borderColor: colors.success,
     },
     reviewControlNeutral: { backgroundColor: colors.separator },
-    reviewControlText: { color: colors.textTertiary, fontSize: 13, fontWeight: "700" },
+    reviewControlText: {
+      color: colors.textTertiary,
+      fontSize: 13,
+      fontWeight: "700",
+      textAlign: "center",
+    },
+    reviewDisclosure: { minHeight: 44 },
     reviewControls: {
       alignItems: "center",
       flexDirection: "row",
@@ -1922,6 +1927,7 @@ const createStyles = (colors: UiColors) => {
       fontVariant: ["tabular-nums"],
       fontWeight: "800",
     },
+    reviewMemberName: { flex: 1 },
     reviewMemberRow: {
       alignItems: "center",
       flexDirection: "row",
