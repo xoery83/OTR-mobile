@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useLayoutEffect } from "react";
 import {
   ActionSheetIOS,
+  Alert,
   Modal,
   Platform,
   ScrollView,
@@ -464,6 +465,18 @@ export function DocumentActions({
   const styles = useThemedStyles(createStyles);
   const [information, setInformation] = useState(informationInitially),
     [menu, setMenu] = useState(false);
+  const confirmCopy = () => {
+    if (!available || !isCurrent()) return;
+    Alert.alert(t("documents.export"), t("documents.shareCopyHelp"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("documents.confirmShareCopy"),
+        onPress: () => {
+          if (isCurrent()) onExport();
+        },
+      },
+    ]);
+  };
   const showMenu = () => {
     if (!isCurrent()) return;
     if (Platform.OS !== "ios") {
@@ -487,7 +500,7 @@ export function DocumentActions({
       (index) => {
         if (!isCurrent()) return;
         if (index === 0) setInformation(true);
-        if (index === 1) onExport();
+        if (index === 1) confirmCopy();
       },
     );
   };
@@ -529,7 +542,7 @@ export function DocumentActions({
                 disabled={!available}
                 onPress={() => {
                   setMenu(false);
-                  onExport();
+                  confirmCopy();
                 }}
               />
             ) : null}
