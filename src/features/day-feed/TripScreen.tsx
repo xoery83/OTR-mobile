@@ -1809,6 +1809,29 @@ function TripContent({
                   ? phase(calendarDates[calendarDates.length - 1])
                   : colors.background,
               },
+              footer: (date, bottomSpace) => (
+                <View
+                  pointerEvents="none"
+                  style={{ minHeight: bottomSpace, backgroundColor: colors.tripIntroduction }}
+                >
+                  <View
+                    style={{
+                      height: Math.min(bottomSpace, visual.space.section * 2),
+                      experimental_backgroundImage: [
+                        {
+                          type: "linear-gradient",
+                          // ui-foundation-exception: string -- Native gradient direction identifier.
+                          direction: "to bottom",
+                          colorStops: [
+                            { color: phase(date), positions: ["0%"] },
+                            { color: colors.tripIntroduction, positions: ["100%"] },
+                          ],
+                        },
+                      ],
+                    }}
+                  />
+                </View>
+              ),
               showTimeUnspecified: false,
               renderDayHeading: (date, empty) => (
                 <P1MeasuredMoveRegion

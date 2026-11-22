@@ -104,6 +104,7 @@ export type DayFeedPresentation = {
   renderImmersiveHeader?: (onClose: () => void) => ReactNode;
   listRef?: (value: DayListHandle | null) => void;
   header?: ReactNode;
+  footer?: (date: string, bottomSpace: number) => ReactNode;
   formatDayHeading?: (date: string) => string;
   topInset?: number;
   onViewportChange?: (viewport: {
@@ -743,6 +744,7 @@ function AcceptedDayFeed({
             topInset={presentation?.topInset ?? 0}
             bottomInset={visual.space.section + bottomInset}
             header={presentation?.header}
+            footer={presentation?.footer}
             style={[styles.root, presentation?.listStyle]}
             contentContainerStyle={[
               styles.content,

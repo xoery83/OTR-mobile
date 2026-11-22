@@ -162,6 +162,7 @@ export function LocalManualDayFeed({
       bottomInset={visual.space.section + bottomInset}
       rowSpacing={presentation?.wrapDayRow ? 0 : visual.space.section}
       header={presentation?.header}
+      footer={presentation?.footer}
       style={[styles.body, presentation?.listStyle]}
       contentContainerStyle={[
         styles.content,

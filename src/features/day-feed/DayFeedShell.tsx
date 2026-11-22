@@ -70,6 +70,8 @@ export function DayFeedIntroduction({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
+  if (fidelity && !rangeLabel && !locationSummary)
+    return <View style={styles.emptyFidelityIntroduction} />;
   return (
     <View
       style={
@@ -303,6 +305,7 @@ const createStyles = (colors: UiColors) =>
       textAlign: "center",
       flexShrink: 1,
     },
+    emptyFidelityIntroduction: { height: visual.space.heading },
     fidelityIntroduction: {
       minHeight: 111,
       paddingTop: 13,

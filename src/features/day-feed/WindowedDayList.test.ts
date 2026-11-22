@@ -160,6 +160,7 @@ function setup(
   coldAnchor?: { key: string; date: string; within: number },
   header?: ReactNode,
   rowSpacing = 0,
+  footer?: (date: string, bottomSpace: number) => ReactNode,
 ) {
   let date = "2026-10-01";
   const rows = Array.from({ length: days }, () => {
@@ -198,6 +199,7 @@ function setup(
         initialAnchor,
         topInset,
         header,
+        footer,
         rowSpacing,
         bottomInset: rowSpacing ? 100 : 0,
         onMountedRowsChange: count,
@@ -223,6 +225,17 @@ function setup(
     readingStopped,
   };
 }
+
+it("lets the footer paint the existing bottom inset from the last visible itinerary date", () => {
+  const view = createElement("span", {}, "End of itinerary");
+  const footer = vi.fn(() => view);
+  const { rows } = setup(0, 3, undefined, undefined, 24, footer);
+  expect(footer).toHaveBeenLastCalledWith(rows.at(-1)?.date, 76);
+  expect(state.props.ListFooterComponent.props.children).toBe(view);
+  expect(state.props.contentContainerStyle.at(-1).paddingBottom).toBe(0);
+  expect(state.props.scrollIndicatorInsets.bottom).toBe(100);
+});
+
 function touch(pageY: number, identifier: string | number = "1", count = 1) {
   return { nativeEvent: { pageY, identifier, touches: Array(count).fill({}) } };
 }

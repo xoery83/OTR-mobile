@@ -51,6 +51,7 @@ export function WindowedDayList<T>({
   style,
   contentContainerStyle,
   header,
+  footer,
   onAnchorChange,
   onVisibleDates,
   onOffsetChange,
@@ -74,6 +75,7 @@ export function WindowedDayList<T>({
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   header?: ReactNode;
+  footer?: (date: string, bottomSpace: number) => ReactNode;
   onAnchorChange?(anchor: DayScrollAnchor): void;
   onVisibleDates?(dates: readonly string[]): void;
   onOffsetChange?(offset: number): void;
@@ -660,6 +662,9 @@ export function WindowedDayList<T>({
     },
     [retry, resolveRequest, trace, recordAnchor, renderedEpoch],
   );
+  const lastDate = rows.at(-1)?.date;
+  const bottomSpace = Math.max(0, bottomInset - rowSpacing);
+  const listFooter = lastDate ? footer?.(lastDate, bottomSpace) : null;
   return (
     <FlatList
       scrollEnabled={scrollEnabled}
@@ -685,6 +690,7 @@ export function WindowedDayList<T>({
           <View style={{ height: topInset + rowSpacing }} />
         )
       }
+      ListFooterComponent={listFooter ? <>{listFooter}</> : null}
       {...dayListWindow}
       updateCellsBatchingPeriod={statusBarOrigin.current !== null ? 0 : 50}
       removeClippedSubviews={false}
@@ -696,7 +702,7 @@ export function WindowedDayList<T>({
       style={style}
       contentContainerStyle={[
         contentContainerStyle,
-        { paddingBottom: Math.max(0, bottomInset - rowSpacing) },
+        { paddingBottom: listFooter ? 0 : bottomSpace },
       ]}
       scrollIndicatorInsets={{ top: topInset, bottom: bottomInset }}
       scrollEventThrottle={16}

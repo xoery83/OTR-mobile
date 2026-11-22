@@ -247,6 +247,26 @@ it("opens Calendar from the initial Trip date row while the floating title is bl
   expect(open).toHaveBeenCalledOnce();
 });
 
+it("keeps an empty fidelity introduction compact and preserves the date action when present", () => {
+  const props = { fidelity: true, tripName: "A short trip" };
+  renderToStaticMarkup(createElement(DayFeedIntroduction, props));
+  expect(state.views[0].style.height).toBeLessThan(24);
+  expect(state.nodes).toHaveLength(0);
+
+  const onOpenCalendar = vi.fn();
+  renderToStaticMarkup(
+    createElement(DayFeedIntroduction, {
+      ...props,
+      rangeLabel: "Nov 22, 2026",
+      openCalendarLabel: "Choose date",
+      onOpenCalendar,
+    }),
+  );
+  const calendar = state.nodes.find((node) => node.accessibilityLabel === "Choose date");
+  calendar.onPress();
+  expect(onOpenCalendar).toHaveBeenCalledOnce();
+});
+
 it("compresses Native Chinese parts that mislabel the full date as year", () => {
   vi.useRealTimers();
   const locale = vi.spyOn(uiLocale, "getFormatLocale").mockReturnValue("zh-Hans");
