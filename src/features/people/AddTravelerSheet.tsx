@@ -202,7 +202,7 @@ function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: P
             ? "common.tryAgain"
             : failed
               ? "people.retrySave"
-              : "people.saveTraveler",
+              : "ui.save",
         )}
         onRight={() => void (!ready ? loadDraft() : save())}
         rightDisabled={
