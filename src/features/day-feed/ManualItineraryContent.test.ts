@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { createRequire } from "node:module";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ManualItineraryContent } from "./ManualItineraryContent";
+vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
 vi.mock("@/data/operations/defaultUniversalP3SourceInterpreter", () => ({
   createDefaultUniversalP3SourceInterpreter: vi.fn(),
 }));
@@ -126,7 +127,7 @@ beforeEach(() => {
   state.read.mockReset();
 });
 it("shows the approved 2+5 order without creating a draft or reading an editor", () => {
-  render();
+  expect(render()).not.toContain("formEntry.localOnlyHint");
   expect(
     state.buttons
       .filter((p) => p.accessibilityLabel?.startsWith("formEntry."))
@@ -220,7 +221,8 @@ vi.mock("@/data/auth/localTripAccess", async () => ({
 
 it("Guest local slice exposes only the approved P1/P3 writers and preserves normal Account chooser capabilities", () => {
   props.localOnly = true;
-  render();
+  expect(render()).toContain("formEntry.localOnlyHint");
+  expect(state.buttons.find((button) => button.accessibilityLabel === "formEntry.activity").disabled).toBe(true);
   const plan = state.buttons.find(
     (button) => button.accessibilityLabel === "formEntry.plan",
   );

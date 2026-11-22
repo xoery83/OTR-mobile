@@ -192,6 +192,7 @@ export function ManualItineraryChooser({
           contentContainerStyle={styles.content}
         >
           <UiText style={styles.prompt}>{t("formEntry.prompt")}</UiText>
+          {localOnly ? <UiText style={styles.meta}>{t("formEntry.localOnlyHint")}</UiText> : null}
           {contextLabel ? <UiText style={styles.meta}>{contextLabel}</UiText> : null}
           <View style={styles.row}>
             {manualItineraryTypes.slice(0, 2).map((type) => choice(type, false))}
