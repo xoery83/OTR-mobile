@@ -111,7 +111,7 @@ import { createLatestRequest } from "./latestRequest";
 import { retrySQLiteRollbackOnce } from "./retryLedgerRead";
 import { GuestLedgerScreen } from "./GuestLedgerScreen";
 import { SheetHeader } from "@/components/SheetHeader";
-import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
+import { advanceScrollAnchor, rebaseHeaderCollapse, restoredScrollY } from "./settlementScrollAnchor";
 
 type Mode = "SPENDING" | "SETTLEMENT";
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView);
@@ -272,10 +272,21 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
       ? projection.journey
       : null;
   const collapseDistance = spendingHeaderHeight;
-  useEffect(() => {
-    if (collapseDistance > 0)
-      setModeNavHidden(sharedCollapse.current >= collapseDistance - 1);
-  }, [collapseDistance]);
+  const previousCollapseDistance = useRef(0);
+  useLayoutEffect(() => {
+    const collapse = rebaseHeaderCollapse(
+      sharedCollapse.current, previousCollapseDistance.current, collapseDistance,
+    );
+    previousCollapseDistance.current = collapseDistance;
+    setModeNavHidden(collapseDistance > 0 && collapse >= collapseDistance - 1);
+    if (sharedCollapse.current === collapse) return;
+    sharedCollapse.current = collapse;
+    settlementHeaderOffset.setValue(collapse);
+    const y = restoredScrollY(collapse, spendingAnchor.current.body);
+    spendingAnchor.current.y = y;
+    spendingScroll.current?.scrollTo({ y, animated: false });
+    setModeTransitionSeq((value) => value + 1);
+  }, [collapseDistance, settlementHeaderOffset]);
   useEffect(() => {
     settlementHeaderOffset.setValue(0);
     modePageProgress.position.setValue(modeRef.current === "SPENDING" ? 0 : 1);

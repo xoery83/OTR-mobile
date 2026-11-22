@@ -19,3 +19,8 @@ export function advanceScrollAnchor(
 export function restoredScrollY(sharedCollapse: number, savedBody: number) {
   return sharedCollapse + savedBody;
 }
+
+export function rebaseHeaderCollapse(collapse: number, previousHeight: number, height: number) {
+  if (previousHeight > 0 && collapse >= previousHeight - 1) return height;
+  return Math.min(collapse, height);
+}

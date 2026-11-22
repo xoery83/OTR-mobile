@@ -449,6 +449,7 @@ export function SettlementSectionTabs({
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   useUiLocale();
+  const { fontScale } = useWindowDimensions();
   const [width, setWidth] = useState(0);
   const page = progress ? Animated.add(progress.position, progress.offset) : null;
   return (
@@ -481,7 +482,7 @@ export function SettlementSectionTabs({
           />
           {page ? (
             <View style={styles.navLabel}>
-              <Text
+              <UiText
                 adjustsFontSizeToFit
                 maxFontSizeMultiplier={1.35}
                 minimumFontScale={0.8}
@@ -489,8 +490,9 @@ export function SettlementSectionTabs({
                 style={styles.navText}
               >
                 {t(labelKey)}
-              </Text>
+              </UiText>
               <Animated.Text
+                key={fontScale}
                 adjustsFontSizeToFit
                 maxFontSizeMultiplier={1.35}
                 minimumFontScale={0.8}
@@ -512,7 +514,7 @@ export function SettlementSectionTabs({
               </Animated.Text>
             </View>
           ) : (
-            <Text
+            <UiText
               adjustsFontSizeToFit
               maxFontSizeMultiplier={1.35}
               minimumFontScale={0.8}
@@ -520,7 +522,7 @@ export function SettlementSectionTabs({
               style={[styles.navText, active === name && styles.navTextActive]}
             >
               {t(labelKey)}
-            </Text>
+            </UiText>
           )}
         </Pressable>
       ))}
