@@ -158,7 +158,12 @@ export function ImportUpdatesSection({
   const query = filter.query.trim().toLocaleLowerCase();
   const localTitle = (job: CaptureJobReadModel) =>
     (job.batch.inputs?.length === 1 && job.batch.inputs[0].originalFilename) ||
-    t("capture.progress.batchTitle", { count: job.counts.selected });
+    t(
+      job.counts.selected === 1
+        ? "capture.progress.singleMaterialBatchTitle"
+        : "capture.progress.batchTitle",
+      { count: job.counts.selected },
+    );
   const localJobs =
     loaded?.localJobs.filter(
       (job) =>

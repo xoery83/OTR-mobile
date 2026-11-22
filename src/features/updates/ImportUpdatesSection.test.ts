@@ -120,8 +120,7 @@ it("shows one original notification time in compact rows and searches existing d
 it("renders a reopenable local record without fabricating Task state and replaces it with the same Batch observation", () => {
   fixture.cards = [];
   fixture.loading = true;
-  fixture.localJobs = [
-    {
+  const namedJob = {
       batch: {
         accountId: "account",
         createdAt: "2026-11-01T19:26:26Z",
@@ -133,8 +132,8 @@ it("renders a reopenable local record without fabricating Task state and replace
       counts: { selected: 1 },
       allInputsAccepted: true,
       availableActions: { canReopen: true },
-    },
-  ];
+  };
+  fixture.localJobs = [namedJob];
   const local = render("lantern.txt");
   expect(local).toContain("lantern.txt");
   expect(local).toContain("<button");
@@ -144,6 +143,11 @@ it("renders a reopenable local record without fabricating Task state and replace
   expect(local).toContain("2026-11-01T19:26:26.000Z");
   expect(local).not.toContain("updates.refresh");
   expect(render("other.pdf")).not.toContain("lantern.txt");
+  const untitled = { ...namedJob, batch: { ...namedJob.batch, inputs: [] } };
+  fixture.localJobs = [untitled];
+  expect(render()).toContain("capture.progress.singleMaterialBatchTitle");
+  fixture.localJobs = [{ ...untitled, counts: { selected: 2 } }];
+  expect(render()).toContain("capture.progress.batchTitle");
   fixture.cards = [
     {
       id: "batch",

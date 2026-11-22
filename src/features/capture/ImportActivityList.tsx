@@ -188,7 +188,12 @@ export function ImportActivityList({
         {visible.map(({ job, fact }) => {
           const title =
             (job.inputs.length === 1 && job.inputs[0].originalFilename) ||
-            t("capture.progress.batchTitle", { count: job.counts.selected });
+            t(
+              job.counts.selected === 1
+                ? "capture.progress.singleMaterialBatchTitle"
+                : "capture.progress.batchTitle",
+              { count: job.counts.selected },
+            );
           const icon =
             fact.sources.length > 1
               ? "square.stack"
