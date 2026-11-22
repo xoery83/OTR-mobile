@@ -97,7 +97,6 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { UiButton, UiText as ThemedText } from "@/ui/controls";
-import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -281,11 +280,9 @@ function TripContent({
     repository: ManualTransportRepository;
     draft: ManualTransportDraft;
   } | null>(null);
-  const [date, setDate] = useState(value(params.date));
   const [zone, setZone] = useState(value(params.zone));
   const [trip, setTrip] = useState<TripRead | null>(null);
   const [status, setStatus] = useState<"LOADING" | "UNAVAILABLE" | "READY">("LOADING");
-  const [contextError, setContextError] = useState(false);
   const [homeItem, setHomeItem] = useState<{
     read: TripRead;
     date: string;
@@ -600,7 +597,7 @@ function TripContent({
     async (requestedDate?: string | null, requestedZone: string | null = zone) => {
       if (generation !== getAccountGeneration() || !canChooseDay || !visibleTrip) return;
       try {
-        const selectedDate = requestedDate || date;
+        const selectedDate = requestedDate || value(params.date);
         const dateValue = selectedDate ? validateCalendarDate(selectedDate) : "";
         const context = dateValue
           ? viewContext(dateValue, requestedZone || { zone: null, viewMode: "FLOATING" })
@@ -619,7 +616,6 @@ function TripContent({
         )
           return;
         if (context?.zone === null && result.observed?.projection.version === 1) {
-          setContextError(true);
           return;
         }
         setTrip(result);
@@ -633,12 +629,11 @@ function TripContent({
             : { viewMode: "NAMED_ZONE" }),
           view: "day",
         });
-        setContextError(false);
       } catch {
-        setContextError(true);
+        // Keep the current Trip if its scoped Day read fails.
       }
     },
-    [generation, canChooseDay, visibleTrip, date, zone, requested, select],
+    [generation, canChooseDay, visibleTrip, params.date, zone, requested, select],
   );
   const freshLocalRead = async (expected: Pick<LocalManualRead, "scope" | "source">) => {
     if (
@@ -1205,14 +1200,20 @@ function TripContent({
   const routeDay = (() => {
     if (today || home || !visibleTrip) return null;
     try {
+      const explicitDate = value(params.date);
+      const explicitZone = value(params.zone);
+      const bookmark = [savedDay, resumeView].find(
+        (saved) => saved?.tripId === requested && saved.generation === generation,
+      );
+      if (!explicitDate && !explicitZone && !value(params.viewMode) && bookmark) {
+        validateCalendarDate(bookmark.date);
+        if (bookmark.zone !== "") viewContext(bookmark.date, bookmark);
+        return bookmark;
+      }
       const routeDate = validateCalendarDate(
-        value(params.date) ||
-          (view?.tripId === requested && view.generation === generation
-            ? view.date
-            : "") ||
-          (resumeView?.tripId === requested && resumeView.generation === generation
-            ? resumeView.date
-            : "") ||
+        explicitDate ||
+          bookmark?.date ||
+          dayFacts?.startDate ||
           currentSnapshot?.trip?.startDate ||
           currentSnapshot?.candidateDays[0] ||
           visibleTrip.localManual?.items
@@ -1225,16 +1226,17 @@ function TripContent({
               return first ? [first] : [];
             })
             .sort()[0] ||
-          "",
+          dayFacts?.endDate ||
+          currentSnapshot?.trip?.endDate ||
+          localCalendarDate(new Date().toISOString(), Intl.DateTimeFormat().resolvedOptions().timeZone),
       );
-      const routeZone = value(params.zone);
+      const routeZone = explicitZone || (params.viewMode === "FLOATING" ? "" : zone);
       if (routeZone)
         return { tripId: requested, ...viewContext(routeDate, routeZone), generation };
       if (visibleTrip.observed?.projection.version === 1)
         return params.viewMode === "FLOATING"
           ? null
           : { tripId: requested, date: routeDate, zone: "", generation };
-      if (params.viewMode !== "FLOATING" && !visibleTrip.localManual) return null;
       return {
         tripId: requested,
         ...viewContext(routeDate, { zone: null, viewMode: "FLOATING" }),
@@ -1255,6 +1257,10 @@ function TripContent({
     savedDay?.viewMode === dayContext?.viewMode
       ? savedDay
       : null;
+  useEffect(() => {
+    if (!today && dayActive && dayContext && !selected && canChooseDay && navigation.isFocused())
+      select(dayContext);
+  }, [today, dayActive, dayContext, selected, canChooseDay, navigation, select]);
   const visibleLocalItem =
     localItem &&
     visibleTrip?.localManual &&
@@ -2160,43 +2166,12 @@ function TripContent({
         </ThemedText>
       </View>
     );
-  if (!dayContent && !home && !today && visibleTrip && canChooseDay)
+  if (dayActive && !dayContent)
     return (
-      <View style={styles.root}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: bottomBarHeight + visual.space.page },
-          ]}
-        >
-          <Text accessibilityRole="header" style={styles.heading}>
-            {t("shell.day")}
-          </Text>
-          <Text style={styles.meta}>{t("dayFeed.timeUnspecified")}</Text>
-          <Text style={styles.meta}>{t("dayFeed.date")}</Text>
-          <UiTextInput
-            accessibilityLabel={t("dayFeed.date")}
-            value={date}
-            onChangeText={setDate}
-            autoCapitalize="none"
-          />
-          {dateChoices.map((choice) => (
-            <UiChoiceChip
-              compact
-              key={choice}
-              label={choice}
-              selected={date === choice}
-              onPress={() => void enterDay(choice)}
-            />
-          ))}
-          {contextError ? (
-            <Text accessibilityRole="alert" style={styles.meta}>
-              {t("dayFeed.contextInvalid")}
-            </Text>
-          ) : null}
-          <UiButton label={t("dayFeed.openDay")} onPress={() => void enterDay()} />
-        </ScrollView>
+      <View style={[styles.root, { paddingTop: dayTopInset }]}>
+        <ThemedText accessibilityRole="alert" style={styles.meta}>
+          {t("dayFeed.unavailable")}
+        </ThemedText>
       </View>
     );
   return (
