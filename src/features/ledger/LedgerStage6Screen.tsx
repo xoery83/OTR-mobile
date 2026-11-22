@@ -1502,17 +1502,17 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
                       style={styles.context}
                     >
                       <View style={styles.tripBadge}>
-                        <Text style={styles.tripBadgeText}>
+                        <UiText style={styles.tripBadgeText}>
                           {t("ledger.tripHeading")}
-                        </Text>
+                        </UiText>
                       </View>
-                      <Text
+                      <UiText
                         maxFontSizeMultiplier={2}
                         numberOfLines={1}
                         style={styles.contextTitle}
                       >
                         {journey.title}
-                      </Text>
+                      </UiText>
                       <AppIcon
                         color={colors.textSecondary}
                         name="chevron.right"
@@ -1585,17 +1585,17 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
                         style={styles.context}
                       >
                         <View style={styles.tripBadge}>
-                          <Text style={styles.tripBadgeText}>
+                          <UiText style={styles.tripBadgeText}>
                             {t("ledger.tripHeading")}
-                          </Text>
+                          </UiText>
                         </View>
-                        <Text
+                        <UiText
                           maxFontSizeMultiplier={2}
                           numberOfLines={1}
                           style={styles.contextTitle}
                         >
                           {journey.title}
-                        </Text>
+                        </UiText>
                         <AppIcon
                           color={colors.textSecondary}
                           name="chevron.right"

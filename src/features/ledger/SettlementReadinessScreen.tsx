@@ -617,14 +617,14 @@ function SummarySection({
   return (
     <View style={styles.section}>
       <View style={styles.hero}>
-        <Text accessibilityRole="header" style={styles.sectionLeadText}>
+        <UiText accessibilityRole="header" style={styles.sectionLeadText}>
           {t("settlement.balanceHeading")}
-        </Text>
-        <Text style={styles.heroLabel}>
+        </UiText>
+        <UiText style={styles.heroLabel}>
           {balanceMinor === undefined
             ? t("settlement.preparingBalance")
             : settlementPositionLabel(balanceMinor)}
-        </Text>
+        </UiText>
         <View style={styles.heroAmountRow}>
           <MoneyText
             variant="hero"
