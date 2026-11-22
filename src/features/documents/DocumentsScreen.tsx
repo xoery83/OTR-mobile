@@ -7,6 +7,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -191,6 +192,85 @@ function DocumentsWorkspace({
       };
     }, [active, generation, tripId, setAccountId, setChecked, setTripName]),
   );
+  const [addingFile, setAddingFile] = useState(false);
+  const [addedFileVersion, setAddedFileVersion] = useState(0);
+  const addBusy = useRef(false);
+  const addTargetVersion = useRef(0);
+  useLayoutEffect(() => {
+    addTargetVersion.current++;
+  }, [accountId, tab, tripId]);
+  const canAddFiles =
+    !!accountId && (tab === "PERSONAL_INBOX" || (tab === "TRIP" && !!tripId));
+  const addFile = async () => {
+    if (!canAddFiles || !active() || addBusy.current) return;
+    addBusy.current = true;
+    setAddingFile(true);
+    const targetVersion = addTargetVersion.current;
+    const isCurrent = () => active() && targetVersion === addTargetVersion.current;
+    try {
+      const [{ getDocumentAsync }, { requireActiveUserId }] = await Promise.all([
+        import("expo-document-picker"),
+        import("@/data/auth/authRepository"),
+      ]);
+      const context = await captureAccountRequestContext(
+        tab === "TRIP" ? tripId ?? "" : "",
+        requireActiveUserId,
+      );
+      if (!isCurrent() || context.accountId !== accountId) return;
+      const selection = await getDocumentAsync({
+        multiple: false,
+        copyToCacheDirectory: true,
+      });
+      if (selection.canceled) return;
+      const [asset] = selection.assets;
+      if (!asset) throw Error("DOCUMENTS_PICKER_EMPTY");
+      try {
+        if (!isCurrent()) return;
+        const [{ getDefaultImportDocumentsLocalWriter }, { openCaptureUriReader }] =
+          await Promise.all([
+            import("@/data/operations/defaultImportDocuments"),
+            import("@/native/captureUriReader"),
+          ]);
+        const write = await getDefaultImportDocumentsLocalWriter();
+        if (!isCurrent()) return;
+        const reader = await openCaptureUriReader(asset.uri);
+        try {
+          if (!isCurrent()) return;
+          await write(context, asset.name, asset.mimeType ?? null, { reader });
+          setAddedFileVersion((value) => value + 1);
+        } finally {
+          await reader.close().catch(() => {});
+        }
+      } finally {
+        // Dispose only Expo Files picker copies. The selected original is never touched.
+        try {
+          const { Directory, File, Paths } = await import("expo-file-system");
+          const pickerCache = new Directory(Paths.cache, "DocumentPicker").uri.replace(
+            /\/?$/,
+            "/",
+          );
+          if (asset.uri.startsWith(pickerCache)) {
+            const copy = new File(asset.uri);
+            if (copy.exists) copy.delete();
+          }
+        } catch {
+          // Native cache reclamation does not affect the SQLite original.
+        }
+      }
+    } catch (error) {
+      if (isCurrent())
+        Alert.alert(
+          t(
+            error instanceof Error && error.message === "DOCUMENTS_TRIP_ACCESS"
+              ? "documents.denied"
+              : "capture.failed",
+          ),
+        );
+    } finally {
+      addBusy.current = false;
+      setAddingFile(false);
+    }
+  };
   const pickTrip = async () => {
     if (!accountId || !active()) return;
     setChoosing(true);
@@ -241,6 +321,16 @@ function DocumentsWorkspace({
       ) : null}
       {!searchOnly && !collapsed && tab !== "ACTIVITY" ? (
         <Stack.Toolbar placement="right">
+          {canAddFiles ? (
+            <Stack.Toolbar.Button
+              icon="plus"
+              tintColor={colors.accent}
+              separateBackground
+              accessibilityLabel={t("capture.files")}
+              disabled={addingFile}
+              onPress={() => void addFile()}
+            />
+          ) : null}
           <Stack.Toolbar.Button
             icon="magnifyingglass"
             tintColor={colors.accent}
@@ -390,6 +480,7 @@ function DocumentsWorkspace({
                       tripId={name === "TRIP" ? tripId : null}
                       generation={generation}
                       scope={name}
+                      addedFileVersion={addedFileVersion}
                       visible={focused && tab === name}
                       isCurrent={() => active() && tab === name}
                       onScrollOffset={(offset, distance, dragging) => {
@@ -457,6 +548,7 @@ function DocumentDirectory({
   visible,
   onScrollOffset,
   searchOnly = false,
+  addedFileVersion = 0,
 }: {
   accountId: string;
   tripId: string | null;
@@ -466,6 +558,7 @@ function DocumentDirectory({
   visible: boolean;
   onScrollOffset(offset: number, distance: number, dragging: boolean): void;
   searchOnly?: boolean;
+  addedFileVersion?: number;
 }) {
   const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
@@ -539,7 +632,7 @@ function DocumentDirectory({
           requireActiveUserId,
         );
         if (!valid() || context.accountId !== accountId) return [];
-        const cacheKey = `${accountId}:${generation}:${tripId}:${scope}:${searching}:${searchScope}:${refresh}`;
+        const cacheKey = `${accountId}:${generation}:${tripId}:${scope}:${searching}:${searchScope}:${refresh}:${addedFileVersion}`;
         if (pagingKey.current !== cacheKey) {
           pages.current.clear();
           pagingKey.current = cacheKey;
@@ -634,6 +727,7 @@ function DocumentDirectory({
     scope,
     visible,
     refresh,
+    addedFileVersion,
     active,
     searching,
     searchScope,

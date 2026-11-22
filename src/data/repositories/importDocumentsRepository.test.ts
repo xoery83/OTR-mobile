@@ -1,9 +1,12 @@
 import type { SQLiteBindValue } from "expo-sqlite";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
-import { fixture } from "./__fixtures__/captureBatchAssessment";
+import { fixture, now, sha256 } from "./__fixtures__/captureBatchAssessment";
 import { captureAccountRequestContext } from "../auth/accountRequestContext";
-import { createImportDocumentsRepository } from "./importDocumentsRepository";
+import {
+  createImportDocumentsLocalWriter,
+  createImportDocumentsRepository,
+} from "./importDocumentsRepository";
 
 it("lists metadata without loading originals, and opens the same accepted Batch/input bytes", async () => {
   const f = fixture(true),
@@ -211,4 +214,67 @@ it("advances a real 30-row cursor across pages without duplicates or reading ori
     await repo.list(context, "PERSONAL_INBOX", { limit: 30, before: second.at(-1) }),
   ).toEqual([]);
   expect(original).not.toHaveBeenCalled();
+});
+
+
+it("retains explicit Files originals in their local directories across process reopen", async () => {
+  const f = fixture(true);
+  const docs = createImportDocumentsRepository(f.db, f.getAccount, f.captures);
+  const save = createImportDocumentsLocalWriter(f.db, f.getAccount, {
+    now, sha256, newId: randomUUID,
+  });
+  const inbox = await captureAccountRequestContext("", f.getAccount);
+  const trip = await captureAccountRequestContext(randomUUID(), f.getAccount);
+  f.sql.prepare(
+    "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'owner','{}',?)",
+  ).run(trip.accountId, trip.tripId, now());
+  const bytes = new Uint8Array([37, 80, 68, 70, 13, 10]);
+  await save(inbox, "private.pdf", "application/pdf", { bytes });
+  await save(trip, "trip.pdf", "application/pdf", { bytes });
+  f.reopen();
+  for (const [context, scope, filename] of [
+    [inbox, "PERSONAL_INBOX", "private.pdf"],
+    [trip, "TRIP", "trip.pdf"],
+  ] as const) {
+    const rows = await docs.list(context, scope);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      originalFilename: filename,
+      sha256: await sha256(bytes),
+      custody: "LOCAL_RECORDED",
+      visibility: "PRIVATE",
+      cloudOriginal: "NOT_ASSERTED",
+      jobId: null,
+      batchId: null,
+    });
+    expect((await docs.original(context, scope, rows[0].captureId)).bytes).toEqual(bytes);
+  }
+  expect(f.sql.prepare("SELECT count(*) AS n FROM capture_submission_batches").get()).toMatchObject({ n: 0 });
+  expect(f.sql.prepare("SELECT count(*) AS n FROM sync_operations").get()).toMatchObject({ n: 0 });
+  expect(f.sql.prepare("SELECT count(*) AS n FROM local_capture_payloads").get()).toMatchObject({ n: 1 });
+  f.sql.prepare(
+    "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,2,1)",
+  ).run(trip.accountId, trip.tripId);
+  await expect(docs.list(trip, "TRIP")).rejects.toThrow("DOCUMENTS_TRIP_ACCESS");
+  expect(await docs.list(inbox, "PERSONAL_INBOX")).toHaveLength(1);
+});
+
+it("rejects Files intake after access revocation or account change without retaining bytes", async () => {
+  const f = fixture();
+  const save = createImportDocumentsLocalWriter(f.db, f.getAccount, {
+    now, sha256, newId: randomUUID,
+  });
+  const trip = await captureAccountRequestContext(randomUUID(), f.getAccount);
+  const input = { bytes: new Uint8Array([1]) };
+  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow("DOCUMENTS_TRIP_ACCESS");
+  f.sql.prepare(
+    "INSERT INTO ledger_actor_context(user_id,journey_id,role,capabilities_json,updated_at) VALUES(?,?,'owner','{}',?)",
+  ).run(trip.accountId, trip.tripId, now());
+  f.sql.prepare(
+    "INSERT INTO trip_core_scopes(account_id,trip_id,refresh_generation,access_revision,revoked) VALUES(?,?,1,2,1)",
+  ).run(trip.accountId, trip.tripId);
+  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow("DOCUMENTS_TRIP_ACCESS");
+  await f.switchTo(randomUUID());
+  await expect(save(trip, "file.pdf", "application/pdf", input)).rejects.toThrow("Account changed");
+  expect(f.sql.prepare("SELECT count(*) AS n FROM local_capture_payloads").get()).toMatchObject({ n: 0 });
 });

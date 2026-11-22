@@ -1,17 +1,22 @@
 import { z } from "zod";
 import {
   assertAccountRequestContext,
+  withAccountApplyGate,
   type AccountRequestContext,
 } from "../auth/accountRequestContext";
 import {
   captureIdSchema,
   captureKindSchema,
+  captureMetadataSchema,
   sha256Schema,
 } from "@/domain/capture/localCapture";
-import type {
-  LocalCaptureDatabase,
-  createLocalCaptureInboxRepository,
+import {
+  createLocalCaptureTransactionStore,
+  type LocalCaptureDatabase,
+  type LocalCaptureDependencies,
+  type createLocalCaptureInboxRepository,
 } from "./localCaptureInboxRepository";
+import { readCapturePayload, type CapturePayloadInput } from "../files/capturePayloadReader";
 
 const metadataSchema = z.object({
   captureId: captureIdSchema,
@@ -42,6 +47,55 @@ export type ImportDocument = z.infer<typeof metadataSchema> & {
   visibility: "PRIVATE";
 };
 export type ImportDocumentScope = "PERSONAL_INBOX" | "TRIP";
+
+async function assertTripDocumentsAccess(
+  db: LocalCaptureDatabase,
+  context: AccountRequestContext,
+) {
+  z.uuid().parse(context.tripId);
+  const actor = await db.getFirstAsync(
+    `SELECT 1 FROM ledger_actor_context actor
+     WHERE actor.user_id=? AND actor.journey_id=?
+       AND NOT EXISTS (
+         SELECT 1 FROM trip_core_scopes scope
+         WHERE scope.account_id=actor.user_id AND scope.trip_id=actor.journey_id AND scope.revoked=1)`,
+    context.accountId,
+    context.tripId,
+  );
+  if (!actor) throw Error("DOCUMENTS_TRIP_ACCESS");
+}
+
+export function createImportDocumentsLocalWriter(
+  db: LocalCaptureDatabase,
+  getAccountId: () => Promise<string>,
+  dependencies: LocalCaptureDependencies,
+) {
+  const storage = createLocalCaptureTransactionStore(db, dependencies);
+  return async (
+    context: AccountRequestContext,
+    filename: string,
+    mimeType: string | null,
+    input: CapturePayloadInput,
+  ): Promise<void> => {
+    await assertAccountRequestContext(context, getAccountId);
+    const tripId = context.tripId === "" ? null : z.uuid().parse(context.tripId);
+    const metadata = captureMetadataSchema.parse({
+      kind: mimeType?.startsWith("image/") ? "IMAGE" : "FILE",
+      originalFilename: filename,
+      declaredContentType: mimeType,
+      tripId,
+    });
+    const payload = await readCapturePayload(metadata.kind, input, dependencies.sha256);
+    await withAccountApplyGate(() =>
+      db.withTransactionAsync(async () => {
+        await assertAccountRequestContext(context, getAccountId);
+        if (tripId) await assertTripDocumentsAccess(db, context);
+        await storage.insert(context.accountId, metadata, payload);
+        await assertAccountRequestContext(context, getAccountId);
+      }),
+    );
+  };
+}
 const select = `SELECT c.id AS captureId,c.account_id AS accountId,c.trip_id AS tripId,
  c.kind,c.original_filename AS originalFilename,c.declared_content_type AS declaredContentType,
  c.created_at AS recordedAt,c.payload_id AS payloadId,p.sha256,p.byte_count AS byteCount,
@@ -70,13 +124,7 @@ export function createImportDocumentsRepository(
     z.enum(["PERSONAL_INBOX", "TRIP"]).parse(scope);
     await assertAccountRequestContext(context, getAccountId);
     if (scope === "TRIP") {
-      z.uuid().parse(context.tripId);
-      const actor = await db.getFirstAsync(
-        "SELECT 1 FROM ledger_actor_context WHERE user_id=? AND journey_id=?",
-        context.accountId,
-        context.tripId,
-      );
-      if (!actor) throw Error("DOCUMENTS_TRIP_ACCESS");
+      await assertTripDocumentsAccess(db, context);
       await assertAccountRequestContext(context, getAccountId);
     }
   }
