@@ -538,7 +538,19 @@ it("all four destinations remain reachable for large text without altering Day r
   state.workingTrip = { tripId: "a", generation: 1 };
   state.view = { tripId: "a", date: "2027-02-02", zone: "Asia/Tokyo", generation: 1 };
   state.fontScale = 3;
-  const buttons = pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }));
+  const shell = ExperienceBottomShell({ visible: true, pathname: "/trip" });
+  const routesInRows = (node: ReactNode): (string | undefined)[][] => {
+    if (!isValidElement<{ style?: { flexDirection?: string }; children?: ReactNode }>(node))
+      return [];
+    if (node.type === "View" && node.props.style?.flexDirection === "row")
+      return [pressables(node).map((button) => button.props.accessibilityLabel)];
+    return Children.toArray(node.props.children).flatMap(routesInRows);
+  };
+  expect(routesInRows(shell)).toEqual([
+    ["shell.home", "shell.day"],
+    ["navigation.ledger", "updates.title"],
+  ]);
+  const buttons = pressables(shell);
   const updates = buttons.find(
     (button) => button.props.accessibilityLabel === "updates.title",
   )!;

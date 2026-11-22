@@ -261,6 +261,185 @@ export function ExperienceBottomShell({
     dayShellChrome?.tripId === shellTripId &&
     dayShellChrome.generation === generation &&
     !dayShellChrome.navigationVisible;
+  const navigationGlass = largeText ? null : Glass;
+  const NavigationMaterial = navigationGlass ?? View;
+  const destinations = tripList
+    ? []
+    : [
+        <Pressable
+          key="home"
+          accessibilityRole="button"
+          accessibilityLabel={t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
+          accessibilityHint={t("shell.openMyTrips")}
+          accessibilityState={{ selected: isTripWorkspacePath(pathname) && !isDay }}
+          onPress={openMyTrips}
+          style={[
+            styles.destination,
+            largeText && styles.largeDestination,
+            isTripWorkspacePath(pathname) && !isDay && styles.selectedDestination,
+          ]}
+        >
+          <AppIcon
+            size={visual.bottomShell.icon}
+            name="house"
+            color={
+              isTripWorkspacePath(pathname) && !isDay ? colors.accent : colors.textPrimary
+            }
+          />
+          <Text
+            numberOfLines={largeText ? undefined : 1}
+            style={[
+              styles.label,
+              isTripWorkspacePath(pathname) && !isDay && styles.activeLabel,
+            ]}
+          >
+            {t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
+          </Text>
+        </Pressable>,
+        shellTripId ? (
+          <Pressable
+            key="day"
+            accessibilityRole="button"
+            accessibilityLabel={t("shell.day")}
+            accessibilityHint={t("shell.openSelectedDay")}
+            accessibilityState={{ selected: isDay }}
+            onPress={() => {
+              if (
+                generation !== getAccountGeneration() ||
+                renderedTarget !== currentTarget.current
+              )
+                return;
+              const savedDay = resumeView ?? view;
+              if (
+                savedDay?.tripId === shellTripId &&
+                savedDay.generation === generation
+              ) {
+                resume();
+                // The legacy root Tab has JS header actions; resume in the native Trip Stack.
+                router.navigate({
+                  pathname: "/trip-home",
+                  params: {
+                    tripId: savedDay.tripId,
+                    view: "day",
+                    date: savedDay.date,
+                    zone: savedDay.zone ?? "",
+                    viewMode: savedDay.zone === null ? "FLOATING" : "NAMED_ZONE",
+                  },
+                });
+              } else if (activeQuickActions?.chooseDay) {
+                activeQuickActions.chooseDay();
+              } else {
+                router.navigate({
+                  pathname: "/trip-home",
+                  params: { tripId: shellTripId, view: "day" },
+                });
+              }
+            }}
+            style={[
+              styles.destination,
+              largeText && styles.largeDestination,
+              isDay && styles.selectedDestination,
+            ]}
+          >
+            <AppIcon
+              size={visual.bottomShell.icon}
+              name="calendar"
+              color={isDay ? colors.accent : colors.textPrimary}
+            />
+            <Text
+              numberOfLines={largeText ? undefined : 1}
+              style={[styles.label, isDay && styles.activeLabel]}
+            >
+              {t("shell.day")}
+            </Text>
+          </Pressable>
+        ) : null,
+        shellTripId ? (
+          <Pressable
+            key="ledger"
+            accessibilityRole="button"
+            accessibilityLabel={t("navigation.ledger")}
+            accessibilityState={{ selected: pathname.startsWith("/expenses") }}
+            onPress={() => {
+              if (
+                generation !== getAccountGeneration() ||
+                renderedTarget !== currentTarget.current
+              )
+                return;
+              router.navigate({
+                pathname: "/expenses",
+                params: { journeyId: shellTripId },
+              });
+            }}
+            style={[
+              styles.destination,
+              largeText && styles.largeDestination,
+              pathname.startsWith("/expenses") && styles.selectedDestination,
+            ]}
+          >
+            <AppIcon
+              size={visual.bottomShell.icon}
+              name="list.bullet.rectangle"
+              color={
+                pathname.startsWith("/expenses") ? colors.accent : colors.textPrimary
+              }
+            />
+            <Text
+              numberOfLines={largeText ? undefined : 1}
+              style={[
+                styles.label,
+                pathname.startsWith("/expenses") && styles.activeLabel,
+              ]}
+            >
+              {t("navigation.ledger")}
+            </Text>
+          </Pressable>
+        ) : null,
+        shellShowsUpdates(pathname, params, Boolean(shellTripId)) ? (
+          <Pressable
+            key="updates"
+            accessibilityRole="button"
+            accessibilityLabel={t("updates.title")}
+            accessibilityHint={
+              unreadActionable && unreadActionable > 0
+                ? t("updates.unreadActionableBadge", {
+                    count: formatUiNumber(unreadActionable),
+                  })
+                : undefined
+            }
+            accessibilityState={{ selected: pathname === "/updates" }}
+            onPress={() => router.navigate("/updates")}
+            style={[
+              styles.destination,
+              largeText && styles.largeDestination,
+              pathname === "/updates" && styles.selectedDestination,
+            ]}
+          >
+            <View style={styles.badgeAnchor}>
+              <AppIcon
+                size={visual.bottomShell.icon}
+                name="bell"
+                color={pathname === "/updates" ? colors.accent : colors.textPrimary}
+              />
+              {unreadActionable && unreadActionable > 0 ? (
+                <View
+                  style={styles.badge}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                >
+                  <Text style={styles.badgeText}>{formatUiNumber(unreadActionable)}</Text>
+                </View>
+              ) : null}
+            </View>
+            <Text
+              numberOfLines={largeText ? undefined : 1}
+              style={[styles.label, pathname === "/updates" && styles.activeLabel]}
+            >
+              {t("updates.title")}
+            </Text>
+          </Pressable>
+        ) : null,
+      ].filter(Boolean);
   return (
     <SafeAreaView
       edges={["bottom", "left", "right"]}
@@ -280,8 +459,8 @@ export function ExperienceBottomShell({
         ]}
       >
         {!tripList ? (
-          <Material
-            {...(Glass
+          <NavigationMaterial
+            {...(navigationGlass
               ? {
                   glassEffectStyle: "clear" as const,
                   isInteractive: true,
@@ -292,185 +471,22 @@ export function ExperienceBottomShell({
               : {})}
             style={[
               styles.navigationIsland,
-              Glass && styles.nativeMaterial,
+              navigationGlass && styles.nativeMaterial,
               reducedTransparency && styles.reducedMaterial,
               largeText && styles.largeNavigationIsland,
             ]}
           >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
-              accessibilityHint={t("shell.openMyTrips")}
-              accessibilityState={{ selected: isTripWorkspacePath(pathname) && !isDay }}
-              onPress={openMyTrips}
-              style={[
-                styles.destination,
-                largeText && styles.largeDestination,
-                isTripWorkspacePath(pathname) && !isDay && styles.selectedDestination,
-              ]}
-            >
-              <AppIcon
-                size={visual.bottomShell.icon}
-                name="house"
-                color={
-                  isTripWorkspacePath(pathname) && !isDay
-                    ? colors.accent
-                    : colors.textPrimary
-                }
-              />
-              <Text
-                numberOfLines={largeText ? undefined : 1}
-                style={[
-                  styles.label,
-                  isTripWorkspacePath(pathname) && !isDay && styles.activeLabel,
-                ]}
-              >
-                {t(shellTripId ? "shell.home" : "dayFeed.myTrips")}
-              </Text>
-            </Pressable>
-            {shellTripId ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("shell.day")}
-                accessibilityHint={t("shell.openSelectedDay")}
-                accessibilityState={{ selected: isDay }}
-                onPress={() => {
-                  if (
-                    generation !== getAccountGeneration() ||
-                    renderedTarget !== currentTarget.current
-                  )
-                    return;
-                  const savedDay = resumeView ?? view;
-                  if (
-                    savedDay?.tripId === shellTripId &&
-                    savedDay.generation === generation
-                  ) {
-                    resume();
-                    // The legacy root Tab has JS header actions; resume in the native Trip Stack.
-                    router.navigate({
-                      pathname: "/trip-home",
-                      params: {
-                        tripId: savedDay.tripId,
-                        view: "day",
-                        date: savedDay.date,
-                        zone: savedDay.zone ?? "",
-                        viewMode: savedDay.zone === null ? "FLOATING" : "NAMED_ZONE",
-                      },
-                    });
-                  } else if (activeQuickActions?.chooseDay) {
-                    activeQuickActions.chooseDay();
-                  } else {
-                    router.navigate({
-                      pathname: "/trip-home",
-                      params: { tripId: shellTripId, view: "day" },
-                    });
-                  }
-                }}
-                style={[
-                  styles.destination,
-                  largeText && styles.largeDestination,
-                  isDay && styles.selectedDestination,
-                ]}
-              >
-                <AppIcon
-                  size={visual.bottomShell.icon}
-                  name="calendar"
-                  color={isDay ? colors.accent : colors.textPrimary}
-                />
-                <Text
-                  numberOfLines={largeText ? undefined : 1}
-                  style={[styles.label, isDay && styles.activeLabel]}
-                >
-                  {t("shell.day")}
-                </Text>
-              </Pressable>
-            ) : null}
-            {shellTripId ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("navigation.ledger")}
-                accessibilityState={{ selected: pathname.startsWith("/expenses") }}
-                onPress={() => {
-                  if (
-                    generation !== getAccountGeneration() ||
-                    renderedTarget !== currentTarget.current
-                  )
-                    return;
-                  router.navigate({
-                    pathname: "/expenses",
-                    params: { journeyId: shellTripId },
-                  });
-                }}
-                style={[
-                  styles.destination,
-                  largeText && styles.largeDestination,
-                  pathname.startsWith("/expenses") && styles.selectedDestination,
-                ]}
-              >
-                <AppIcon
-                  size={visual.bottomShell.icon}
-                  name="list.bullet.rectangle"
-                  color={
-                    pathname.startsWith("/expenses") ? colors.accent : colors.textPrimary
-                  }
-                />
-                <Text
-                  numberOfLines={largeText ? undefined : 1}
-                  style={[
-                    styles.label,
-                    pathname.startsWith("/expenses") && styles.activeLabel,
-                  ]}
-                >
-                  {t("navigation.ledger")}
-                </Text>
-              </Pressable>
-            ) : null}
-            {shellShowsUpdates(pathname, params, Boolean(shellTripId)) ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("updates.title")}
-                accessibilityHint={
-                  unreadActionable && unreadActionable > 0
-                    ? t("updates.unreadActionableBadge", {
-                        count: formatUiNumber(unreadActionable),
-                      })
-                    : undefined
-                }
-                accessibilityState={{ selected: pathname === "/updates" }}
-                onPress={() => router.navigate("/updates")}
-                style={[
-                  styles.destination,
-                  largeText && styles.largeDestination,
-                  pathname === "/updates" && styles.selectedDestination,
-                ]}
-              >
-                <View style={styles.badgeAnchor}>
-                  <AppIcon
-                    size={visual.bottomShell.icon}
-                    name="bell"
-                    color={pathname === "/updates" ? colors.accent : colors.textPrimary}
-                  />
-                  {unreadActionable && unreadActionable > 0 ? (
-                    <View
-                      style={styles.badge}
-                      accessibilityElementsHidden
-                      importantForAccessibility="no-hide-descendants"
-                    >
-                      <Text style={styles.badgeText}>
-                        {formatUiNumber(unreadActionable)}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text
-                  numberOfLines={largeText ? undefined : 1}
-                  style={[styles.label, pathname === "/updates" && styles.activeLabel]}
-                >
-                  {t("updates.title")}
-                </Text>
-              </Pressable>
-            ) : null}
-          </Material>
+            {largeText ? (
+              <>
+                <View style={styles.destinationRow}>{destinations.slice(0, 2)}</View>
+                {destinations.length > 2 ? (
+                  <View style={styles.destinationRow}>{destinations.slice(2)}</View>
+                ) : null}
+              </>
+            ) : (
+              destinations
+            )}
+          </NavigationMaterial>
         ) : null}
         {!tripList && !ledger && contextualTripId ? (
           <Material
@@ -623,7 +639,8 @@ const createStyles = (c: UiColors) =>
       borderRadius: visual.radius.pill,
       flexDirection: "row",
     },
-    largeNavigationIsland: { flexWrap: "wrap" },
+    largeNavigationIsland: { flexDirection: "column", minWidth: 0 },
+    destinationRow: { flexDirection: "row" },
     actionIsland: {
       alignSelf: "center",
       minWidth: visual.bottomShell.height,
@@ -658,9 +675,6 @@ const createStyles = (c: UiColors) =>
       gap: visual.bottomShell.gap,
     },
     largeDestination: {
-      flexBasis: "50%",
-      flexGrow: 0,
-      flexShrink: 0,
       minHeight: 76,
       paddingVertical: visual.space.card,
     },
