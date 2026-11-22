@@ -13,6 +13,7 @@ import { systemMessage, categoryLabel } from "@/ui/domainLabels";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
 import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
 import { ExpenseConflictList } from "./ExpenseConflictList";
@@ -209,6 +210,7 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const largeText = useWindowDimensions().fontScale > 1.5;
+  const bottomShellHeight = useBottomShellHeight();
   const spendingScroll = useRef<ScrollView>(null);
   const spendingAnchor = useRef({ y: 0, body: 0 });
   const sharedCollapse = useRef(0);
@@ -1538,7 +1540,7 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
                   onLayout={(event) =>
                     setSettlementViewportHeight(event.nativeEvent.layout.height)
                   }
-                  style={styles.settlementShell}
+                  style={[styles.settlementShell, { marginBottom: bottomShellHeight }]}
                 >
                   <SettlementReadinessScreen
                     activeSection={settlementSection}
