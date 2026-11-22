@@ -76,7 +76,7 @@ export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
       <UiSection>
         {visible?.failed ? (
           <>
-            <UiText accessibilityLiveRegion="polite">
+            <UiText accessibilityLiveRegion="polite" style={styles.error}>
               {t("privateProfile.loadFailed")}
             </UiText>
             <UiButton
@@ -101,4 +101,5 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.section },
+    error: { ...visual.type.meta, color: colors.destructive },
   });
