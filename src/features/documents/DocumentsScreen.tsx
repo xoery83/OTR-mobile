@@ -23,7 +23,7 @@ import {
   useIsFocused,
   useLocalSearchParams,
 } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -42,6 +42,7 @@ import { AppIcon } from "@/components/AppIcon";
 import { GlobalMenu } from "@/components/GlobalMenu";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText } from "@/ui/controls";
+import { UiGlassSurface } from "@/ui/UiGlassSurface";
 import { UiChoiceChip, UiTextInput, UiDatePicker } from "@/ui/forms";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -112,6 +113,7 @@ function DocumentsWorkspace({
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     tripId?: string;
     scope?: "TRIP" | "PERSONAL_INBOX" | "ACTIVITY";
@@ -320,16 +322,6 @@ function DocumentsWorkspace({
       ) : null}
       {!searchOnly && !collapsed && tab !== "ACTIVITY" ? (
         <Stack.Toolbar placement="right">
-          {canAddFiles ? (
-            <Stack.Toolbar.Button
-              icon="plus"
-              tintColor={colors.accent}
-              separateBackground
-              accessibilityLabel={t("capture.files")}
-              disabled={addingFile}
-              onPress={() => void addFile()}
-            />
-          ) : null}
           <Stack.Toolbar.Button
             icon="magnifyingglass"
             tintColor={colors.accent}
@@ -480,6 +472,11 @@ function DocumentsWorkspace({
                       generation={generation}
                       scope={name}
                       addedFileVersion={addedFileVersion}
+                      bottomPadding={
+                        tab === name && canAddFiles
+                          ? insets.bottom + visual.bottomShell.height + visual.space.heading
+                          : 0
+                      }
                       visible={focused && tab === name}
                       isCurrent={() => active() && tab === name}
                       onScrollOffset={(offset, distance, dragging) => {
@@ -496,6 +493,32 @@ function DocumentsWorkspace({
           ))}
         </PagerView>
       )}
+      {!searchOnly && canAddFiles ? (
+        <UiGlassSurface
+          style={[
+            styles.addFiles,
+            {
+              bottom: insets.bottom + visual.space.heading,
+              right: Math.max(insets.right, visual.space.page),
+            },
+          ]}
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("capture.files")}
+            accessibilityState={{ disabled: addingFile }}
+            disabled={addingFile}
+            onPress={() => void addFile()}
+            style={styles.addFilesTarget}
+          >
+            <AppIcon
+              name="plus"
+              size={visual.bottomShell.icon}
+              color={addingFile ? colors.textSecondary : colors.accent}
+            />
+          </Pressable>
+        </UiGlassSurface>
+      ) : null}
       <Modal
         visible={choosing && focused && generation === getAccountGeneration()}
         presentationStyle="pageSheet"
@@ -548,6 +571,7 @@ function DocumentDirectory({
   onScrollOffset,
   searchOnly = false,
   addedFileVersion = 0,
+  bottomPadding = 0,
 }: {
   accountId: string;
   tripId: string | null;
@@ -558,6 +582,7 @@ function DocumentDirectory({
   onScrollOffset(offset: number, distance: number, dragging: boolean): void;
   searchOnly?: boolean;
   addedFileVersion?: number;
+  bottomPadding?: number;
 }) {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
@@ -939,7 +964,10 @@ function DocumentDirectory({
       </View>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          bottomPadding > 0 && { paddingBottom: bottomPadding + visual.space.section },
+        ]}
         ref={list}
         onLayout={() =>
           list.current?.scrollTo({ y: scrollOffset.current, animated: false })
@@ -1086,6 +1114,18 @@ function DocumentDirectory({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
+    addFiles: {
+      position: "absolute",
+      borderRadius: visual.radius.pill,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.separator,
+    },
+    addFilesTarget: {
+      width: visual.bottomShell.height,
+      height: visual.bottomShell.height,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     search: { paddingHorizontal: visual.space.page, paddingVertical: 4, gap: 4 },
     content: { padding: visual.space.page, gap: visual.space.card },
     tabs: {
