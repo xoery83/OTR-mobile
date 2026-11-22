@@ -73,8 +73,10 @@ export function TripCalendarRangeField({
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const { fontScale, width } = useWindowDimensions();
+  const [listWidth, setListWidth] = useState<number | null>(null);
   const cellSize = Math.max(44, Math.ceil(24 * fontScale));
-  const gridWidth = Math.max(width - 2 * visual.space.page, cellSize * 7);
+  const availableWidth = (listWidth ?? width) - 2 * visual.space.page;
+  const gridWidth = Math.max(availableWidth, cellSize * 7);
   const [open, setOpen] = useState(false);
   const changeOpen = (next: boolean) => {
     if (onOpenChange?.(next) !== false) setOpen(next);
@@ -163,6 +165,9 @@ export function TripCalendarRangeField({
             <FlatList
               keyboardShouldPersistTaps="handled"
               style={styles.sheet}
+              onLayout={({ nativeEvent }) => {
+                if (nativeEvent.layout.width > 0) setListWidth(nativeEvent.layout.width);
+              }}
               data={months}
               keyExtractor={(month) => month}
               initialScrollIndex={initialMonthIndex}
@@ -205,6 +210,7 @@ export function TripCalendarRangeField({
                     <ScrollView
                       keyboardShouldPersistTaps="handled"
                       horizontal
+                      scrollEnabled={gridWidth > availableWidth}
                       showsHorizontalScrollIndicator={false}
                       style={{ height: gridHeight, flexGrow: 0, flexShrink: 0 }}
                       contentContainerStyle={{ height: gridHeight }}

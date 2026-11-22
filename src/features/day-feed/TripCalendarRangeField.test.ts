@@ -185,6 +185,26 @@ function openedCalendar(value = { start: "2026-10-01", end: "2026-10-31" }) {
     .props.onPress();
   return () => render().find((node) => node.type === "FlatList")!;
 }
+it("fits seven columns to the measured page sheet and keeps large cells scrollable", () => {
+  state.width = 1180;
+  const render = openedCalendar();
+  render().props.onLayout({ nativeEvent: { layout: { width: 740 } } });
+  const getGrid = () => {
+    const month = render().props.renderItem({ item: "2026-10" });
+    return (Children.toArray(month.props.children) as Element[])[1];
+  };
+  const month = render().props.renderItem({ item: "2026-10" });
+  expect(getGrid().props.children.props.style.width).toBe(
+    740 - 2 * style(month.props.style).paddingHorizontal,
+  );
+  expect(getGrid().props.scrollEnabled).toBe(false);
+
+  state.fontScale = 4;
+  render().props.onLayout({ nativeEvent: { layout: { width: 420 } } });
+  expect(getGrid().props.children.props.style.width).toBe(7 * 96);
+  expect(getGrid().props.scrollEnabled).toBe(true);
+});
+
 it.each([1, 2.5, 4])(
   "gives six seven-cell weeks an explicit matching item/scroll/grid height at text scale %s",
   (fontScale) => {
