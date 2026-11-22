@@ -13,7 +13,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from "react-native";
 import { useNetworkState } from "expo-network";
 import PagerView from "react-native-pager-view";
@@ -560,7 +559,6 @@ function DocumentDirectory({
   searchOnly?: boolean;
   addedFileVersion?: number;
 }) {
-  const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const [rows, setRows] = useState<DocumentListEntry[]>([]),
@@ -924,14 +922,7 @@ function DocumentDirectory({
           </ScrollView>
         </SafeAreaView>
       </Modal>
-      <ScrollView
-        horizontal
-        keyboardShouldPersistTaps="handled"
-        showsHorizontalScrollIndicator={false}
-        key={fontScale}
-        style={styles.filters}
-        contentContainerStyle={styles.filterContent}
-      >
+      <View style={[styles.filterContent, styles.filters]}>
         {filters
           .filter((filter) => scope === "TRIP" || filter !== "PRIVATE")
           .map((filter) => (
@@ -945,7 +936,7 @@ function DocumentDirectory({
               }}
             />
           ))}
-      </ScrollView>
+      </View>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.list}
@@ -1126,7 +1117,11 @@ const createStyles = (colors: UiColors) =>
     },
     title: { ...visual.type.row, color: colors.textPrimary, flexShrink: 1 },
     meta: { ...visual.type.meta, color: colors.textSecondary },
-    filters: { flexGrow: 0, flexShrink: 0, backgroundColor: colors.surface },
+    filters: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      backgroundColor: colors.surface,
+    },
     filterContent: { gap: 8, paddingHorizontal: visual.space.page, paddingVertical: 8 },
     list: { paddingBottom: visual.space.section },
     message: { padding: visual.space.page, color: colors.textSecondary },
