@@ -205,6 +205,14 @@ export default function RootLayout() {
               options={{ headerShown: true, headerTitle: t("navigation.settings") }}
             />
             <Stack.Screen
+              name="settings-language"
+              options={{ headerShown: true, headerTitle: t("navigation.language") }}
+            />
+            <Stack.Screen
+              name="settings-appearance"
+              options={{ headerShown: true, headerTitle: t("authSettings.appearance") }}
+            />
+            <Stack.Screen
               name="profile"
               options={{ headerShown: true, headerTitle: t("privateProfile.title") }}
             />

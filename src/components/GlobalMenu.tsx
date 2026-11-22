@@ -6,7 +6,6 @@ import {
 import { shellShowsUpdates } from "./bottomBarVisibility";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { chooseUiLocale } from "@/native/uiLocalePreference";
 import {
   useEffect,
   useLayoutEffect,
@@ -49,7 +48,7 @@ export function GlobalMenu({
   nativeToolbar?: boolean;
   guestLedger?: boolean;
 }) {
-  const locale = useUiLocale();
+  useUiLocale();
   const params = useGlobalSearchParams<{ tripId?: string; view?: string }>();
   const pathname = usePathname();
   const generation = useSyncExternalStore(
@@ -88,32 +87,6 @@ export function GlobalMenu({
       requestLifetime.current++;
     };
   }, [returnLease]);
-  const changeLanguage = () =>
-    Alert.alert(t("navigation.language"), undefined, [
-      {
-        text:
-          locale === "en"
-            ? t("navigation.selectedLanguage", { language: t("navigation.english") })
-            : t("navigation.english"),
-        onPress: () => {
-          void chooseUiLocale("en").catch(() =>
-            Alert.alert(t("navigation.languageFailed")),
-          );
-        },
-      },
-      {
-        text:
-          locale === "zh-Hans"
-            ? t("navigation.selectedLanguage", { language: t("navigation.chinese") })
-            : t("navigation.chinese"),
-        onPress: () => {
-          void chooseUiLocale("zh-Hans").catch(() =>
-            Alert.alert(t("navigation.languageFailed")),
-          );
-        },
-      },
-      { text: t("common.cancel"), style: "cancel" },
-    ]);
   const queryClient = useQueryClient();
   const [identityRead, setIdentityRead] = useState<{
     generation: number;
@@ -342,7 +315,7 @@ export function GlobalMenu({
       {
         icon: "globe",
         label: t("navigation.language"),
-        onPress: changeLanguage,
+        onPress: () => router.push("/settings-language"),
       },
     ],
     [

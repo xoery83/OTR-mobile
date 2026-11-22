@@ -1,5 +1,5 @@
 import { useRef, useState, useSyncExternalStore } from "react";
-import { StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { chooseUiLocale } from "@/native/uiLocalePreference";
 import {
   chooseUiAppearance,
@@ -7,17 +7,15 @@ import {
   subscribeUiAppearancePreference,
   type UiAppearancePreference,
 } from "@/native/uiAppearancePreference";
-import { UiButton, UiSection, UiText } from "@/ui/controls";
+import { UiText } from "@/ui/controls";
 import { UiChoiceChip } from "@/ui/forms";
 import { t, type UiLocale } from "@/ui/locale";
 import type { UiColors } from "@/ui/palette";
 import { useThemedStyles } from "@/ui/theme";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { visual } from "@/ui/visual";
-import { AppleAccountConnection } from "./AppleAccountConnection";
 
-// Native Settings supplies the normal route callback only once local Profile is available.
-export function AuthSettingsSection({ onOpenProfile }: { onOpenProfile?: () => void }) {
+export function AuthSettingsSection({ kind }: { kind: "language" | "appearance" }) {
   const locale = useUiLocale();
   const styles = useThemedStyles(createStyles);
   const appearance = useSyncExternalStore(
@@ -44,21 +42,8 @@ export function AuthSettingsSection({ onOpenProfile }: { onOpenProfile?: () => v
     }
   }
   return (
-    <View style={styles.content}>
-      <AppleAccountConnection />
-      <UiSection title={t("privateProfile.title")}>
-        <UiButton
-          label={t("privateProfile.title")}
-          disabled={!onOpenProfile || busy}
-          onPress={() => {
-            if (!running.current) onOpenProfile?.();
-          }}
-        />
-        {!onOpenProfile ? (
-          <UiText style={styles.hint}>{t("authSettings.profileUnavailable")}</UiText>
-        ) : null}
-      </UiSection>
-      <UiSection title={t("navigation.language")}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {kind === "language" ? (
         <View style={styles.choices}>
           {busy ? (
             <UiText style={styles.hint}>
@@ -79,8 +64,7 @@ export function AuthSettingsSection({ onOpenProfile }: { onOpenProfile?: () => v
             ))
           )}
         </View>
-      </UiSection>
-      <UiSection title={t("authSettings.appearance")}>
+      ) : (
         <View style={styles.choices}>
           {busy ? (
             <UiText style={styles.hint}>
@@ -101,19 +85,26 @@ export function AuthSettingsSection({ onOpenProfile }: { onOpenProfile?: () => v
             ))
           )}
         </View>
-      </UiSection>
+      )}
       {failed ? (
         <UiText accessibilityRole="alert" style={styles.error}>
-          {t("settings.saveFailed")}
+          {t("authSettings.preferenceSaveFailed")}
         </UiText>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    content: { gap: visual.space.section },
-    choices: { flexDirection: "row", flexWrap: "wrap", gap: visual.space.heading },
+    screen: { flex: 1, backgroundColor: colors.background },
+    content: {
+      gap: visual.space.section,
+      padding: visual.space.page,
+      width: "100%",
+      maxWidth: 640,
+      alignSelf: "center",
+    },
+    choices: { gap: visual.space.heading },
     hint: { ...visual.type.meta, color: colors.textSecondary },
     error: { ...visual.type.meta, color: colors.destructive },
   });

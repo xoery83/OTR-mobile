@@ -1,10 +1,17 @@
-import { AuthSettingsSection } from "@/features/auth/AuthSettingsSection";
+import { AppleAccountConnection } from "@/features/auth/AppleAccountConnection";
+import {
+  getUiAppearancePreference,
+  subscribeUiAppearancePreference,
+} from "@/native/uiAppearancePreference";
+import { visual } from "@/ui/visual";
+import { readCommittedLocalPrincipal } from "@/data/auth/authRepository";
+import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { systemMessage } from "@/ui/domainLabels";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -20,22 +27,55 @@ import { AppIcon } from "@/components/AppIcon";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 
 export default function SettingsRoute() {
-  useUiLocale();
+  const locale = useUiLocale();
+  const appearance = useSyncExternalStore(
+    subscribeUiAppearancePreference,
+    getUiAppearancePreference,
+    getUiAppearancePreference,
+  );
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
-  const developer = process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev";
+  const generation = useSyncExternalStore(
+    subscribeAccountGeneration, getAccountGeneration, getAccountGeneration,
+  );
+  const [principal, setPrincipal] = useState<{ generation: number; kind: "GUEST" | "ACCOUNT" } | null>(null);
+  const kind = principal?.generation === generation ? principal.kind : null;
+  const developer = process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" && kind === "ACCOUNT";
+  useEffect(() => {
+    let active = true;
+    void readCommittedLocalPrincipal().then((value) => {
+      if (active && generation === getAccountGeneration() &&
+        (value?.kind === "GUEST" || value?.kind === "ACCOUNT")) {
+        setPrincipal({ generation, kind: value.kind });
+      }
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [generation]);
   const [debugMode, setDebugMode] = useState(false);
-  const [loading, setLoading] = useState(developer);
+  const [loadedGeneration, setLoadedGeneration] = useState<number | null>(null);
+  const loading = loadedGeneration !== generation;
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!developer) return;
+    let active = true;
+    const current = () => active && getAccountGeneration() === generation;
     void getDefaultLedgerReportingRepository()
       .then((repository) => repository.getPreferences())
-      .then((preferences) => setDebugMode(preferences.debugMode))
-      .catch(() => setMessage(t("settings.loadFailed")))
-      .finally(() => setLoading(false));
-  }, [developer]);
+      .then((preferences) => {
+        if (current()) {
+          setDebugMode(preferences.debugMode);
+          setMessage(null);
+        }
+      })
+      .catch(() => {
+        if (current()) setMessage(t("settings.loadFailed"));
+      })
+      .finally(() => {
+        if (current()) setLoadedGeneration(generation);
+      });
+    return () => { active = false; };
+  }, [developer, generation]);
 
   const toggleDebugMode = async (enabled: boolean) => {
     setDebugMode(enabled);
@@ -51,17 +91,50 @@ export default function SettingsRoute() {
 
   return (
     <ScrollView
+      style={styles.screen}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}
     >
-      <AuthSettingsSection onOpenProfile={() => router.push("/profile")} />
       <Text accessibilityRole="header" style={styles.sectionTitle}>
-        {t("settings.system")}
+        {t("navigation.account")}
+      </Text>
+      <View style={styles.group}>
+        <SettingRow
+          icon="person.crop.circle"
+          label={t("privateProfile.title")}
+          onPress={() => router.push("/profile")}
+        />
+        <SettingRow
+          icon="person"
+          label={t(kind === "GUEST" ? "navigation.signIn" : "navigation.account")}
+          onPress={() => router.push(kind === "GUEST" ? "/foundation" : "/account")}
+        />
+      </View>
+      <AppleAccountConnection />
+      <Text accessibilityRole="header" style={styles.sectionTitle}>
+        {t("settings.preferences")}
+      </Text>
+      <View style={styles.group}>
+        <SettingRow
+          icon="globe"
+          label={t("navigation.language")}
+          value={t(locale === "en" ? "navigation.english" : "navigation.chinese")}
+          onPress={() => router.push("/settings-language")}
+        />
+        <SettingRow
+          icon="circle.lefthalf.filled"
+          label={t("authSettings.appearance")}
+          value={t(`authSettings.appearance.${appearance}`)}
+          onPress={() => router.push("/settings-appearance")}
+        />
+      </View>
+      <Text accessibilityRole="header" style={styles.sectionTitle}>
+        {t("navigation.dataSync")}
       </Text>
       <View style={styles.group}>
         <SettingRow
           icon="checkmark.shield"
-          label={t("settings.health")}
+          label={t("navigation.dataSync")}
           onPress={() => router.push("/data-sync")}
         />
       </View>
@@ -97,7 +170,7 @@ export default function SettingsRoute() {
           </View>
         </>
       ) : null}
-      {message ? (
+      {developer && !loading && message ? (
         <Text accessibilityLiveRegion="polite" style={styles.error}>
           {systemMessage(message)}
         </Text>
@@ -109,10 +182,12 @@ export default function SettingsRoute() {
 function SettingRow({
   icon,
   label,
+  value,
   onPress,
 }: {
   icon: Parameters<typeof AppIcon>[0]["name"];
   label: string;
+  value?: string;
   onPress: () => void;
 }) {
   useUiLocale();
@@ -121,7 +196,10 @@ function SettingRow({
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
       <AppIcon color={colors.textSecondary} name={icon} size={20} />
-      <Text style={[styles.label, styles.grow]}>{label}</Text>
+      <View style={styles.grow}>
+        <Text style={styles.label}>{label}</Text>
+        {value ? <Text style={styles.detail}>{value}</Text> : null}
+      </View>
       <AppIcon color={colors.textTertiary} name="chevron.right" size={14} />
     </Pressable>
   );
@@ -129,7 +207,13 @@ function SettingRow({
 
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
-    content: { backgroundColor: colors.background, flexGrow: 1, padding: 20 },
+    screen: { backgroundColor: colors.background },
+    content: {
+      padding: visual.space.page,
+      width: "100%",
+      maxWidth: 640,
+      alignSelf: "center",
+    },
     sectionTitle: {
       color: colors.textTertiary,
       fontSize: 13,
