@@ -31,6 +31,7 @@ const UniversalResults = lazy(() =>
 
 export function CaptureProgress({
   model,
+  historical = false,
   readTripTargets,
   accountId,
   busy,
@@ -53,6 +54,7 @@ export function CaptureProgress({
   photoRelevanceCopy,
 }: {
   model: CaptureJobReadModel | null;
+  historical?: boolean;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   accountId: string;
   busy: boolean;
@@ -155,7 +157,7 @@ export function CaptureProgress({
       style={styles.body}
       contentContainerStyle={styles.content}
     >
-      {!canSelectV3 ? (
+      {!canSelectV3 && !historical ? (
         <UiText style={styles.secondary}>{t("capture.progress.closeHint")}</UiText>
       ) : null}
       {reading || busy ? (
@@ -180,13 +182,15 @@ export function CaptureProgress({
                 {t(
                   error || reading
                     ? "capture.progress.recordedCounts"
-                    : "capture.progress.localCounts",
+                    : historical && model?.allInputsAccepted
+                      ? "capture.history.materialsReceived"
+                      : "capture.progress.localCounts",
                   activity.counts,
                 )}
               </UiText>
             </>
           ) : null}
-          {!canSelectV3 ? (
+          {!canSelectV3 && !historical ? (
             <UiText style={styles.secondary}>{t("capture.progress.noCloud")}</UiText>
           ) : null}
           {!hasUniversalReader || (detailsOpen && model?.processingEvents?.length) ? (
@@ -231,6 +235,7 @@ export function CaptureProgress({
               }
             >
               <UniversalResults
+                historical={historical}
                 originalsListedElsewhere
                 readTripTargets={readTripTargets}
                 onOpenAcceptedItem={onOpenAcceptedItem}
@@ -248,7 +253,8 @@ export function CaptureProgress({
               />
             </Suspense>
           ) : null}
-          {!canSelectV3 ? (
+          {!canSelectV3 &&
+          (!historical || !!model?.processingEvents?.length || !!model?.localInterpretationEvents?.length) ? (
             <UiButton
               label={t(
                 detailsOpen
@@ -436,7 +442,7 @@ export function CaptureProgress({
           onPress={onRetry}
         />
       ) : null}
-      {!canSelectV3 || detailsOpen ? (
+      {!historical && (!canSelectV3 || detailsOpen) ? (
         <>
           <UiButton
             label={t("capture.progress.activeImports")}

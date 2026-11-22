@@ -531,7 +531,9 @@ export function CaptureContent({
                     ? "capture.progress.activeImports"
                     : model?.batch.jobId === resultsJob
                       ? "capture.ux.resultsTitle"
-                      : "capture.progress.title",
+                      : reopening
+                        ? "capture.history.details"
+                        : "capture.progress.title",
                 )
               : undefined
         }
@@ -602,6 +604,7 @@ export function CaptureContent({
               />
             ) : attempted || reopening || model ? (
               <CaptureProgress
+                historical={reopening}
                 photoRelevanceCopy={{
                   title: t("capture.photo.localTitle"),
                   localOnly: t("capture.photo.localOnly"),

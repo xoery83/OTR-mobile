@@ -46,6 +46,7 @@ import { AppIcon } from "@/components/AppIcon";
 
 export function UniversalCaptureResults({
   model,
+  historical = false,
   isCurrent,
   readTripTargets,
   onOpenAcceptedItem,
@@ -60,6 +61,7 @@ export function UniversalCaptureResults({
   onHistoryChange,
 }: {
   model: CaptureJobReadModel;
+  historical?: boolean;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   originalsListedElsewhere?: boolean;
@@ -74,6 +76,7 @@ export function UniversalCaptureResults({
   isCurrent(): boolean;
 }) {
   const state = useUniversalCapture(model, isCurrent);
+  const historyStyles = useThemedStyles(styles);
   const { localFirstSelected, busy, canStart, unavailable, localFirst, start } = state;
   const submittedStart = useRef(false);
   const ready = state.localFirst?.state === "REVIEW_READY";
@@ -119,6 +122,29 @@ export function UniversalCaptureResults({
     onLegacyPhotoReview?.(state.localFirstSelected === false);
   }, [onLegacyPhotoReview, state.localFirstSelected]);
   const admission = useUniversalP1Admission(model, isCurrent, state.result);
+  if (
+    historical &&
+    state.localFirstSelected !== true &&
+    !state.result &&
+    !state.activity &&
+    !state.queued &&
+    !state.photoReviewRequired &&
+    (!state.attempted || state.unavailable || state.busy)
+  ) {
+    return (
+      <UiSection title={t("capture.history.steps")}>
+        <UiText style={historyStyles.heading}>{t("capture.history.analysis")}</UiText>
+        <UiText accessibilityLiveRegion="polite" style={historyStyles.meta}>
+          {t(state.busy || !state.attempted ? "capture.jobLoading" : "capture.history.unconfirmed")}
+        </UiText>
+        <UiText style={historyStyles.heading}>{t("capture.history.reviewAndSave")}</UiText>
+        <UiText style={historyStyles.meta}>{t("capture.history.noAction")}</UiText>
+        {state.attempted && !state.busy ? (
+          <UiButton label={t("capture.ai.check")} variant="text" onPress={state.recover} />
+        ) : null}
+      </UiSection>
+    );
+  }
   if (state.localFirstSelected === null) {
     return (
       <UiSection title={t("capture.activityStatus.activity")}>
@@ -129,7 +155,7 @@ export function UniversalCaptureResults({
         {state.unavailable ? (
           <UiButton
             label={t("capture.ai.check")}
-            variant="secondary"
+            variant={historical ? "text" : "secondary"}
             disabled={state.busy}
             onPress={state.recover}
           />
@@ -159,7 +185,7 @@ export function UniversalCaptureResults({
           <UiSection title={t("capture.activityStatus.analysis")}>
             <UiButton
               label={t("capture.ai.check")}
-              variant="secondary"
+              variant={historical ? "text" : "secondary"}
               disabled={state.busy}
               onPress={state.recover}
             />
@@ -177,6 +203,7 @@ export function UniversalCaptureResults({
       onOpenAcceptedItem={onOpenAcceptedItem}
       originalsListedElsewhere={originalsListedElsewhere}
       {...state}
+      canStart={state.canStart && (!historical || !state.unavailable)}
     />
   );
 }

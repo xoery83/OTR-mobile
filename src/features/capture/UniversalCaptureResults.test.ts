@@ -43,6 +43,40 @@ beforeEach(() => {
   state.buttons = [];
   setUiLocale("en");
 });
+it("offers only a status read on a historical import with unconfirmed results", () => {
+  const f = fixture();
+  const recover = vi.fn(async () => {});
+  const start = vi.fn(async () => {});
+  vi.mocked(useUniversalCapture).mockReturnValueOnce({
+    localFirstSelected: false,
+    localFirst: null,
+    busy: false,
+    canStart: true,
+    unavailable: true,
+    attempted: true,
+    activity: null,
+    result: null,
+    queued: false,
+    formatUnavailable: false,
+    photoReviewRequired: false,
+    canStartDuringRead: false,
+    recover,
+    start,
+  });
+  const html = renderToStaticMarkup(
+    createElement(UniversalCaptureResults, {
+      model: f.props.model,
+      historical: true,
+      isCurrent: () => true,
+    }),
+  );
+  expect(html).toContain(t("capture.history.unconfirmed"));
+  expect(html).toContain(t("capture.history.reviewAndSave"));
+  expect(html).not.toContain(t("capture.ai.process"));
+  state.buttons.find(({ label }) => label === t("capture.ai.check"))?.onPress();
+  expect(recover).toHaveBeenCalledOnce();
+  expect(start).not.toHaveBeenCalled();
+});
 function fixture() {
   const accountId = randomUUID(),
     tripId = randomUUID(),
