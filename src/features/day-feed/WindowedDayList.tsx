@@ -167,6 +167,7 @@ export function WindowedDayList<T>({
   const contentHeight = useRef(0);
   const viewportHeight = useRef(0);
   const saved = useRef<DayScrollAnchor | null>(null);
+  const preserveReachedAnchor = useRef(false);
   const pending = useRef<{
     anchor: DayScrollAnchor;
     attempts: number;
@@ -228,6 +229,8 @@ export function WindowedDayList<T>({
       if (request && result) {
         if (result === "REACHED") {
           saved.current = request.anchor;
+          // Native can clamp a jump while two Day headers fit in the viewport.
+          preserveReachedAnchor.current = true;
           live.current.onAnchorChange?.(request.anchor);
           if (visibleDates.current.length) {
             live.current.onVisibleDates?.(visibleDates.current);
@@ -520,6 +523,7 @@ export function WindowedDayList<T>({
       );
       if (delta < 0) prependPrevious(next, "follow");
       if (Math.abs(next - offset.current) < 0.1) return false;
+      preserveReachedAnchor.current = false;
       offset.current = next;
       list.current.scrollToOffset({ offset: next, animated: false });
       return true;
@@ -534,6 +538,7 @@ export function WindowedDayList<T>({
     });
   }, [windowStart, origin, trace]);
   useLayoutEffect(() => {
+    preserveReachedAnchor.current = false;
     saved.current = initialAnchor ?? null;
     if (initialAnchor) restore(initialAnchor);
     else if (windowStart.scopeKey !== scopeKey) {
@@ -565,7 +570,7 @@ export function WindowedDayList<T>({
     // Array/callback identity changes caused by reading updates are not layout changes.
   }, [rowSignature, layoutRevision, restore]);
   const recordAnchor = useCallback(() => {
-    if (pending.current) return;
+    if (pending.current || preserveReachedAnchor.current) return;
     const viewport = list.current?.getNativeScrollRef();
     if (!viewport || !("measureInWindow" in viewport)) return;
     const startOffset = offset.current,
@@ -578,6 +583,7 @@ export function WindowedDayList<T>({
         cell.node.measureInWindow((_cx, cellY, _w, height) => {
           if (
             pending.current ||
+            preserveReachedAnchor.current ||
             offset.current !== startOffset ||
             live.current.scopeKey !== scope ||
             listEpoch.current !== epoch ||
@@ -793,6 +799,7 @@ export function WindowedDayList<T>({
           return;
         prepending.current = false;
         followPrependOrigin.current = null;
+        preserveReachedAnchor.current = false;
         prependPrevious(0, "status-bar");
       }}
       onScrollBeginDrag={() => {
@@ -807,6 +814,7 @@ export function WindowedDayList<T>({
         followPrependOrigin.current = null;
         diagnostic.current.count = 0;
         diagnostic.current.until = Date.now() + 10000;
+        preserveReachedAnchor.current = false;
         trace("DRAG_BEGIN", { origin, listEpoch: renderedEpoch });
         const touch = readingTouch.current;
         if (touch?.epoch === renderedEpoch && touch.pendingDelta) {

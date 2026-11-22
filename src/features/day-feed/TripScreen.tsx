@@ -2123,7 +2123,11 @@ function TripContent({
           rangeLabel={dayRangeLabel ?? undefined}
           tripStart={dayFacts?.startDate}
           tripEnd={dayFacts?.endDate}
-          selectedDate={dayShell.visibleDates?.first ?? dayContext.date}
+          selectedDate={
+            !today && resumeView?.tripId === requested && resumeView.generation === generation
+              ? resumeView.date
+              : (dayShell.visibleDates?.first ?? dayContext.date)
+          }
           dates={calendarDates}
           summaries={daySummaries}
           copy={{

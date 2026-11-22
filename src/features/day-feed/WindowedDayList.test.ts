@@ -914,6 +914,30 @@ it("selecting the first lawful day restores the full Trip introduction, not the 
   expect(result).toHaveBeenCalledWith("REACHED", rows[0].date);
 });
 
+it("keeps the second-day bookmark when native clamps a short trip to the first viewport", () => {
+  const { rows, ref, rerender, anchorChanged, result } = setup(0, 2);
+  ref.current!.jumpToDayHeader(rows[1].date);
+  rerender();
+  state.props.onContentSizeChange(390, 200);
+  mount(rows[0], 0, 0);
+  mount(rows[1], 1, 100);
+  visible(rows[1], 1);
+  flushFrames();
+  expect(result).toHaveBeenCalledWith("REACHED", rows[1].date);
+
+  mount(rows[0], 0, 0);
+  visible(rows[0], 0);
+  scroll(0);
+  expect(anchorChanged).toHaveBeenLastCalledWith({
+    key: rows[1].key, date: rows[1].date, within: 0,
+  });
+  state.props.onScrollBeginDrag();
+  scroll(0);
+  expect(anchorChanged).toHaveBeenLastCalledWith({
+    key: rows[0].key, date: rows[0].date, within: 0,
+  });
+});
+
 it("remeasures a live refresh in place without replacing the list or resetting its date origin", () => {
   const { rows, ref, rerender } = setup(100);
   ref.current!.jumpToDayHeader(rows[50].date);
