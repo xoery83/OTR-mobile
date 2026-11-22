@@ -12,6 +12,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useNetworkState } from "expo-network";
@@ -114,6 +115,8 @@ function DocumentsWorkspace({
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const insets = useSafeAreaInsets();
+  const { width, fontScale } = useWindowDimensions();
+  const stackTabs = width / fontScale < 310;
   const params = useLocalSearchParams<{
     tripId?: string;
     scope?: "TRIP" | "PERSONAL_INBOX" | "ACTIVITY";
@@ -341,7 +344,7 @@ function DocumentsWorkspace({
         </Stack.Toolbar>
       ) : null}
       {!searchOnly && !collapsed ? (
-        <View style={styles.tabs}>
+        <View style={[styles.tabs, stackTabs && styles.stackedTabs]}>
           {tabs.map((name, index) => (
             <Pressable
               key={name}
@@ -353,7 +356,7 @@ function DocumentsWorkspace({
                 setCollapsed(name === "ACTIVITY" && activityView.current.offset > 6);
                 pager.current?.setPage(index);
               }}
-              style={[styles.tab, tab === name && styles.selectedTab]}
+              style={[styles.tab, stackTabs && styles.stackedTab, tab === name && styles.selectedTab]}
             >
               <AppIcon
                 name={
@@ -1054,7 +1057,7 @@ function DocumentDirectory({
                   </View>
                 </View>
                 <View style={styles.rowCopy}>
-                  <UiText numberOfLines={2} style={styles.title}>
+                  <UiText style={styles.title}>
                     {entry.title}
                   </UiText>
                   <UiText style={styles.meta}>
@@ -1144,8 +1147,17 @@ const createStyles = (colors: UiColors) =>
       borderBottomWidth: 2,
       borderBottomColor: colors.transparent,
     },
+    stackedTabs: { flexDirection: "column" },
+    stackedTab: {
+      flex: 0,
+      minHeight: 44,
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      paddingHorizontal: visual.space.page,
+      gap: visual.space.card,
+    },
     selectedTab: { borderBottomColor: colors.accent },
-    tabText: { ...visual.type.meta, color: colors.textSecondary },
+    tabText: { ...visual.type.meta, color: colors.textSecondary, flexShrink: 1, textAlign: "center" },
     selectedText: { color: colors.accent },
     context: {
       minHeight: 50,
