@@ -2,11 +2,12 @@ import {
   captureAccountScope,
   assertAccountRequestGeneration,
 } from "@/data/auth/accountRequestContext";
-import { requireActiveUserId } from "@/data/auth/authRepository";
+import { readCommittedLocalPrincipal, requireActiveUserId } from "@/data/auth/authRepository";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import { segmentedControlTokens } from "@/ui/segmented";
 import type { TextInput as NativeTextInput } from "react-native";
+import { UiText } from "@/ui/controls";
 import { UiTextInput as TextInput } from "@/ui/forms";
 import { systemMessage, categoryLabel } from "@/ui/domainLabels";
 import { t } from "@/ui/locale";
@@ -26,6 +27,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import {
   ActivityIndicator,
@@ -106,6 +108,7 @@ import {
 } from "./dashboardPresentation";
 import { createLatestRequest } from "./latestRequest";
 import { retrySQLiteRollbackOnce } from "./retryLedgerRead";
+import { GuestLedgerScreen } from "./GuestLedgerScreen";
 import { SheetHeader } from "@/components/SheetHeader";
 import { advanceScrollAnchor, restoredScrollY } from "./settlementScrollAnchor";
 
@@ -164,9 +167,43 @@ function categoryIcon(category: string) {
   return categoryIcons[category.toLowerCase()] ?? "tag.fill";
 }
 
-export function LedgerStage6Screen({
-  scopedJourneyId,
-}: { scopedJourneyId?: string } = {}) {
+export function LedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: string } = {}) {
+  const generation = useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
+  useUiLocale();
+  const [scope, setScope] = useState<{ generation: number; guest: boolean } | null>(null);
+  const [failedGeneration, setFailedGeneration] = useState<number>();
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void readCommittedLocalPrincipal()
+        .then((principal) => {
+          if (active && generation === getAccountGeneration()) {
+            setFailedGeneration(undefined);
+            setScope({ generation, guest: principal?.kind === "GUEST" });
+          }
+        })
+        .catch(() => {
+          if (active && generation === getAccountGeneration()) setFailedGeneration(generation);
+        });
+      return () => { active = false; };
+    }, [generation]),
+  );
+  if (scope?.generation !== generation)
+    return (
+      <>
+        <Stack.Screen options={{ ...navigationContentFrameOptions, title: t("navigation.ledger") }} />
+        <NavigationContentFrame>
+          <UiText>
+            {t(failedGeneration === generation ? "ledger.cacheUnavailable" : "common.loading")}
+          </UiText>
+        </NavigationContentFrame>
+      </>
+    );
+  if (scope.guest) return <GuestLedgerScreen scopedJourneyId={scopedJourneyId} />;
+  return <AccountLedgerStage6Screen scopedJourneyId={scopedJourneyId} />;
+}
+
+function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: string }) {
   useUiLocale();
   const { workingTrip, switchTrip } = useTripView();
   const styles = useThemedStyles(createStyles);

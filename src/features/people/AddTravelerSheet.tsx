@@ -191,6 +191,7 @@ function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: P
       onRequestClose={close}
     >
       <SheetHeader
+        wrapActions
         category="form"
         title={t("people.addTraveler")}
         leftLabel={t(submitted ? "common.close" : "common.cancel")}

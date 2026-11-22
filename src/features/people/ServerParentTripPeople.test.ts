@@ -125,6 +125,7 @@ beforeEach(() => {
     tripId: current.context.tripId,
     generation: 5,
     setup: current,
+    showInvitation: true,
     onSetup: vi.fn(),
   };
   state.read.mockImplementation(async () => proof());
@@ -351,4 +352,11 @@ it("keeps unknown roster read-only when the parent reader is closed", async () =
   expect((await settled()).onAddTraveler).toBeUndefined();
   expect(state.roster).not.toHaveBeenCalled();
   expect(state.save).not.toHaveBeenCalled();
+});
+
+
+it("forwards the Account invitation entry independently of Person create proof", () => {
+  expect(render().showInvitation).toBe(true);
+  props.showInvitation = false;
+  expect(render().showInvitation).toBe(false);
 });

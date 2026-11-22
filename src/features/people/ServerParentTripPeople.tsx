@@ -24,11 +24,13 @@ export function ServerParentTripPeople({
   tripId,
   generation,
   setup,
+  showInvitation,
   onSetup,
 }: {
   tripId: string;
   generation: number;
   setup: TripPreparationSetup | null;
+  showInvitation: boolean;
   onSetup(setup: TripPreparationSetup): void;
 }) {
   const current =
@@ -147,6 +149,7 @@ export function ServerParentTripPeople({
       tripId={tripId}
       generation={generation}
       setup={current}
+      showInvitation={showInvitation}
       onAddTraveler={add}
     />
   );

@@ -290,6 +290,45 @@ it("invalidates old handles on same-UUID Account, Guest replacement and failed t
   expect(f.opened[0].name).not.toBe(f.opened[1].name);
 });
 
+it("adds a Guest traveler to an existing Trip and reopens the same Person without sharing", async () => {
+  const f = fixture();
+  const open = f.newOpener();
+  const workspace = await open();
+  const trip = tripInput();
+  await workspace.trips.createTrip(trip);
+  const otherTrip = tripInput();
+  await workspace.trips.createTrip(otherTrip);
+  const { context } = await workspace.currency.readSetup(trip.tripId);
+  const person = {
+    operationId: randomUUID(),
+    personId: randomUUID(),
+    displayName: "旅客",
+  };
+  await workspace.currency.addTraveler(context, person);
+  await workspace.currency.addTraveler(context, person);
+  f.close();
+  const reopened = await f.newOpener()();
+  expect((await reopened.currency.readSetup(trip.tripId)).members).toMatchObject({
+    state: "AVAILABLE",
+    namedCount: 2,
+    people: [
+      expect.objectContaining({ isCurrentActor: true }),
+      {
+        personId: person.personId,
+        displayName: person.displayName,
+        isCurrentActor: false,
+      },
+    ],
+  });
+  expect((await reopened.currency.readSetup(otherTrip.tripId)).members).toMatchObject({
+    state: "AVAILABLE",
+    namedCount: 1,
+  });
+  expect((await reopened.plan.createDraft(trip.tripId)).participantOptions).toEqual(
+    expect.arrayContaining([expect.objectContaining({ personId: person.personId })]),
+  );
+});
+
 it("discards stale async reads across kind changes and retains the original local data", async () => {
   const f = fixture();
   const open = f.newOpener();
@@ -1881,6 +1920,34 @@ it("accounts for the normal Guest traveler creation records without connecting t
   expect(body.targetAccountId).toBeUndefined();
   expect(body.cloudAuthority).toBe(false);
   await lease.release();
+});
+
+it("reads the existing Guest Ledger with the same local Person identity after reopen", async () => {
+  const f = fixture();
+  const workspace = await f.newOpener()();
+  const trip = { ...tripInput(), syncFormatVersion: 2 as const, destinations: [] };
+  await workspace.trips.createTrip(trip);
+  const person = { operationId: randomUUID(), personId: randomUUID(), displayName: "Guest Traveller" };
+  const setup = await workspace.currency.readSetup(trip.tripId);
+  await workspace.currency.addTraveler(setup.context, person);
+  const reopened = await f.newOpener()();
+  const before = f.opened[1].sql.prepare("SELECT id,status FROM sync_operations ORDER BY id").all();
+  const report = await reopened.readLedger(trip.tripId);
+  expect(report).toMatchObject({
+    currency: "NZD",
+    people: expect.arrayContaining([expect.objectContaining({
+      personId: person.personId,
+      displayName: person.displayName,
+      isCurrentActor: false,
+    })]),
+    expenses: [],
+  });
+  expect(f.opened[1].sql.prepare("SELECT id,status FROM sync_operations ORDER BY id").all())
+    .toEqual(before);
+  await expect(reopened.readLedger(randomUUID())).rejects.toThrow();
+  const hold = await reopened.freezeForInventory();
+  await expect(reopened.readLedger(trip.tripId)).rejects.toThrow("GUEST_INVENTORY_FROZEN");
+  await hold.release();
 });
 
 it("retains Ledger initialization settings and source timestamps as data, without manufacturing a new cloud policy", async () => {

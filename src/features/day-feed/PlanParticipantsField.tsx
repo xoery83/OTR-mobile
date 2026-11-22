@@ -70,6 +70,7 @@ export function PlanParticipantsField({
       >
         <SafeAreaView edges={["bottom"]} style={styles.sheet}>
           <SheetHeader
+            wrapActions
             category="picker"
             safeTop={false}
             title={t("tripCreate.planParticipants")}

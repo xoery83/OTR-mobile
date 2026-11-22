@@ -45,6 +45,7 @@ import { tripCoreSha256Hex } from "../repositories/tripCoreSha256";
 import { createTripRepository } from "../repositories/tripRepository";
 import { createTripPreparationReader } from "../repositories/tripPreparationRepository";
 import { createTripJourneySnapshotReader } from "../repositories/tripJourneySnapshotRepository";
+import { createLedgerReportingRepository } from "../repositories/ledgerReportingRepository";
 import { createGuestTripCurrencyRepository } from "../repositories/guestTripCurrencyRepository";
 import { createTripPhotoRepository } from "../repositories/tripPhotoRepository";
 import { createTripPersonalCoverRepository } from "../repositories/tripPersonalCoverRepository";
@@ -207,6 +208,8 @@ export function createGuestLocalWorkspaceOpener(deps: {
       async () => "",
     );
     const localManual = createTripLocalManualReader(database, repositoryOwner, core);
+    const currency = createGuestTripCurrencyRepository(database, repositoryOwner);
+    const ledger = createLedgerReportingRepository(database, repositoryOwner);
     const trips = {
       createTrip: repository.createTrip,
       getTrip: repository.getTrip,
@@ -392,7 +395,23 @@ export function createGuestLocalWorkspaceOpener(deps: {
         repositoryOwner,
         localManual,
       ),
-      currency: createGuestTripCurrencyRepository(database, repositoryOwner),
+      currency,
+      async readLedger(tripId: string) {
+        // The Guest workspace has a local Ledger actor, bound to the creator Person.
+        const setup = await currency.readSetup(tripId);
+        if (setup.members.state !== "AVAILABLE" || setup.currency.state !== "AVAILABLE")
+          throw Error("GUEST_LEDGER_CONTEXT_REQUIRED");
+        const actor = await ledger.getActorContext(tripId);
+        const owner = setup.members.people.find((person) => person.isCurrentActor);
+        if (!actor?.memberId || owner?.personId !== actor.memberId)
+          throw Error("GUEST_LEDGER_CONTEXT_REQUIRED");
+        const expenses = await ledger.listExpenses(
+          { journeyId: tripId, memberId: actor.memberId, scope: "GROUP", order: "UPDATED" },
+          12,
+        );
+        await repositoryOwner();
+        return { currency: setup.currency.code, people: setup.members.people, expenses };
+      },
       photos: createTripPhotoRepository(database, repositoryOwner),
       personalCover: createTripPersonalCoverRepository(database, repositoryOwner),
       plan: createManualPlanRepository(database, repositoryOwner, core),

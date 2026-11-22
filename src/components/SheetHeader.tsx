@@ -16,6 +16,7 @@ export function SheetHeader({
   rightLabel = t("common.done"),
   onRight,
   rightDisabled = false,
+  wrapActions = false,
   safeTop = true,
   surface = "surface",
 }: {
@@ -27,12 +28,14 @@ export function SheetHeader({
   rightLabel?: string;
   onRight?: () => void;
   rightDisabled?: boolean;
+  wrapActions?: boolean;
   safeTop?: boolean;
   surface?: "surface" | "background";
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
-  const largeText = useWindowDimensions().fontScale > 2;
+  const { fontScale } = useWindowDimensions();
+  const largeText = fontScale > 2 || (wrapActions && fontScale >= 1.3);
   const touchY = useRef(0);
   const lightweight = category === "action" || category === "composer";
   const standard = category !== "legacy";
@@ -42,6 +45,7 @@ export function SheetHeader({
       label={leftLabel ?? t(standard ? "common.cancel" : "common.close")}
       onPress={onLeft}
       regular={standard}
+      wrap={wrapActions}
     />
   );
   const right = lightweight ? (
@@ -56,7 +60,7 @@ export function SheetHeader({
       <AppIcon name="xmark" size={20} color={styles.closeIcon.color} />
     </Pressable>
   ) : onRight ? (
-    <Action disabled={rightDisabled} label={rightLabel} onPress={onRight} />
+    <Action disabled={rightDisabled} label={rightLabel} onPress={onRight} wrap={wrapActions} />
   ) : null;
   // Accessibility exception: large text keeps two title lines above the actions.
   return (
@@ -97,7 +101,7 @@ export function SheetHeader({
               >
                 {title}
               </Text>
-              <View style={[styles.actions, lightweight && styles.closeActions]}>
+              <View style={[styles.actions, wrapActions && styles.wrappedActions, lightweight && styles.closeActions]}>
                 {left}
                 {right}
               </View>
@@ -126,8 +130,10 @@ function Action({
   label,
   onPress,
   regular = false,
+  wrap = false,
 }: {
   regular?: boolean;
+  wrap?: boolean;
   disabled?: boolean;
   label: string;
   onPress: () => void;
@@ -139,12 +145,13 @@ function Action({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.button, disabled && styles.disabled]}
+      style={[styles.button, wrap && styles.wrappedAction, disabled && styles.disabled]}
     >
       <Text
-        numberOfLines={1}
+        numberOfLines={wrap ? undefined : 1}
         style={[
           styles.buttonText,
+          wrap && styles.wrappedActionText,
           regular && styles.regularText,
           disabled && styles.disabledText,
         ]}
@@ -202,6 +209,9 @@ const createStyles = (colors: UiColors) =>
       textAlign: "center",
     },
     actions: { flexDirection: "row", justifyContent: "space-between" },
+    wrappedActions: { flexDirection: "column" },
+    wrappedAction: { flexShrink: 1, maxWidth: "100%", paddingHorizontal: 4 },
+    wrappedActionText: { textAlign: "center" },
     closeActions: { justifyContent: "flex-end" },
     button: {
       alignItems: "center",

@@ -1058,7 +1058,16 @@ function LocalTripContent({
     )
       ? setup.context
       : null;
-  const addTraveler = peopleAuthoringContext
+  const guestPeopleContext =
+    guest === true &&
+    selected?.serverId === null &&
+    setup?.context.tripId === selected.id &&
+    selected?.id === tripId &&
+    setup.context.generation === generation &&
+    setup.members.state === "AVAILABLE"
+      ? setup.context
+      : null;
+  const addAccountTraveler = peopleAuthoringContext
     ? async (input: AddTravelerInput) => {
         const origin = peopleAuthoringContext;
         if (!alive.current || generation !== getAccountGeneration())
@@ -1092,6 +1101,27 @@ function LocalTripContent({
         );
       }
     : undefined;
+  const addGuestTraveler = useCallback(async (input: AddTravelerInput) => {
+    if (!guestPeopleContext) throw Error("PEOPLE_CONTEXT_CHANGED");
+    const peopleRequest = request.current;
+    const current = () =>
+      alive.current &&
+      generation === getAccountGeneration() &&
+      guestPeopleContext.accountId === loadedGuest.current &&
+      peopleRequest === request.current;
+    const repository = await readGuestTripCurrencyRepository();
+    if (!current()) throw Error("PEOPLE_CONTEXT_CHANGED");
+    await repository.addTraveler(guestPeopleContext, input);
+    const latest = await repository.readSetup(guestPeopleContext.tripId);
+    if (current())
+      setSetup((prior) =>
+        prior?.context.accountId === guestPeopleContext.accountId &&
+        prior.context.tripId === guestPeopleContext.tripId
+          ? latest
+          : prior,
+      );
+  }, [generation, guestPeopleContext]);
+  const addTraveler = guestPeopleContext ? addGuestTraveler : addAccountTraveler;
   useFocusEffect(
     useCallback(() => {
       if (!selected && remoteSelected && remoteMetadataQualified && status === "READY") {
@@ -1435,20 +1465,23 @@ function LocalTripContent({
                 : []),
             ]}
             modules={
-              guest === false ? (
+              guest !== null ? (
                 <View style={styles.root}>
                   <TripMembersSummary
                     tripId={selected.id}
                     generation={generation}
+                    showInvitation={guest === false}
                     setup={setup?.context.tripId === selected.id ? setup : null}
                     onAddTraveler={addTraveler}
                   />
-                  <LocalTripPhotos
-                    compact
-                    tripId={selected.id}
-                    registerAdd={registerPhotos}
-                    onSaved={photosSaved}
-                  />
+                  {guest === false ? (
+                    <LocalTripPhotos
+                      compact
+                      tripId={selected.id}
+                      registerAdd={registerPhotos}
+                      onSaved={photosSaved}
+                    />
+                  ) : null}
                 </View>
               ) : null
             }
@@ -1496,19 +1529,23 @@ function LocalTripContent({
             }
             onClose={() => setMenuMembersTrip(null)}
             onAddTraveler={addTraveler}
-            onInvitePerson={(personId) => {
-              if (
-                !alive.current ||
-                generation !== getAccountGeneration() ||
-                setup?.context.tripId !== selected.id ||
-                setup.context.generation !== generation
-              )
-                return;
-              router.push({
-                pathname: "/directed-invite",
-                params: { tripId: selected.id, personId },
-              });
-            }}
+            onInvitePerson={
+              guest === false
+                ? (personId) => {
+                    if (
+                      !alive.current ||
+                      generation !== getAccountGeneration() ||
+                      setup?.context.tripId !== selected.id ||
+                      setup.context.generation !== generation
+                    )
+                      return;
+                    router.push({
+                      pathname: "/directed-invite",
+                      params: { tripId: selected.id, personId },
+                    });
+                  }
+                : undefined
+            }
           />
           <Modal
             visible={coverOpen}
@@ -1714,6 +1751,7 @@ function LocalTripContent({
             modules={
               serverParentPeopleEnabled ? (
                 <ServerParentTripPeople
+                  showInvitation={guest === false}
                   tripId={remoteSelected.id}
                   generation={generation}
                   setup={setup?.context.tripId === remoteSelected.id ? setup : null}
@@ -1723,6 +1761,7 @@ function LocalTripContent({
                 <TripMembersSummary
                   tripId={remoteSelected.id}
                   generation={generation}
+                  showInvitation={guest === false}
                   setup={setup?.context.tripId === remoteSelected.id ? setup : null}
                 />
               )

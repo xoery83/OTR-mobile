@@ -55,6 +55,7 @@ function VisiblePeopleSheet({
     >
       <SafeAreaView edges={["bottom"]} style={styles.sheet}>
         <SheetHeader
+          wrapActions
           title={t("people.title")}
           safeTop={false}
           onLeft={onClose}

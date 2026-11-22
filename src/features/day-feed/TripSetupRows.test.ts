@@ -66,7 +66,7 @@ it("displays actual currency and routes only an observed eligible owner to exist
   expect(open).toHaveBeenCalledOnce();
 });
 function summary(setup: TripPreparationSetup | null, tripId = "trip", generation = 1) {
-  const scoped = TripMembersSummary({ setup, tripId, generation });
+  const scoped = TripMembersSummary({ setup, tripId, generation, showInvitation: true });
   if (state.key !== scoped.key) {
     state.key = scoped.key;
     state.open = false;
@@ -87,7 +87,7 @@ it("never substitutes fake currency or invitation counts for unknown facts", () 
 it("forwards Person authoring only to the matching Trip and generation", () => {
   const save = vi.fn();
   expect(
-    TripMembersSummary({ setup, tripId: "trip", generation: 1, onAddTraveler: save })
+    TripMembersSummary({ setup, tripId: "trip", generation: 1, showInvitation: true, onAddTraveler: save })
       .props.onAddTraveler,
   ).toBe(save);
   expect(
@@ -95,13 +95,29 @@ it("forwards Person authoring only to the matching Trip and generation", () => {
       setup,
       tripId: "different-trip",
       generation: 1,
+      showInvitation: true,
       onAddTraveler: save,
     }).props.onAddTraveler,
   ).toBeUndefined();
   expect(
-    TripMembersSummary({ setup, tripId: "trip", generation: 2, onAddTraveler: save })
+    TripMembersSummary({ setup, tripId: "trip", generation: 2, showInvitation: true, onAddTraveler: save })
       .props.onAddTraveler,
   ).toBeUndefined();
+});
+
+it("keeps local Guest Person authoring distinct from Account invitations", () => {
+  for (const showInvitation of [false, true]) {
+    const addTraveler = vi.fn();
+    const scoped = TripMembersSummary({
+      setup, tripId: "trip", generation: 1, showInvitation, onAddTraveler: addTraveler,
+    });
+    const sheet = Children.toArray((scoped.type as any)(scoped.props).props.children)
+      .find((child) => isValidElement(child) && String(child.type) === "TripMembersSheet");
+    if (!isValidElement<{ onAddTraveler: unknown; onInvitePerson?: unknown }>(sheet))
+      throw new Error("People sheet missing");
+    expect(sheet.props.onAddTraveler).toBe(addTraveler);
+    expect(typeof sheet.props.onInvitePerson).toBe(showInvitation ? "function" : "undefined");
+  }
 });
 
 it("offers only missing metadata setup without treating intentional one-sided dates as missing", () => {

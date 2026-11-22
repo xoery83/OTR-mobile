@@ -126,11 +126,13 @@ export function TripMembersSummary({
   setup,
   tripId,
   generation,
+  showInvitation,
   onAddTraveler,
 }: {
   setup: TripPreparationSetup | null;
   tripId: string;
   generation: number;
+  showInvitation: boolean;
   onAddTraveler?(input: AddTravelerInput): Promise<void>;
 }) {
   const current =
@@ -141,15 +143,18 @@ export function TripMembersSummary({
     <ScopedMembersSummary
       key={JSON.stringify([tripId, generation, current?.context.accountId ?? null])}
       setup={current}
+      showInvitation={showInvitation}
       onAddTraveler={current ? onAddTraveler : undefined}
     />
   );
 }
 function ScopedMembersSummary({
   setup,
+  showInvitation,
   onAddTraveler,
 }: {
   setup: TripPreparationSetup | null;
+  showInvitation: boolean;
   onAddTraveler?(input: AddTravelerInput): Promise<void>;
 }) {
   useUiLocale();
@@ -177,7 +182,7 @@ function ScopedMembersSummary({
         onClose={() => setOpen(false)}
         onAddTraveler={onAddTraveler}
         onInvitePerson={
-          setup
+          showInvitation && setup
             ? (personId) => {
                 if (setup.context.generation !== getAccountGeneration()) return;
                 router.push({

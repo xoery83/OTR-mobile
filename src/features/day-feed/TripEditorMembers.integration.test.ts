@@ -332,6 +332,7 @@ it("opens a real actor plus three local named people and clears the sheet on acc
       setup: value,
       tripId: id,
       generation: getAccountGeneration(),
+      showInvitation: true,
     });
     if (mounted !== scoped.key) {
       mounted = scoped.key;

@@ -42,10 +42,12 @@ export function GlobalMenu({
   journeyId,
   module,
   nativeToolbar = false,
+  guestLedger = false,
 }: {
   journeyId?: string | null;
   module: GlobalMenuModule;
   nativeToolbar?: boolean;
+  guestLedger?: boolean;
 }) {
   const locale = useUiLocale();
   const params = useGlobalSearchParams<{ tripId?: string; view?: string }>();
@@ -171,8 +173,9 @@ export function GlobalMenu({
     };
   }, [journeyId, generation]);
 
-  const contextItems = contextualMenuDestinations(module).map<AppNavigationMenuItem>(
-    (destination) => ({
+  const contextItems = contextualMenuDestinations(module)
+    .filter((destination) => !guestLedger || destination.label !== "My Ledger")
+    .map<AppNavigationMenuItem>((destination) => ({
       icon:
         destination.label === "My Ledger" ? "list.bullet.rectangle" : "dollarsign.circle",
       label:
@@ -183,8 +186,7 @@ export function GlobalMenu({
         destination.label === "Currency" && journeyId
           ? router.push({ pathname: destination.path, params: { journeyId } } as never)
           : router.push(destination.path as never),
-    }),
-  );
+    }));
   const tripContextId = selectedTripMenuId(pathname, params);
   const hasTripItems = module === "TRIP" && !!tripContextId;
   const membersCurrent =
