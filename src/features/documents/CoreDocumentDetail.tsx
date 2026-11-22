@@ -4,6 +4,7 @@ import {
   Alert,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -99,6 +100,13 @@ export function CoreDocumentDetail({
         const reader = await localItemImportOriginals(tripId, undefined, generation);
         const doc = (await reader.metadata()).find((row) => row.id === entry.id);
         if (!doc) throw Error("DOCUMENT_ACCESS_CHANGED");
+        if (!batchJobId) {
+          const directItems = await reader.relationships(entry.id);
+          if (!valid()) return;
+          setAvailable(doc.localAvailable);
+          setItems(directItems);
+          setLoading(false);
+        }
         const history = await reader.batches(entry.id).catch(() => {
           if (valid()) setBatchError(true);
           return [];
@@ -107,16 +115,17 @@ export function CoreDocumentDetail({
           ? history.filter((row) => row.jobId === batchJobId && row.batchId === batchId)
           : history;
         if (batchJobId && selected.length !== 1) throw Error("DOCUMENT_ACCESS_CHANGED");
-        const linked = new Map<string, Item>();
-        for (const id of batchJobId
-          ? selected[0].documents.map((row) => row.id)
-          : [entry.id])
-          for (const item of await reader.relationships(id)) linked.set(item.id, item);
+        if (batchJobId) {
+          const linked = new Map<string, Item>();
+          for (const { id } of selected[0].documents)
+            for (const item of await reader.relationships(id)) linked.set(item.id, item);
+          if (!valid()) return;
+          setAvailable(doc.localAvailable);
+          setItems([...linked.values()]);
+          setLoading(false);
+        }
         if (!valid()) return;
-        setAvailable(doc.localAvailable);
-        setItems([...linked.values()]);
         setBatches(selected);
-        setLoading(false);
         for (const batch of selected) {
           const result = await reader
             .batchResults(batch.jobId, batch.batchId)
@@ -246,6 +255,54 @@ export function CoreDocumentDetail({
       <UiText style={styles.meta}>{t("documents.localOnly")}</UiText>
     </View>
   );
+  const itemSection = !error ? (
+    <View style={styles.section}>
+      <UiText style={styles.heading}>
+        {t(batchJobId ? "documents.batchItems" : "documents.directItems")}
+      </UiText>
+      {loading ? (
+        <UiText style={styles.meta}>{t("common.loading")}</UiText>
+      ) : !items.length ? (
+        <UiText style={styles.meta}>{t("documents.noDirectItems")}</UiText>
+      ) : (
+        items.map((item) => (
+          <Pressable
+            key={item.id}
+            accessibilityRole="button"
+            disabled={!/^P[1-6]$/.test(item.family)}
+            onPress={() => openItem(item.id, item.family)}
+            style={styles.row}
+          >
+            <AppIcon
+              name={itemIcons[item.family as keyof typeof itemIcons] ?? "doc"}
+              size={22}
+              color={colors.textSecondary}
+            />
+            <View style={styles.copy}>
+              <UiText style={styles.title}>
+                {item.title || t("documents.untitledItem")}
+              </UiText>
+              {item.date || item.time ? (
+                <UiText style={styles.meta}>
+                  {[
+                    item.date && formatUiDate(new Date(`${item.date}T00:00:00Z`), {
+                      dateStyle: "medium",
+                      timeZone: "UTC",
+                    }),
+                    item.time,
+                  ].filter(Boolean).join(" · ")}
+                </UiText>
+              ) : null}
+              {item.place ? (
+                <UiText style={styles.meta}>{item.place}</UiText>
+              ) : null}
+            </View>
+            <AppIcon name="chevron.right" size={14} color={colors.textSecondary} />
+          </Pressable>
+        ))
+      )}
+    </View>
+  ) : null;
   return (
     <View style={styles.body}>
       <DocumentActions
@@ -273,6 +330,7 @@ export function CoreDocumentDetail({
         {batchError ? (
           <UiText style={styles.meta}>{t("documents.batchUnavailable")}</UiText>
         ) : null}
+        {!batchJobId ? itemSection : null}
         {batches.length ? (
           <View style={styles.section}>
             <UiText style={styles.heading}>{t("documents.sameImportResults")}</UiText>
@@ -375,52 +433,7 @@ export function CoreDocumentDetail({
             })}
           </View>
         ) : null}
-        {!error ? (
-          <View style={styles.section}>
-            <UiText style={styles.heading}>
-              {t(batchJobId ? "documents.batchItems" : "documents.directItems")}
-            </UiText>
-            {loading ? (
-              <UiText style={styles.meta}>{t("common.loading")}</UiText>
-            ) : !items.length ? (
-              <UiText style={styles.meta}>{t("documents.noDirectItems")}</UiText>
-            ) : (
-              items.map((item) => (
-                <View key={item.id} style={styles.row}>
-                  <AppIcon
-                    name={itemIcons[item.family as keyof typeof itemIcons] ?? "doc"}
-                    size={22}
-                    color={colors.textSecondary}
-                  />
-                  <View style={styles.copy}>
-                    <UiText style={styles.title}>
-                      {item.title || t("documents.untitledItem")}
-                    </UiText>
-                    {item.date || item.time ? (
-                      <UiText style={styles.meta}>
-                        {[
-                          item.date && formatUiDate(new Date(`${item.date}T00:00:00Z`), {
-                            dateStyle: "medium",
-                            timeZone: "UTC",
-                          }),
-                          item.time,
-                        ].filter(Boolean).join(" · ")}
-                      </UiText>
-                    ) : null}
-                    {item.place ? (
-                      <UiText style={styles.meta}>{item.place}</UiText>
-                    ) : null}
-                  </View>
-                  <UiButton
-                    variant="text"
-                    label={t("documents.openItem")}
-                    onPress={() => openItem(item.id, item.family)}
-                  />
-                </View>
-              ))
-            )}
-          </View>
-        ) : null}
+        {batchJobId ? itemSection : null}
         {!batchJobId && !error && entry.canOpenOriginal !== false ? (
           <View style={styles.section}>
             <UiButton
@@ -577,6 +590,7 @@ const createStyles = (colors: UiColors) =>
     heading: { ...visual.type.section, color: colors.textPrimary },
     meta: { ...visual.type.meta, color: colors.textSecondary },
     row: {
+      minHeight: 44,
       flexDirection: "row",
       alignItems: "center",
       gap: visual.space.card,
