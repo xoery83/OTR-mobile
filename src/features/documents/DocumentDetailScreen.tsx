@@ -155,7 +155,7 @@ export default function DocumentDetailScreen() {
           }}
           onOpenActivity={(jobId) => {
             if (current())
-              router.push({ pathname: "/capture", params: { jobId, tripId } });
+              router.push({ pathname: "/import-plans", params: { jobId, tripId } });
           }}
         />
       ) : (
