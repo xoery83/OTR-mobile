@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "./AppIcon";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
+import { UiText } from "@/ui/controls";
 
 export function SheetHeader({
   title,
@@ -148,7 +149,7 @@ function Action({
       onPress={onPress}
       style={[styles.button, wrap && styles.wrappedAction, disabled && styles.disabled]}
     >
-      <Text
+      <UiText
         numberOfLines={wrap ? undefined : 1}
         style={[
           styles.buttonText,
@@ -158,7 +159,7 @@ function Action({
         ]}
       >
         {label}
-      </Text>
+      </UiText>
     </Pressable>
   );
 }
