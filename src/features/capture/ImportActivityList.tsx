@@ -14,6 +14,7 @@ import type { UniversalTaskActivity } from "@/data/api/universalImportContracts"
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 
 const sources = ["ALL", "FILES", "PHOTOS", "TEXT"] as const;
+export const showImportActivitySourceFilter = false;
 const statuses = [
   "ALL",
   "PROCESSING",
@@ -104,11 +105,14 @@ export function ImportActivityList({
         tasks[job.batch.batchId],
       ),
     }))
-    .filter(({ fact }) => source === "ALL" || fact.sources.includes(source));
+    .filter(
+      ({ fact }) =>
+        !showImportActivitySourceFilter || source === "ALL" || fact.sources.includes(source),
+    );
   const visible = rows.filter(({ fact }) => status === "ALL" || fact.status === status);
   return (
     <View style={styles.body}>
-      {!directory.collapsed ? (
+      {showImportActivitySourceFilter && !directory.collapsed ? (
         <UiButton
           label={t("activity.sourceChooser", { source: t(`activity.source.${source}`) })}
           variant="text"

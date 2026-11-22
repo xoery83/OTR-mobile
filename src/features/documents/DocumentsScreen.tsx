@@ -36,7 +36,10 @@ import {
   listCaptureTripPriors,
 } from "@/features/capture/captureTripPrior";
 import { useTripView } from "@/features/day-feed/TripViewContext";
-import type { ActivityView } from "@/features/capture/ImportActivityList";
+import {
+  showImportActivitySourceFilter,
+  type ActivityView,
+} from "@/features/capture/ImportActivityList";
 import { CaptureActivity } from "@/features/capture/CaptureActivity";
 import { NavigationContextTitle } from "@/components/navigationChrome";
 import { AppIcon } from "@/components/AppIcon";
@@ -314,7 +317,7 @@ function DocumentsWorkspace({
       {!searchOnly && (!collapsed || tab === "ACTIVITY") ? (
         <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar />
       ) : null}
-      {!searchOnly && tab === "ACTIVITY" && collapsed ? (
+      {showImportActivitySourceFilter && !searchOnly && tab === "ACTIVITY" && collapsed ? (
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Button
             onPress={() => activityChooser.current?.()}

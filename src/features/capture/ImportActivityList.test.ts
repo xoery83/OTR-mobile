@@ -113,7 +113,7 @@ it("restores a selected status and uses the original Job ID when opened", () => 
   expect(open).toHaveBeenCalledWith("review");
 });
 
-it("shows localized acquisition sources and authorized Trip names, not diagnostic input labels", () => {
+it("keeps source labels and Trip names while the hidden filter cannot exclude a Batch", () => {
   const file = job("file");
   const photo = job("photo");
   photo.batch.inputs = [{ acquisitionSource: "camera" }] as any;
@@ -137,7 +137,8 @@ it("shows localized acquisition sources and authorized Trip names, not diagnosti
     }),
   );
   expect(html).toContain("file.pdf");
-  expect(html).not.toContain("photo.pdf");
+  expect(html).toContain("photo.pdf");
+  expect(html).not.toContain("activity.sourceChooser");
   expect(html).toContain("activity.source.FILES");
   expect(html).toContain("Auckland Weekend");
   expect(html).not.toContain("INTERNAL_READER_DIAGNOSTIC");
