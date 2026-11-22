@@ -791,14 +791,22 @@ it("unknown-zone legacy accepted Day retains its owning projection and renderer"
   expect(feed.zone).toBe("");
   expect(feed.date).toBe("2027-02-06");
 });
-it("an undated Trip opens an empty Day page with date selection inside the page", async () => {
+it("an undated Trip opens the empty Day Feed directly on the local date", async () => {
   state.routeMode = "day";
   state.view = { ...state.view, date: "", zone: "" };
   state.snapshot = null;
-  const page = await loaded();
-  expect(find(page, "Modal")).toBeNull();
-  expect(find(page, LocalTripWorkspace)).toBeNull();
-  expect(find(page, "Input").accessibilityLabel).toBe("dayFeed.date");
+  vi.setSystemTime(new Date(2026, 10, 29, 12));
+  try {
+    const page = await loaded();
+    const feed = find(page, DayFeed);
+    expect(feed.date).toBe("2026-11-29");
+    expect(feed.projection).toBe(state.result.observed.projection);
+    expect(find(page, "Modal")?.visible).not.toBe(true);
+    expect(find(page, LocalTripWorkspace)).toBeNull();
+    expect(find(page, "Input")).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it("switches the My Trips native title only after the body heading leaves, reverses on return, and reserves shell space", async () => {
