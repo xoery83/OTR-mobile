@@ -15,6 +15,7 @@ import {
   readLocalTripPrincipal,
 } from "@/data/auth/localTripAccess";
 import { loadP1Detail, type P1DetailState } from "./p1DetailRead";
+import { readCertifiedPlanAfterJournalMismatch } from "@/data/repositories/tripDayFeedRepository";
 import { UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -74,6 +75,7 @@ export function P1Detail() {
             return read;
           },
           repository: createDefaultManualPlanRepository,
+          readCertified: readCertifiedPlanAfterJournalMismatch,
           generation: getAccountGeneration,
           onReadable: (next) => {
             if (active && generation === getAccountGeneration()) setState(next);

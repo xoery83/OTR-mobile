@@ -82,6 +82,9 @@ vi.mock("@/data/auth/localTripAccess", () => ({
   readTripDayFeed: async () => ({ trip: state.read }),
   createDefaultManualPlanRepository: () => state.repository(),
 }));
+vi.mock("@/data/repositories/tripDayFeedRepository", () => ({
+  readCertifiedPlanAfterJournalMismatch: vi.fn(),
+}));
 vi.mock("@/ui/controls", () => ({
   UiText: (p: any) => createElement("span", null, p.children),
   UiButton: (p: any) => createElement("button", null, p.label),

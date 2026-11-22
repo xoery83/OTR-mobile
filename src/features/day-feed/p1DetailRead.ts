@@ -1,5 +1,8 @@
 import { coreUuid } from "@/domain/trip/tripCoreV2";
-import type { readTripDayFeed } from "@/data/repositories/tripDayFeedRepository";
+import type {
+  readCertifiedPlanAfterJournalMismatch,
+  readTripDayFeed,
+} from "@/data/repositories/tripDayFeedRepository";
 import type {
   ManualPlanDraft,
   ManualPlanRepository,
@@ -22,6 +25,7 @@ export async function loadP1Detail(
   },
   ports: {
     read(id: string): Promise<Read>;
+    readCertified?: typeof readCertifiedPlanAfterJournalMismatch;
     repository(): Promise<ManualPlanRepository>;
     generation(): number;
     onReadable?(state: P1DetailState): void;
@@ -32,7 +36,22 @@ export async function loadP1Detail(
   coreUuid.parse(itemId);
   const current = () => generation === ports.generation();
   if (!current()) return null;
-  const read = await ports.read(tripId);
+  const read = await ports.read(tripId).catch((error: unknown) => {
+    if (error instanceof Error && error.message === "LOCAL_RESULT_MISMATCH")
+      return null;
+    throw error;
+  });
+  if (!read) {
+    if (!current()) return null;
+    if (!ports.readCertified) throw new Error("P1_UNAVAILABLE");
+    const { scope, item } = await ports.readCertified(tripId, itemId);
+    if (!current() || scope.generation !== generation) return null;
+    if (!item || item.tripId !== tripId || item.itemId !== itemId)
+      throw new Error("P1_UNAVAILABLE");
+    const presentation = localP1Presentation(item, occurrence);
+    if (!presentation) throw new Error("P1_UNAVAILABLE");
+    return { ...input, presentation, editor: null };
+  }
   if (!current() || read.scope.generation !== generation) return null;
   const projection =
     read.observed?.sourceStatus === "CURRENTLY_MATCHES_SOURCE" &&

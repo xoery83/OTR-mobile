@@ -65,6 +65,28 @@ it("keeps readable facts when Edit is denied", async () => {
   repository.read.mockRejectedValue(new Error("MANUAL_PLAN_UNAVAILABLE"));
   expect((await loadP1Detail(input, ports))?.editor).toBeNull();
 });
+it("reads a certified P1 without Edit after a local journal result mismatch", async () => {
+  const { ports, record } = setup();
+  ports.read.mockRejectedValue(new Error("LOCAL_RESULT_MISMATCH"));
+  const readCertified = vi.fn(async () => ({
+    scope,
+    item: { ...record, localState: "ACCEPTED" as const } as never,
+  }));
+  const state = await loadP1Detail(input, { ...ports, readCertified });
+  expect(readCertified).toHaveBeenCalledWith(tripId, itemId);
+  expect(state?.presentation.facts.pending).toBe(false);
+  expect(state?.editor).toBeNull();
+  expect(ports.repository).not.toHaveBeenCalled();
+});
+it("does not retry an access denial with the certified reader", async () => {
+  const { ports } = setup();
+  ports.read.mockRejectedValue(new Error("CORE_ACCESS_REVOKED"));
+  const readCertified = vi.fn();
+  await expect(loadP1Detail(input, { ...ports, readCertified })).rejects.toThrow(
+    "CORE_ACCESS_REVOKED",
+  );
+  expect(readCertified).not.toHaveBeenCalled();
+});
 it("drops a deferred Reader response after an account switch without reading an edit draft", async () => {
   const { ports, result } = setup();
   let generation = 5,

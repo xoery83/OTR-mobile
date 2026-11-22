@@ -17,6 +17,7 @@ import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { tripCoreSha256Hex } from "./tripCoreSha256";
 import type { ObservedCoreFlightProjection } from "./tripCoreV2DayFeedRepository";
 import { createCoreP6DayFeedReader } from "./tripCoreV2P6DayFeedRepository";
+import { projectCoreItem } from "@/domain/trip/tripCoreV2Views";
 
 import {
   createTripLocalManualReader,
@@ -34,6 +35,41 @@ type Dependencies = {
     observed: ObservedDayProjection,
   ) => Promise<Record<string, FlightService[]>>;
 };
+
+// Called only after a verified local journal replay mismatch. A certified Item can
+// still be read when no unresolved Core intent or local slot can shadow its facts.
+export async function readCertifiedPlanAfterJournalMismatch(
+  tripId: string,
+  itemId: string,
+): Promise<{ scope: AccountScope; item: ReturnType<typeof projectCoreItem> }> {
+  const database = await readInitializedDatabase();
+  const core = createTripCoreV2Repository(database, requireActiveUserId, tripCoreSha256Hex);
+  const scope = await core.captureContext(tripId);
+  return withAccountApplyGate(async () => {
+    let item: ReturnType<typeof projectCoreItem> = null;
+    await database.withTransactionAsync(async () => {
+      const snapshot = await core.readAcceptedSnapshotWithinTransaction(scope);
+      if (!snapshot) return;
+      const unsafeToRead = await database.getFirstAsync(
+        `SELECT 1 FROM local_core_authority_slots
+          WHERE account_id=? AND trip_id=? AND target_kind='ITEM' AND target_id=?
+         UNION ALL
+         SELECT 1 FROM trip_core_pending_intents
+          WHERE account_id=? AND trip_id=? AND reconciled_revision IS NULL
+            AND state IN ('BLOCKED','PENDING','IN_FLIGHT','APPLIED')
+         LIMIT 1`,
+        scope.accountId, tripId, itemId, scope.accountId, tripId,
+      );
+      if (unsafeToRead) return;
+      item = projectCoreItem(snapshot.graph, snapshot.actor, itemId, {
+        rosterHash: snapshot.certificate.roster_hash,
+        participatingPersonIds: snapshot.participatingPersonIds,
+      });
+    });
+    await assertAccountRequestContext(scope, requireActiveUserId);
+    return { scope, item };
+  });
+}
 // Discovery never admits a Trip. The account-scoped accepted projection is the read boundary.
 export function createTripDayFeedReader(deps: Dependencies) {
   return {
