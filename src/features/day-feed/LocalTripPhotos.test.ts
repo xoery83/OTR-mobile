@@ -41,11 +41,20 @@ vi.mock("react", async (original) => ({
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
 }));
 vi.mock("react-native", () => ({
+  Modal: "aside",
+  ScrollView: "main",
   AppState: { addEventListener: () => ({ remove: vi.fn() }) },
   Image: (props: any) => createElement("img", { src: props.source.uri }),
   StyleSheet: { create: (styles: unknown) => styles },
   Text: (props: any) => createElement("span", null, props.children),
   View: (props: any) => createElement("div", null, props.children),
+}));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "div" }));
+vi.mock("@/components/SheetHeader", () => ({
+  SheetHeader: (props: { onLeft(): void }) => {
+    state.buttons.push({ label: "close", onPress: props.onLeft, disabled: false });
+    return null;
+  },
 }));
 vi.mock("expo-image-picker", () => ({
   launchImageLibraryAsync: (...args: unknown[]) => state.picker(...args),
@@ -79,8 +88,9 @@ function render(
   id = tripId,
   compact = false,
   registerAdd?: (add: (() => void) | null) => void,
+  readOnly = false,
 ) {
-  const element = LocalTripPhotos({ tripId: id, compact, registerAdd });
+  const element = LocalTripPhotos({ tripId: id, compact, registerAdd, readOnly });
   const next = String(element.key);
   state.mount = next !== key;
   if (state.mount) {
@@ -287,6 +297,8 @@ it("keeps the real Photos capability mounted behind a compact More row", async (
   expect(render(tripId, true)).not.toContain("tripPhotos.choose");
   state.buttons[0].onPress();
   expect(render(tripId, true)).toContain("tripPhotos.choose");
+  state.buttons.find(({ label }) => label === "close")!.onPress();
+  expect(render(tripId, true)).not.toContain("tripPhotos.choose");
 });
 
 it("shows ActionIsland picker failures even while the compact Photos row is collapsed", async () => {
@@ -306,5 +318,24 @@ it("shows ActionIsland picker failures even while the compact Photos row is coll
   add!();
   await flush();
   expect(render(tripId, true, register)).toContain("tripPhotos.addFailed");
+  expect(repo.addTripPhoto).not.toHaveBeenCalled();
+});
+
+
+it("shows retained photos in the read-only module without any add capability", async () => {
+  const registerAdd = vi.fn();
+  const repo = {
+    listTripPhotos: vi.fn(async () => [{ assetId: "photo", localUri: "file:///photo.jpg" }]),
+    addTripPhoto: vi.fn(),
+  };
+  state.repository.mockResolvedValue(repo);
+  render(tripId, true, registerAdd, true);
+  await flush();
+  render(tripId, true, registerAdd, true);
+  state.buttons[0].onPress();
+  const html = render(tripId, true, registerAdd, true);
+  expect(html).toContain("file:///photo.jpg");
+  expect(html).not.toContain("tripPhotos.choose");
+  expect(registerAdd).toHaveBeenCalledWith(null);
   expect(repo.addTripPhoto).not.toHaveBeenCalled();
 });

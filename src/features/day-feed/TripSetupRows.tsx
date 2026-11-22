@@ -158,10 +158,9 @@ function ScopedMembersSummary({
   onAddTraveler?(input: AddTravelerInput): Promise<void>;
 }) {
   useUiLocale();
-  const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   return (
-    <View style={styles.rows}>
+    <>
       <UiFormRow
         label={t("people.title")}
         value={
@@ -173,9 +172,6 @@ function ScopedMembersSummary({
         }
         onPress={() => setOpen(true)}
       />
-      {setup?.members.state === "AVAILABLE" ? (
-        <UiText style={styles.meta}>{t("tripForm.namedPeopleHint")}</UiText>
-      ) : null}
       <TripMembersSheet
         visible={open}
         members={open ? (setup?.members ?? null) : null}
@@ -193,12 +189,11 @@ function ScopedMembersSummary({
             : undefined
         }
       />
-    </View>
+    </>
   );
 }
 const createStyles = (c: UiColors) =>
   StyleSheet.create({
-    rows: { gap: visual.space.card },
     setupRows: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: c.separator,
@@ -210,5 +205,4 @@ const createStyles = (c: UiColors) =>
       paddingVertical: visual.space.heading,
     },
     title: { ...visual.type.section, color: c.textPrimary },
-    meta: { ...visual.type.meta, color: c.textSecondary },
   });

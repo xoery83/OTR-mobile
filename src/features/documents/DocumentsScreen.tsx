@@ -123,8 +123,11 @@ function DocumentsWorkspace({
   const stackTabs = width / fontScale < 310;
   const params = useLocalSearchParams<{
     tripId?: string;
+    fromTripHome?: string;
     scope?: "TRIP" | "PERSONAL_INBOX" | "ACTIVITY";
   }>();
+  const fromTripHome = params.fromTripHome === "1";
+  const showBack = searchOnly || fromTripHome;
   const { workingTrip, switchTrip } = useTripView();
   const tripId =
     typeof params.tripId === "string" && params.tripId
@@ -293,13 +296,13 @@ function DocumentsWorkspace({
   };
   return (
     <SafeAreaView
-      edges={collapsed && !searchOnly && tab !== "ACTIVITY" ? ["top"] : []}
+      edges={collapsed && !showBack && tab !== "ACTIVITY" ? ["top"] : []}
       style={styles.body}
     >
       <Stack.Screen
         options={{
-          headerShown: searchOnly || !collapsed || tab === "ACTIVITY",
-          headerBackVisible: searchOnly,
+          headerShown: showBack || !collapsed || tab === "ACTIVITY",
+          headerBackVisible: showBack,
           title: t(searchOnly ? "documents.searchTitle" : "tripHome.documents"),
           headerTitle: () => (
             <NavigationContextTitle
@@ -314,7 +317,7 @@ function DocumentsWorkspace({
           ),
         }}
       />
-      {!searchOnly && (!collapsed || tab === "ACTIVITY") ? (
+      {!showBack && (!collapsed || tab === "ACTIVITY") ? (
         <GlobalMenu module="TRIP" journeyId={tripId} nativeToolbar />
       ) : null}
       {showImportActivitySourceFilter && !searchOnly && tab === "ACTIVITY" && collapsed ? (
@@ -554,7 +557,7 @@ function DocumentsWorkspace({
                   label={trip.name}
                   onPress={() => {
                     if (!active()) return;
-                    switchTrip(trip.id, generation);
+                    if (!fromTripHome) switchTrip(trip.id, generation);
                     router.setParams({ tripId: trip.id });
                     setTripName(trip.name);
                     setChoosing(false);

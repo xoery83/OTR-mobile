@@ -239,6 +239,7 @@ vi.mock("@/ui/locale", () => ({
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => {} }));
 vi.mock("@/ui/theme", () => ({
   useThemedStyles: () => ({}),
+  useUiAppearance: () => "light",
   useUiTheme: () => ({
     transparent: "transparent",
     surface: "surface",
@@ -849,6 +850,8 @@ it("keeps status information readable after the measured Hero scrolls away and o
   const node = await loaded();
   find(node, LocalTripWorkspace).onHomeHeroHeight(300);
   const scroll = find(node, "ScrollView");
+  expect(find(node, "View").style).toContainEqual({ paddingBottom: 90 });
+  expect(scroll.scrollIndicatorInsets).toEqual({ bottom: 0 });
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   expect(state.setOptions.mock.lastCall?.[0].headerTransparent).toBe(true);
@@ -865,12 +868,10 @@ it("keeps status information readable after the measured Hero scrolls away and o
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe(
-    "transparent",
+    "background",
   );
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
-    "systemUltraThinMaterial",
-  );
-  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
+  expect(state.setOptions.mock.lastCall?.[0].title).toBe(
     "Actual saved Trip",
   );
   expect(state.setOptions.mock.lastCall?.[0].headerTransparent).toBe(true);
@@ -881,22 +882,20 @@ it("keeps status information readable after the measured Hero scrolls away and o
   };
   state.mount = true;
   render();
-  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+  expect(state.setOptions.mock.lastCall?.[0].title).toBe(
     "Locally edited Trip",
   );
   state.quickActions = { tripId: "other-trip", generation: 5, tripName: "Other Trip" };
   state.mount = true;
   render();
-  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe(
+  expect(state.setOptions.mock.lastCall?.[0].title).toBe(
     "Actual saved Trip",
   );
   scroll.onScroll({ nativeEvent: { contentOffset: { y: 242 } } });
   state.mount = true;
   render();
-  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
-    "systemUltraThinMaterial",
-  );
+  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("dark");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   find(node, LocalTripWorkspace).onHomeHeroHeight(500);
   state.mount = true;
   render();
@@ -905,16 +904,14 @@ it("keeps status information readable after the measured Hero scrolls away and o
   find(node, LocalTripWorkspace).onHomeHeroHeight(300);
   state.mount = true;
   render();
-  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("auto");
-  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBe(
-    "systemUltraThinMaterial",
-  );
+  expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("dark");
+  expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   scroll.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
   state.mount = true;
   render();
   expect(state.setOptions.mock.lastCall?.[0].statusBarStyle).toBe("light");
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
-  expect(state.setOptions.mock.lastCall?.[0].headerTitle({}).props.children).toBe("");
+  expect(state.setOptions.mock.lastCall?.[0].title).toBe("");
   expect(state.setOptions.mock.lastCall?.[0].headerBlurEffect).toBeUndefined();
   expect(state.select).not.toHaveBeenCalled();
   expect(state.saveReading).not.toHaveBeenCalled();
@@ -1509,7 +1506,7 @@ it("separates native blur from edge effects and resets both on warm Home–Day s
 });
 
 it.each(["26.0", "27.0"])(
-  "uses only the native soft top edge on iOS %s and restores Hero defaults",
+  "uses the soft Day edge on iOS %s and a solid collapsed Home header",
   async (version) => {
     state.platformVersion = version;
     state.routeMode = "day";
@@ -1543,7 +1540,8 @@ it.each(["26.0", "27.0"])(
     find(home, "ScrollView").onScroll({ nativeEvent: { contentOffset: { y: 600 } } });
     state.mount = true;
     render(false);
-    expect(state.setOptions.mock.lastCall?.[0].scrollEdgeEffects?.top).toBe("soft");
+    expect(state.setOptions.mock.lastCall?.[0].scrollEdgeEffects?.top).toBe("hidden");
+    expect(state.setOptions.mock.lastCall?.[0].headerStyle.backgroundColor).toBe("background");
     expect(state.setOptions.mock.lastCall?.[0]).toHaveProperty(
       "headerBlurEffect",
       undefined,

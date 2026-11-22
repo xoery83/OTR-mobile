@@ -79,6 +79,7 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
+import { UiFormRow } from "@/ui/forms";
 import { UiButton, UiText as Text } from "@/ui/controls";
 import { formatUiDate, t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -1289,6 +1290,60 @@ function LocalTripContent({
       : []),
     ...(finance ? [finance] : []),
   ];
+  const homeSetup =
+    metadata &&
+    setup?.context.tripId === metadata.id &&
+    setup.context.generation === generation
+      ? setup
+      : null;
+  const canEditHomeTrip = selected ? metadataEditable : remoteMetadataQualified;
+  const editHomeTrip = () => void openTripEditor();
+  const homeModules = metadata && guest !== null ? (
+    <View style={styles.homeModules}>
+      {guest === false && (selected || homeSetup?.members.state === "AVAILABLE") ? (
+        <UiFormRow
+          label={t("importDocuments.trip")}
+          value=""
+          onPress={() => {
+            if (!alive.current || generation !== getAccountGeneration()) return;
+            router.push({
+              pathname: "/documents",
+              params: { tripId: metadata.id, scope: "TRIP", fromTripHome: "1" },
+            });
+          }}
+        />
+      ) : null}
+      {!selected && serverParentPeopleEnabled ? (
+        <ServerParentTripPeople
+          showInvitation={guest === false}
+          tripId={metadata.id}
+          generation={generation}
+          setup={homeSetup}
+          onSetup={receiveSetup}
+        />
+      ) : (
+        <TripMembersSummary
+          tripId={metadata.id}
+          generation={generation}
+          showInvitation={guest === false}
+          setup={homeSetup}
+          onAddTraveler={selected ? addTraveler : undefined}
+        />
+      )}
+      {guest === false && (selected || personalCover.selection) ? (
+        <LocalTripPhotos
+          compact
+          tripId={metadata.id}
+          readOnly={!selected}
+          registerAdd={selected ? registerPhotos : undefined}
+          onSaved={selected ? photosSaved : undefined}
+        />
+      ) : null}
+      {canEditHomeTrip ? (
+        <UiFormRow label={t("tripHome.settings")} value="" onPress={editHomeTrip} />
+      ) : null}
+    </View>
+  ) : null;
   if (mode === "PAST")
     return status === "READY" ? (
       <MyTripsList
@@ -1432,14 +1487,7 @@ function LocalTripContent({
           <TripHomeFrame
             canChooseCover={!!personalCover.selection}
             onChooseCover={openPersonalCover}
-            onEdit={
-              metadataEditable
-                ? () => {
-                    if (alive.current && generation === getAccountGeneration())
-                      void openTripEditor();
-                  }
-                : undefined
-            }
+            onEdit={canEditHomeTrip ? editHomeTrip : undefined}
             onHeroHeight={onHomeHeroHeight}
             widgets={pages}
             tripId={selected.id}
@@ -1464,27 +1512,7 @@ function LocalTripContent({
                 ? [tripDestinationDisplay(selected)!]
                 : []),
             ]}
-            modules={
-              guest !== null ? (
-                <View style={styles.root}>
-                  <TripMembersSummary
-                    tripId={selected.id}
-                    generation={generation}
-                    showInvitation={guest === false}
-                    setup={setup?.context.tripId === selected.id ? setup : null}
-                    onAddTraveler={addTraveler}
-                  />
-                  {guest === false ? (
-                    <LocalTripPhotos
-                      compact
-                      tripId={selected.id}
-                      registerAdd={registerPhotos}
-                      onSaved={photosSaved}
-                    />
-                  ) : null}
-                </View>
-              ) : null
-            }
+            modules={homeModules}
           />
           {savedNotice ||
           (localOutcome?.tripId === selected.id &&
@@ -1744,28 +1772,11 @@ function LocalTripContent({
       ) : remoteSelected ? (
         <>
           <TripHomeFrame
-            onEdit={remoteMetadataQualified ? () => void openTripEditor() : undefined}
+            onEdit={canEditHomeTrip ? editHomeTrip : undefined}
             canChooseCover={!!personalCover.selection}
             onChooseCover={openPersonalCover}
             onHeroHeight={onHomeHeroHeight}
-            modules={
-              serverParentPeopleEnabled ? (
-                <ServerParentTripPeople
-                  showInvitation={guest === false}
-                  tripId={remoteSelected.id}
-                  generation={generation}
-                  setup={setup?.context.tripId === remoteSelected.id ? setup : null}
-                  onSetup={receiveSetup}
-                />
-              ) : (
-                <TripMembersSummary
-                  tripId={remoteSelected.id}
-                  generation={generation}
-                  showInvitation={guest === false}
-                  setup={setup?.context.tripId === remoteSelected.id ? setup : null}
-                />
-              )
-            }
+            modules={homeModules}
             widgets={pages}
             tripId={remoteSelected.id}
             rawCoverSelection={displayCover?.selectedCoverAssetIdRaw}
@@ -1971,6 +1982,7 @@ function LocalTripContent({
 }
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    homeModules: { gap: visual.space.heading },
     modal: { flex: 1, backgroundColor: colors.background },
     manualModal: { flex: 1 },
     form: { padding: visual.space.page, gap: visual.space.card },

@@ -334,8 +334,11 @@ vi.mock("./MyTripsList", async (original) => {
   };
 });
 vi.mock("./LocalTripPhotos", () => ({
-  LocalTripPhotos: (p: { tripId: string }) =>
-    createElement("div", { "data-trip-photos": p.tripId }),
+  LocalTripPhotos: (p: { tripId: string; readOnly?: boolean }) =>
+    createElement("div", {
+      "data-trip-photos": p.tripId,
+      "data-read-only": p.readOnly,
+    }),
 }));
 vi.mock("./TripCoverPicker", () => ({
   TripCoverPicker: (p: any) => {
@@ -670,7 +673,8 @@ it("mounts the scoped server-parent People adapter only for an explicitly enable
   expect(state.nodes.some((node) => node.serverParentPeople)).toBe(false);
 });
 
-it("mounts trusted Photos only for the currently selected local Trip", async () => {
+it("scopes authorized Photos to the currently selected Trip", async () => {
+  state.personal.selection = { raw: "coast" };
   state.repo.mockResolvedValue(
     repository([trip("local-a", "Local A"), trip("local-b", "Local B")]),
   );
@@ -684,6 +688,41 @@ it("mounts trusted Photos only for the currently selected local Trip", async () 
   const next = render();
   expect(next).toContain('data-trip-photos="local-b"');
   expect(next).not.toContain('data-trip-photos="local-a"');
+});
+
+it("opens exact Trip Documents and uses the same authority for More Settings as the Hero", async () => {
+  const repo = repository([trip("local-a", "Local A")]);
+  state.repo.mockResolvedValue(repo);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  render();
+  vi.mocked(router.push).mockClear();
+  button("importDocuments.trip").onPress();
+  expect(router.push).toHaveBeenCalledExactlyOnceWith({
+    pathname: "/documents",
+    params: { tripId: "local-a", scope: "TRIP", fromTripHome: "1" },
+  });
+  expect(button("tripHome.settings").onPress).toBe(button("tripHome.edit").onPress);
+  const staleOpen = button("importDocuments.trip").onPress;
+  advanceAccountGeneration();
+  staleOpen();
+  expect(router.push).toHaveBeenCalledTimes(1);
+});
+
+it("withholds account Documents and Photos from Guest but retains local Trip Settings", async () => {
+  vi.mocked(readLocalTripPrincipal).mockResolvedValue({
+    kind: "GUEST",
+    localId: "guest-local",
+  });
+  state.personal.selection = { raw: "coast" };
+  state.repo.mockResolvedValue(repository([trip("local-a", "Local A")]));
+  props.tripId = "local-a";
+  render();
+  await flush();
+  expect(render()).not.toContain("data-trip-photos");
+  expect(button("importDocuments.trip")).toBeUndefined();
+  expect(button("tripHome.settings").onPress).toBe(button("tripHome.edit").onPress);
 });
 
 it("opens a remote member chooser only through the independent owning capability", async () => {
@@ -877,6 +916,8 @@ it("non-Creator Home opens the independent preference Gallery without metadata a
   await flush();
   render();
   expect(state.nodes.some((node) => node.label === "tripHome.edit")).toBe(false);
+  expect(button("tripHome.settings")).toBeUndefined();
+  expect(button("importDocuments.trip")).toBeDefined();
   expect(state.nodes.find((node) => node.frame)!.frame.rawCoverSelection).toBe("coast");
   state.forceEffects = true;
   render();

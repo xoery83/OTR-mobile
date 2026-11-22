@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { AppState, Image, StyleSheet, Text, View } from "react-native";
+import { AppState, Image, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { SheetHeader } from "@/components/SheetHeader";
 import * as ImagePicker from "expo-image-picker";
 import {
   readLocalTripPhotoRepository,
@@ -22,11 +24,13 @@ export function LocalTripPhotos({
   registerAdd,
   onSaved,
   compact = false,
+  readOnly = false,
 }: {
   tripId: string;
   registerAdd?: (add: (() => void) | null) => void;
   onSaved?: () => void;
   compact?: boolean;
+  readOnly?: boolean;
 }) {
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
@@ -39,6 +43,7 @@ export function LocalTripPhotos({
       registerAdd={registerAdd}
       onSaved={onSaved}
       compact={compact}
+      readOnly={readOnly}
     />
   );
 }
@@ -48,11 +53,13 @@ function LocalTripPhotoContent({
   registerAdd,
   onSaved,
   compact = false,
+  readOnly = false,
 }: {
   tripId: string;
   registerAdd?: (add: (() => void) | null) => void;
   onSaved?: () => void;
   compact?: boolean;
+  readOnly?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -98,7 +105,7 @@ function LocalTripPhotoContent({
     };
   }, [load]);
   const add = useCallback(async () => {
-    if (busy.current || !current() || status !== "READY") return;
+    if (readOnly || busy.current || !current() || status !== "READY") return;
     busy.current = true;
     setAdding(true);
     setAddError(false);
@@ -130,66 +137,98 @@ function LocalTripPhotoContent({
       busy.current = false;
       if (current()) setAdding(false);
     }
-  }, [current, tripId, load, status, onSaved]);
+  }, [current, tripId, load, status, onSaved, readOnly]);
   useEffect(() => {
     registerAdd?.(
-      status === "READY"
+      !readOnly && status === "READY"
         ? () => {
             void add();
           }
         : null,
     );
     return () => registerAdd?.(null);
-  }, [registerAdd, status, add]);
+  }, [registerAdd, status, add, readOnly]);
+  const content = (
+    <>
+      {!readOnly ? (
+        <UiButton
+          label={t("tripPhotos.choose")}
+          disabled={adding || status !== "READY"}
+          onPress={() => void add()}
+        />
+      ) : null}
+      {addError ? (
+        <Text accessibilityRole="alert" style={styles.status}>
+          {t("tripPhotos.addFailed")}
+        </Text>
+      ) : null}
+      {status !== "READY" ? (
+        <Text style={styles.status}>
+          {t(status === "LOADING" ? "dayFeed.loading" : "tripPhotos.unavailable")}
+        </Text>
+      ) : photos.length === 0 ? (
+        <Text style={styles.status}>{t("tripPhotos.empty")}</Text>
+      ) : (
+        photos.map((photo, index) => (
+          <View key={photo.assetId}>
+            {photo.localUri && !broken.has(photo.assetId) ? (
+              <Image
+                source={{ uri: photo.localUri }}
+                style={styles.photo}
+                resizeMode="contain"
+                accessibilityLabel={t("tripPhotos.photoNumber", {
+                  number: index + 1,
+                })}
+                onError={() =>
+                  setBroken((previous) => new Set(previous).add(photo.assetId))
+                }
+              />
+            ) : (
+              <Text style={styles.status}>{t("tripPhotos.missing")}</Text>
+            )}
+          </View>
+        ))
+      )}
+    </>
+  );
+  if (!compact) return <UiSection title={t("tripPhotos.title")}>{content}</UiSection>;
+  const close = () => setExpanded(false);
   return (
     <>
-      {compact ? (
+      {(!readOnly || status === "READY") ? (
         <UiFormRow
           label={t("tripPhotos.title")}
           value={status === "READY" ? String(photos.length) : ""}
-          onPress={() => setExpanded((v) => !v)}
+          onPress={() => {
+            if (!current()) return;
+            setExpanded(true);
+            if (status !== "READY") void load();
+          }}
         />
       ) : null}
-      {!compact || expanded || addError ? (
-        <UiSection title={t("tripPhotos.title")}>
-          <UiButton
-            label={t("tripPhotos.choose")}
-            disabled={adding || status !== "READY"}
-            onPress={() => void add()}
-          />
-          {addError ? (
-            <Text accessibilityRole="alert" style={styles.status}>
-              {t("tripPhotos.addFailed")}
-            </Text>
-          ) : null}
-          {status !== "READY" ? (
-            <Text style={styles.status}>
-              {t(status === "LOADING" ? "dayFeed.loading" : "tripPhotos.unavailable")}
-            </Text>
-          ) : photos.length === 0 ? (
-            <Text style={styles.status}>{t("tripPhotos.empty")}</Text>
-          ) : (
-            photos.map((photo, index) => (
-              <View key={photo.assetId}>
-                {photo.localUri && !broken.has(photo.assetId) ? (
-                  <Image
-                    source={{ uri: photo.localUri }}
-                    style={styles.photo}
-                    resizeMode="contain"
-                    accessibilityLabel={t("tripPhotos.photoNumber", {
-                      number: index + 1,
-                    })}
-                    onError={() =>
-                      setBroken((previous) => new Set(previous).add(photo.assetId))
-                    }
-                  />
-                ) : (
-                  <Text style={styles.status}>{t("tripPhotos.missing")}</Text>
-                )}
-              </View>
-            ))
-          )}
-        </UiSection>
+      {addError && !expanded ? (
+        <Text accessibilityRole="alert" style={styles.status}>{t("tripPhotos.addFailed")}</Text>
+      ) : null}
+      {expanded ? (
+        <Modal
+          visible
+          presentationStyle="pageSheet"
+          animationType="slide"
+          onRequestClose={close}
+        >
+          <SafeAreaView edges={["bottom"]} style={styles.sheet}>
+            <SheetHeader
+              category="action"
+              safeTop={false}
+              title={t("tripPhotos.title")}
+              onLeft={close}
+              wrapActions
+            />
+            <ScrollView contentContainerStyle={styles.gallery}>
+              {content}
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
       ) : null}
     </>
   );
@@ -197,6 +236,8 @@ function LocalTripPhotoContent({
 
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
+    sheet: { flex: 1, backgroundColor: colors.surface },
+    gallery: { padding: visual.space.page, gap: visual.space.card },
     photo: { width: "100%", height: 220, borderRadius: visual.radius.card },
     status: { color: colors.textSecondary, ...visual.type.meta },
   });

@@ -1529,8 +1529,8 @@ function TripContent({
   ]);
   useLayoutEffect(() => {
     if (today && !dayActive) return;
-    const blurHeader =
-      (dayActive && dayShell.navigationVisible) || (immersiveHome && !heroBehindStatus);
+    const collapsedHome = immersiveHome && !heroBehindStatus;
+    const blurHeader = dayActive && dayShell.navigationVisible;
     const nativeEdge =
       Platform.OS === "ios" && Number.parseInt(String(Platform.Version), 10) >= 26;
     navigation.setOptions({
@@ -1543,7 +1543,9 @@ function TripContent({
         backgroundColor:
           dayActive && !dayPastIntroduction && !moveActive
             ? colors.tripIntroduction
-            : colors.transparent,
+            : collapsedHome
+              ? colors.background
+              : colors.transparent,
       },
       headerShadowVisible: false,
       // Modern UIKit uses its soft scroll edge instead of the legacy rectangular bar blur.
@@ -1554,7 +1556,7 @@ function TripContent({
             ? "systemUltraThinMaterial"
             : undefined,
       scrollEdgeEffects:
-        dayActive && (moveActive || !dayShell.navigationVisible)
+        collapsedHome || (dayActive && (moveActive || !dayShell.navigationVisible))
           ? { top: "hidden", bottom: "hidden", left: "hidden", right: "hidden" }
           : blurHeader
             ? {
@@ -1568,7 +1570,9 @@ function TripContent({
         (immersiveHome && heroBehindStatus) || appearance === "dark" ? "light" : "dark",
       headerTitle: moveActive
         ? () => null
-        : ({ onLayout }: { onLayout?: import("react-native").TextProps["onLayout"] }) =>
+        : immersiveHome
+          ? undefined
+          : ({ onLayout }: { onLayout?: import("react-native").TextProps["onLayout"] }) =>
             dayActive ? (
               dayTitle ? (
                 dayPastIntroduction ? (
@@ -1629,9 +1633,9 @@ function TripContent({
       contentContainerStyle={[
         styles.content,
         immersiveHome && styles.homeContent,
-        { paddingBottom: bottomBarHeight + visual.space.page },
+        { paddingBottom: (immersiveHome ? 0 : bottomBarHeight) + visual.space.page },
       ]}
-      scrollIndicatorInsets={{ bottom: bottomBarHeight }}
+      scrollIndicatorInsets={{ bottom: immersiveHome ? 0 : bottomBarHeight }}
       scrollEventThrottle={16}
       onScroll={
         isMyTrips
@@ -2208,7 +2212,11 @@ function TripContent({
     <>
       <View
         accessibilityElementsHidden={dayActive}
-        style={[styles.root, dayActive && styles.inactive]}
+        style={[
+          styles.root,
+          immersiveHome && { paddingBottom: bottomBarHeight },
+          dayActive && styles.inactive,
+        ]}
       >
         {homeContent}
       </View>
