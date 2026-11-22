@@ -688,9 +688,9 @@ function SummarySection({
       shareMinor !== undefined &&
       balanceMinor !== undefined ? (
         <View style={styles.summaryBlock}>
-          <Text accessibilityRole="header" style={styles.summaryHeading}>
+          <UiText accessibilityRole="header" style={styles.summaryHeading}>
             {t("settlement.breakdown")}
-          </Text>
+          </UiText>
           <View style={styles.card}>
             <MoneyLine
               label={t("settlement.paidForGroup")}
