@@ -8,6 +8,7 @@ import type { UiColors } from "./palette";
 import { useUiLocale } from "./useUiLocale";
 import { getFormatLocale } from "./locale";
 import { visual } from "./visual";
+import { UiText } from "./controls";
 import { textInputStyles } from "./textInput";
 export { UiTextInput } from "./textInput";
 // Keep the installed native picker. System-derived props update mounted modal hosts.
@@ -73,12 +74,12 @@ export function UiFormRow({
       >
         {leading}
         <View style={styles.actionCopy}>
-          <Text style={[styles.actionTitle, disabled && styles.disabledText]}>
+          <UiText style={[styles.actionTitle, disabled && styles.disabledText]}>
             {label}
-          </Text>
-          <Text style={[styles.actionHint, disabled && styles.disabledText]}>
+          </UiText>
+          <UiText style={[styles.actionHint, disabled && styles.disabledText]}>
             {value}
-          </Text>
+          </UiText>
         </View>
         {trailing}
       </Pressable>
@@ -101,7 +102,7 @@ export function UiFormRow({
       ]}
     >
       {!field && (
-        <Text
+        <UiText
           style={[
             styles.rowLabel,
             stacked && styles.rowLabelStacked,
@@ -109,9 +110,9 @@ export function UiFormRow({
           ]}
         >
           {label}
-        </Text>
+        </UiText>
       )}
-      <Text
+      <UiText
         numberOfLines={2}
         style={[
           field ? styles.fieldValue : styles.rowValue,
@@ -122,13 +123,13 @@ export function UiFormRow({
         ]}
       >
         {value}
-      </Text>
+      </UiText>
       {field ? trailing : null}
     </Pressable>
   );
   return field ? (
     <View style={styles.fieldGroup}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <UiText style={styles.fieldLabel}>{label}</UiText>
       {button}
     </View>
   ) : (
