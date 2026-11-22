@@ -58,6 +58,14 @@ type Detail = Extract<
   NonNullable<Awaited<ReturnType<Reader["resolve"]>>>,
   { kind: "ITEM" }
 >;
+const localDetailRoute = {
+  P1: "/p1-detail",
+  P2: "/p2-detail",
+  P3: "/p3-detail",
+  P4: "/p4-detail",
+  P5: "/p5-detail",
+  P6: "/p6-detail",
+} as const;
 const categoryKey = {
   ALL: "comprehensiveSearch.categoryAll",
   TRIPS: "comprehensiveSearch.categoryTrips",
@@ -310,6 +318,11 @@ function SearchContent({
         router.push({
           pathname: "/search-trip",
           params: { tripId: resolved.tripId, view: "home" },
+        });
+      else if (resolved.kind === "LOCAL_ITEM")
+        router.push({
+          pathname: localDetailRoute[resolved.family],
+          params: { tripId: resolved.tripId, itemId: resolved.itemId },
         });
       else setDetail(resolved);
     } catch {

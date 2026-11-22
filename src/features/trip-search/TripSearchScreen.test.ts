@@ -386,6 +386,22 @@ it("restores the exact scroll after Immersive Close while retaining query and se
   expect(state.input.value).toBe("Museum");
   expect(state.actions.find((p) => p.label === "Itinerary (1)").selected).toBe(true);
 });
+it("opens a local P1 through its existing detail stack without selecting the Trip", async () => {
+  state.reader.resolve.mockResolvedValue({
+    kind: "LOCAL_ITEM",
+    family: "P1",
+    tripId: "trip",
+    itemId: "item",
+  });
+  await query();
+  await state.actions.find((action) => action.label === "Museum").onPress();
+  expect(state.push).toHaveBeenLastCalledWith({
+    pathname: "/p1-detail",
+    params: { tripId: "trip", itemId: "item" },
+  });
+  expect(state.select).not.toHaveBeenCalled();
+  expect(state.input.value).toBe("Museum");
+});
 it("does not save typed prefixes; Return or opened results commit a scoped recent search", async () => {
   await query();
   expect(state.recents.record).not.toHaveBeenCalled();

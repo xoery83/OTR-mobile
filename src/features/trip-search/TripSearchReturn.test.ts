@@ -10,6 +10,8 @@ const state = vi.hoisted(() => ({
   replace: vi.fn(),
   button: null as any,
   options: null as any,
+  view: "home",
+  navigationVisible: true,
 }));
 vi.mock("expo-router", async () => {
   const { createElement } = await import("react");
@@ -20,7 +22,7 @@ vi.mock("expo-router", async () => {
     },
   });
   return {
-    useLocalSearchParams: () => ({ tripId: "inspected", view: "home" }),
+    useLocalSearchParams: () => ({ tripId: "inspected", view: state.view }),
     router: { replace: state.replace, canGoBack: () => state.canBack },
     Stack: {
       Toolbar,
@@ -33,7 +35,13 @@ vi.mock("expo-router", async () => {
 });
 vi.mock("react-native", () => ({ View: (p: any) => p.children }));
 vi.mock("@/features/trip-search/TripSearchEntry", () => ({
-  TripSearchEntry: () => "Scoped Search",
+  TripSearchEntry: (p: { entry: string; tripId: string }) =>
+    `Scoped Search ${p.entry} ${p.tripId}`,
+}));
+vi.mock("@/features/day-feed/TripViewContext", () => ({
+  useTripView: () => ({
+    dayShellChrome: { tripId: "inspected", navigationVisible: state.navigationVisible },
+  }),
 }));
 vi.mock("@/features/day-feed/TripScreen", () => ({
   TripScreen: () => "Owning Trip Home",
@@ -47,7 +55,15 @@ beforeEach(() => {
   state.canBack = true;
   state.button = null;
   state.options = null;
+  state.view = "home";
+  state.navigationVisible = true;
   vi.clearAllMocks();
+});
+it("keeps scoped Search on Day reached through a Search result, respecting hidden chrome", () => {
+  state.view = "day";
+  expect(render()).toContain("Scoped Search DAY inspected");
+  state.navigationVisible = false;
+  expect(render()).not.toContain("Scoped Search");
 });
 const render = () => renderToStaticMarkup(createElement(SearchTripRoute));
 it("reuses the owning Trip screen with native Root Stack Back and no custom context writes", () => {

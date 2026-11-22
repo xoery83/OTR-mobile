@@ -35,7 +35,7 @@ export function TripSearchEntry({
       ? undefined
       : entry === "HOME"
         ? tripId
-        : current?.generation === generation
+        : current?.generation === generation && (!tripId || tripId === current.tripId)
           ? current.tripId
           : undefined;
   if (entry !== "MY_TRIPS" && !target) return null;

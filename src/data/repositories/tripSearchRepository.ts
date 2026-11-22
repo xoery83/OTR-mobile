@@ -2,10 +2,18 @@ import type * as SQLite from "expo-sqlite";
 import {
   captureAccountScope,
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   withAccountApplyGate,
   type AccountScope,
 } from "../auth/accountRequestContext";
-import { requireActiveUserId } from "../auth/authRepository";
+import {
+  readCommittedLocalPrincipal,
+  requireActiveUserId,
+  requireCommittedGuestPrincipal,
+} from "../auth/authRepository";
+import type { GuestLocalWorkspace } from "../auth/guestLocalWorkspace";
+import { getAccountGeneration } from "../auth/accountGeneration";
+import type { LocalManualRead } from "./tripLocalManualReadRepository";
 import { readInitializedDatabase } from "../db/database";
 import {
   createTripCoreV2Repository,
@@ -21,6 +29,7 @@ import {
   matchSearchItem,
   matchSearchTrip,
   type SearchInput,
+  type SearchItem,
   type SearchResult,
   type SearchTrip,
 } from "@/domain/trip/tripSearch";
@@ -37,7 +46,9 @@ export type SearchProof = {
   scope: AccountScope;
   tripId: string;
   fingerprint: string;
+  metadataFingerprint: string;
   inventory: string;
+  includesItems: boolean;
 };
 export type SearchCursor = {
   scope: AccountScope;
@@ -62,6 +73,29 @@ const roots = `WITH roots AS (
  AND NOT EXISTS(SELECT 1 FROM local_trip_containers l WHERE l.account_id=d.account_id AND l.id=d.id))`;
 const certificateFields =
   "epoch,revision,access_revision,applied_generation,actor_person_binding_hash,roster_hash,manifest_sha256,ordinary_order_version,business_version,read_version,temporal_version,complete";
+
+type SearchSource = {
+  inventory(scope: AccountScope): Promise<string>;
+  roots(scope: AccountScope, after: string, tripId: string | null): Promise<SearchTrip[]>;
+  metadata(
+    scope: AccountScope,
+    tripId: string,
+  ): Promise<{
+    trip: SearchTrip | null;
+    certificate: CoreAcceptedSnapshot["certificate"] | null;
+    revoked: boolean;
+    fingerprint: string;
+    mayHaveLocal: boolean;
+  }>;
+  accepted?(scope: AccountScope, tripId: string, includesItems: boolean): Promise<CoreAcceptedSnapshot | null>;
+  local?(tripId: string): Promise<LocalManualRead | null>;
+  validateAccountFence?(
+    proofs: readonly SearchProof[],
+    corpus?: Pick<SearchPage, "scope" | "inventory">,
+  ): Promise<boolean>;
+};
+const itemFamilies = ["P1", "P2", "P3", "P4", "P5", "P6"] as const;
+
 export function createTripSearchRepository(
   database: Database,
   core: Core,
@@ -85,6 +119,17 @@ export function createTripSearchRepository(
       tripId,
     );
   }
+  async function listRoots(scope: AccountScope, after: string, tripId: string | null) {
+    return database.getAllAsync<SearchTrip>(
+      roots +
+        " SELECT * FROM roots WHERE id>? AND (? IS NULL OR id=?) ORDER BY id LIMIT 10",
+      scope.accountId,
+      scope.accountId,
+      after,
+      tripId,
+      tripId,
+    );
+  }
   async function metadata(scope: AccountScope, tripId: string) {
     const trip = await root(scope, tripId);
     const certificate = await database.getFirstAsync<CoreAcceptedSnapshot["certificate"]>(
@@ -104,38 +149,178 @@ export function createTripSearchRepository(
     return {
       trip,
       certificate,
-      fence,
+      revoked: !!fence?.revoked,
       fingerprint: JSON.stringify([trip, certificate, fence]),
+      mayHaveLocal: false,
     };
   }
-  async function current(scope: AccountScope, tripId: string, items = true) {
-    const before = await metadata(scope, tripId);
-    if (!before.trip || before.fence?.revoked) return null;
-    const context = await core.captureContext(tripId);
-    if (context.accountId !== scope.accountId || context.generation !== scope.generation)
-      throw new Error("SEARCH_ACCOUNT_CHANGED");
-    const snapshot = items ? await core.acceptedSnapshot(context) : null;
+  return createSearchReader(
+    {
+      inventory,
+      roots: listRoots,
+      metadata,
+      async validateAccountFence(proofs, corpus) {
+        return withAccountApplyGate(async () => {
+          let valid = true;
+          const inventories = new Map<string, string>();
+          await database.withTransactionAsync(async () => {
+            if (corpus) {
+              await assertAccountRequestContext(corpus.scope, account);
+              if ((await inventory(corpus.scope)) !== corpus.inventory) valid = false;
+            }
+            for (const proof of proofs) {
+              await assertAccountRequestContext(proof.scope, account);
+              const key = JSON.stringify(proof.scope);
+              if (!inventories.has(key)) inventories.set(key, await inventory(proof.scope));
+              if (
+                (await metadata(proof.scope, proof.tripId)).fingerprint !==
+                  proof.metadataFingerprint ||
+                inventories.get(key) !== proof.inventory
+              )
+                valid = false;
+            }
+          });
+          return valid;
+        });
+      },
+      async accepted(scope, tripId, includesItems) {
+        const context = await core.captureContext(tripId);
+        if (
+          context.accountId !== scope.accountId ||
+          context.generation !== scope.generation
+        )
+          throw new Error("SEARCH_ACCOUNT_CHANGED");
+        return includesItems ? core.acceptedSnapshot(context) : null;
+      },
+    },
+    account,
+  );
+}
+
+export function createGuestTripSearchRepository(
+  workspace: {
+    trips: Pick<GuestLocalWorkspace["trips"], "listTrips" | "getTrip">;
+    days: {
+      trip(
+        tripId: string,
+      ): Promise<
+        Pick<
+          Awaited<ReturnType<GuestLocalWorkspace["days"]["trip"]>>,
+          "localManualStatus" | "localManual"
+        >
+      >;
+    };
+  },
+  owner: () => Promise<string>,
+) {
+  const root = (
+    trip: Pick<
+      Awaited<ReturnType<typeof workspace.trips.listTrips>>[number],
+      "id" | "name" | "destination" | "startDate" | "endDate"
+    >,
+  ): SearchTrip => ({
+    id: trip.id,
+    name: trip.name,
+    destination: trip.destination,
+    start_date: trip.startDate,
+    end_date: trip.endDate,
+  });
+  return createSearchReader(
+    {
+      async inventory() {
+        return JSON.stringify(
+          (await workspace.trips.listTrips())
+            .filter((trip) => !trip.deletedAt)
+            .sort((a, b) => a.id.localeCompare(b.id))
+            .map(root),
+        );
+      },
+      async roots(_scope, after, tripId) {
+        return (await workspace.trips.listTrips())
+          .filter(
+            (trip) =>
+              !trip.deletedAt && trip.id > after && (!tripId || trip.id === tripId),
+          )
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .slice(0, 10)
+          .map(root);
+      },
+      async metadata(_scope, tripId) {
+        const trip = await workspace.trips.getTrip(tripId);
+        const visible = trip && !trip.deletedAt ? root(trip) : null;
+        return {
+          trip: visible,
+          certificate: null,
+          revoked: false,
+          fingerprint: JSON.stringify(visible),
+          mayHaveLocal: !!visible,
+        };
+      },
+      async local(tripId) {
+        const result = await workspace.days.trip(tripId);
+        if (result.localManualStatus === "UNAVAILABLE")
+          throw new Error("SEARCH_LOCAL_UNAVAILABLE");
+        return result.localManual;
+      },
+    },
+    owner,
+  );
+}
+
+function createSearchReader(source: SearchSource, account: () => Promise<string>) {
+  async function current(
+    scope: AccountScope,
+    tripId: string,
+    includesItems: boolean,
+    readAccepted = true,
+  ) {
+    const before = await source.metadata(scope, tripId);
+    if (!before.trip || before.revoked) return null;
+    const snapshot =
+      readAccepted
+        ? ((await source.accepted?.(scope, tripId, includesItems)) ?? null)
+        : null;
+    const local =
+      includesItems && before.mayHaveLocal
+        ? ((await source.local?.(tripId)) ?? null)
+        : null;
     await assertAccountRequestContext(scope, account);
-    const after = await metadata(scope, tripId);
+    const after = await source.metadata(scope, tripId);
     if (
       before.fingerprint !== after.fingerprint ||
       (snapshot &&
-        JSON.stringify(snapshot.certificate) !== JSON.stringify(after.certificate))
+        (!after.certificate ||
+          Object.entries(after.certificate).some(
+            ([key, value]) => Reflect.get(snapshot.certificate, key) !== value,
+          )))
     )
       throw new Error("SEARCH_STALE");
     if (
-      snapshot &&
-      (snapshot.actor.accountId !== scope.accountId || snapshot.actor.tripId !== tripId)
+      (snapshot &&
+        (snapshot.actor.accountId !== scope.accountId ||
+          snapshot.actor.tripId !== tripId)) ||
+      (local &&
+        (local.scope.accountId !== scope.accountId ||
+          local.scope.tripId !== tripId ||
+          local.scope.generation !== scope.generation))
     )
       throw new Error("SEARCH_ACTOR_SCOPE");
+    const inventory = await source.inventory(scope);
+    await assertAccountRequestContext(scope, account);
     return {
       trip: before.trip,
       snapshot,
+      local,
       proof: {
         scope,
         tripId,
-        fingerprint: before.fingerprint,
-        inventory: await inventory(scope),
+        includesItems,
+        metadataFingerprint: before.fingerprint,
+        fingerprint: JSON.stringify([
+          before.fingerprint,
+          local?.source.fingerprint ?? null,
+        ]),
+        inventory,
       },
     };
   }
@@ -143,29 +328,22 @@ export function createTripSearchRepository(
     proofs: readonly SearchProof[],
     corpus?: Pick<SearchPage, "scope" | "inventory">,
   ) {
-    return withAccountApplyGate(async () => {
-      let valid = true;
-      const inventories = new Map<string, string>();
-      await database.withTransactionAsync(async () => {
-        if (corpus) {
-          await assertAccountRequestContext(corpus.scope, account);
-          if ((await inventory(corpus.scope)) !== corpus.inventory) valid = false;
-        }
-        for (const proof of proofs) {
-          await assertAccountRequestContext(proof.scope, account);
-          const scopeKey = JSON.stringify(proof.scope);
-          if (!inventories.has(scopeKey))
-            inventories.set(scopeKey, await inventory(proof.scope));
-          if (
-            (await metadata(proof.scope, proof.tripId)).fingerprint !==
-              proof.fingerprint ||
-            inventories.get(scopeKey) !== proof.inventory
-          )
-            valid = false;
-        }
-      });
-      return valid;
-    });
+    if (corpus) {
+      await assertAccountRequestContext(corpus.scope, account);
+      if ((await source.inventory(corpus.scope)) !== corpus.inventory) return false;
+    }
+    for (const proof of proofs) {
+      await assertAccountRequestContext(proof.scope, account);
+      const latest = await current(proof.scope, proof.tripId, proof.includesItems, false);
+      if (
+        !latest ||
+        latest.proof.fingerprint !== proof.fingerprint ||
+        latest.proof.inventory !== proof.inventory
+      )
+        return false;
+    }
+    if (corpus) await assertAccountRequestContext(corpus.scope, account);
+    return (await source.validateAccountFence?.(proofs, corpus)) ?? true;
   }
   return {
     validate,
@@ -177,7 +355,7 @@ export function createTripSearchRepository(
       await assertAccountRequestContext(scope, account);
       const key = JSON.stringify([input.query, input.tripId, input.category]);
       if (cursor && cursor.key !== key) throw new Error("SEARCH_CURSOR_SCOPE");
-      const inventoryKey = await inventory(scope);
+      const inventoryKey = await source.inventory(scope);
       if (input.tripId) coreUuid.parse(input.tripId);
       if (!input.query.trim())
         return {
@@ -189,18 +367,8 @@ export function createTripSearchRepository(
           cursor: null,
         };
       const rows = cursor?.within
-        ? [await root(scope, cursor.within.tripId)].filter(
-            (r): r is SearchTrip => r !== null,
-          )
-        : await database.getAllAsync<SearchTrip>(
-            roots +
-              " SELECT * FROM roots WHERE id>? AND (? IS NULL OR id=?) ORDER BY id LIMIT 10",
-            scope.accountId,
-            scope.accountId,
-            cursor?.afterTrip ?? "",
-            input.tripId,
-            input.tripId,
-          );
+        ? await source.roots(scope, "", cursor.within.tripId)
+        : await source.roots(scope, cursor?.afterTrip ?? "", input.tripId);
       if (cursor?.within && !rows.length) throw new Error("SEARCH_STALE");
       const results: SearchResult[] = [],
         proofs: SearchProof[] = [];
@@ -221,32 +389,40 @@ export function createTripSearchRepository(
           if (match) results.push(match);
         }
         const snapshot = value.snapshot;
-        const events =
-          snapshot?.graph.itinerary_events
-            .filter((r) => String(r.id) > (cursor?.within?.afterItem ?? ""))
-            .sort((a, b) => String(a.id).localeCompare(String(b.id))) ?? [];
-        for (let index = 0; index < events.length; index++) {
-          const event = events[index];
-          const item = snapshot
-            ? projectCoreItem(snapshot.graph, snapshot.actor, String(event.id), {
-                rosterHash: snapshot.certificate.roster_hash,
-                participatingPersonIds: snapshot.participatingPersonIds,
-              })
-            : null;
-          const match = item
-            ? matchSearchItem(
-                item,
-                value.trip,
-                input.query,
-                typeof event.description === "string" ? event.description : undefined,
-              )
-            : null;
+        const localItems = new Map(value.local?.items.map((item) => [item.itemId, item]));
+        const events = new Map(
+          snapshot?.graph.itinerary_events.map((row) => [String(row.id), row]),
+        );
+        const ids = [...new Set([...events.keys(), ...localItems.keys()])]
+          .filter((id) => id > (cursor?.within?.afterItem ?? ""))
+          .sort((a, b) => a.localeCompare(b));
+        for (let index = 0; index < ids.length; index++) {
+          const id = ids[index];
+          const event = events.get(id);
+          const item =
+            localItems.get(id) ??
+            (snapshot && event
+              ? projectCoreItem(snapshot.graph, snapshot.actor, id, {
+                  rosterHash: snapshot.certificate.roster_hash,
+                  participatingPersonIds: snapshot.participatingPersonIds,
+                })
+              : null);
+          const note = localItems.has(id) ? item?.description : event?.description;
+          const match =
+            item && searchableItem(item)
+              ? matchSearchItem(
+                  item,
+                  value.trip,
+                  input.query,
+                  typeof note === "string" ? note : undefined,
+                )
+              : null;
           if (match) results.push(match);
           inspected++;
-          if (inspected >= 100 && index < events.length - 1) {
+          if (inspected >= 100 && index < ids.length - 1) {
             within = {
               tripId: row.id,
-              afterItem: String(event.id),
+              afterItem: id,
               fingerprint: value.proof.fingerprint,
             };
             break;
@@ -260,16 +436,8 @@ export function createTripSearchRepository(
         throw new Error("SEARCH_STALE");
       await assertAccountRequestContext(scope, account);
       const hasNext =
-        within ||
-        (await database.getFirstAsync<{ id: string }>(
-          roots +
-            " SELECT id FROM roots WHERE id>? AND (? IS NULL OR id=?) ORDER BY id LIMIT 1",
-          scope.accountId,
-          scope.accountId,
-          afterTrip,
-          input.tripId,
-          input.tripId,
-        ));
+        within || (await source.roots(scope, afterTrip, input.tripId)).length > 0;
+      await assertAccountRequestContext(scope, account);
       return {
         scope,
         key,
@@ -287,23 +455,33 @@ export function createTripSearchRepository(
       if (result.tripId !== proof.tripId) return null;
       if (result.category === "TRIPS" && result.id !== result.tripId) return null;
       await assertAccountRequestContext(proof.scope, account);
-      const value = await current(proof.scope, result.tripId);
-      if (!value || value.proof.fingerprint !== proof.fingerprint) return null;
+      const value = await current(proof.scope, result.tripId, proof.includesItems);
+      if (
+        !value ||
+        value.proof.fingerprint !== proof.fingerprint ||
+        value.proof.inventory !== proof.inventory
+      )
+        return null;
       if (result.category === "TRIPS")
         return { kind: "TRIP" as const, tripId: value.trip.id };
+      const local = value.local?.items.find((item) => item.itemId === result.id);
+      if (local) {
+        const family = searchableItem(local);
+        if (!family || !(await validate([value.proof]))) return null;
+        return {
+          kind: "LOCAL_ITEM" as const,
+          family,
+          itemId: local.itemId,
+          tripId: value.trip.id,
+        };
+      }
       const s = value.snapshot;
       if (!s) return null;
       const item = projectCoreItem(s.graph, s.actor, result.id, {
         rosterHash: s.certificate.roster_hash,
         participatingPersonIds: s.participatingPersonIds,
       });
-      if (
-        !item ||
-        item.hidden ||
-        !["P1", "P2", "P3", "P4", "P5", "P6"].includes(item.family) ||
-        ["cancelled", "skipped"].includes(String(item.status))
-      )
-        return null;
+      if (!item || !searchableItem(item)) return null;
       const boundary = itemSearchBoundary(item),
         date = boundary?.localDate,
         zone =
@@ -355,11 +533,43 @@ export function createTripSearchRepository(
     },
   };
 }
+function searchableItem(item: SearchItem) {
+  if (item.hidden || ["cancelled", "skipped"].includes(String(item.status))) return;
+  return itemFamilies.find((family) => family === item.family);
+}
+
 export async function readTripSearchRepository() {
+  const generation = getAccountGeneration();
+  const principal = await readCommittedLocalPrincipal();
+  if (generation !== getAccountGeneration() || !principal)
+    throw new Error("SEARCH_ACCOUNT_CHANGED");
+  if (principal.kind === "GUEST") {
+    const { openGuestLocalWorkspace } = await import("../auth/guestLocalWorkspace");
+    const workspace = await openGuestLocalWorkspace();
+    if (
+      workspace.scope.localId !== principal.localId ||
+      workspace.scope.generation !== generation
+    )
+      throw new Error("SEARCH_ACCOUNT_CHANGED");
+    const scope = { accountId: principal.localId, generation };
+    return createGuestTripSearchRepository(workspace, async () => {
+      assertAccountRequestGeneration(scope);
+      const guest = await requireCommittedGuestPrincipal();
+      assertAccountRequestGeneration(scope);
+      if (guest.localId !== principal.localId) throw new Error("SEARCH_ACCOUNT_CHANGED");
+      return guest.localId;
+    });
+  }
+  if (principal.kind !== "ACCOUNT") throw new Error("SEARCH_ACCOUNT_CHANGED");
   const database = await readInitializedDatabase();
-  return createTripSearchRepository(
-    database,
-    createTripCoreV2Repository(database, requireActiveUserId, tripCoreSha256Hex),
+  await assertAccountRequestContext(
+    { accountId: principal.accountId, generation },
     requireActiveUserId,
   );
+  const core = createTripCoreV2Repository(
+    database,
+    requireActiveUserId,
+    tripCoreSha256Hex,
+  );
+  return createTripSearchRepository(database, core, requireActiveUserId);
 }

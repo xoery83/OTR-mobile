@@ -1,8 +1,14 @@
 import * as SecureStore from "expo-secure-store";
-import { requireActiveUserId } from "@/data/auth/authRepository";
+import {
+  readCommittedLocalPrincipal,
+  requireActiveUserId,
+  requireCommittedGuestPrincipal,
+} from "@/data/auth/authRepository";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   captureAccountScope,
   assertAccountRequestContext,
+  assertAccountRequestGeneration,
   withAccountApplyGate,
 } from "@/data/auth/accountRequestContext";
 import { coreUuid } from "@/domain/trip/tripCoreV2";
@@ -13,10 +19,11 @@ const identity = (row: RecentSearch) =>
 export function createSearchRecentRepository(
   storage: Pick<typeof SecureStore, "getItemAsync" | "setItemAsync"> = SecureStore,
   account = requireActiveUserId,
+  guest = false,
 ) {
   async function access(change?: (rows: RecentSearch[]) => RecentSearch[]) {
     const scope = await captureAccountScope(account);
-    const key = `otr-search-recents-v1-${coreUuid.parse(scope.accountId)}`;
+    const key = `otr-search-recents-v1-${guest ? "guest-" : ""}${coreUuid.parse(scope.accountId)}`;
     return withAccountApplyGate(async () => {
       await assertAccountRequestContext(scope, account);
       const raw = await storage.getItemAsync(key);
@@ -69,4 +76,34 @@ export function createSearchRecentRepository(
     clear: () => access(() => []),
   };
 }
-export const searchRecentRepository = createSearchRecentRepository();
+async function currentRecents() {
+  const generation = getAccountGeneration();
+  const principal = await readCommittedLocalPrincipal();
+  if (!principal || principal.kind === "SIGNED_OUT")
+    throw new Error("SEARCH_RECENTS_PRINCIPAL_REQUIRED");
+  const scope = {
+    accountId: principal.kind === "GUEST" ? principal.localId : principal.accountId,
+    generation,
+  };
+  assertAccountRequestGeneration(scope);
+  return createSearchRecentRepository(
+    SecureStore,
+    async () => {
+      const current =
+        principal.kind === "GUEST"
+          ? (await requireCommittedGuestPrincipal()).localId
+          : await requireActiveUserId();
+      assertAccountRequestGeneration(scope);
+      if (current !== scope.accountId)
+        throw new Error("SEARCH_RECENTS_PRINCIPAL_CHANGED");
+      return current;
+    },
+    principal.kind === "GUEST",
+  );
+}
+export const searchRecentRepository = {
+  list: async () => (await currentRecents()).list(),
+  record: async (row: RecentSearch) => (await currentRecents()).record(row),
+  remove: async (row: RecentSearch) => (await currentRecents()).remove(row),
+  clear: async () => (await currentRecents()).clear(),
+};

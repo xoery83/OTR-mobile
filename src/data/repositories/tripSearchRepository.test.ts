@@ -8,8 +8,12 @@ import { migrations } from "../db/migrations";
 import { serializeDatabaseTransactions } from "../db/databaseConnection";
 import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
-import { readTripSearchRepository } from "./tripSearchRepository";
-import { requireActiveUserId } from "../auth/authRepository";
+import { createManualPlanRepository } from "./manualPlanRepository";
+import {
+  createGuestTripSearchRepository,
+  readTripSearchRepository,
+} from "./tripSearchRepository";
+import { readCommittedLocalPrincipal, requireActiveUserId } from "../auth/authRepository";
 import { readInitializedDatabase } from "../db/database";
 import { applyCoreCommand, emptyCoreGraph } from "@/domain/trip/tripCoreV2Mutation";
 import { coreDefaults } from "@/domain/trip/tripCoreV2";
@@ -17,8 +21,12 @@ import { coreDateBoundary } from "@/domain/trip/tripCoreV2Temporal";
 import { coreLifecycleGraphHash } from "@/domain/trip/tripCoreV2Lifecycle";
 import { validateCoreCommand } from "@/domain/trip/tripCoreV2Commands";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
+import { createTripLocalManualReader } from "./tripLocalManualReadRepository";
 import { advanceAccountGeneration } from "../auth/accountGeneration";
-vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
+vi.mock("../auth/authRepository", () => ({
+  readCommittedLocalPrincipal: vi.fn(),
+  requireActiveUserId: vi.fn(),
+}));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 it("normal SQLite search is incremental across whole Trip, formal certificates/cold/admission/deletion/revoke/ABA fence results and detail", async () => {
   const folder = mkdtempSync(join(tmpdir(), "otr-search-owned-")),
@@ -62,6 +70,10 @@ it("normal SQLite search is incremental across whole Trip, formal certificates/c
     sql.exec("PRAGMA foreign_keys=ON");
     for (const migration of migrations) sql.exec(migration.sql);
     vi.mocked(requireActiveUserId).mockImplementation(async () => active);
+    vi.mocked(readCommittedLocalPrincipal).mockImplementation(async () => ({
+      kind: "ACCOUNT",
+      accountId: active,
+    }));
     vi.mocked(readInitializedDatabase).mockResolvedValue(database as never);
     const core = createTripCoreV2Repository(database, async () => active, hash),
       trips = createTripRepository(database, async () => active, core);
@@ -79,6 +91,47 @@ it("normal SQLite search is incremental across whole Trip, formal certificates/c
       (await reader.page({ query: "Search contract", tripId: null, category: "TRIPS" }))
         .results[0].category,
     ).toBe("TRIPS");
+    const localTripId = randomUUID();
+    await trips.createTrip({
+      operationId: randomUUID(),
+      tripId: localTripId,
+      name: "Offline lighthouse",
+      startDate: "2027-01-01",
+      endDate: "2027-01-28",
+    });
+    const plans = createManualPlanRepository(database, async () => active, core);
+    const draft = await plans.createDraft(localTripId);
+    const item = await plans.save(draft, {
+      ...draft.fields,
+      title: "Unsent lighthouse walk",
+      startDate: "2027-01-27",
+    });
+    const localInput = { ...input, query: "Unsent lighthouse", tripId: localTripId };
+    const guest = createGuestTripSearchRepository(
+      {
+        trips,
+        days: {
+          async trip(target) {
+            return {
+              localManualStatus: "AVAILABLE",
+              localManual: await localReader(target),
+            };
+          },
+        },
+      },
+      async () => active,
+    );
+    const localReader = createTripLocalManualReader(database, async () => active, core);
+    expect((await reader.page(localInput)).results).toEqual([]);
+    const found = await guest.page(localInput);
+    expect(found.results.map(({ id }) => id)).toEqual([item.itemId]);
+    expect(await guest.resolve(found.results[0], found.proofs[0])).toMatchObject({
+      kind: "LOCAL_ITEM",
+      family: "P1",
+      tripId: localTripId,
+      itemId: item.itemId,
+    });
+    expect((await guest.page({ ...localInput, tripId })).results).toEqual([]);
     let graph = emptyCoreGraph();
     const ids: string[] = [];
     const add = (title: string, owner = actor, timed = false, description?: string) => {

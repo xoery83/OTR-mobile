@@ -95,6 +95,9 @@ it("Day uses only a current generation reading context and omits an unqualified 
   TripSearchEntry({ entry: "DAY" })!.props.onPress();
   expect(state.push.mock.calls[0][0].params.tripId).toBe("saved");
   expect(state.resumeView.offset).toBe(87);
+  expect(TripSearchEntry({ entry: "DAY", tripId: "other-trip" })).toBeNull();
+  TripSearchEntry({ entry: "DAY", tripId: "saved" })!.props.onPress();
+  expect(state.push.mock.calls[1][0].params).toEqual({ entry: "DAY", tripId: "saved" });
   state.generation = 2;
   expect(TripSearchEntry({ entry: "DAY" })).toBeNull();
 });

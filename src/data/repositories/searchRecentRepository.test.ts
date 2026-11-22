@@ -63,3 +63,11 @@ it("rejects malformed scopes, corrupt preferences and oversized searches; bounds
   for (const value of values.values())
     expect(new TextEncoder().encode(value).length).toBeLessThanOrEqual(1800);
 });
+
+it("keeps Guest recents separate even if the local UUID equals an Account UUID", async () => {
+  const guest = createSearchRecentRepository(storage, async () => a, true);
+  await guest.record({ query: "Guest lighthouse", tripId: a });
+  await repo.record({ query: "Account museum", tripId: a });
+  expect(await guest.list()).toEqual([{ query: "Guest lighthouse", tripId: a }]);
+  expect(await repo.list()).toEqual([{ query: "Account museum", tripId: a }]);
+});

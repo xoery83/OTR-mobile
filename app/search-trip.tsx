@@ -6,6 +6,7 @@ import {
   navigationContentFrameOptions,
 } from "@/components/navigationChrome";
 import { TripScreen } from "@/features/day-feed/TripScreen";
+import { useTripView } from "@/features/day-feed/TripViewContext";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 
@@ -15,6 +16,10 @@ export default function SearchTripRoute() {
   const canGoBack = router.canGoBack();
   const params = useLocalSearchParams<{ tripId?: string; view?: string }>();
   const home = !!params.tripId && params.view !== "day";
+  const day = !!params.tripId && params.view === "day";
+  const { dayShellChrome } = useTripView();
+  const hideDayActions =
+    dayShellChrome?.tripId === params.tripId && !dayShellChrome?.navigationVisible;
   return (
     <>
       <Stack.Screen
@@ -48,9 +53,14 @@ export default function SearchTripRoute() {
           </View>
         </>
       ) : (
-        <NavigationContentFrame>
-          <TripScreen />
-        </NavigationContentFrame>
+        <>
+          {day && !hideDayActions ? (
+            <TripSearchEntry nativeToolbar entry="DAY" tripId={params.tripId} />
+          ) : null}
+          <NavigationContentFrame>
+            <TripScreen />
+          </NavigationContentFrame>
+        </>
       )}
     </>
   );
