@@ -1,5 +1,12 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { ActionSheetIOS, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActionSheetIOS,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText } from "@/ui/controls";
 import { UiChoiceChip } from "@/ui/forms";
@@ -65,6 +72,8 @@ export function ImportActivityList({
   onOpen(jobId: string): void;
 }) {
   useUiLocale();
+  const { fontScale } = useWindowDimensions();
+  const stackDate = fontScale >= 1.3;
   const { view: viewRef, chooser: chooserRef } = directory;
   const colors = useUiTheme(),
     styles = useThemedStyles(createStyles);
@@ -107,7 +116,9 @@ export function ImportActivityList({
     }))
     .filter(
       ({ fact }) =>
-        !showImportActivitySourceFilter || source === "ALL" || fact.sources.includes(source),
+        !showImportActivitySourceFilter ||
+        source === "ALL" ||
+        fact.sources.includes(source),
     );
   const visible = rows.filter(({ fact }) => status === "ALL" || fact.status === status);
   return (
@@ -236,8 +247,8 @@ export function ImportActivityList({
                 </View>
               </View>
               <View style={styles.copy}>
-                <View style={styles.heading}>
-                  <UiText style={styles.title} numberOfLines={1}>
+                <View style={!stackDate && styles.heading}>
+                  <UiText style={[styles.title, !stackDate && styles.inlineTitle]}>
                     {title}
                   </UiText>
                   <UiText
@@ -258,7 +269,7 @@ export function ImportActivityList({
                     })}
                   </UiText>
                 </View>
-                <UiText style={styles.meta} numberOfLines={1}>
+                <UiText style={styles.meta}>
                   {t("activity.context", {
                     source: fact.sources
                       .map((value) => t(`activity.source.${value}`))
@@ -336,13 +347,8 @@ const createStyles = (colors: UiColors) =>
     },
     copy: { flex: 1, gap: 2 },
     heading: { flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", gap: 4 },
-    title: {
-      flexGrow: 1,
-      flexShrink: 1,
-      flexBasis: 120,
-      color: colors.textPrimary,
-      ...visual.type.row,
-    },
+    title: { color: colors.textPrimary, ...visual.type.row },
+    inlineTitle: { flexGrow: 1, flexShrink: 1, flexBasis: 120 },
     meta: { color: colors.textSecondary, ...visual.type.meta },
     summary: { color: colors.textPrimary, ...visual.type.meta },
     footer: {

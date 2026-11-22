@@ -5,10 +5,14 @@ import { ImportActivityList, type ActivityDirectory } from "./ImportActivityList
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const inputs = vi.hoisted(() => ({
+  fontScale: 1,
   buttons: [] as { label?: string; onPress?: () => void }[],
 }));
 vi.mock("react-native", () => ({
-  View: "div",
+  View: ({ children, style }: any) =>
+    createElement("div", { "data-direction": style?.flexDirection }, children),
+  useWindowDimensions: () => ({ fontScale: inputs.fontScale }),
+
   ScrollView: ({ children }: any) => createElement("main", {}, children),
   Pressable: ({ children, onPress }: any) => {
     inputs.buttons.push({ onPress });
@@ -25,10 +29,14 @@ vi.mock("@/ui/forms", () => ({
   },
 }));
 vi.mock("@/ui/controls", () => ({
-  UiText: "span",
+  UiText: ({ children, numberOfLines }: any) =>
+    createElement("span", { "data-lines": numberOfLines }, children),
   UiButton: ({ label }: any) => createElement("button", {}, label),
 }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
+vi.mock("@/ui/theme", () => ({
+  useThemedStyles: (factory: any) => factory({}),
+  useUiTheme: () => ({}),
+}));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/locale", () => ({
   t: (key: string, values?: Record<string, unknown>) =>
@@ -143,4 +151,31 @@ it("keeps source labels and Trip names while the hidden filter cannot exclude a 
   expect(html).toContain("Auckland Weekend");
   expect(html).not.toContain("INTERNAL_READER_DIAGNOSTIC");
   expect(html).not.toContain("activity.loadedCounts");
+});
+
+it("stacks the timestamp at large sizes and keeps the full title and trip context", () => {
+  inputs.fontScale = 1.6;
+  try {
+    const html = renderToStaticMarkup(
+      createElement(ImportActivityList, {
+        jobs: [job("Long itinerary document filename")],
+        v3: {},
+        tasks: {},
+        directory: directory(),
+        loading: false,
+        error: false,
+        hasMore: false,
+        onMore: vi.fn(),
+        onRefresh: vi.fn(),
+        onOpen: vi.fn(),
+      }),
+    );
+    expect(html).toContain(
+      "<div><span>Long itinerary document filename.pdf</span><span>2026",
+    );
+    expect(html).toContain("activity.context");
+    expect(html).not.toContain("data-lines");
+  } finally {
+    inputs.fontScale = 1;
+  }
 });
