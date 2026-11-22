@@ -1,4 +1,5 @@
 import { createUuid } from "../../domain/localId";
+import { localImportDocumentId } from "../../domain/trip/universalImportIdentity";
 import {
   resolveCoreInstructionParentForSubmit,
   CoreInstructionScopeError,
@@ -784,6 +785,134 @@ export function createTripCoreV2Repository(
     await assertContext(ctx);
     announceLedgerQueueWorkAvailable();
     return commands.map(({ operationId }) => operationId);
+  }
+  async function p1DocumentLinkStateWithinTransaction(
+    ctx: AccountRequestContext,
+    itemId: string,
+  ) {
+    const accepted = await acceptedWithinTransaction(ctx);
+    if (!accepted) return null;
+    const { graph, actor } = accepted;
+    const item = graph.itinerary_events.find(
+      (row) =>
+        row.id === itemId &&
+        row.trip_id === ctx.tripId &&
+        row.owner_account_id === ctx.accountId &&
+        row.business_contract_version === 2 &&
+        row.experience_family === "P1" &&
+        !row.hidden_at &&
+        coreCanManage(graph, actor, "ITEM", row),
+    );
+    if (!item) return null;
+    const existing = new Map(
+      graph.trip_item_document_links
+        .filter((row) => row.trip_id === ctx.tripId && row.item_id === itemId)
+        .map((row) => [row.document_id, row]),
+    );
+    const candidates = graph.trip_operational_documents.flatMap((row) => {
+      if (
+        typeof row.id !== "string" ||
+        typeof row.title !== "string" ||
+        typeof row.media_type !== "string" ||
+        typeof row.sha256 !== "string" ||
+        !coreHash.safeParse(row.sha256).success ||
+        row.trip_id !== ctx.tripId ||
+        row.owner_account_id !== ctx.accountId ||
+        row.visibility !== "PRIVATE" ||
+        row.custody !== "LOCAL_ONLY" ||
+        row.hidden_at ||
+        !coreCanManage(graph, actor, "DOCUMENT", row) ||
+        row.id !== localImportDocumentId(ctx.accountId, ctx.tripId, row.sha256)
+      )
+        return [];
+      const link = existing.get(row.id);
+      if (link && (link.active || link.linked_by !== ctx.accountId)) return [];
+      return [{
+        id: row.id,
+        title: row.title,
+        mediaType: row.media_type,
+        revision: Number(row.revision),
+        recordedAt: String(row.created_at),
+      }];
+    });
+    const pendingItem = (await pending(ctx)).filter(
+      ({ command, state }) =>
+        command.target.kind === "ITEM" &&
+        command.target.id === itemId &&
+        state !== "CONFLICT" &&
+        state !== "REVIEW",
+    );
+    return { itemRevision: Number(item.semantic_revision), candidates, pendingItem };
+  }
+  async function readP1DocumentLinkChoices(ctx: AccountRequestContext, itemId: string) {
+    coreUuid.parse(itemId);
+    return withAccountApplyGate(async () => {
+      let state!: Awaited<ReturnType<typeof p1DocumentLinkStateWithinTransaction>>;
+      await database.withTransactionAsync(async () => {
+        state = await p1DocumentLinkStateWithinTransaction(ctx, itemId);
+      });
+      await assertContext(ctx);
+      if (!state) return null;
+      const { candidates, pendingItem, itemRevision } = state;
+      return {
+        candidates: pendingItem.length ? [] : candidates,
+        itemRevision,
+        pendingLink: pendingItem.some(
+          ({ command }) => command.command === "RECONCILE_ITEM_DOCUMENTS",
+        ),
+      };
+    });
+  }
+  async function enqueueP1DocumentLink(
+    ctx: AccountRequestContext,
+    itemId: string,
+    documentId: string,
+    expected: { itemRevision: number; documentRevision: number },
+  ) {
+    coreUuid.parse(itemId);
+    coreUuid.parse(documentId);
+    return withAccountApplyGate(async () => {
+      let result: { operationId: string; enqueued: boolean } | undefined;
+      await database.withTransactionAsync(async () => {
+        const state = await p1DocumentLinkStateWithinTransaction(ctx, itemId);
+        if (!state) throw Error("CORE_DOCUMENT_LINK_UNAVAILABLE");
+        const prior = state.pendingItem.find(({ command }) =>
+          command.command === "RECONCILE_ITEM_DOCUMENTS" &&
+          (command.payload as { add: string[] }).add.includes(documentId),
+        );
+        if (prior) {
+          result = { operationId: prior.command.operationId, enqueued: false };
+          return;
+        }
+        const document = state.candidates.find((candidate) => candidate.id === documentId);
+        if (
+          !document ||
+          state.pendingItem.length ||
+          state.itemRevision !== expected.itemRevision ||
+          document.revision !== expected.documentRevision
+        )
+          throw Error("CORE_DOCUMENT_LINK_UNAVAILABLE");
+        const saved = await enqueueWithinTransaction(ctx, {
+          contractVersion: 2,
+          intentVersion: 2,
+          operationId: createUuid(),
+          tripId: ctx.tripId,
+          command: "RECONCILE_ITEM_DOCUMENTS",
+          target: { kind: "ITEM", id: itemId },
+          baseVector: [
+            { kind: "DOCUMENT", id: documentId, revision: document.revision },
+            { kind: "ITEM", id: itemId, revision: state.itemRevision },
+          ],
+          admission: { mode: "MANUAL", sourceIntentId: null, policyVersion: null },
+          payload: { add: [documentId], remove: [] },
+        });
+        result = { operationId: saved.operationId, enqueued: true };
+      });
+      await assertContext(ctx);
+      return result!;
+    }, ({ enqueued }) => {
+      if (enqueued) announceLedgerQueueWorkAvailable();
+    });
   }
   async function manualInstructionOriginWithinTransaction(
     ctx: AccountRequestContext,
@@ -2572,6 +2701,8 @@ export function createTripCoreV2Repository(
     resume,
     enqueue,
     enqueueConfirmedItemDocuments,
+    readP1DocumentLinkChoices,
+    enqueueP1DocumentLink,
     commitManualBatch,
     manualInstructionEligibility,
     manualInstructionCorrectionPreclaimEligibility,

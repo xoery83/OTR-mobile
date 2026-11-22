@@ -23,6 +23,7 @@ import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { P1Row } from "./P1Row";
+import { useP1DocumentLinks } from "./P1DocumentLinkPicker";
 import { P1PlanEditor } from "./P1PlanEditor";
 import { useTripView } from "./TripViewContext";
 
@@ -45,6 +46,9 @@ export function P1Detail() {
   const [editing, setEditing] = useState(false);
   const [localOnly, setLocalOnly] = useState(false);
   const [revision, setRevision] = useState(0);
+  const documentLinks = useP1DocumentLinks(tripId, itemId, generation, revision, () =>
+    setRevision((value) => value + 1),
+  );
   const [failed, setFailed] = useState(false);
   const colors = useUiTheme(),
     styles = useThemedStyles(createStyles);
@@ -148,6 +152,7 @@ export function P1Detail() {
                 pending: !localOnly && visible.presentation.facts.pending,
               }}
               actions={{
+                addAttachment: documentLinks.open,
                 addExpense: () =>
                   router.push({
                     pathname: "/trip-item-expense",
@@ -173,6 +178,7 @@ export function P1Detail() {
           ) : (
             <DayReadSkeleton />
           )}
+          {visible ? documentLinks.pending : null}
           {visible ? (
             <LocalItemImportOriginals
               tripId={tripId}
@@ -183,6 +189,7 @@ export function P1Detail() {
           ) : null}
         </ScrollView>
       </NavigationContentFrame>
+      {visible ? documentLinks.dialog : null}
       {editing && visible?.editor ? (
         <P1PlanEditor
           tripId={tripId}

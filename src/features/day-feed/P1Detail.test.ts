@@ -68,6 +68,9 @@ vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 vi.mock("./ImmersiveActions", () => ({ ImmersiveActions: () => null }));
 vi.mock("./P1PlanEditor", () => ({ P1PlanEditor: () => null }));
+vi.mock("./P1DocumentLinkPicker", () => ({
+  useP1DocumentLinks: () => ({ open: undefined, pending: null, dialog: null }),
+}));
 vi.mock("./LocalItemImportOriginals", () => ({ LocalItemImportOriginals: () => null }));
 vi.mock("./useDetailCloudRefresh", () => ({ useDetailCloudRefresh: () => undefined }));
 vi.mock("./TripViewContext", () => ({

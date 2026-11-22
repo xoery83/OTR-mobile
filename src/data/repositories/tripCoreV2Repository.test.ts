@@ -48,6 +48,7 @@ import {
 } from "../../domain/trip/tripCoreV2Mutation";
 import { coreDateBoundary } from "../../domain/trip/tripCoreV2Temporal";
 import { coreDefaults } from "../../domain/trip/tripCoreV2";
+import { localImportDocumentId } from "../../domain/trip/universalImportIdentity";
 import { buildCoreActorCollection } from "../../../backend/src/tripCoreV2Collection";
 vi.mock("react-native", () => ({ AppState: { currentState: "active" } }));
 const hash = async (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
@@ -133,11 +134,14 @@ function fixture(path = ":memory:", initialize = true) {
 async function collection(
   participating = true,
   graph = applyCoreCommand(emptyCoreGraph(), sparse(), actor, stamp).graph,
+  localDocumentMetadata = false,
+  state: { epoch: string; revision: number; accessRevision: number; generatedAt: string } =
+    { epoch: randomUUID(), revision: 1, accessRevision: 1, generatedAt: stamp },
 ) {
   return buildCoreActorCollection(
     graph,
     actor,
-    { epoch: randomUUID(), revision: 1, accessRevision: 1, generatedAt: stamp },
+    state,
     [
       {
         person_id: person,
@@ -148,6 +152,11 @@ async function collection(
       },
     ],
     hash,
+    [],
+    [],
+    [],
+    undefined,
+    localDocumentMetadata,
   );
 }
 describe("Core SQLite54 account partition and durable offline foundation", () => {
@@ -3062,6 +3071,134 @@ it("claim-bound CORRECT actual minted postimage drift rolls the whole claim back
   ).rejects.toThrow("CORE_CORRECTION_CLAIM_POSTIMAGE_CHANGED");
   spy.mockRestore();
   expect(correctionDurableState(f)).toEqual(before);
+});
+
+it("queues one selected private Trip document for a certified P1 and preserves its operation across restart", async () => {
+  const folder = mkdtempSync(join(tmpdir(), "otr-core-p1-link-"));
+  folders.push(folder);
+  const path = join(folder, "core.db");
+  const f = fixture(path);
+  const ctx = await f.repo.captureContext(trip);
+  const plan = {
+    ...sparse(),
+    command: "CREATE_ITEM",
+    payload: {
+      family: "P1",
+      core: { title: "Day plan" },
+      schedule: { start: coreDateBoundary("2026-12-14") },
+      ...coreDefaults("member"),
+    },
+  };
+  const digest = "a".repeat(64);
+  const document = localImportDocumentId(account, trip, digest);
+  const createDocument = {
+    ...sparse(),
+    command: "CREATE_DOCUMENT_METADATA",
+    target: { kind: "DOCUMENT", id: document },
+    baseVector: [{ kind: "DOCUMENT", id: document, revision: null }],
+    payload: {
+      title: "Booking.pdf",
+      media_type: "application/pdf",
+      sha256: digest,
+      byte_size: 16,
+    },
+  };
+  const itemGraph = applyCoreCommand(emptyCoreGraph(), plan, actor, stamp).graph;
+  const accepted = applyCoreCommand(itemGraph, createDocument, actor, stamp).graph;
+  const bundle = await collection(true, accepted, true);
+  expect(await f.repo.readP1DocumentLinkChoices(ctx, item)).toBeNull();
+  await f.repo.install(await f.repo.beginRefresh(ctx, 1), bundle.manifest, bundle.pages);
+  expect(await f.repo.readP1DocumentLinkChoices(ctx, item)).toEqual({
+    itemRevision: 1,
+    candidates: [
+      {
+        id: document, title: "Booking.pdf", mediaType: "application/pdf",
+        revision: 1, recordedAt: expect.any(String),
+      },
+    ],
+    pendingLink: false,
+  });
+  const opened = { itemRevision: 1, documentRevision: 1 };
+  await expect(f.repo.enqueueP1DocumentLink(ctx, item, document, { ...opened, itemRevision: 2 }))
+    .rejects.toThrow("CORE_DOCUMENT_LINK_UNAVAILABLE");
+  await expect(f.repo.enqueueP1DocumentLink(ctx, item, randomUUID(), opened))
+    .rejects.toThrow("CORE_DOCUMENT_LINK_UNAVAILABLE");
+  const first = await f.repo.enqueueP1DocumentLink(ctx, item, document, opened);
+  expect(first.enqueued).toBe(true);
+  f.sql.close();
+
+  const cold = fixture(path, false);
+  const openedAgain = await cold.repo.captureContext(trip);
+  expect(await cold.repo.readP1DocumentLinkChoices(openedAgain, item)).toEqual({
+    itemRevision: 1,
+    candidates: [],
+    pendingLink: true,
+  });
+  expect(await cold.repo.enqueueP1DocumentLink(openedAgain, item, document, opened)).toEqual({
+    operationId: first.operationId,
+    enqueued: false,
+  });
+  const [entry] = await cold.repo.pending(openedAgain);
+  expect(entry.command).toMatchObject({
+    command: "RECONCILE_ITEM_DOCUMENTS",
+    operationId: first.operationId,
+    target: { kind: "ITEM", id: item },
+    baseVector: [
+      { kind: "DOCUMENT", id: document, revision: 1 },
+      { kind: "ITEM", id: item, revision: 1 },
+    ],
+    payload: { add: [document], remove: [] },
+  });
+  expect(cold.sql.prepare("SELECT count(*) AS count FROM sync_operations").get()?.count).toBe(1);
+  const foreignTrip = await cold.repo.captureContext(randomUUID());
+  await expect(cold.repo.enqueueP1DocumentLink(foreignTrip, item, document, opened))
+    .rejects.toThrow("CORE_DOCUMENT_LINK_UNAVAILABLE");
+
+  let serverGraph = accepted;
+  const receipt = await executeCoreCommandV2({
+    withLockedCommand: async (_scope, work) => work({
+      actor,
+      readReceipt: async () => null,
+      hasLegacyOperation: async () => false,
+      canReadReceipt: async () => true,
+      enabledCommands: async () => ["RECONCILE_ITEM_DOCUMENTS"],
+      readLockedGraph: async () => serverGraph,
+      verifyAdmission: async () => {},
+      lifecycleGraphHash: async () => undefined,
+      async commit(mutation) {
+        if (mutation) serverGraph = mutation.graph;
+        return randomUUID();
+      },
+    }),
+  }, account, trip, entry.command, hash, () => stamp);
+  expect(receipt.projection).toBe("FULL");
+  if (receipt.projection !== "FULL") throw Error("expected original full receipt");
+  expect(receipt.receipt.outcome).toBe("APPLIED");
+  await cold.repo.applyReceipt(openedAgain, receipt.receipt);
+  const refreshed = await collection(true, serverGraph, true, {
+    epoch: bundle.manifest.epoch,
+    revision: 2,
+    accessRevision: 1,
+    generatedAt: stamp,
+  });
+  await cold.repo.install(
+    await cold.repo.beginRefresh(openedAgain, 1),
+    refreshed.manifest,
+    refreshed.pages,
+  );
+  expect(await cold.repo.retainedReceipt(openedAgain, entry.command)).toEqual(receipt.receipt);
+  expect((await cold.repo.acceptedSnapshot(openedAgain))?.graph.trip_item_document_links)
+    .toMatchObject([{ item_id: item, document_id: document, active: true }]);
+  expect(await cold.repo.readP1DocumentLinkChoices(openedAgain, item)).toEqual({
+    itemRevision: 2,
+    candidates: [],
+    pendingLink: false,
+  });
+  await expect(cold.repo.enqueueP1DocumentLink(openedAgain, item, document, opened))
+    .rejects.toThrow("CORE_DOCUMENT_LINK_UNAVAILABLE");
+  advanceAccountGeneration();
+  await expect(cold.repo.enqueueP1DocumentLink(openedAgain, item, document, opened))
+    .rejects.toThrow("Account changed");
 });
 
 it("retains the explicitly confirmed Item, Document and link operations across restart without creating another Item", async () => {
