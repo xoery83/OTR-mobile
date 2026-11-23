@@ -25,6 +25,13 @@ src/
 
 Feature modules may compose UI, hooks, and repositories. Domain modules must not import UI, SQLite, Expo APIs, or API clients. Repositories coordinate local reads/writes and enqueue sync operations.
 
+## Ledger journey selection
+
+Ledger and Settlement share the same Journey selector. In QA the chooser uses
+the common Sheet and the existing eligible Journey sections. A successful read
+returns to the owning Ledger route. Failed or stale selections preserve the
+current Ledger context.
+
 ## Canonical Trip Person foundation
 
 A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from

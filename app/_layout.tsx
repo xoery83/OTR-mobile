@@ -1,6 +1,7 @@
 import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
 import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
+import { hostedLedgerJourneySheetEnabled } from "@/features/ledger/ledgerJourneySheet";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
@@ -184,6 +185,18 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedDayCalendarEnabled}>
               <Stack.Screen
                 name="day-calendar"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedLedgerJourneySheetEnabled}>
+              <Stack.Screen
+                name="ledger-journey-picker"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",
