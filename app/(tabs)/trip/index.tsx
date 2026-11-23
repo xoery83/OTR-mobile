@@ -44,7 +44,7 @@ export default function TripRoute() {
         />
       ) : null}
       <NavigationContentFrame underlapHeader={home || day}>
-        <TripScreen contentFrameManaged={!home && !day} />
+        <TripScreen contentFrameManaged={!home && !day} hasBottomShell />
       </NavigationContentFrame>
     </>
   );

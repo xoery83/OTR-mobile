@@ -6,11 +6,12 @@ import { useWindowDimensions } from "react-native";
 import { bottomBarVisible } from "@/components/bottomBarVisibility";
 import { bottomShellInset } from "./bottomShellInset";
 
-export function useBottomShellHeight() {
+export function useBottomShellHeight(visible?: boolean) {
   const measured = useContext(BottomTabBarHeightContext);
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
-  return bottomBarVisible(usePathname())
+  const pathname = usePathname();
+  return (visible ?? bottomBarVisible(pathname))
     ? bottomShellInset(measured, insets.bottom, fontScale)
     : 0;
 }

@@ -153,9 +153,11 @@ function savedTripZone(
 export function TripScreen({
   today = false,
   contentFrameManaged = false,
+  hasBottomShell = false,
 }: {
   today?: boolean;
   contentFrameManaged?: boolean;
+  hasBottomShell?: boolean;
 }) {
   const params = useLocalSearchParams();
   const generation = useSyncExternalStore(
@@ -172,15 +174,18 @@ export function TripScreen({
       ])}
       today={today}
       contentFrameManaged={contentFrameManaged}
+      hasBottomShell={hasBottomShell}
     />
   );
 }
 function TripContent({
   today = false,
   contentFrameManaged = false,
+  hasBottomShell = false,
 }: {
   today?: boolean;
   contentFrameManaged?: boolean;
+  hasBottomShell?: boolean;
 }) {
   const pathname = usePathname();
   useUiLocale();
@@ -208,7 +213,7 @@ function TripContent({
     [headerBottom],
   );
   const navigation = useNavigation();
-  const bottomBarHeight = useBottomShellHeight();
+  const bottomBarHeight = useBottomShellHeight(hasBottomShell);
   const [headingHidden, setHeadingHidden] = useState(false);
   const headingBottom = useRef(0);
   const generation = useSyncExternalStore(

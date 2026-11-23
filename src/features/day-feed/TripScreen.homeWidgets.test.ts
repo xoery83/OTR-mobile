@@ -200,7 +200,9 @@ vi.mock("expo-router/react-navigation", () => ({
     state.preventRemove = enabled ? callback : null;
   },
 }));
-vi.mock("@/ui/useBottomShellHeight", () => ({ useBottomShellHeight: () => 90 }));
+vi.mock("@/ui/useBottomShellHeight", () => ({
+  useBottomShellHeight: (visible = state.pathname === "/trip-home") => (visible ? 90 : 0),
+}));
 vi.mock("expo-router", () => ({
   usePathname: () => state.pathname,
   useNavigation: () => state.navigation,
@@ -301,9 +303,9 @@ vi.mock("./TripViewContext", async (original) => ({
     quickActions: state.quickActions,
   }),
 }));
-function render(contentFrameManaged = false) {
+function render(contentFrameManaged = false, hasBottomShell = true) {
   state.cursor = state.refCursor = state.callbackCursor = 0;
-  const outer = TripScreen({ contentFrameManaged });
+  const outer = TripScreen({ contentFrameManaged, hasBottomShell });
   const content = outer.type as (props: typeof outer.props) => ReactElement;
   const node = content(outer.props);
   for (const effect of state.effects.splice(0)) effect();
@@ -2199,6 +2201,28 @@ it.each(["foreign", "fingerprint", "generation"])("Guest Past withholds an unbou
   if (kind === "fingerprint") state.snapshot.localSource.source = { ...state.snapshot.localSource.source, fingerprint: "wrong" };
   if (kind === "generation") state.snapshot.scope = { ...state.snapshot.scope, generation: 4 };
   expect(page(await loaded())).toBeUndefined();
+});
+
+it("keeps the retained trip home viewport when Documents covers its Bottom Shell", async () => {
+  state.routeTrip = reference;
+  const home = await loaded();
+  expect(find(home, "View")).toMatchObject({
+    style: expect.arrayContaining([{ paddingBottom: 90 }]),
+  });
+  state.pathname = "/documents";
+  const covered = render();
+  expect(find(covered, "View")).toMatchObject({
+    style: expect.arrayContaining([{ paddingBottom: 90 }]),
+  });
+});
+
+it("does not reserve a Bottom Shell for the search-owned trip home", async () => {
+  state.pathname = "/search-trip";
+  state.routeTrip = reference;
+  const home = render(false, false);
+  expect(find(home, "View")).toMatchObject({
+    style: expect.arrayContaining([{ paddingBottom: 0 }]),
+  });
 });
 
 it("empty Guest My Trips Create then Cancel restores only route params, without a second native page replacement", async () => {
