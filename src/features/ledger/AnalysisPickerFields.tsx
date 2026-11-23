@@ -25,7 +25,7 @@ export function AnalysisPickerFields({
   picker,
   panel,
 }: {
-  picker: AnalysisPicker;
+  picker: Exclude<AnalysisPicker, { kind: "excluded" }>;
   panel?: RenderPanel;
 }) {
   useUiLocale();

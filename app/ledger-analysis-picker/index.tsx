@@ -7,8 +7,10 @@ import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
+import { AnalysisExcludedExpenses } from "@/features/ledger/AnalysisExcludedExpenses";
 import { AnalysisPickerFields } from "@/features/ledger/AnalysisPickerFields";
 import {
+  completeAnalysisPicker,
   readAnalysisPicker,
   releaseAnalysisPicker,
 } from "@/features/ledger/analysisPickerInvocation";
@@ -26,23 +28,34 @@ export default function LedgerAnalysisPickerRoute() {
   );
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
   const picker = readAnalysisPicker(invocation);
-  const { requestClose, isExitPending } = useSheetMotion();
+  const { requestCloseWithAction, isExitPending, exitPending } = useSheetMotion();
 
-  useEffect(() => () => releaseAnalysisPicker(invocation), [invocation]);
+  useEffect(() => () => {
+    queueMicrotask(() => releaseAnalysisPicker(invocation));
+  }, [invocation]);
 
   function choose(apply: () => void) {
-    if (isExitPending() || readAnalysisPicker(invocation) !== picker) return;
-    apply();
+    if (!picker || isExitPending() || readAnalysisPicker(invocation) !== picker) return;
     Keyboard.dismiss();
-    requestClose();
+    requestCloseWithAction(() => completeAnalysisPicker(invocation, picker, apply));
   }
 
   const panel = (fields: ReactNode, confirm?: () => void) => (
     <SheetRoutePanel
       title={t(picker?.kind === "range" ? "ui.analysisDates" : "ui.chooseCategory")}
-      action={confirm ? { label: t("ui.applyCustomRange"), onPress: confirm } : undefined}
+      action={confirm ? { label: t("ui.applyCustomRange"), onPress: confirm, disabled: exitPending } : undefined}
     >
       <View style={styles.content}>{fields}</View>
+    </SheetRoutePanel>
+  );
+
+  if (picker?.kind === "excluded") return (
+    <SheetRoutePanel title={t("ui.notIncludedInTotal")}>
+      <View style={styles.content}>
+        <AnalysisExcludedExpenses expenses={picker.expenses} scope={picker.scope} onOpen={id => {
+          if (picker.expenses.some(expense => expense.id === id)) choose(() => picker.open(id));
+        }} />
+      </View>
     </SheetRoutePanel>
   );
 

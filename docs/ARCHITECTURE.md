@@ -25,6 +25,12 @@ src/
 
 Feature modules may compose UI, hooks, and repositories. Domain modules must not import UI, SQLite, Expo APIs, or API clients. Repositories coordinate local reads/writes and enqueue sync operations.
 
+## Application Sheet navigation
+
+Ledger Analysis date, category and excluded-expense views share the QA Sheet.
+Selection returns to the original Analysis scope. The exclusion list closes
+before opening the original expense Detail route.
+
 ## Canonical Trip Person foundation
 
 A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from

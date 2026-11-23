@@ -2,6 +2,7 @@ import { segmentedControlTokens } from "@/ui/segmented";
 import { formatExpenseCount } from "./searchFilters";
 import { systemMessage } from "@/ui/domainLabels";
 import { t } from "@/ui/locale";
+import { AnalysisExcludedExpenses } from "./AnalysisExcludedExpenses";
 import { AnalysisPickerFields } from "./AnalysisPickerFields";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { useUiTheme, useThemedStyles } from "@/ui/theme";
@@ -17,7 +18,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Stack, router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { Stack, router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 
 import { AppIcon } from "@/components/AppIcon";
@@ -30,13 +31,11 @@ import {
   analysisRangePresets,
   buildSpendingAnalysis,
   type AnalysisDataset,
-  type AnalysisExpense,
   type AnalysisRange,
 } from "@/domain/ledger/spendingAnalysis";
 import type { ReportingScope } from "@/domain/ledger/reporting";
 import { createLatestRequest } from "./latestRequest";
 import {
-  formatLedgerDate,
   formatLedgerDateFilter,
   formatLedgerMoney,
   localDateKey,
@@ -62,16 +61,6 @@ import {
   releaseAnalysisPicker,
   type AnalysisPicker,
 } from "./analysisPickerInvocation";
-
-function exclusionReason(expense: AnalysisExpense, scope: ReportingScope) {
-  if (expense.hasOpenConflict) return t("ui.changesNeedReview");
-  if (expense.businessStatus === "DRAFT") return t("ui.draftExpense");
-  if (expense.businessStatus === "RATE_REQUIRED" || expense.totalMinor === null)
-    return t("ui.waitingForConfirmedJourneyCurrencyValue");
-  if (scope === "MINE" && expense.personalMinor === null)
-    return t("ui.yourShareIsNotAvailableYet");
-  return t("ui.notIncludedInSpendingTotal");
-}
 
 export function LedgerAnalysisScreen() {
   useUiLocale();
@@ -106,6 +95,7 @@ export function LedgerAnalysisScreen() {
   const rangeRef = useRef<AnalysisRange>({});
   const pendingRange = useRef<AnalysisRange | null>(null);
   const pickerId = useRef<string>(undefined);
+  const owningNavigation = useNavigation();
   const generation = getAccountGeneration();
   const pickerOwner = useRef<symbol | null>(null);
   useLayoutEffect(() => {
@@ -139,6 +129,7 @@ export function LedgerAnalysisScreen() {
           await repository.current
         ).loadSpendingAnalysisProjection(params.journeyId, params.memberId, range);
         if (!request.isCurrent(id)) return;
+        if (pendingRange.current === range) pendingRange.current = null;
         rangeRef.current = range;
         setView({ dataset: data, range });
       } catch {
@@ -239,11 +230,16 @@ export function LedgerAnalysisScreen() {
     const owner = pickerOwner.current;
     if (
       !owner ||
+      !owningNavigation.isFocused() ||
       generation !== getAccountGeneration() ||
       readAnalysisPicker(pickerId.current)
     )
       return;
-    const invocation = openAnalysisPicker(picker, () => pickerOwner.current === owner);
+    const invocation = openAnalysisPicker(
+      picker,
+      () => pickerOwner.current === owner,
+      () => owningNavigation.isFocused(),
+    );
     pickerId.current = invocation;
     router.push({ pathname: "/ledger-analysis-picker", params: { invocation } });
   }
@@ -263,13 +259,11 @@ export function LedgerAnalysisScreen() {
     },
     choose: (range) => {
       if (hostedLedgerAnalysisPickerEnabled) pendingRange.current = range;
-      else {
-        setRangeOpen(false);
-        void load(range);
-      }
+      else setRangeOpen(false);
+      void load(range);
     },
   };
-  function categoryPicker(menu: NonNullable<typeof categoryMenu>): AnalysisPicker {
+  function categoryPicker(menu: NonNullable<typeof categoryMenu>): Extract<AnalysisPicker, { kind: "category" }> {
     const { selected, setSelected } =
       menu === "BIGGEST"
         ? { selected: biggestCategory, setSelected: setBiggestCategory }
@@ -430,7 +424,15 @@ export function LedgerAnalysisScreen() {
                         count: dashboard.incomplete.length,
                       })}
                       hitSlop={12}
-                      onPress={() => setCompletenessOpen(true)}
+                      onPress={() => {
+                        if (hostedLedgerAnalysisPickerEnabled) openHostedPicker({
+                          kind: "excluded",
+                          scope,
+                          expenses: dashboard.incomplete,
+                          open: id => router.push(`/expenses/expense/${id}`),
+                        });
+                        else setCompletenessOpen(true);
+                      }}
                     >
                       <Text style={shared.meta}>ⓘ</Text>
                     </Pressable>
@@ -596,36 +598,14 @@ export function LedgerAnalysisScreen() {
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.modalContent}
             >
-              <Text style={shared.meta}>
-                {formatExpenseCount(dashboard.incomplete.length)} ·{" "}
-                {scope === "MINE" ? t("ledger.mine") : t("ledger.group")}
-              </Text>
-              {dashboard.incomplete.map((expense) => (
-                <Pressable
-                  key={expense.id}
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setCompletenessOpen(false);
-                    router.push(`/expenses/expense/${expense.id}`);
-                  }}
-                  style={styles.excludedExpense}
-                >
-                  <Text numberOfLines={2} style={styles.excludedTitle}>
-                    {expense.title}
-                  </Text>
-                  <Text style={shared.meta}>
-                    {t("analysis.originalTotal", {
-                      date: formatLedgerDate(expense.occurredAt),
-                      amount: formatLedgerMoney(
-                        expense.originalMinor,
-                        expense.originalCurrency,
-                        expense.originalScale,
-                      ),
-                    })}
-                  </Text>
-                  <Text style={shared.meta}>{exclusionReason(expense, scope)}</Text>
-                </Pressable>
-              ))}
+              <AnalysisExcludedExpenses
+                expenses={dashboard.incomplete}
+                scope={scope}
+                onOpen={id => {
+                  setCompletenessOpen(false);
+                  router.push(`/expenses/expense/${id}`);
+                }}
+              />
             </ScrollView>
           </View>
         </Modal>
@@ -715,13 +695,6 @@ const createStyles = (colors: UiColors) => {
     segmentText: { color: segment.label, fontSize: 16, fontWeight: "600" },
     segmentTextSelected: { color: segment.selectedLabel },
     countLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5 },
-    excludedExpense: {
-      padding: 12,
-      gap: 5,
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-    },
-    excludedTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
     retry: { minHeight: 44, justifyContent: "center" },
     surface: { backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden" },
     modalPage: { flex: 1, backgroundColor: colors.background },

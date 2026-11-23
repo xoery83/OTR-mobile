@@ -1,8 +1,13 @@
+import { AnalysisExcludedExpenses } from "./AnalysisExcludedExpenses";
+import { AnalysisPickerFields } from "./AnalysisPickerFields";
+import type { AnalysisPicker } from "./analysisPickerInvocation";
+import type { ComponentProps } from "react";
 import { MoneyText } from "./MoneyText";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import type { ReactElement } from "react";
 import {
+  analysisPresetBounds,
   buildSpendingAnalysis,
   type AnalysisDataset,
 } from "@/domain/ledger/spendingAnalysis";
@@ -30,7 +35,7 @@ const ui = vi.hoisted(() => ({
   options: vi.fn(),
   fontScale: 1,
   push: vi.fn(),
-  nav: { getParent: () => ({ setOptions: ui.options }) },
+  nav: { getParent: () => ({ setOptions: ui.options }), isFocused: () => true },
 }));
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -262,9 +267,12 @@ describe("Analysis UI transitions and request guardrails", () => {
       "Entire trip",
     );
     expect(ui.projection).toHaveBeenCalledTimes(1);
-    press(
-      nodes(screen).find((node) => node.props.onPress && texts(node) === "This month")!,
-    );
+    press(nodes(screen).find((node) => node.props.accessibilityLabel === "Choose date range")!);
+    const picker = nodes(render()).find(node => node.type === AnalysisPickerFields)!.props.picker as
+      Extract<AnalysisPicker, { kind: "range" }>;
+    expect(picker.kind).toBe("range");
+    expect(picker.presets).toContain("MONTH");
+    picker.choose(analysisPresetBounds("MONTH", picker.today));
     await new Promise<void>((resolve) => setImmediate(resolve));
     expect(ui.projection).toHaveBeenCalledTimes(2);
     expect(ui.projection.mock.calls[1][2]).toHaveProperty("from");
@@ -280,7 +288,11 @@ describe("Analysis UI transitions and request guardrails", () => {
     )!;
     press(menu);
     screen = render();
-    press(nodes(screen).find((node) => node.props.onPress && texts(node) === "Hotel")!);
+    const picker = nodes(screen).find(node => node.type === AnalysisPickerFields)!.props.picker as
+      Extract<AnalysisPicker, { kind: "category" }>;
+    expect(picker.kind).toBe("category");
+    expect(picker.options).toContain("hotel");
+    picker.choose("hotel");
     screen = render();
     const rows = nodes(screen).find((node) => node.type === AnalysisExpenseRows)!;
     expect(rows.props.expenses).toEqual([dataset.expenses[0]]);
@@ -447,11 +459,16 @@ describe("Analysis UI transitions and request guardrails", () => {
     const popup = nodes(screen).find(
       (node) => node.type === "modal" && node.props.visible === true,
     )!;
-    expect(texts(popup)).toContain("Waiting for confirmed Journey currency value");
-    expect(texts(popup)).toContain("Changes need review");
-    expect(texts(popup)).toContain("Your share is not available yet");
-    expect(texts(popup)).toMatch(/Original total\s+€10\.00/);
-    expect(texts(popup)).not.toContain("Expense 3");
+    const rows = (element: unknown) => AnalysisExcludedExpenses(
+      nodes(element).find(node => node.type === AnalysisExcludedExpenses)!.props as
+        ComponentProps<typeof AnalysisExcludedExpenses>,
+    );
+    const displayed = texts(rows(popup));
+    expect(displayed).toContain("Waiting for confirmed Journey currency value");
+    expect(displayed).toContain("Changes need review");
+    expect(displayed).toContain("Your share is not available yet");
+    expect(displayed).toMatch(/Original total\s+€10\.00/);
+    expect(displayed).not.toContain("Expense 3");
     (popup.props.onRequestClose as () => void)();
     expect(
       nodes(render()).filter(
@@ -465,7 +482,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     );
     screen = render();
     press(
-      nodes(screen).find(
+      nodes(rows(screen)).find(
         (node) => node.props.onPress && texts(node).startsWith("Expense 0"),
       )!,
     );
