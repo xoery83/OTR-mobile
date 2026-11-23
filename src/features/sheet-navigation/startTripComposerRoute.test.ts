@@ -50,6 +50,9 @@ it("drops a retired chooser before granting admission or serving a late action",
   expect(route.type).toBe("capture");
   const current = (route.props as { canUseHostedSource(): boolean }).canUseHostedSource;
   expect(current()).toBe(true);
+  state.pending = true;
+  expect(current()).toBe(false);
+  state.pending = false;
   state.routes[0] = { key: "different-chooser" };
   expect(current()).toBe(false);
   state.routes[0] = { key: "chooser" };

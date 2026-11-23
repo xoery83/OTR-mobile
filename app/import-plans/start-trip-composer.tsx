@@ -19,7 +19,7 @@ function HostedStartTripComposer() {
   const entry = useSyncExternalStore(subscribeStartTrip, () => readStartTrip(invocation));
   const navigation = useNavigation();
   const { key } = useRoute();
-  const { isExitPending, requestClose } = useSheetMotion();
+  const { exitPending, isExitPending, requestClose } = useSheetMotion();
   const current = useCallback(() => {
     if (!entry || readStartTrip(invocation) !== entry || !chooserKey) return false;
     const state = navigation.getState();
@@ -27,6 +27,10 @@ function HostedStartTripComposer() {
     return index > 0 && state?.routes[index - 1]?.key === chooserKey;
   }, [chooserKey, entry, invocation, key, navigation]);
 
+  const canUseHostedSource = useCallback(
+    () => current() && !exitPending && !isExitPending(),
+    [current, exitPending, isExitPending],
+  );
   const back = () => {
     if (!navigation.isFocused() || isExitPending()) return;
     const state = navigation.getState();
@@ -35,7 +39,7 @@ function HostedStartTripComposer() {
     else navigation.dispatch({ type: "GO_BACK", target: state.key, source: key });
   };
   if (entry && current()) {
-    return <CaptureRoute overlay hosted hostedChild canUseHostedSource={current} onHostedClose={back} />;
+    return <CaptureRoute overlay hosted hostedChild canUseHostedSource={canUseHostedSource} onHostedClose={back} />;
   }
   return <SheetRoutePanel title={t("actionIsland.importPlans")} onBack={back}>{null}</SheetRoutePanel>;
 }

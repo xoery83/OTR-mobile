@@ -346,7 +346,10 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
       );
   if (hosted) {
     return admitted ? <View style={styles.hosted}>{body}</View> : (
-      <SheetRoutePanel title={t("capture.composer.title")} onBack={hostedChild ? () => router.back() : undefined}>
+      <SheetRoutePanel
+        title={t("capture.composer.title")}
+        onBack={hostedChild ? (onHostedClose ?? (() => router.back())) : undefined}
+      >
         {body}
       </SheetRoutePanel>
     );
