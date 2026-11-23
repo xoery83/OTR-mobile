@@ -53,7 +53,7 @@ export default function DocumentSearchFiltersRoute() {
     >
       {filters ? (
         <View style={styles.content}>
-          <DocumentSearchFilterFields facets={facets} setFacets={update} />
+          <DocumentSearchFilterFields facets={facets} setFacets={update} hosted />
         </View>
       ) : null}
     </SheetRoutePanel>

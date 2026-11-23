@@ -14,13 +14,16 @@ import {
 export function DocumentSearchFilterFields({
   facets,
   setFacets,
+  hosted = false,
 }: {
   facets: DocumentSearchFilters;
   setFacets(facets: DocumentSearchFilters): void;
+  hosted?: boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
-  const useDateWheels = useWindowDimensions().fontScale > 1.5;
+  const { fontScale } = useWindowDimensions();
+  const useDateWheels = hosted && fontScale > 1.5;
   return (
     <>
       <UiText style={styles.title}>{t("documents.privacyFilter")}</UiText>
@@ -84,7 +87,7 @@ export function DocumentSearchFilterFields({
         />
       ))}
       {(["from", "to"] as const).map((key) => (
-        <View key={key} style={styles.content}>
+        <View key={key} style={hosted ? styles.content : styles.legacyDate}>
           <UiText style={styles.title}>
             {t(key === "from" ? "documents.dateFrom" : "documents.dateTo")}
           </UiText>
@@ -122,6 +125,7 @@ export function DocumentSearchFilterFields({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     content: { gap: 8 },
+    legacyDate: { padding: visual.space.page, gap: visual.space.card },
     title: { ...visual.type.row, color: colors.textPrimary },
     meta: { ...visual.type.meta, color: colors.textSecondary },
   });
