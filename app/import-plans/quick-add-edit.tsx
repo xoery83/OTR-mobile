@@ -101,7 +101,12 @@ function HostedQuickAddEditor() {
   return (
     <HostedManualEditorIntent.Provider value={canEdit}>
       <HostedManualEditorContext.Provider value={props => (
-        <HostedHeader {...props} onLeft={back} rightDisabled={props.rightDisabled || Boolean(savedId.current)} />
+        <HostedHeader
+          {...props}
+          onLeft={back}
+          leftDisabled={props.leftDisabled && !savedId.current}
+          rightDisabled={props.rightDisabled || Boolean(savedId.current)}
+        />
       )}>
         <OpenFlightAirportContext.Provider value={read => {
           if (!airport || !navigation.isFocused() || isExitPending() || !readManualItinerary(invocation)) return false;

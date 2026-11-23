@@ -75,7 +75,10 @@ it("retries only dismissal for the exact locally committed item after a root exi
   render();
   expect(qa.approved).toBeUndefined();
   expect(screen.value()).toBe(false);
-  header.value({}).props.onLeft();
+  const retry = render().children.props.value({ leftDisabled: true });
+  expect(retry.props.leftDisabled).toBe(false);
+  expect(retry.props.rightDisabled).toBe(true);
+  retry.props.onLeft();
   render();
   expect(qa.actions).toHaveLength(2);
   qa.actions[1]();
