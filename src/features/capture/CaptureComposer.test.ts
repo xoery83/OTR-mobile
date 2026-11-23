@@ -678,3 +678,5 @@ it("Files image uses its local preview while retaining the opaque source lease",
   expect(state.nodes.some((n) => n.source?.uri === item.temporaryUri)).toBe(false);
   expect(state.nodes.some((n) => n.children === item.name)).toBe(false);
 });
+
+vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: () => null }));

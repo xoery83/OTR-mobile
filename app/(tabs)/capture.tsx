@@ -1,12 +1,12 @@
-import { useIsFocused } from "expo-router";
+import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import {
   listCaptureTripPriors,
   readCaptureTripPrior,
 } from "@/features/capture/captureTripPrior";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
-import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
+import { router, useFocusEffect, useIsFocused, useLocalSearchParams, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { readLocalSession } from "@/data/auth/authRepository";
 import {
   getAccountGeneration,
@@ -51,7 +51,7 @@ subscribeAccountGeneration(() => {
     retained.current = null;
   }
 });
-export default function CaptureRoute({ overlay = false }: { overlay?: boolean } = {}) {
+export default function CaptureRoute({ overlay = false, hosted = false, hostedChild = false, onHostedClose }: { overlay?: boolean; hosted?: boolean; hostedChild?: boolean; onHostedClose?: () => void } = {}) {
   const { jobId, origin, originGeneration, tripId } = useLocalSearchParams<{
     tripId?: string;
     jobId?: string;
@@ -91,13 +91,15 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
   const [admission, setAdmission] = useState<Admission | null>(null);
   const [checked, setChecked] = useState<number | null>(null);
   const [draftWarning, setDraftWarning] = useState(false);
+  const openingHostedReview = useRef(false);
   const activityPositionsRef = useRef<Record<string, number>>({});
   useFocusEffect(
     useCallback(() => {
       let active = true;
       let visibleStaging: ReturnType<typeof createCaptureStaging> | null = null;
       let stopSaving: (() => void) | undefined;
-      setAdmission(null);
+      openingHostedReview.current = false;
+      if (!hosted) setAdmission(null);
       setChecked(null);
       setDraftWarning(false);
       void withAccountApplyGate(readLocalSession)
@@ -198,25 +200,26 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
               tripName: prior?.name,
               current: lease,
             });
-          }
+          } else if (hosted) setAdmission(null);
           setChecked(generation);
         })
         .catch(() => {
-          if (active) setChecked(generation);
+          if (!active) return;
+          if (hosted) setAdmission(null);
+          setChecked(generation);
         });
       return () => {
         stopSaving?.();
         active = false;
         // Dependency cleanup must not erase a newer focused invocation.
-        const parent = navigation.getParent()?.getState() ?? navigation.getState?.();
+        const parent = hosted ? navigation.getState?.() : navigation.getParent()?.getState() ?? navigation.getState?.();
         const destination = parent?.routes[parent.index];
         const openingReview =
+          (hosted && (openingHostedReview.current || destination?.name === "review")) ||
           destination?.name === "import-review" ||
           typeof destination?.params?.importJobId === "string";
-        if (!openingReview) {
-          visibleStaging?.hide();
-          setAdmission(null);
-        }
+        if (hosted || !openingReview) visibleStaging?.hide();
+        if (!hosted && !openingReview) setAdmission(null);
         if (!overlay && !navigation.isFocused() && !openingReview)
           navigation.setParams({
             tripId: undefined,
@@ -225,11 +228,12 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             originGeneration: undefined,
           });
       };
-    }, [generation, navigation, tripId, retained, overlay]),
+    }, [generation, navigation, tripId, retained, overlay, hosted]),
   );
   const isCurrent = () => {
     if (
       !admission ||
+      (hosted && admission.tripPrior !== (tripId || null)) ||
       !admission.current() ||
       admission.generation !== getAccountGeneration()
     )
@@ -242,17 +246,15 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
     }
   };
   // An unfocused transparent overlay must not leak stale admission copy behind its destination.
-  if (overlay && !focused) return <></>;
-  return (
-    <SafeAreaView
-      edges={["bottom", "left", "right"]}
-      style={[styles.body, overlay && styles.overlay]}
-    >
-      {admission?.generation === generation ? (
+  if (overlay && !hosted && !focused) return <></>;
+  const admitted = admission?.generation === generation && (!hosted || admission.tripPrior === (tripId || null));
+  const body = admitted ? (
         <CaptureContent
           key={`${generation}:${jobId ?? ""}${admission.tripPrior ? `:${admission.tripPrior}` : ""}`}
           jobId={typeof jobId === "string" ? jobId : undefined}
           embeddedComposer={overlay}
+          hostedComposer={hosted}
+          hostedChild={hostedChild}
           activityPositionsRef={activityPositionsRef}
           onOpenAcceptedItem={(target) => {
             if (!isCurrent() || !target.family || !/^P[1-6]$/.test(target.family)) return;
@@ -291,8 +293,11 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
           onOpenReview={(id) => {
             if (!isCurrent()) return;
-            navigation.setParams({ jobId: id });
-            router.push({ pathname: "/import-review", params: { jobId: id } });
+            if (hosted) {
+              if (openingHostedReview.current) return;
+              openingHostedReview.current = true;
+            } else navigation.setParams({ jobId: id });
+            router.push({ pathname: hosted ? "/import-plans/review" : "/import-review", params: { jobId: id } });
           }}
           onCancel={() => {
             const target = captureOriginPath(
@@ -301,7 +306,8 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
               getAccountGeneration(),
             );
             if (!isCurrent()) return;
-            if (overlay && router.canGoBack()) router.back();
+            if (onHostedClose) onHostedClose();
+            else if (overlay && router.canGoBack()) router.back();
             else if (target) router.navigate(target as never);
             else if (admission.tripPrior)
               router.navigate({
@@ -330,14 +336,26 @@ export default function CaptureRoute({ overlay = false }: { overlay?: boolean } 
             />
           ) : null}
         </>
-      )}
+      );
+  if (hosted) {
+    return admitted ? <View style={styles.hosted}>{body}</View> : (
+      <SheetRoutePanel title={t("capture.composer.title")} onBack={hostedChild ? () => router.back() : undefined}>
+        {body}
+      </SheetRoutePanel>
+    );
+  }
+  return (
+    <SafeAreaView edges={["bottom", "left", "right"]} style={[styles.body, overlay && styles.overlay]}>
+      {body}
     </SafeAreaView>
   );
 }
+
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     body: { flex: 1, backgroundColor: colors.background },
     overlay: { backgroundColor: colors.transparent },
+  hosted: { flex: 1 },
     message: {
       padding: visual.space.page,
       color: colors.textSecondary,

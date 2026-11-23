@@ -1,4 +1,5 @@
 import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
+import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
@@ -183,9 +184,10 @@ export default function RootLayout() {
               name="import-plans"
               options={{
                 presentation: "transparentModal",
-                animation: "fade",
+                animation: hostedImportEnabled ? "none" : "fade",
                 contentStyle: { backgroundColor: colors.transparent },
                 gestureEnabled: false,
+                ...(hostedImportEnabled ? { orientation: "all" as const } : {}),
               }}
             />
             <Stack.Screen

@@ -226,3 +226,5 @@ it("UX-C2 offline, unknown and version conflict retain the original answer and u
   expect(h.inputs).toHaveLength(0);
   expect(button(t("ui.confirm"))).toBeUndefined();
 });
+
+vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: () => null }));

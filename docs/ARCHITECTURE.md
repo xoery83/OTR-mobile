@@ -118,6 +118,12 @@ coverage and list jump. A date applies only after its own completed dismissal.
 Closing without selecting restores the originating Day viewport unless the user
 starts scrolling. The original entry and presenter remain available behind the QA gate.
 
+The default-off Import QA entry places Trip Quick Add, its Import composer and
+hosted Review inside the native Sheet Stack. Existing standalone routes remain
+available to the legacy callers and with the flag off. Existing capture draft,
+Operation and permissions continue to belong to Capture. An external Quick Add
+handoff applies only after the originating Sheet's own successful close.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.

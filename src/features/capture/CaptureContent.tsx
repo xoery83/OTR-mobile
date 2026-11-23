@@ -42,6 +42,8 @@ export function CaptureContent({
   onReturnToTrip,
   activityPositionsRef,
   embeddedComposer = false,
+  hostedComposer = false,
+  hostedChild = false,
   accountId,
 }: {
   isCurrent: () => boolean;
@@ -59,6 +61,8 @@ export function CaptureContent({
   onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
   activityPositionsRef?: { current: Record<string, number> };
   embeddedComposer?: boolean;
+  hostedComposer?: boolean;
+  hostedChild?: boolean;
   accountId?: string;
 }) {
   useUiLocale();
@@ -454,6 +458,8 @@ export function CaptureContent({
     return (
       <CaptureComposer
         embedded={embeddedComposer}
+        hosted={hostedComposer}
+        onParentBack={hostedChild ? hide : undefined}
         fixedHeight={reopening && !attempted && !activity && !documents && !resultDocument}
         visible={!reviewJob}
         onDismiss={() => {
@@ -759,7 +765,11 @@ export function CaptureContent({
             ? () => {
                 if (current()) setDocuments(null);
               }
-            : undefined
+            : hostedComposer && documents
+              ? () => { if (current()) setDocuments(documents.captureId ? { scope: documents.scope } : null); }
+              : hostedComposer && activity
+                ? () => { if (current()) setActivity(false); }
+                : undefined
         }
         onFiles={() => void pick("files")}
         onPhotos={() => void pick("photos")}

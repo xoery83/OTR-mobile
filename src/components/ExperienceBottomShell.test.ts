@@ -32,6 +32,8 @@ const state = vi.hoisted(() => ({
   reduced: false,
   startTripTarget: null as symbol | null,
   refCalls: 0,
+  activePath: "",
+  quickAddOwnerRef: { current: null as { key: string; scope: string } | null },
   startTripRef: { current: null as symbol | null },
   resolveReduced: null as null | ((value: boolean) => void),
   reducedListener: null as null | ((value: boolean) => void),
@@ -63,7 +65,7 @@ vi.mock("./TripQuickAddMenu", () => ({ TripQuickAddMenu: "TripQuickAddMenu" }));
 vi.mock("./StartTripSheet", () => ({ StartTripSheet: "StartTripSheet" }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useRef: () => (state.refCalls++ % 2 === 0 ? state.targetRef : state.startTripRef),
+  useRef: () => [state.targetRef, state.startTripRef, state.quickAddOwnerRef][state.refCalls++ % 3],
   useContext: () => state.reportHeight,
   useState: (initial: unknown) =>
     initial === null
@@ -105,6 +107,7 @@ vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({
   }),
 }));
 vi.mock("expo-router", () => ({
+  usePathname: () => state.activePath,
   router: state,
   useGlobalSearchParams: () => state.params,
 }));
@@ -194,6 +197,8 @@ function startSheet(node: ReactNode): StartSheetElement {
 
 beforeEach(() => {
   state.refCalls = 0;
+  state.activePath = "";
+  state.quickAddOwnerRef.current = null;
   state.startTripTarget = null;
   state.startTripRef.current = null;
   state.glassCapability = null;
@@ -883,3 +888,30 @@ it.each([false, true])(
     }
   },
 );
+
+it("retains the original Quick Add lease through its sheet and rejects a same-generation Trip change", () => {
+  const findQuickAdd = (node: ReactNode): ReactElement<any> | null => {
+    if (!isValidElement(node)) return null;
+    const item = node as ReactElement<any>;
+    if (item.type === "TripQuickAddMenu") return item;
+    for (const child of Children.toArray(item.props.children)) {
+      const result = findQuickAdd(child);
+      if (result) return result;
+    }
+    return null;
+  };
+  state.params = { tripId: "a", view: "home" };
+  state.workingTrip = { tripId: "a", generation: 1 };
+  state.activePath = "/trip-home";
+  const launch = findQuickAdd(ExperienceBottomShell({ visible: true, pathname: "/trip-home" }))!;
+  expect(launch.props.canOpenCapture()).toBe(true);
+
+  state.params = { invocation: "1" };
+  state.activePath = "/import-plans/quick-add";
+  ExperienceBottomShell({ visible: true, pathname: "/trip-home" });
+  expect(launch.props.canOpenCapture()).toBe(true);
+
+  state.workingTrip = { tripId: "b", generation: 1 };
+  ExperienceBottomShell({ visible: true, pathname: "/trip-home" });
+  expect(launch.props.canOpenCapture()).toBe(false);
+});

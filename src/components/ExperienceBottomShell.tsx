@@ -29,7 +29,7 @@ import { requireActiveUserId } from "@/data/auth/authRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
 import { UiText as Text } from "@/ui/controls";
-import { router, useGlobalSearchParams } from "expo-router";
+import { router, useGlobalSearchParams, usePathname } from "expo-router";
 import {
   AccessibilityInfo,
   Alert,
@@ -78,6 +78,7 @@ export function ExperienceBottomShell({
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 1.5;
+  const activePath = usePathname();
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [reducedTransparency, setReducedTransparency] = useState(false);
   const [startTripTarget, setStartTripTarget] = useState<symbol | null>(null);
@@ -165,6 +166,20 @@ export function ExperienceBottomShell({
   const renderedTarget = useMemo(() => Symbol(targetKey), [targetKey]);
   const currentTarget = useRef<symbol | null>(null);
   const startTripLease = useRef<symbol | null>(null);
+  const quickAddOwner = useRef<{ key: string; scope: string } | null>(null);
+  const quickAddScope = JSON.stringify([generation, workingTrip?.tripId, view?.tripId]);
+  const sheetActive = activePath === "/import-plans" || activePath.startsWith("/import-plans/");
+  useLayoutEffect(() => {
+    if (!sheetActive) {
+      quickAddOwner.current = contextualTripId ? { key: targetKey, scope: quickAddScope } : null;
+    } else if (quickAddOwner.current?.scope !== quickAddScope) {
+      quickAddOwner.current = null;
+    }
+  }, [contextualTripId, quickAddScope, sheetActive, targetKey]);
+  useLayoutEffect(() => () => { quickAddOwner.current = null; }, []);
+  const isQuickAddOwnerCurrent = () =>
+    generation === getAccountGeneration() &&
+    (renderedTarget === currentTarget.current || quickAddOwner.current?.key === targetKey);
   useLayoutEffect(() => {
     currentTarget.current = renderedTarget;
     return () => {
@@ -212,10 +227,10 @@ export function ExperienceBottomShell({
     targetId = journeyId,
     suggestedDate: string | null = null,
     fromHome = false,
+    isTargetCurrent = () => renderedTarget === currentTarget.current,
   ) => {
     if (!targetId) return;
-    const target = renderedTarget;
-    if (target !== currentTarget.current || generation !== getAccountGeneration()) return;
+    if (!isTargetCurrent() || generation !== getAccountGeneration()) return;
     try {
       const scope = await captureAccountScope(requireActiveUserId);
       const repo = await getDefaultLedgerReportingRepository();
@@ -224,7 +239,7 @@ export function ExperienceBottomShell({
         repo.getActorContext(targetId),
       ]);
       assertAccountRequestGeneration(scope);
-      if (!target || target !== currentTarget.current) return;
+      if (!isTargetCurrent()) return;
       if (
         !journeys.some((journey) => journey.journeyId === targetId) ||
         !actor?.memberId ||
@@ -519,11 +534,7 @@ export function ExperienceBottomShell({
               showDate={isDay}
               triggerStyle={styles.action}
               onManualSaved={(id) => {
-                if (
-                  generation !== getAccountGeneration() ||
-                  renderedTarget !== currentTarget.current
-                )
-                  return;
+                if (!isQuickAddOwnerCurrent()) return;
                 reportManualOutcome(contextualTripId, generation, id);
               }}
               photos={
@@ -537,12 +548,9 @@ export function ExperienceBottomShell({
                     }
                   : undefined
               }
+              canOpenCapture={isQuickAddOwnerCurrent}
               capture={() => {
-                if (
-                  renderedTarget !== currentTarget.current ||
-                  generation !== getAccountGeneration()
-                )
-                  return;
+                if (!isQuickAddOwnerCurrent()) return;
                 router.navigate({
                   pathname: "/import-plans",
                   params: {
@@ -553,7 +561,7 @@ export function ExperienceBottomShell({
                 });
               }}
               expense={(date) => {
-                void openExpense(contextualTripId, date, true);
+                void openExpense(contextualTripId, date, true, isQuickAddOwnerCurrent);
               }}
             />
           </Material>

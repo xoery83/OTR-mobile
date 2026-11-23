@@ -1,3 +1,4 @@
+import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useEffect, useRef, useState } from "react";
 import {
   AppState,
@@ -9,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { NavigationContextTitle } from "@/components/navigationChrome";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText } from "@/ui/controls";
@@ -52,7 +53,7 @@ import { captureActivityTime } from "./CaptureActivity";
 
 type Owner = Awaited<ReturnType<typeof openUniversalV3Review>>;
 type Candidate = V3AdmissionRow["candidate"];
-export function ImportExceptionReviewScreen() {
+export function ImportExceptionReviewScreen({ hosted = false }: { hosted?: boolean } = {}) {
   useUiLocale();
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
   const [model, setModel] = useState<CaptureJobReadModel>();
@@ -179,16 +180,7 @@ export function ImportExceptionReviewScreen() {
       if (current()) setRefreshVersion((v) => v + 1);
     }
   };
-  return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: false,
-          headerBackVisible: true,
-          headerTitle: () => <NavigationContextTitle title={t("common.review")} />,
-        }}
-      />
+  const content = (
       <ImportExceptionReviewContent
         model={model}
         owner={owner}
@@ -199,6 +191,25 @@ export function ImportExceptionReviewScreen() {
         isCurrent={current}
         onConfirm={confirm}
       />
+  );
+  if (hosted) {
+    return (
+      <SheetRoutePanel title={t("common.review")} onBack={() => router.back()} ownsScroll>
+        {content}
+      </SheetRoutePanel>
+    );
+  }
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: false,
+          headerBackVisible: true,
+          headerTitle: () => <NavigationContextTitle title={t("common.review")} />,
+        }}
+      />
+      {content}
     </>
   );
 }

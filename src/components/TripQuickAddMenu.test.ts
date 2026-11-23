@@ -15,6 +15,7 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import {
   TripQuickAddMenu,
+  TripQuickAddPanel,
   shiftSuggestedDate,
   validSuggestedDate,
 } from "./TripQuickAddMenu";
@@ -30,6 +31,7 @@ const state = vi.hoisted(() => ({
   generation: 1,
   manualProps: null as any,
   modalProps: null as any,
+  hostedHeader: null as any,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -94,7 +96,7 @@ vi.mock("@/ui/locale", () => ({
   formatUiDate: (date: Date) => date.toISOString().slice(0, 10),
 }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}), useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}), useThemedStyles: (create: (colors: object) => unknown) => create({}) }));
 vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("@/data/auth/accountRequestContext", () => ({
   captureAccountScope: async () => ({ generation: 1 }),
@@ -112,12 +114,13 @@ const itinerary = vi.fn(),
 let initialDate: string | undefined;
 let useManual = false;
 const manualSaved = vi.fn();
-function render() {
+function render(hosted = false) {
   state.cursor = 0;
   state.refCursor = 0;
   state.nodes = [];
   return renderToStaticMarkup(
-    createElement(TripQuickAddMenu, {
+    createElement(hosted ? TripQuickAddPanel : TripQuickAddMenu, {
+      hosted,
       tripId: "a",
       date: initialDate,
       showDate: true,
@@ -248,6 +251,7 @@ it("an unknown menu date can be explicitly selected without invoking or moving a
   expect(button("quickAdd.itinerary").disabled).toBe(true);
   button("quickAdd.selectedDay").onPress();
   render();
+  expect(state.nodes.find((node) => node.mode === "date")?.style).toMatchObject({ alignSelf: "center", maxWidth: "100%" });
   state.nodes
     .find((node) => node.mode === "date")
     .onChange(undefined, new Date(2027, 1, 9, 12));
@@ -324,4 +328,34 @@ it("Guest Quick Add passes P1-only scope to the shared chooser without Account C
   expect(readCaptureTripPrior).not.toHaveBeenCalled();
   expect(getDefaultLedgerReportingRepository).not.toHaveBeenCalled();
   expect(state.actor).not.toHaveBeenCalled();
+});
+
+vi.mock("@/components/SheetRoutePanel", () => ({
+  SheetRoutePanel: (props: any) => {
+    state.hostedHeader = props;
+    return createElement("main", null, props.children);
+  },
+}));
+vi.mock("@/components/SheetHost", () => ({ useSheetMotion: vi.fn() }));
+vi.mock("expo-router", () => ({ router: { push: vi.fn(), navigate: vi.fn() }, useFocusEffect: vi.fn() }));
+
+it("hosts date completion in the trailing toolbar and keeps Back non-committing", () => {
+  render(true);
+  button("quickAdd.selectedDay").onPress();
+  render(true);
+  expect(state.hostedHeader.action?.label).toBe("common.done");
+  expect(button("common.done")).toBeUndefined();
+  expect(state.nodes.find(node => node.mode === "date")?.style.alignSelf).toBe("center");
+  state.nodes.find(node => node.mode === "date").onChange(undefined, new Date(2027, 1, 9, 12));
+  render(true);
+  state.hostedHeader.onBack();
+  render(true);
+  expect(button("quickAdd.selectedDay").accessibilityValue.text).toBe("actionIsland.selectDate");
+  button("quickAdd.selectedDay").onPress();
+  render(true);
+  state.nodes.find(node => node.mode === "date").onChange(undefined, new Date(2027, 1, 9, 12));
+  render(true);
+  state.hostedHeader.action.onPress();
+  render(true);
+  expect(button("quickAdd.selectedDay").accessibilityValue.text).toBe("2027-02-09");
 });
