@@ -2310,6 +2310,7 @@ const createStyles = (c: UiColors) =>
     dateOverlay: { position: "absolute", left: 0, right: 0, alignItems: "center" },
     dateIsland: {
       minHeight: 44,
+      maxWidth: 250,
       paddingHorizontal: 12,
       borderRadius: visual.radius.pill,
       borderWidth: StyleSheet.hairlineWidth,

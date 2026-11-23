@@ -42,6 +42,7 @@ export function DayFeedShellTitle({
         numberOfLines={1}
         ellipsizeMode="tail"
         adjustsFontSizeToFit
+        maxFontSizeMultiplier={1.35}
         minimumFontScale={0.75}
       >
         {label}
