@@ -221,13 +221,18 @@ function SheetCaptionDrag({ drag, height }: { drag: SheetDrag; height: number })
   const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const handlers = useMemo(() => createSheetDrag(drag), [drag]);
+  const leadingToolbarSpace = Platform.OS === "ios" && Platform.isPad ? 128 : 64;
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       {...handlers}
-      // The native toolbar places its buttons inside the horizontal safe area.
-      style={[styles.captionTarget, { height, left: insets.left + 64, right: insets.right + 64 }]}
+      // iPad window controls can shift the native leading button toward the title.
+      style={[styles.captionTarget, {
+        height,
+        left: insets.left + leadingToolbarSpace,
+        right: insets.right + 64,
+      }]}
     />
   );
 }
