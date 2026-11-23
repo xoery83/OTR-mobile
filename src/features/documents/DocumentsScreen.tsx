@@ -8,6 +8,7 @@ import {
 } from "react";
 import {
   Alert,
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -23,6 +24,7 @@ import {
   useFocusEffect,
   useIsFocused,
   useLocalSearchParams,
+  useNavigation,
 } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -47,7 +49,7 @@ import { GlobalMenu } from "@/components/GlobalMenu";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText } from "@/ui/controls";
 import { UiGlassSurface } from "@/ui/UiGlassSurface";
-import { UiChoiceChip, UiTextInput, UiDatePicker } from "@/ui/forms";
+import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { t, formatUiDate, formatUiNumber } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -58,7 +60,6 @@ import {
   coreDocumentDisplayTitle,
   documentFormat,
   documentFormatLabel,
-  documentSourceLabel as sourceKey,
   filterDocumentRows,
   documentChromeAfterScroll,
   documentReadFailure,
@@ -69,6 +70,17 @@ import {
   type DocumentListEntry,
   type DocumentFormat,
 } from "./documentListPresentation";
+
+import {
+  hostedDocumentsTripPickerEnabled,
+  openDocumentsTripPicker,
+  readDocumentsTripPicker,
+} from "./documentsTripPicker";
+
+import { DocumentSearchFilterFields } from "./DocumentSearchFilterFields";
+import {
+  openDocumentSearchFilters, readDocumentSearchFilters, releaseDocumentSearchFilters,
+} from "./documentSearchFilterInvocation";
 
 type Tab = "TRIP" | "PERSONAL_INBOX" | "ACTIVITY";
 const tabs: Tab[] = ["TRIP", "PERSONAL_INBOX", "ACTIVITY"];
@@ -126,6 +138,7 @@ function DocumentsWorkspace({
     fromTripHome?: string;
     scope?: "TRIP" | "PERSONAL_INBOX" | "ACTIVITY";
   }>();
+  const navigation = useNavigation<{ setParams(params: { tripId: string }): void }>();
   const fromTripHome = params.fromTripHome === "1";
   const showBack = searchOnly || fromTripHome;
   const { workingTrip, switchTrip } = useTripView();
@@ -161,6 +174,12 @@ function DocumentsWorkspace({
   const [choosing, setChoosing] = useState(false),
     [choices, setChoices] = useState<{ id: string; name: string }[]>([]);
   const [chooseError, setChooseError] = useState(false);
+  const pickerOwner = useRef<symbol | null>(null);
+  const openPicker = useRef<string>(undefined);
+  useLayoutEffect(() => {
+    pickerOwner.current = Symbol();
+    return () => { pickerOwner.current = null; };
+  }, [accountId, generation, tab, tripId, fromTripHome]);
   const active = useCallback(
     () => visible.current && generation === getAccountGeneration(),
     [generation],
@@ -282,8 +301,27 @@ function DocumentsWorkspace({
       setAddingFile(false);
     }
   };
+  const selectTrip = (trip: { id: string; name: string }) => {
+    if (!fromTripHome) switchTrip(trip.id, generation);
+    navigation.setParams({ tripId: trip.id });
+    setTripName(trip.name);
+    setChoosing(false);
+  };
   const pickTrip = async () => {
     if (!accountId || !active()) return;
+    if (hostedDocumentsTripPickerEnabled && !searchOnly) {
+      const owner = pickerOwner.current;
+      if (!owner || readDocumentsTripPicker(openPicker.current)) return;
+      const invocation = openDocumentsTripPicker({
+        accountId,
+        generation,
+        isCurrent: () => pickerOwner.current === owner,
+        select: selectTrip,
+      });
+      openPicker.current = invocation;
+      router.navigate({ pathname: "/documents-trip-picker", params: { invocation } });
+      return;
+    }
     setChoosing(true);
     setChooseError(false);
     setChoices([]);
@@ -557,10 +595,7 @@ function DocumentsWorkspace({
                   label={trip.name}
                   onPress={() => {
                     if (!active()) return;
-                    if (!fromTripHome) switchTrip(trip.id, generation);
-                    router.setParams({ tripId: trip.id });
-                    setTripName(trip.name);
-                    setChoosing(false);
+                    selectTrip(trip);
                   }}
                 />
               ))
@@ -622,6 +657,15 @@ function DocumentDirectory({
   const [query, setQuery] = useState("");
   const [facets, setFacets] = useState<DocumentSearchFilters>({});
   const [filtering, setFiltering] = useState(false);
+  const filterInvocation = useRef<string>(undefined);
+  const filterOwner = useRef<symbol | null>(null);
+  useLayoutEffect(() => {
+    filterOwner.current = Symbol();
+    return () => {
+      filterOwner.current = null;
+      releaseDocumentSearchFilters(filterInvocation.current);
+    };
+  }, [accountId, generation, tripId]);
   const [searchScope, setSearchScope] = useState<"TRIP" | "PERSONAL_INBOX" | "ALL">(
     scope,
   );
@@ -799,48 +843,74 @@ function DocumentDirectory({
   return (
     <View style={styles.body}>
       {searchOnly ? (
-        <View style={styles.search}>
-          <UiTextInput
-            accessibilityLabel={t("documents.search")}
-            placeholder={t("documents.search")}
-            value={query}
-            onChangeText={setQuery}
-            autoCorrect={false}
-            clearButtonMode="while-editing"
-            returnKeyType="search"
-          />
-          <ScrollView
-            horizontal
-            keyboardShouldPersistTaps="handled"
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterContent}
-          >
-            {(["TRIP", "PERSONAL_INBOX", "ALL"] as const)
-              .filter((choice) => choice !== "TRIP" || tripId)
-              .map((choice) => (
-                <UiChoiceChip
-                  key={choice}
-                  label={t(
-                    choice === "TRIP"
-                      ? "documents.searchTrip"
-                      : choice === "ALL"
-                        ? "documents.searchAll"
-                        : "documents.searchInbox",
-                  )}
-                  selected={searchScope === choice}
-                  onPress={() => {
-                    setSearchScope(choice);
-                    setLimit(30);
-                  }}
-                />
-              ))}
-          </ScrollView>
-          <UiButton
-            variant="text"
-            label={t("documents.searchFilters")}
-            onPress={() => setFiltering(true)}
-          />
-        </View>
+        <>
+          {hostedDocumentsTripPickerEnabled ? (
+            <Stack.Toolbar placement="right">
+              <Stack.Toolbar.Button
+                icon="line.3.horizontal.decrease"
+                accessibilityLabel={t("documents.searchFilters")}
+                onPress={() => {
+                  if (!active()) return;
+                  Keyboard.dismiss();
+                  const owner = filterOwner.current;
+                  if (!owner || readDocumentSearchFilters(filterInvocation.current)) return;
+                  const invocation = openDocumentSearchFilters({
+                    generation,
+                    initial: facets,
+                    isCurrent: () => filterOwner.current === owner,
+                    apply: setFacets,
+                  });
+                  filterInvocation.current = invocation;
+                  router.push({ pathname: "/documents-search-filters", params: { invocation } });
+                }}
+              />
+            </Stack.Toolbar>
+          ) : null}
+          <View style={styles.search}>
+            <UiTextInput
+              accessibilityLabel={t("documents.search")}
+              placeholder={t("documents.search")}
+              value={query}
+              onChangeText={setQuery}
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              returnKeyType="search"
+            />
+            <ScrollView
+              horizontal
+              keyboardShouldPersistTaps="handled"
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterContent}
+            >
+              {(["TRIP", "PERSONAL_INBOX", "ALL"] as const)
+                .filter((choice) => choice !== "TRIP" || tripId)
+                .map((choice) => (
+                  <UiChoiceChip
+                    key={choice}
+                    label={t(
+                      choice === "TRIP"
+                        ? "documents.searchTrip"
+                        : choice === "ALL"
+                          ? "documents.searchAll"
+                          : "documents.searchInbox",
+                    )}
+                    selected={searchScope === choice}
+                    onPress={() => {
+                      setSearchScope(choice);
+                      setLimit(30);
+                    }}
+                  />
+                ))}
+            </ScrollView>
+            {!hostedDocumentsTripPickerEnabled ? (
+              <UiButton
+                variant="text"
+                label={t("documents.searchFilters")}
+                onPress={() => setFiltering(true)}
+              />
+            ) : null}
+          </View>
+        </>
       ) : null}
       <Modal
         visible={filtering && visible}
@@ -855,104 +925,7 @@ function DocumentDirectory({
             onLeft={() => setFiltering(false)}
           />
           <ScrollView contentContainerStyle={styles.content}>
-            <UiText style={styles.title}>{t("documents.privacyFilter")}</UiText>
-            {([undefined, "PRIVATE", "GROUP", "SELECTED_PERSONS"] as const).map(
-              (value) => (
-                <UiChoiceChip
-                  key={value ?? "ALL"}
-                  selected={facets.visibility === value}
-                  label={t(
-                    value === "PRIVATE"
-                      ? "importDocuments.private"
-                      : value === "GROUP"
-                        ? "documents.sharedTrip"
-                        : value === "SELECTED_PERSONS"
-                          ? "documents.sharedPeople"
-                          : "documents.all",
-                  )}
-                  onPress={() => setFacets({ ...facets, visibility: value })}
-                />
-              ),
-            )}
-            <UiText style={styles.title}>{t("documents.storageFilter")}</UiText>
-            {([undefined, "LOCAL", "UNAVAILABLE"] as const).map((value) => (
-              <UiChoiceChip
-                key={value ?? "ALL"}
-                selected={facets.storage === value}
-                label={t(
-                  value === "LOCAL"
-                    ? "documents.offline"
-                    : value === "UNAVAILABLE"
-                      ? "documents.unavailableFilter"
-                      : "documents.all",
-                )}
-                onPress={() => setFacets({ ...facets, storage: value })}
-              />
-            ))}
-            <UiText style={styles.title}>{t("documents.sourceFilter")}</UiText>
-            {(
-              [
-                undefined,
-                "files",
-                "photos",
-                "camera",
-                "magic_input",
-                "clipboard",
-              ] as const
-            ).map((value) => (
-              <UiChoiceChip
-                key={value ?? "ALL"}
-                selected={facets.source === value}
-                label={t(value ? sourceKey[value] : "documents.all")}
-                onPress={() => setFacets({ ...facets, source: value })}
-              />
-            ))}
-            <UiText style={styles.title}>{t("documents.relation")}</UiText>
-            {([undefined, "LINKED", "UNLINKED", "MULTIPLE"] as const).map((relation) => (
-              <UiChoiceChip
-                key={relation ?? "ALL"}
-                selected={facets.relation === relation}
-                label={t(
-                  relation === "LINKED"
-                    ? "documents.linkedFilter"
-                    : relation === "UNLINKED"
-                      ? "documents.unlinkedFilter"
-                      : relation === "MULTIPLE"
-                        ? "documents.multipleFilter"
-                        : "documents.all",
-                )}
-                onPress={() => setFacets({ ...facets, relation })}
-              />
-            ))}
-            {(["from", "to"] as const).map((key) => (
-              <View key={key} style={styles.content}>
-                <UiText style={styles.title}>
-                  {t(key === "from" ? "documents.dateFrom" : "documents.dateTo")}
-                </UiText>
-                <UiDatePicker
-                  value={facets[key] ?? new Date()}
-                  mode="date"
-                  display="compact"
-                  onChange={(_, value) => {
-                    if (value) setFacets({ ...facets, [key]: value });
-                  }}
-                />
-                {facets[key] ? (
-                  <UiButton
-                    variant="text"
-                    label={t("documents.clearDate")}
-                    onPress={() => setFacets({ ...facets, [key]: undefined })}
-                  />
-                ) : (
-                  <UiText style={styles.meta}>{t("documents.noDateFilter")}</UiText>
-                )}
-              </View>
-            ))}
-            <UiButton
-              variant="text"
-              label={t("documents.resetFilters")}
-              onPress={() => setFacets({})}
-            />
+            <DocumentSearchFilterFields facets={facets} setFacets={setFacets} />
             <UiButton label={t("common.done")} onPress={() => setFiltering(false)} />
           </ScrollView>
         </SafeAreaView>

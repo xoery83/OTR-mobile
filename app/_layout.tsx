@@ -1,4 +1,5 @@
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
+import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
@@ -131,6 +132,28 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="(tabs)" />
+            <Stack.Protected guard={hostedDocumentsTripPickerEnabled}>
+              <Stack.Screen
+                name="documents-trip-picker"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+              <Stack.Screen
+                name="documents-search-filters"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
             <Stack.Protected guard={hostedDayCalendarEnabled}>
               <Stack.Screen
                 name="day-calendar"
