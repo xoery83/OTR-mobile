@@ -23,6 +23,7 @@ import {
   useDayFeedShellState,
 } from "./DayFeedShell";
 import { dayFeedCalendarBounds, DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
+import { hostedDayCalendarEnabled } from "./dayCalendarHandoff";
 import type { DayListHandle } from "./WindowedDayList";
 import type { DaySummary } from "./dayFeedWindow";
 import {
@@ -254,6 +255,12 @@ function TripContent({
   const insertionDismiss = useRef<(() => void) | null>(null);
   const [daySummaries, setDaySummaries] = useState<DaySummary[]>([]);
   const dayList = useRef<DayListHandle>(null);
+  const calendarAnchor = useRef<{
+    tripId: string;
+    generation: number;
+    anchor: NonNullable<ReturnType<DayListHandle["saveAnchor"]>>;
+  } | null>(null);
+  const calendarRestore = useRef<typeof calendarAnchor.current>(null);
   const dayOffset = useRef(0);
   const dayOrigin = useRef(0);
   const dayIntroductionBottom = useRef<number | null>(null);
@@ -391,6 +398,15 @@ function TripContent({
   const hideHomePrelude = !today && home && knownWorkspaceTrip;
   const workingViewTripId = view?.tripId;
   const workingViewGeneration = view?.generation;
+  const openCalendar = useCallback(() => {
+    if (generation !== getAccountGeneration()) return;
+    if (hostedDayCalendarEnabled) {
+      const anchor = dayList.current?.saveAnchor();
+      calendarRestore.current = null;
+      calendarAnchor.current = requested && anchor ? { tripId: requested, generation, anchor } : null;
+    }
+    setCalendarVisible(true);
+  }, [generation, requested]);
   const load = useCallback(async () => {
     const captured = getAccountGeneration(),
       ticket = ++request.current;
@@ -455,6 +471,19 @@ function TripContent({
         // The qualified Day read must not wait for the optional Home summary.
         setTrip(result);
         setStatus(result.observed || result.localManual ? "READY" : "UNAVAILABLE");
+        const restore = calendarRestore.current;
+        if (restore?.tripId === requested && restore.generation === captured &&
+            result.scope.generation === captured &&
+            (result.observed?.projection.tripId === requested ||
+              result.localManual?.scope.tripId === requested)) {
+          requestAnimationFrame(() => {
+            if (calendarRestore.current === restore && ticket === request.current &&
+                captured === getAccountGeneration() && navigation.isFocused() &&
+                dayList.current?.restoreAnchor(restore.anchor)) {
+              calendarRestore.current = null;
+            }
+          });
+        }
         if (
           (result.observed?.projection.version === 2 &&
             result.observed.sourceStatus === "CURRENTLY_MATCHES_SOURCE") ||
@@ -1585,7 +1614,7 @@ function TripContent({
                     <DayFeedShellTitle
                       label={dayTitle}
                       openCalendarLabel={t("dayShell.calendar.open")}
-                      onOpenCalendar={() => setCalendarVisible(true)}
+                      onOpenCalendar={openCalendar}
                     />
                   </UiGlassSurface>
                 ) : (
@@ -1621,6 +1650,7 @@ function TripContent({
     dayShell.navigationVisible,
     dayPastIntroduction,
     moveActive,
+    openCalendar,
   ]);
   const moveInteraction = {
     canMove: move.canMove,
@@ -1917,7 +1947,7 @@ function TripContent({
                     rangeLabel={dayRangeLabel}
                     locationSummary={dayFacts ? tripDestinationDisplay(dayFacts) : null}
                     openCalendarLabel={t("dayShell.calendar.open")}
-                    onOpenCalendar={() => setCalendarVisible(true)}
+                    onOpenCalendar={openCalendar}
                   />
                   {visibleTrip.observed?.sourceStatus ===
                   "HISTORICAL_ACCEPTED_PROJECTION" ? (
@@ -1934,6 +1964,7 @@ function TripContent({
                       )
                   : undefined,
               onReadingMotion: dayShell.observeReadingMotion,
+              onInteraction: () => { calendarRestore.current = null; },
               onOffsetChange: (value) => {
                 if (
                   dayIntroductionBottom.current !== null &&
@@ -2120,7 +2151,7 @@ function TripContent({
                 <DayFeedShellTitle
                   label={dayTitle}
                   openCalendarLabel={t("dayShell.calendar.open")}
-                  onOpenCalendar={() => setCalendarVisible(true)}
+                  onOpenCalendar={openCalendar}
                 />
               </UiGlassSurface>
             </View>
@@ -2129,6 +2160,7 @@ function TripContent({
         </View>
         {move.confirmation}
         <DayFeedCalendarSheet
+          hostedScope={requested}
           today={appearanceToday}
           visible={calendarVisible}
           tripName={dayName}
@@ -2150,8 +2182,14 @@ function TripContent({
               Transport: t("dayShell.calendar.transport"),
             },
           }}
-          onClose={() => setCalendarVisible(false)}
+          onClose={() => {
+            calendarRestore.current = calendarAnchor.current;
+            calendarAnchor.current = null;
+            setCalendarVisible(false);
+          }}
           onSelect={(target) => {
+            calendarRestore.current = null;
+            calendarAnchor.current = null;
             setCalendarVisible(false);
             dayList.current?.jumpToDayHeader(target, target === dayFacts?.startDate);
           }}

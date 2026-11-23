@@ -296,3 +296,6 @@ it("keeps Today and selected backgrounds rectangular with the trip range", () =>
   expect(tint).toBeTruthy();
   expect(tint.style.borderRadius ?? 0).toBe(0);
 });
+
+vi.mock("expo-router", () => ({ router: { navigate: vi.fn() } }));
+vi.mock("@/components/SheetScrollView", () => ({ SheetScrollView: "SheetScrollView" }));

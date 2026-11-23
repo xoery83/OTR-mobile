@@ -7,6 +7,7 @@ import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { TripScreen } from "./TripScreen";
 import { DayFeed } from "./DayFeed";
 import { DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
+import { DayFeedIntroduction } from "./DayFeedShell";
 import { JourneySnapshotWidget } from "./JourneySnapshotWidget";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { createDefaultManualPlanRepository } from "@/data/repositories/manualPlanRepository";
@@ -51,6 +52,7 @@ vi.mock("@/data/repositories/dayNavigationBookmarkRepository", () => ({
 const reference = "b61a0000-0061-4000-8000-000000000001";
 const actor = "3a44420f-ec2b-4d7e-9770-410a5ed5e77e";
 const state = vi.hoisted(() => ({
+  hostedDayCalendarEnabled: false,
   moveCapture: false,
   preventRemove: null as null | ((event: any) => void),
   focusEffect: null as unknown,
@@ -121,6 +123,9 @@ vi.mock("@/data/repositories/tripDiscoveryRepository", () => ({
   readLocalTripDiscoveryRepository: async () => ({
     readMerged: async () => ({ trips: state.discovery }),
   }),
+}));
+vi.mock("./dayCalendarHandoff", () => ({
+  get hostedDayCalendarEnabled() { return state.hostedDayCalendarEnabled; },
 }));
 vi.mock("./DayFeedCalendarSheet", () => ({
   DayFeedCalendarSheet: () => null,
@@ -355,6 +360,7 @@ beforeEach(() => {
     isFocused: () => state.focused,
     dispatch: state.dispatch,
   };
+  state.hostedDayCalendarEnabled = false;
   state.routeMode = "home";
   state.pathname = "/trip-home";
   state.headerHeight = 103;
@@ -734,6 +740,39 @@ it("normal Day uses the full owning calendar only for current matching actor/gen
   for (let i = 0; i < 12; i++) await Promise.resolve();
   expect(find(render(), DayFeed)?.dates).toEqual([state.view.date]);
 });
+
+it.each(["untouched", "dragged before read", "dragged before frame"])(
+  "restores a cancelled Calendar viewport only while the user has left it %s",
+  async (reading) => {
+    state.routeMode = "day";
+    state.hostedDayCalendarEnabled = true;
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => frames.push(callback));
+    const feed = find(await loaded(), DayFeed);
+    const anchor = { key: "day:2027-02-06", date: "2027-02-06", within: 24 };
+    const restoreAnchor = vi.fn(() => true);
+    feed.presentation.listRef({ saveAnchor: () => anchor, restoreAnchor });
+    find(feed.presentation.header, DayFeedIntroduction).onOpenCalendar();
+    find(render(), DayFeedCalendarSheet).onClose();
+
+    let finishRead!: (result: typeof state.result) => void;
+    state.read.mockImplementationOnce(() => new Promise(resolve => { finishRead = resolve; }));
+    const flush = () => new Promise<void>(resolve => setImmediate(resolve));
+    state.appActive!();
+    await flush();
+    if (reading === "dragged before read") feed.presentation.onInteraction();
+    finishRead(state.result);
+    await flush();
+    if (reading === "dragged before frame") feed.presentation.onInteraction();
+    frames.splice(0).forEach(callback => callback(0));
+    if (reading === "untouched") expect(restoreAnchor).toHaveBeenCalledExactlyOnceWith(anchor);
+    else expect(restoreAnchor).not.toHaveBeenCalled();
+
+    state.appActive!();
+    await flush();
+    expect(frames).toHaveLength(0);
+  },
+);
 
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
 

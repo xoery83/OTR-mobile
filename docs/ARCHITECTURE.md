@@ -110,6 +110,14 @@ It does not repeat the primary bottom destinations. Missing My Trips, My
 Albums, Trip Settings, or Album Settings routes are omitted rather than
 represented by placeholder screens.
 
+## Shared Sheet navigation
+
+The staged Day calendar uses a transparent root route with a single window-width
+bottom Sheet and a nested native stack. Day retains ownership of the scoped date
+coverage and list jump. A date applies only after its own completed dismissal.
+Closing without selecting restores the originating Day viewport unless the user
+starts scrolling. The original entry and presenter remain available behind the QA gate.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.

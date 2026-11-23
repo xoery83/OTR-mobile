@@ -1,3 +1,4 @@
+import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
@@ -130,6 +131,18 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="(tabs)" />
+            <Stack.Protected guard={hostedDayCalendarEnabled}>
+              <Stack.Screen
+                name="day-calendar"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
             <Stack.Screen
               name="import-plans"
               options={{

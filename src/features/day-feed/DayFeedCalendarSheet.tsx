@@ -1,4 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { router } from "expo-router";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { hostedDayCalendarEnabled, stageDayCalendar, releaseDayCalendar, readDayCalendar } from "./dayCalendarHandoff";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -101,21 +105,7 @@ const accessibleDay = (date: string) =>
   formatUiDate(dateValue(date), { dateStyle: "full", timeZone: "UTC" });
 const markers: readonly DayFeedCalendarMarker[] = ["Plans", "Stay", "Transport"];
 
-// Summaries are already authorized and assigned by the owning Day reader, never inferred here.
-export function DayFeedCalendarSheet({
-  visible,
-  onClose,
-  onSelect,
-  tripName,
-  rangeLabel,
-  tripStart,
-  tripEnd,
-  selectedDate,
-  today,
-  dates = [],
-  summaries,
-  copy,
-}: {
+export type DayFeedCalendarProps = {
   visible: boolean;
   onClose(): void;
   onSelect(date: string): void;
@@ -128,7 +118,65 @@ export function DayFeedCalendarSheet({
   dates?: readonly string[];
   summaries: readonly DayFeedCalendarSummary[];
   copy: DayFeedCalendarCopy;
-}) {
+  hostedScope?: string;
+};
+
+export function DayFeedCalendarSheet(props: DayFeedCalendarProps) {
+  return hostedDayCalendarEnabled && props.hostedScope ? <HostedDayCalendarLink {...props} /> :
+    <DayFeedCalendarContent {...props} />;
+}
+
+function HostedDayCalendarLink(props: DayFeedCalendarProps) {
+  const { hostedScope, visible } = props;
+  const owner = useRef<DayFeedCalendarProps | null>(null);
+  const invocation = useRef<string>(undefined);
+  useLayoutEffect(() => {
+    owner.current = props;
+    return () => { owner.current = null; };
+  }, [props]);
+  useEffect(() => {
+    if (!visible || !owner.current || readDayCalendar(invocation.current)) return;
+    const initial = owner.current;
+    const generation = getAccountGeneration();
+    let finished = false;
+    const isCurrent = () => !finished && Boolean(owner.current?.visible) &&
+      owner.current?.hostedScope === hostedScope && generation === getAccountGeneration();
+    const canSelect = (date: string) => {
+      const current = owner.current;
+      if (!current || !isCurrent()) return false;
+      return dayFeedCalendarCoverage(current.tripStart, current.tripEnd, current.dates ?? [], current.selectedDate)
+        .dates.has(date);
+    };
+    const id = stageDayCalendar({
+      ...initial,
+      isCurrent,
+      canSelect,
+      onSelect: date => {
+        if (!canSelect(date)) return;
+        finished = true;
+        owner.current?.onSelect(date);
+      },
+      onClose: () => {
+        if (!isCurrent()) return;
+        finished = true;
+        owner.current?.onClose();
+      },
+    });
+    invocation.current = id;
+    router.navigate({ pathname: "/day-calendar", params: { invocation: id } });
+    return () => {
+      releaseDayCalendar(id);
+      if (invocation.current === id) invocation.current = undefined;
+    };
+  }, [hostedScope, visible]);
+  return null;
+}
+
+// Summaries are already authorized and assigned by the owning Day reader, never inferred here.
+export function DayFeedCalendarContent({
+  visible, onClose, onSelect, tripName, rangeLabel, tripStart, tripEnd,
+  selectedDate, today, dates = [], summaries, copy, hosted = false,
+}: DayFeedCalendarProps & { hosted?: boolean }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
@@ -162,6 +210,144 @@ export function DayFeedCalendarSheet({
     scroll.current.scrollTo({ y: offsets.current[selectedMonth], animated: false });
     positioned.current = true;
   };
+  const CalendarScroll = hosted ? SheetScrollView : ScrollView;
+  const content = (
+    <View
+      style={styles.sheet}
+      onLayout={({ nativeEvent }) => setSheetWidth(nativeEvent.layout.width)}
+    >
+      {hosted ? null : <SheetHeader title={tripName} onLeft={onClose} safeTop={false} />}
+      {rangeLabel ? <UiText style={styles.range}>{rangeLabel}</UiText> : null}
+      <CalendarScroll
+        keyboardShouldPersistTaps="handled"
+        ref={scroll}
+        style={styles.sheet}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: (hosted ? 0 : insets.bottom) + visual.space.page },
+        ]}
+        onScrollBeginDrag={() => {
+          positioned.current = true;
+        }}
+        onContentSizeChange={position}
+      >
+        {!bounds ? (
+          <UiText style={styles.secondary}>{copy.unknownBounds}</UiText>
+        ) : null}
+        {months.map((month) => (
+          <View
+            key={month}
+            style={styles.month}
+            onLayout={({ nativeEvent }) => {
+              offsets.current[month] = nativeEvent.layout.y;
+              position();
+            }}
+          >
+            <UiText accessibilityRole="header" style={styles.monthTitle}>
+              {formatUiDate(dateValue(`${month}-01`), {
+                year: "numeric",
+                month: "long",
+                timeZone: "UTC",
+              })}
+            </UiText>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              horizontal
+              style={styles.horizontal}
+              showsHorizontalScrollIndicator={
+                gridWidth > sheetWidth - visual.space.page * 2
+              }
+            >
+              <View style={[styles.grid, { width: gridWidth }]}>
+                {Array.from({ length: 7 }, (_, day) => (
+                  <UiText key={day} style={styles.weekday}>
+                    {formatUiDate(dateValue(`2021-11-0${day + 1}`), {
+                      weekday: "narrow",
+                      timeZone: "UTC",
+                    })}
+                  </UiText>
+                ))}
+                {dayFeedCalendarCells(month).map((date, index) => {
+                  if (!date)
+                    return <View key={`blank-${index}`} style={styles.blank} />;
+                  const allowed = coverage.dates.has(date);
+                  const inCoreRange =
+                    !!bounds && date >= bounds.start && date <= bounds.end;
+                  const summary = allowed ? summaryByDate.get(date) : undefined;
+                  const hints = markers.filter((marker) =>
+                    summary?.markers.includes(marker),
+                  );
+                  const selected = allowed && date === selectedDate;
+                  return (
+                    <Pressable
+                      key={date}
+                      style={[
+                        styles.cell,
+                        inCoreRange && styles.inRange,
+                        selected && styles.selected,
+                        date === today && styles.today,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected, disabled: !allowed }}
+                      disabled={!allowed}
+                      accessibilityLabel={[
+                        accessibleDay(date),
+                        summary?.placeTransitionLabel,
+                        ...hints.map((marker) => copy.markers[marker]),
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                      onPress={() => {
+                        if (!allowed) return;
+                        if (!hosted) onClose();
+                        onSelect(date);
+                      }}
+                    >
+                      {date === today ? (
+                        <View pointerEvents="none" style={styles.todayTint} />
+                      ) : null}
+                      <UiText
+                        style={[
+                          styles.day,
+                          !allowed && styles.muted,
+                          selected && styles.selectedText,
+                        ]}
+                      >
+                        {formatUiNumber(+date.slice(8))}
+                      </UiText>
+                      {summary?.placeTransitionLabel ? (
+                        <UiText
+                          numberOfLines={1}
+                          style={[styles.place, selected && styles.selectedText]}
+                        >
+                          {summary.placeTransitionLabel}
+                        </UiText>
+                      ) : null}
+                      {hints.length ? (
+                        <View style={styles.markers}>
+                          {hints.map((marker) => (
+                            <View
+                              key={marker}
+                              style={[
+                                styles.marker,
+                                styles[marker],
+                                selected && styles.selectedMarker,
+                              ]}
+                            />
+                          ))}
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        ))}
+      </CalendarScroll>
+    </View>
+  );
+  if (hosted) return content;
   return (
     <Modal
       visible={visible}
@@ -171,140 +357,7 @@ export function DayFeedCalendarSheet({
       onRequestClose={onClose}
       onShow={position}
     >
-      <View
-        style={styles.sheet}
-        onLayout={({ nativeEvent }) => setSheetWidth(nativeEvent.layout.width)}
-      >
-        <SheetHeader title={tripName} onLeft={onClose} safeTop={false} />
-        {rangeLabel ? <UiText style={styles.range}>{rangeLabel}</UiText> : null}
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          ref={scroll}
-          style={styles.sheet}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: insets.bottom + visual.space.page },
-          ]}
-          onScrollBeginDrag={() => {
-            positioned.current = true;
-          }}
-          onContentSizeChange={position}
-        >
-          {!bounds ? (
-            <UiText style={styles.secondary}>{copy.unknownBounds}</UiText>
-          ) : null}
-          {months.map((month) => (
-            <View
-              key={month}
-              style={styles.month}
-              onLayout={({ nativeEvent }) => {
-                offsets.current[month] = nativeEvent.layout.y;
-                position();
-              }}
-            >
-              <UiText accessibilityRole="header" style={styles.monthTitle}>
-                {formatUiDate(dateValue(`${month}-01`), {
-                  year: "numeric",
-                  month: "long",
-                  timeZone: "UTC",
-                })}
-              </UiText>
-              <ScrollView
-                keyboardShouldPersistTaps="handled"
-                horizontal
-                style={styles.horizontal}
-                showsHorizontalScrollIndicator={
-                  gridWidth > sheetWidth - visual.space.page * 2
-                }
-              >
-                <View style={[styles.grid, { width: gridWidth }]}>
-                  {Array.from({ length: 7 }, (_, day) => (
-                    <UiText key={day} style={styles.weekday}>
-                      {formatUiDate(dateValue(`2021-11-0${day + 1}`), {
-                        weekday: "narrow",
-                        timeZone: "UTC",
-                      })}
-                    </UiText>
-                  ))}
-                  {dayFeedCalendarCells(month).map((date, index) => {
-                    if (!date)
-                      return <View key={`blank-${index}`} style={styles.blank} />;
-                    const allowed = coverage.dates.has(date);
-                    const inCoreRange =
-                      !!bounds && date >= bounds.start && date <= bounds.end;
-                    const summary = allowed ? summaryByDate.get(date) : undefined;
-                    const hints = markers.filter((marker) =>
-                      summary?.markers.includes(marker),
-                    );
-                    const selected = allowed && date === selectedDate;
-                    return (
-                      <Pressable
-                        key={date}
-                        style={[
-                          styles.cell,
-                          inCoreRange && styles.inRange,
-                          selected && styles.selected,
-                          date === today && styles.today,
-                        ]}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected, disabled: !allowed }}
-                        disabled={!allowed}
-                        accessibilityLabel={[
-                          accessibleDay(date),
-                          summary?.placeTransitionLabel,
-                          ...hints.map((marker) => copy.markers[marker]),
-                        ]
-                          .filter(Boolean)
-                          .join(", ")}
-                        onPress={() => {
-                          if (!allowed) return;
-                          onClose();
-                          onSelect(date);
-                        }}
-                      >
-                        {date === today ? (
-                          <View pointerEvents="none" style={styles.todayTint} />
-                        ) : null}
-                        <UiText
-                          style={[
-                            styles.day,
-                            !allowed && styles.muted,
-                            selected && styles.selectedText,
-                          ]}
-                        >
-                          {formatUiNumber(+date.slice(8))}
-                        </UiText>
-                        {summary?.placeTransitionLabel ? (
-                          <UiText
-                            numberOfLines={1}
-                            style={[styles.place, selected && styles.selectedText]}
-                          >
-                            {summary.placeTransitionLabel}
-                          </UiText>
-                        ) : null}
-                        {hints.length ? (
-                          <View style={styles.markers}>
-                            {hints.map((marker) => (
-                              <View
-                                key={marker}
-                                style={[
-                                  styles.marker,
-                                  styles[marker],
-                                  selected && styles.selectedMarker,
-                                ]}
-                              />
-                            ))}
-                          </View>
-                        ) : null}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+      {content}
     </Modal>
   );
 }
