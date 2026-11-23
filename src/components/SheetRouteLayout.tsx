@@ -18,10 +18,19 @@ export function SheetRouteLayout({ immersive = false, interceptClose, onDismiss 
   const close = useCallback((action?: () => void) => {
     const state = navigation.getState();
     if (state?.routes[state.index]?.key !== route.key) return false;
-    if (!action) onDismiss?.();
-    if (state.index > 0) navigation.dispatch({ type: "GO_BACK", target: state.key });
-    else router.replace("/");
-    action?.();
+    const previous = state.routes[state.index - 1];
+    if (!previous) {
+      if (action) return false;
+      onDismiss?.();
+      router.replace("/");
+      return true;
+    }
+    navigation.dispatch({ type: "GO_BACK", target: state.key, source: route.key });
+    const result = navigation.getState();
+    if (result?.key !== state.key || result.routes[result.index]?.key !== previous.key ||
+        result.routes.some(candidate => candidate.key === route.key)) return false;
+    if (action) action();
+    else onDismiss?.();
     return true;
   }, [navigation, onDismiss, route.key]);
 
