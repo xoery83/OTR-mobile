@@ -22,6 +22,7 @@ const s = vi.hoisted(() => ({
   open: vi.fn(),
   push: vi.fn(),
   trip: null as any,
+  fontScale: 1,
 }));
 const same = (a: any[], b: any[]) =>
   a?.length === b.length && a.every((value, i) => Object.is(value, b[i]));
@@ -80,6 +81,7 @@ vi.mock("react-native", () => ({
   Pressable: "Row",
   RefreshControl: "RefreshControl",
   Switch: "Switch",
+  useWindowDimensions: () => ({ fontScale: s.fontScale }),
   StyleSheet: { create: (value: any) => value, hairlineWidth: 1 },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "Safe" }));
@@ -132,6 +134,7 @@ beforeEach(() => {
   s.slots.forEach((slot) => slot?.cleanup?.());
   s.slots = [];
   s.cursor = 0;
+  s.fontScale = 1;
   s.queued = [];
   key = null;
   s.open.mockReset();
@@ -387,4 +390,17 @@ it("reviewer: stale Refresh cannot invalidate the current matching filter or lea
   await flush();
   expect(list).not.toHaveBeenCalled();
   expect(button(render(), t("updates.markAll")).disabled).toBe(false);
+});
+
+
+it("keeps the Updates search editable as the input grows and returns to its default height", () => {
+  const input = () => nodes(render(), "Input")[0];
+  expect(input().style).toBeUndefined();
+  input().onChangeText("QA");
+  s.fontScale = 3;
+  expect(input().style.minHeight).toBeGreaterThan(52);
+  expect(input().value).toBe("QA");
+  s.fontScale = 1;
+  expect(input().style).toBeUndefined();
+  expect(input().value).toBe("QA");
 });

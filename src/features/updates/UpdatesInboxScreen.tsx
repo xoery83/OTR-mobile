@@ -13,6 +13,7 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -58,6 +59,7 @@ export function UpdatesInboxScreen() {
 }
 function UpdatesInboxContent({ generation }: { generation: number }) {
   const locale = useUiLocale();
+  const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const { workingTrip } = useTripView();
@@ -312,6 +314,9 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
           onChangeText={setQuery}
           maxLength={200}
           autoCapitalize="none"
+          style={fontScale >= 2 ? {
+            minHeight: Math.ceil(visual.type.row.fontSize * fontScale) + 2 * visual.space.card,
+          } : undefined}
         />
       </View>
       <ScrollView
