@@ -64,6 +64,7 @@ export type TripQuickAddProps = {
   expense: (date: string | null) => void;
   capture?: () => void;
   canOpenCapture?: () => boolean;
+  isCurrentOwner?: () => boolean;
   triggerStyle: StyleProp<ViewStyle>;
 };
 
@@ -91,7 +92,7 @@ function HostedQuickAddTrigger(props: TripQuickAddProps) {
 
 // Only menu-local weak context; no Feed, Focus, bookmark or Capture fact mutation.
 export function TripQuickAddPanel({
-  tripId, date, showDate, itinerary, onManualSaved, photos, expense, capture, canOpenCapture, triggerStyle,
+  tripId, date, showDate, itinerary, onManualSaved, photos, expense, capture, canOpenCapture, isCurrentOwner, triggerStyle,
   hosted = false, closeHosted,
 }: TripQuickAddProps & { hosted?: boolean; closeHosted?(action: () => void): void }) {
   useUiLocale();
@@ -121,7 +122,8 @@ export function TripQuickAddPanel({
   const manualDismiss = useRef<(() => void) | null>(null);
   const current = () =>
     openedContext.current?.tripId === tripId &&
-    openedContext.current.generation === getAccountGeneration();
+    openedContext.current.generation === getAccountGeneration() &&
+    (!hosted || isCurrentOwner?.() !== false);
   const registerDismissHandler = (handler: () => void) => {
     manualDismiss.current = handler;
     return () => {
@@ -428,7 +430,7 @@ export function TripQuickAddPanel({
   if (hosted) {
     return (
       <>
-        {manual && onManualSaved ? (
+        {manual && onManualSaved && isCurrentOwner?.() !== false ? (
           <Modal visible transparent presentationStyle="overFullScreen" animationType="slide" onRequestClose={() => manualDismiss.current?.()}>
             <SafeAreaProvider style={styles.modalHost}>
               <ManualItineraryContent

@@ -4,7 +4,7 @@ import { useSheetMotion } from "@/components/SheetHost";
 import { TripQuickAddPanel } from "@/components/TripQuickAddMenu";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
-import { readHostedQuickAdd, releaseHostedQuickAdd } from "@/features/sheet-navigation/quickAddHandoff";
+import { readHostedQuickAdd, releaseHostedQuickAdd, subscribeHostedQuickAdd } from "@/features/sheet-navigation/quickAddHandoff";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -17,7 +17,7 @@ function HostedQuickAddRoute() {
   useUiLocale();
   useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration, getAccountGeneration);
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
-  const props = readHostedQuickAdd(invocation);
+  const props = useSyncExternalStore(subscribeHostedQuickAdd, () => readHostedQuickAdd(invocation));
   const { requestCloseWithAction } = useSheetMotion();
   useEffect(() => () => {
     queueMicrotask(() => releaseHostedQuickAdd(invocation));

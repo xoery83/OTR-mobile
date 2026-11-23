@@ -256,6 +256,7 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
           hostedComposer={hosted}
           hostedChild={hostedChild}
           activityPositionsRef={activityPositionsRef}
+          activityScope={hosted ? admission.current : undefined}
           onOpenAcceptedItem={(target) => {
             if (!isCurrent() || !target.family || !/^P[1-6]$/.test(target.family)) return;
             router.push({

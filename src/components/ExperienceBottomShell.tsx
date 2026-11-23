@@ -1,3 +1,4 @@
+import { releaseStaleHostedQuickAdd } from "@/features/sheet-navigation/quickAddHandoff";
 import { openTripHome } from "./openTripHome";
 import { isTripWorkspacePath } from "./tripShellNavigation";
 import { shellShowsUpdates } from "./bottomBarVisibility";
@@ -186,6 +187,10 @@ export function ExperienceBottomShell({
       currentTarget.current = null;
     };
   }, [renderedTarget]);
+  useLayoutEffect(() => {
+    releaseStaleHostedQuickAdd();
+    return () => { queueMicrotask(releaseStaleHostedQuickAdd); };
+  }, [quickAddScope, renderedTarget, sheetActive]);
   useLayoutEffect(() => {
     if (!visible || params.view === "create") {
       startTripLease.current = null;
@@ -549,6 +554,7 @@ export function ExperienceBottomShell({
                   : undefined
               }
               canOpenCapture={isQuickAddOwnerCurrent}
+              isCurrentOwner={isQuickAddOwnerCurrent}
               capture={() => {
                 if (!isQuickAddOwnerCurrent()) return;
                 router.navigate({

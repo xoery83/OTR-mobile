@@ -41,6 +41,7 @@ export function CaptureContent({
   onOpenReview,
   onReturnToTrip,
   activityPositionsRef,
+  activityScope,
   embeddedComposer = false,
   hostedComposer = false,
   hostedChild = false,
@@ -60,6 +61,7 @@ export function CaptureContent({
   onOpenReview?(jobId: string): void;
   onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
   activityPositionsRef?: { current: Record<string, number> };
+  activityScope?: () => boolean;
   embeddedComposer?: boolean;
   hostedComposer?: boolean;
   hostedChild?: boolean;
@@ -143,6 +145,10 @@ export function CaptureContent({
   };
   const hide = () => {
     if (draftStaging && !current()) return;
+    if (hostedComposer && !hostedChild) {
+      onCancel();
+      return;
+    }
     active.current = false;
     ++readEpoch.current;
     if (draftStaging) staging.hide();
@@ -185,30 +191,6 @@ export function CaptureContent({
   };
   useEffect(() => {
     active.current = true;
-    const unsubscribe = subscribeCaptureProcessingActivity((account, job) => {
-      const currentModel = modelRef.current;
-      if (
-        !currentModel ||
-        currentModel.batch.accountId !== account ||
-        currentModel.batch.jobId !== job ||
-        !active.current ||
-        !isCurrent()
-      )
-        return;
-      const epoch = readEpoch.current;
-      void import("@/data/operations/defaultCaptureSubmission")
-        .then((api) => api.reopenDefaultCaptureJob(job))
-        .then((next) => {
-          if (
-            active.current &&
-            isCurrent() &&
-            epoch === readEpoch.current &&
-            modelRef.current?.batch.jobId === job
-          )
-            setModel(next);
-        })
-        .catch(() => undefined);
-    });
     const detach = staging.attach();
     const reads = readEpoch;
     const setup = ++reads.current;
@@ -218,12 +200,39 @@ export function CaptureContent({
     return () => {
       active.current = false;
       ++reads.current;
-      unsubscribe();
       detach();
     };
-    // Invocation is fixed by the host; changing it requires remount.
+    // The draft attachment belongs to the mounted invocation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staging]);
+  useEffect(() => {
+    let listening = true;
+    let newest = 0;
+    const qualified = () => listening && active.current && (activityScope ?? isCurrent)();
+    const refresh = (account: string, job: string) => {
+      const sameJob = () =>
+        modelRef.current?.batch.accountId === account && modelRef.current.batch.jobId === job;
+      if (!qualified() || !sameJob()) return;
+      const epoch = readEpoch.current;
+      const read = ++newest;
+      void import("@/data/operations/defaultCaptureSubmission")
+        .then((api) => qualified() && sameJob() ? api.reopenDefaultCaptureJob(job) : undefined)
+        .then((next) => {
+          if (next !== undefined && qualified() && sameJob() && read === newest && epoch === readEpoch.current)
+            setModel(next);
+        })
+        .catch(() => undefined);
+    };
+    const unsubscribe = subscribeCaptureProcessingActivity(refresh);
+    const retained = modelRef.current;
+    if (activityScope && retained) refresh(retained.batch.accountId, retained.batch.jobId);
+    return () => {
+      listening = false;
+      unsubscribe();
+    };
+    // The hosted reader requalifies when the same screen regains focus.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staging, activityScope]);
   const submit = async () => {
     if (!current() || running.current || snapshot.selecting) return;
     const roster =
