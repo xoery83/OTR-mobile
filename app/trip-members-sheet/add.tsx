@@ -1,5 +1,5 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { usePreventRemove } from "expo-router/react-navigation";
+import { useLocalSearchParams, useNavigation } from "expo-router";
+import { usePreventRemove, useRoute } from "expo-router/react-navigation";
 import { useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
@@ -11,6 +11,13 @@ import { useUiLocale } from "@/ui/useUiLocale";
 export default function TripMembersAddRoute() {
   useUiLocale();
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
+  const navigation = useNavigation();
+  const route = useRoute();
+  const popAdd = useCallback(() => {
+    const state = navigation.getState();
+    if (state?.routes[state.index]?.key !== route.key) return;
+    navigation.dispatch({ type: "GO_BACK", target: state.key, source: route.key });
+  }, [navigation, route.key]);
   const read = () => tripMembersInvocations.read(invocation);
   const entry = useSyncExternalStore(tripMembersInvocations.subscribe, read);
   const { exitPending, isExitPending, requestClose } = useSheetMotion();
@@ -26,23 +33,28 @@ export default function TripMembersAddRoute() {
       unregister?.();
     };
   }, [exit]);
-  usePreventRemove(Boolean(entry && !approved), () => guard.current?.(() => setApproved("back")));
+  usePreventRemove(Boolean(entry && !approved), ({ data: { action } }) => {
+    const state = navigation.getState();
+    if (action.type !== "GO_BACK" && action.type !== "POP") return;
+    if (action.target ? action.target !== state?.key : !navigation.isFocused()) return;
+    guard.current?.(() => setApproved("back"));
+  });
   useEffect(() => {
     if (!approved || dispatched.current) return;
     dispatched.current = true;
-    if (approved === "back") router.back();
+    if (approved === "back") popAdd();
     else {
       exit?.allowClose();
       requestClose();
     }
-  }, [approved, exit, requestClose]);
+  }, [approved, exit, popAdd, requestClose]);
   useEffect(() => {
     if (approved !== "close" || !dispatched.current || exitPending || isExitPending()) return;
     dispatched.current = false;
     setApproved(undefined);
   }, [approved, exitPending, isExitPending]);
 
-  if (!entry) return <SheetRoutePanel title={t("people.addTraveler")} onBack={router.back}>{null}</SheetRoutePanel>;
+  if (!entry) return <SheetRoutePanel title={t("people.addTraveler")} onBack={popAdd}>{null}</SheetRoutePanel>;
   return <AddTravelerForm
     HostedSurface={HostedAddTravelerSurface}
     submissionEnabled={!!entry.onAddTraveler && entry.members?.state === "AVAILABLE"}
