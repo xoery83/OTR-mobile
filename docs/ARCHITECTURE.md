@@ -203,6 +203,8 @@ The QA receipt review Sheet keeps expense draft ownership in the originating
 editor. The review and its child choices are scoped to the active scan and
 account. A choice applies after returning to the originating review. The
 existing confirmation transfers local receipt drafts to the expense editor.
+The initial receipt source opens a short Sheet and returns to its original
+expense editor before handing off to the system camera, photos, or files.
 
 ## Auth
 

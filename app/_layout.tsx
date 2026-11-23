@@ -172,6 +172,16 @@ export default function RootLayout() {
             </Stack.Protected>
             <Stack.Protected guard={hostedLedgerReceiptReviewEnabled}>
               <Stack.Screen
+                name="ledger-receipt-source"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+              <Stack.Screen
                 name="ledger-receipt-review"
                 options={{
                   presentation: "transparentModal",

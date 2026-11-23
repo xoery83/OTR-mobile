@@ -126,6 +126,8 @@ import {
 } from "./receiptReview";
 import { LedgerReceiptReviewPresentation } from "./LedgerReceiptReviewPresentation";
 import { ReceiptScanSourceFields, type ReceiptScanSource } from "./ReceiptScanSourceFields";
+import { hostedLedgerReceiptReviewEnabled } from "./ledgerReceiptReviewSheet";
+import { openLedgerReceiptSource } from "./ledgerReceiptSourceSheet";
 import {
   applyExpenseSharing,
   compactExpenseDate,
@@ -886,6 +888,27 @@ export function LedgerExpenseEntryScreen() {
   const chooseReceipt = (scan = false, addPart = false) => {
     Keyboard.dismiss();
     if (scan) {
+      if (hostedLedgerReceiptReviewEnabled && !addPart) {
+        if (!navigation.isFocused() || addingReceiptRef.current) return;
+        const generation = getAccountGeneration();
+        const originalScan = scanSessionRef.current?.sessionId;
+        const pendingCount = scanSessionRef.current?.documents.length ?? 0;
+        const ownsEditor = () => mountedRef.current && getAccountGeneration() === generation &&
+          !savingRef.current && !allowClose.current;
+        const canLaunch = () => ownsEditor() && navigation.isFocused();
+        const invocation = openLedgerReceiptSource({
+          count: selectedReceiptCount + pendingCount,
+          slots: remainingExpenseAttachmentCapacity(selectedReceiptCount, pendingCount),
+          isCurrent: () => ownsEditor() && !addingReceiptRef.current &&
+            scanSessionRef.current?.sessionId === originalScan,
+          choose: kind => requestAnimationFrame(() => {
+            if (canLaunch() && scanSessionRef.current?.sessionId === originalScan)
+              void attach(kind, true, false, canLaunch);
+          }),
+        }, generation);
+        if (invocation) router.push({ pathname: "/ledger-receipt-source", params: { invocation } });
+        return;
+      }
       scanSourceAddPart.current = addPart;
       pendingScanSource.current = null;
       setScanSourceVisible(true);
