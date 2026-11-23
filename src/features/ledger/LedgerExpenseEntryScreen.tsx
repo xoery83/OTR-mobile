@@ -39,6 +39,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 
 import { AppIcon } from "@/components/AppIcon";
 
@@ -127,7 +128,7 @@ import {
 import { LedgerReceiptReviewPresentation } from "./LedgerReceiptReviewPresentation";
 import { ReceiptScanSourceFields, type ReceiptScanSource } from "./ReceiptScanSourceFields";
 import { hostedLedgerReceiptReviewEnabled } from "./ledgerReceiptReviewSheet";
-import { openLedgerReceiptSource } from "./ledgerReceiptSourceSheet";
+import { openLedgerReceiptSource, readLedgerReceiptSource, releaseLedgerReceiptSource } from "./ledgerReceiptSourceSheet";
 import {
   applyExpenseSharing,
   compactExpenseDate,
@@ -234,6 +235,8 @@ export function LedgerExpenseEntryScreen() {
     correctionReason?: string;
   }>();
   const navigation = useNavigation();
+  const headerHeight = useHeaderHeight();
+  const [receiptSourceLayer, setReceiptSourceLayer] = useState<{ id: string; headerHeight: number }>();
   const [context, setContext] = useState<EntryContext | null>(null);
   const [existing, setExisting] = useState<LedgerExpense | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -905,8 +908,21 @@ export function LedgerExpenseEntryScreen() {
             if (canLaunch() && scanSessionRef.current?.sessionId === originalScan)
               void attach(kind, true, false, canLaunch);
           }),
+          onClose: id => {
+            if (mountedRef.current)
+              setReceiptSourceLayer(layer => layer?.id === id ? undefined : layer);
+          },
         }, generation);
-        if (invocation) router.push({ pathname: "/ledger-receipt-source", params: { invocation } });
+        if (invocation) {
+          setReceiptSourceLayer({ id: invocation, headerHeight });
+          requestAnimationFrame(() => {
+            if (!canLaunch() || !readLedgerReceiptSource(invocation)) {
+              releaseLedgerReceiptSource(invocation);
+              return;
+            }
+            router.push({ pathname: "/ledger-receipt-source", params: { invocation } });
+          });
+        }
         return;
       }
       scanSourceAddPart.current = addPart;
@@ -1307,25 +1323,34 @@ export function LedgerExpenseEntryScreen() {
           headerTitle: existing ? t("ui.editExpense") : t("ui.newExpense"),
         }}
       />
-      <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button
-          accessibilityLabel={t("ui.cancel")}
-          disabled={saving || selectingReceipt}
-          onPress={close}
-        >
-          {t("ui.cancel")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
-      <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button
-          accessibilityLabel={saving ? t("ui.saving") : t("ui.save")}
-          disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
-          onPress={() => void save()}
-          variant="done"
-        >
-          {saving ? t("ui.saving") : t("ui.save")}
-        </Stack.Toolbar.Button>
-      </Stack.Toolbar>
+      {receiptSourceLayer ? (
+        <>
+          <Stack.Header hidden />
+          <View style={{ height: receiptSourceLayer.headerHeight }} />
+        </>
+      ) : (
+        <>
+          <Stack.Toolbar placement="left">
+            <Stack.Toolbar.Button
+              accessibilityLabel={t("ui.cancel")}
+              disabled={saving || selectingReceipt}
+              onPress={close}
+            >
+              {t("ui.cancel")}
+            </Stack.Toolbar.Button>
+          </Stack.Toolbar>
+          <Stack.Toolbar placement="right">
+            <Stack.Toolbar.Button
+              accessibilityLabel={saving ? t("ui.saving") : t("ui.save")}
+              disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
+              onPress={() => void save()}
+              variant="done"
+            >
+              {saving ? t("ui.saving") : t("ui.save")}
+            </Stack.Toolbar.Button>
+          </Stack.Toolbar>
+        </>
+      )}
       <ScrollView
         pointerEvents={saving ? "none" : "auto"}
         automaticallyAdjustKeyboardInsets

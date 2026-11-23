@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 function open(isCurrent = () => true) {
-  const source = { count: 0, slots: 3, isCurrent, choose: vi.fn() };
+  const source = { count: 0, slots: 3, isCurrent, choose: vi.fn(), onClose: vi.fn() };
   state.invocation = openLedgerReceiptSource(source, getAccountGeneration());
   expect(state.invocation).toBeDefined();
   const panel = LedgerReceiptSourceRoute() as ReactElement<{
@@ -52,6 +52,7 @@ it("starts the system source only after the shared host reports a completed clos
   afterClose();
   afterClose();
   expect(source.choose).toHaveBeenCalledExactlyOnceWith("photo");
+  expect(source.onClose).toHaveBeenCalledExactlyOnceWith(state.invocation);
   expect(readLedgerReceiptSource(state.invocation)).toBeUndefined();
 });
 
@@ -67,4 +68,5 @@ it("suppresses a staged source if the owner or account retires before the close 
   advanceAccountGeneration();
   afterClose();
   expect(source.choose).not.toHaveBeenCalled();
+  expect(source.onClose).toHaveBeenCalledExactlyOnceWith(state.invocation);
 });
