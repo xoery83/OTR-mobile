@@ -4,5 +4,9 @@ import { interceptLedgerCurrencySheetClose, readLedgerCurrencySheet } from "@/fe
 
 export default function LedgerCurrencyPickerLayout() {
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
-  return <SheetRouteLayout immersive={readLedgerCurrencySheet(invocation)?.kind !== "display"} interceptClose={() => interceptLedgerCurrencySheetClose(invocation)} />;
+  const kind = readLedgerCurrencySheet(invocation)?.kind;
+  return <SheetRouteLayout
+    immersive={kind !== "display" && kind !== "confirm-date"}
+    interceptClose={() => interceptLedgerCurrencySheetClose(invocation)}
+  />;
 }

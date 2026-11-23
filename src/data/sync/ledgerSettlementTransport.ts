@@ -40,7 +40,7 @@ async function client(
     return createAuthenticatedApiClient({ timeoutMs }, undefined, context);
   const session = await (dependencies.readSession ?? readLocalSession)();
   if (context)
-    await assertAccountRequestContext(context, async () => session?.identity.userId ?? "");
+    await assertAccountRequestContext(context, async () => session?.identity?.userId ?? "");
   if (!session?.accessToken)
     throw new ApiClientError(
       "Authentication is unavailable.",

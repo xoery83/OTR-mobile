@@ -26,8 +26,14 @@ type DateConfirmation = Extract<LedgerCurrencyChoice, { kind: "confirm-date" }>;
 export function useOpenExpenseDateConfirmation(journeyId?: string, sourceKey?: string) {
   const openPicker = useLedgerCurrencySheet(journeyId, sourceKey);
   return (expenseId: string) => {
+    let confirming = false;
     if (journeyId && openPicker({
-      kind: "confirm-date", titleKey: "ui.transactionDate", expenseId, journeyId, busy: { current: false },
+      kind: "confirm-date",
+      titleKey: "ui.transactionDate",
+      expenseId,
+      journeyId,
+      isBusy: () => confirming,
+      setBusy: (busy) => { confirming = busy; },
     })) return;
     router.push({ pathname: "/expenses/confirm-date", params: { expenseId } });
   };
@@ -71,9 +77,8 @@ function ConfirmExpenseDateForm({ expenseId, onClose, hosted, isCurrent }: {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const navigation = useNavigation();
-  const localBusy = useRef(false);
+  const inFlight = useRef(false);
   const completed = useRef(false);
-  const inFlight = hosted?.busy ?? localBusy;
   const generation = getAccountGeneration();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const [date, setDate] = useState<string | null>(null);
@@ -122,6 +127,7 @@ function ConfirmExpenseDateForm({ expenseId, onClose, hosted, isCurrent }: {
   const confirm = async () => {
     if (!expense || expense.economicDate || !date || inFlight.current || completed.current || !canUseForm()) return;
     inFlight.current = true;
+    hosted?.setBusy(true);
     setBusy(true);
     setMessage(null);
     try {
@@ -148,6 +154,7 @@ function ConfirmExpenseDateForm({ expenseId, onClose, hosted, isCurrent }: {
       }
     } finally {
       inFlight.current = false;
+      hosted?.setBusy(false);
       setBusy(false);
     }
   };

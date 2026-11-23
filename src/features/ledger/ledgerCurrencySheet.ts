@@ -20,7 +20,7 @@ export type LedgerCurrencyChoice = {
     subscribeOptions(listener: () => void): () => void;
     choose(code: string): void;
   }
-  | { kind: "confirm-date"; expenseId: string; journeyId: string; busy: { current: boolean } }
+  | { kind: "confirm-date"; expenseId: string; journeyId: string; isBusy(): boolean; setBusy(busy: boolean): void }
   | { kind: "date"; initial: Date; maximumDate?: Date; choose(date: Date): void }
   | ({ kind: "sharing" } & ExpenseSharingInputs)
   | { kind: "category"; selected: string; choose(category: string): void }
@@ -38,7 +38,7 @@ export function readLedgerCurrencySheet(id: string | undefined) {
 
 export function interceptLedgerCurrencySheetClose(id: string | undefined) {
   const choice = readLedgerCurrencySheet(id);
-  return choice?.kind === "confirm-date" && choice.busy.current;
+  return choice?.kind === "confirm-date" && choice.isBusy();
 }
 
 export function releaseLedgerCurrencySheet(id: string | undefined) {
