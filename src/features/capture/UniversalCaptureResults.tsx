@@ -409,7 +409,7 @@ export function UniversalV3Activity({
         ]).then(([{ router }, { getAccountGeneration }]) => {
           if (isCurrent())
             router.push({
-              pathname: "/import-updates",
+              pathname: hostedComposer ? "/import-plans/updates" : "/import-updates",
               params: {
                 activityId: model.batch.batchId,
                 activityJobId: model.batch.jobId,

@@ -15,7 +15,8 @@ export default function ImportSheetLayout() {
   if (!hostedImportEnabled) {
     return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.transparent } }} />;
   }
-  return <HostedImportRoutes immersive={Boolean(jobId) || pathname === "/import-plans/review"} />;
+  const batchPage = pathname === "/import-plans/review" || pathname === "/import-plans/updates";
+  return <HostedImportRoutes immersive={Boolean(jobId) || batchPage} />;
 }
 
 function HostedImportRoutes({ immersive }: { immersive: boolean }) {

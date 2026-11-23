@@ -25,6 +25,7 @@ const s = vi.hoisted(() => ({
   trip: null as any,
   fontScale: 1,
   hostedImport: false,
+  params: {} as Record<string, string>,
 }));
 const same = (a: any[], b: any[]) =>
   a?.length === b.length && a.every((value, i) => Object.is(value, b[i]));
@@ -66,9 +67,10 @@ vi.mock("react", async (original) => ({
 vi.mock("@/features/capture/hostedImport", () => ({
   get hostedImportEnabled() { return s.hostedImport; },
 }));
+vi.mock("@/components/SheetHost", () => ({ useSheetScrollDismissal: () => ({}) }));
 vi.mock("expo-router", () => ({
   router: { push: s.push, setParams: vi.fn() },
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => s.params,
   useFocusEffect: (callback: () => any) => {
     const i = s.cursor++;
     if (s.slots[i]?.callback !== callback) {
@@ -102,8 +104,8 @@ vi.mock("@/data/operations/defaultUpdatesInbox", () => ({
 }));
 
 let key: string | null = null;
-function render(): any {
-  const outer = UpdatesInboxScreen();
+function render(props?: Parameters<typeof UpdatesInboxScreen>[0]): any {
+  const outer = UpdatesInboxScreen(props);
   if (String(outer.key) !== key) {
     s.slots.forEach((slot) => slot?.cleanup?.());
     s.slots = [];
@@ -141,6 +143,7 @@ beforeEach(() => {
   s.cursor = 0;
   s.fontScale = 1;
   s.hostedImport = false;
+  s.params = {};
   s.queued = [];
   key = null;
   s.open.mockReset();
@@ -408,6 +411,7 @@ it("keeps the Updates search editable as the input grows and returns to its defa
   expect(input().value).toBe("QA");
   s.fontScale = 1;
   s.hostedImport = false;
+  s.params = {};
   expect(input().style).toBeUndefined();
   expect(input().value).toBe("QA");
 });
@@ -424,4 +428,44 @@ it.each([true, false])("routes an authorized Updates Review to the expected pres
   advanceAccountGeneration();
   openReview(request.jobId, context.generation, "REVIEW");
   expect(s.push).toHaveBeenCalledOnce();
+});
+
+it("keeps the batch scope on the hosted Updates route and hands authorized navigation to that Sheet", async () => {
+  const { request, context } = await setup();
+  s.params = {
+    activityId: "related-batch",
+    activityJobId: request.jobId,
+    originGeneration: String(context.generation),
+  };
+  const onOpenImport = vi.fn();
+  const related = render({ onOpenImport });
+  expect(nodes(related, ImportUpdatesSection)[0].batchId).toBe("related-batch");
+  button(related, t("updates.batchScope")).onPress();
+  const all = render({ onOpenImport });
+  await flush();
+  expect(nodes(all, ImportUpdatesSection)[0].batchId).toBeUndefined();
+  expect(s.params.activityJobId).toBe(request.jobId);
+  nodes(all, ImportUpdatesSection)[0].onOpen(request.jobId, context.generation, "REVIEW");
+  expect(onOpenImport).toHaveBeenCalledExactlyOnceWith(request.jobId, context.generation, "REVIEW");
+  expect(s.push).not.toHaveBeenCalled();
+});
+
+it("binds the hosted refresh without competing with the Sheet body dismissal gesture", async () => {
+  const { repository } = await setup();
+  const bindRefresh = vi.fn();
+  const props = { bindRefresh };
+  const screen = render(props);
+  expect(nodes(screen, "Scroll").some(({ refreshControl }) => refreshControl)).toBe(false);
+  nodes(screen, "Input")[0].onChangeText("retained query");
+  render(props);
+  await flush();
+  const list = vi.spyOn(repository, "list");
+  bindRefresh.mock.lastCall?.[0]?.();
+  await flush();
+  expect(list).toHaveBeenCalledWith(
+    expect.objectContaining({ query: "retained query" }),
+    expect.anything(),
+    expect.anything(),
+  );
+  expect(nodes(render(props), "Input")[0].value).toBe("retained query");
 });
