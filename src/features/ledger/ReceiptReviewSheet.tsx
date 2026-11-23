@@ -22,8 +22,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { currencyScale } from "@/domain/ledger/currency";
+import { MAX_EXPENSE_ATTACHMENTS } from "@/domain/ledger/attachments";
 import { CurrencyPicker } from "./CurrencyPicker";
 import { SheetHeader } from "@/components/SheetHeader";
+import { SheetRoutePanel } from "@/components/SheetRoutePanel";
+import { useSheetScrollDismissal } from "@/components/SheetHost";
+import type { ReceiptReviewChoice } from "./ledgerReceiptReviewSheet";
+import type { ReceiptScanSource } from "./ReceiptScanSourceFields";
 import {
   currencyAmountInput,
   currencyAmountHint,
@@ -59,10 +64,15 @@ type Props = {
   onConfirm: (result: ReceiptReviewResult, sessionRevision: number) => void;
   onRetry: (documentId: string) => void;
   onRemove: (documentId: string) => void;
-  onScanAnother: () => void;
+  onScanAnother: (source?: ReceiptScanSource, canLaunch?: () => boolean) => void;
   canScanAnother: boolean;
   scanBusy: boolean;
   sourceChooser?: ReactNode;
+  isPickingSource?: () => boolean;
+  isCurrentScan?: () => boolean;
+  openHostedChoice?: (choice: ReceiptReviewChoice) => boolean;
+  readLiveReview?: () => Props | undefined;
+  canLaunchSource?: () => boolean;
 };
 
 export function ReceiptReviewSheet({
@@ -80,6 +90,10 @@ export function ReceiptReviewSheet({
   canScanAnother,
   scanBusy,
   sourceChooser,
+  isPickingSource,
+  openHostedChoice,
+  readLiveReview,
+  canLaunchSource,
 }: Props) {
   useUiLocale();
   const colors = useUiTheme();
@@ -87,6 +101,8 @@ export function ReceiptReviewSheet({
 
   const window = useWindowDimensions();
   const landscape = window.width > window.height;
+  const hosted = !!openHostedChoice;
+  const scrollDismissal = useSheetScrollDismissal();
   const [workspaceWidth, setWorkspaceWidth] = useState(window.width);
   const [currencyPicker, setCurrencyPicker] = useState(false);
   const [overflow, setOverflow] = useState<"Title" | "Amount" | "Currency" | null>(null);
@@ -117,13 +133,19 @@ export function ReceiptReviewSheet({
     }).start();
   }, [compare, offset, workspaceWidth]);
 
-  const change = (field: "title" | "amount" | "currency", value: string) => {
-    setError(null);
-    onChange(editReceiptReviewField(review, field, value));
-  };
+  const change = (field: "title" | "amount" | "currency", value: string) =>
+    applyReview(current => editReceiptReviewField(current, field, value));
   const openCurrency = () => {
     Keyboard.dismiss();
-    setCurrencyPicker(true);
+    if (openHostedChoice?.({
+      kind: "currency",
+      title: t("ui.currency"),
+      selected: review.currency.value,
+      suggestions: [review.currency.value, ...currencyTags, defaultCurrency],
+      isCurrent: isCurrentReview,
+      choose: code => applyReview(current => editReceiptReviewField(current, "currency", code)),
+    })) return;
+    if (!hosted) setCurrencyPicker(true);
   };
   const closeReceipt = () => {
     Keyboard.dismiss();
@@ -137,6 +159,7 @@ export function ReceiptReviewSheet({
     setLandscapeCollapsed(false);
   };
   const confirm = () => {
+    if (hosted && (!isCurrentReview() || isPickingSource?.())) return;
     try {
       onConfirm(confirmReceiptReview(review, session), session.revision);
       setError(null);
@@ -157,8 +180,7 @@ export function ReceiptReviewSheet({
     label: title,
     selected: review.title.value === title,
     onPress: () => {
-      setError(null);
-      onChange(selectReceiptReviewTitle(review, title));
+      applyReview(current => selectReceiptReviewTitle(current, title));
       setOverflow(null);
     },
   }));
@@ -167,8 +189,7 @@ export function ReceiptReviewSheet({
     label: `${candidate.decimal}${candidate.currency && candidate.currency !== review.currency.value ? ` ${candidate.currency}` : ""}`,
     selected: amountTagSelected(review, candidate),
     onPress: () => {
-      setError(null);
-      onChange(selectReceiptReviewAmount(review, candidate));
+      applyReview(current => selectReceiptReviewAmount(current, candidate));
       setOverflow(null);
     },
   }));
@@ -177,7 +198,7 @@ export function ReceiptReviewSheet({
     label: code,
     selected: review.currency.value === code,
     onPress: () => {
-      change("currency", code);
+      applyReview(current => editReceiptReviewField(current, "currency", code));
       setOverflow(null);
     },
   }));
@@ -188,6 +209,45 @@ export function ReceiptReviewSheet({
         ? amountTags
         : currencyOptions;
   const usedSlots = session.existingAttachmentDraftIds.length + cards.length;
+  function isCurrentReview() {
+    const live = readLiveReview?.();
+    return live?.visible === true && live.isCurrentScan?.() !== false && live.session.sessionId === session.sessionId &&
+      live.session.revision === session.revision;
+  }
+
+  function applyReview(apply: (current: ReceiptReviewState) => ReceiptReviewState) {
+    const live = readLiveReview?.();
+    if (hosted && (!live || !isCurrentReview())) return;
+    setError(null);
+    (live?.onChange ?? onChange)(apply(live?.review ?? review));
+  }
+
+  const openCandidates = (field: "Title" | "Amount" | "Currency") => {
+    Keyboard.dismiss();
+    const options = field === "Title" ? titleTags : field === "Amount" ? amountTags : currencyOptions;
+    if (openHostedChoice?.({
+      kind: "receipt-candidates", title: domainLabel(field), options, isCurrent: isCurrentReview,
+    })) return;
+    if (!hosted) setOverflow(field);
+  };
+
+  const openSource = () => {
+    if (!canScanAnother) return;
+    Keyboard.dismiss();
+    if (openHostedChoice?.({
+      kind: "receipt-source",
+      title: t("ui.scanReceipt"),
+      count: usedSlots,
+      slots: MAX_EXPENSE_ATTACHMENTS - usedSlots,
+      isCurrent: () => isCurrentReview() && !!readLiveReview?.()?.canScanAnother,
+      choose: source => requestAnimationFrame(() => {
+        const live = readLiveReview?.();
+        if (canLaunchSource?.() && isCurrentReview() && live?.canScanAnother)
+          live.onScanAnother(source, canLaunchSource);
+      }),
+    })) return;
+    if (!hosted) onScanAnother();
+  };
 
   const scanControls = (
     <View style={styles.scanRow}>
@@ -196,7 +256,7 @@ export function ReceiptReviewSheet({
         accessibilityRole="button"
         accessibilityState={{ disabled: !canScanAnother }}
         disabled={!canScanAnother}
-        onPress={onScanAnother}
+        onPress={openSource}
         style={[styles.scan, !canScanAnother && styles.muted]}
       >
         <Text style={styles.actionText}>{t("ui.scanAnotherPart2")}</Text>
@@ -217,21 +277,7 @@ export function ReceiptReviewSheet({
     </View>
   );
 
-  return (
-    <Modal
-      animationType="slide"
-      supportedOrientations={["portrait", "landscape-left", "landscape-right"]}
-      onOrientationChange={() => setLandscapeCollapsed(false)}
-      onRequestClose={
-        currencyPicker
-          ? () => setCurrencyPicker(false)
-          : overflow
-            ? () => setOverflow(null)
-            : cancel
-      }
-      presentationStyle="fullScreen"
-      visible={visible}
-    >
+  const workspace = (
       <View style={styles.flex}>
         <View
           style={styles.flex}
@@ -239,14 +285,14 @@ export function ReceiptReviewSheet({
           accessibilityElementsHidden={currencyPicker}
           importantForAccessibility={currencyPicker ? "no-hide-descendants" : "auto"}
         >
-          <SheetHeader
+          {!openHostedChoice ? <SheetHeader
             leftLabel={t("ui.cancel")}
             onLeft={cancel}
             onRight={confirm}
             rightLabel={t("ui.confirm")}
             title={t("ui.reviewReceipt")}
-          />
-          <SafeAreaView edges={["left", "right", "bottom"]} style={styles.flex}>
+          /> : null}
+          <SafeAreaView edges={hosted ? [] : ["left", "right", "bottom"]} style={styles.flex}>
             {!landscape ? scanControls : null}
             <View
               onLayout={(event) => setWorkspaceWidth(event.nativeEvent.layout.width)}
@@ -255,6 +301,7 @@ export function ReceiptReviewSheet({
               <View style={{ width: panes.form, flex: 1 }}>
                 {landscape ? scanControls : null}
                 <ScrollView
+                  {...scrollDismissal}
                   automaticallyAdjustKeyboardInsets
                   keyboardShouldPersistTaps="handled"
                   contentContainerStyle={[
@@ -292,19 +339,13 @@ export function ReceiptReviewSheet({
                       <CandidateDropdown
                         tags={titleTags}
                         label={t("ui.title")}
-                        onPress={() => {
-                          Keyboard.dismiss();
-                          setOverflow("Title");
-                        }}
+                        onPress={() => openCandidates("Title")}
                       />
                     ) : (
                       <ReceiptCandidateTags
                         tags={titleTags}
                         label={t("ui.title")}
-                        onOverflow={() => {
-                          Keyboard.dismiss();
-                          setOverflow("Title");
-                        }}
+                        onOverflow={() => openCandidates("Title")}
                       />
                     )}
                   </View>
@@ -344,19 +385,13 @@ export function ReceiptReviewSheet({
                         <CandidateDropdown
                           tags={amountTags}
                           label={t("ui.amount")}
-                          onPress={() => {
-                            Keyboard.dismiss();
-                            setOverflow("Amount");
-                          }}
+                          onPress={() => openCandidates("Amount")}
                         />
                       ) : (
                         <ReceiptCandidateTags
                           tags={amountTags}
                           label={t("ui.amount")}
-                          onOverflow={() => {
-                            Keyboard.dismiss();
-                            setOverflow("Amount");
-                          }}
+                          onOverflow={() => openCandidates("Amount")}
                         />
                       )}
                     </View>
@@ -379,10 +414,7 @@ export function ReceiptReviewSheet({
                         <CandidateDropdown
                           tags={currencyOptions}
                           label={t("ui.currency")}
-                          onPress={() => {
-                            Keyboard.dismiss();
-                            setOverflow("Currency");
-                          }}
+                          onPress={() => openCandidates("Currency")}
                         />
                       ) : (
                         <ReceiptCandidateTags
@@ -589,6 +621,29 @@ export function ReceiptReviewSheet({
           </View>
         ) : null}
       </View>
+  );
+  if (openHostedChoice) {
+    return <SheetRoutePanel title={t("ui.reviewReceipt")} ownsScroll leadingDisabled={isPickingSource?.()}
+      action={{ label: t("ui.confirm"), onPress: confirm, disabled: isPickingSource?.() }}>
+      {workspace}
+    </SheetRoutePanel>;
+  }
+  return (
+    <Modal
+      animationType="slide"
+      supportedOrientations={["portrait", "landscape-left", "landscape-right"]}
+      onOrientationChange={() => setLandscapeCollapsed(false)}
+      onRequestClose={
+        currencyPicker
+          ? () => setCurrencyPicker(false)
+          : overflow
+            ? () => setOverflow(null)
+            : cancel
+      }
+      presentationStyle="fullScreen"
+      visible={visible}
+    >
+      {workspace}
       {sourceChooser}
     </Modal>
   );

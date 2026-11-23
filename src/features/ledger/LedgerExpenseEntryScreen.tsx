@@ -124,7 +124,8 @@ import {
   seedReceiptReviewFromExpense,
   type ReceiptReviewState,
 } from "./receiptReview";
-import { ReceiptReviewSheet } from "./ReceiptReviewSheet";
+import { LedgerReceiptReviewPresentation } from "./LedgerReceiptReviewPresentation";
+import { ReceiptScanSourceFields, type ReceiptScanSource } from "./ReceiptScanSourceFields";
 import {
   applyExpenseSharing,
   compactExpenseDate,
@@ -277,7 +278,7 @@ export function LedgerExpenseEntryScreen() {
   const scanOcrQueue = useRef<string[]>([]);
   const [scanSourceVisible, setScanSourceVisible] = useState(false);
   const scanSourceAddPart = useRef(false);
-  const pendingScanSource = useRef<"camera" | "photo" | "file" | null>(null);
+  const pendingScanSource = useRef<ReceiptScanSource | null>(null);
   const largeText = fontScale > 2;
   const retainedReceipts = existingReceipts.filter(
     (item) => !removedReceiptIds.includes(item.id),
@@ -682,11 +683,16 @@ export function LedgerExpenseEntryScreen() {
     : splitResult.splits;
 
   const attach = async (
-    kind: "camera" | "photo" | "file",
+    kind: ReceiptScanSource,
     scan = false,
     addPart = false,
+    canLaunch?: () => boolean,
   ) => {
-    if (!context || (scan && existing)) return;
+    const generation = getAccountGeneration();
+    const priorScanSessionId = scanSessionRef.current?.sessionId;
+    const ownsSelection = () => mountedRef.current && generation === getAccountGeneration() &&
+      (!addPart || scanSessionRef.current?.sessionId === priorScanSessionId);
+    if (!context || (scan && existing) || canLaunch?.() === false) return;
     if (addingReceiptRef.current) return;
     if (scan && scanSessionRef.current && !addPart) {
       Keyboard.dismiss();
@@ -740,6 +746,7 @@ export function LedgerExpenseEntryScreen() {
           kind === "camera"
             ? await ImagePicker.requestCameraPermissionsAsync()
             : await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!ownsSelection() || canLaunch?.() === false) return;
         if (!permission.granted) throw new Error(t("extra.copy3"));
         const result =
           kind === "camera"
@@ -757,7 +764,7 @@ export function LedgerExpenseEntryScreen() {
             name: asset.fileName,
           }));
       }
-      if (!sources.length) return;
+      if (!ownsSelection() || canLaunch?.() === false || !sources.length) return;
       if (sources.length > remaining)
         throw new Error(
           `Select up to ${remaining} attachment${remaining === 1 ? "" : "s"}.`,
@@ -802,7 +809,8 @@ export function LedgerExpenseEntryScreen() {
           );
           selectedDraft = next;
           if (
-            !mountedRef.current ||
+            !mountedRef.current || generation !== getAccountGeneration() ||
+            canLaunch?.() === false ||
             (currentScan && scanSessionRef.current?.sessionId !== currentScan.sessionId)
           ) {
             discardExpenseReceiptDraft(next);
@@ -864,11 +872,11 @@ export function LedgerExpenseEntryScreen() {
         }
       }
       const message = cause instanceof Error ? cause.message : t("extra.copy5");
-      setError(message);
+      if (ownsSelection() && canLaunch?.() !== false) setError(message);
     } finally {
       addingReceiptRef.current = false;
-      setSelectingReceipt(false);
-      if (scan && mountedRef.current && scanSessionRef.current) {
+      if (mountedRef.current) setSelectingReceipt(false);
+      if (scan && ownsSelection() && canLaunch?.() !== false && scanSessionRef.current) {
         Keyboard.dismiss();
         setReviewVisible(true);
       }
@@ -1181,43 +1189,15 @@ export function LedgerExpenseEntryScreen() {
             <Text accessibilityRole="header" style={styles.scanSourceTitle}>
               {t("ui.scanReceipt")}
             </Text>
-            <Text style={styles.hint}>
-              {t("ui.scanOneReceiptOrAddMultiplePartsOfALong")}
-            </Text>
-            <Text style={styles.hint}>
-              {selectedReceiptCount + (scanSession?.documents.length ?? 0) === 0
-                ? t("entry.upToImages", { count: MAX_EXPENSE_ATTACHMENTS })
-                : t("entry.slots", { count: remainingAttachmentSlots })}
-            </Text>
-            {(
-              [
-                ["camera", t("ui.camera"), t("extra.copy0")],
-                ["photo", t("ui.photoLibrary"), t("extra.copy1")],
-                ["file", t("ui.files"), t("extra.copy2")],
-              ] as const
-            ).map(([kind, title, subtitle]) => (
-              <Pressable
-                key={kind}
-                accessibilityRole="button"
-                accessibilityLabel={`${title}. ${subtitle}`}
-                disabled={receiptCapacityFull}
-                style={styles.scanSourceOption}
-                onPress={() => {
-                  pendingScanSource.current = kind;
-                  setScanSourceVisible(false);
-                }}
-              >
-                <Text style={styles.scanActionText}>{title}</Text>
-                <Text style={styles.hint}>{subtitle}</Text>
-              </Pressable>
-            ))}
-            <Pressable
-              accessibilityRole="button"
-              style={styles.scanSourceOption}
-              onPress={() => setScanSourceVisible(false)}
-            >
-              <Text style={styles.scanActionText}>{t("ui.cancel")}</Text>
-            </Pressable>
+            <ReceiptScanSourceFields
+              count={selectedReceiptCount + (scanSession?.documents.length ?? 0)}
+              slots={remainingAttachmentSlots}
+              onChoose={kind => {
+                pendingScanSource.current = kind;
+                setScanSourceVisible(false);
+              }}
+              onCancel={() => setScanSourceVisible(false)}
+            />
           </ScrollView>
         </SafeAreaView>
       </View>
@@ -1674,7 +1654,7 @@ export function LedgerExpenseEntryScreen() {
       />
 
       {scanSession && receiptReview ? (
-        <ReceiptReviewSheet
+        <LedgerReceiptReviewPresentation
           canScanAnother={
             !receiptCapacityFull &&
             !selectingReceipt &&
@@ -1687,7 +1667,8 @@ export function LedgerExpenseEntryScreen() {
           defaultCurrency={context.defaultCurrency}
           journeyCurrency={context.settlementCurrency}
           onCancel={() => {
-            discardPendingScan();
+            if (scanSessionRef.current?.sessionId === scanSession.sessionId)
+              discardPendingScan();
           }}
           onChange={(next) => {
             setReceiptReview(next);
@@ -1757,7 +1738,11 @@ export function LedgerExpenseEntryScreen() {
               /* retain for recovery */
             }
           }}
-          onScanAnother={() => chooseReceipt(true, true)}
+          isPickingSource={() => addingReceiptRef.current}
+          isCurrentScan={() => mountedRef.current && scanSessionRef.current === scanSession}
+          onScanAnother={(source, canLaunch) => source
+            ? void attach(source, true, true, canLaunch)
+            : chooseReceipt(true, true)}
           sourceChooser={reviewVisible ? scanSourceSheet : null}
           review={receiptReview}
           session={scanSession}
@@ -2388,13 +2373,6 @@ const createStyles = (colors: UiColors) =>
       maxHeight: "90%",
     },
     scanSourceContent: { padding: 20, gap: 12 },
-    scanSourceOption: {
-      backgroundColor: colors.groupedBackground,
-      borderRadius: 10,
-      padding: 14,
-      gap: 4,
-      minHeight: 44,
-    },
     dateOverlay: { flex: 1, justifyContent: "flex-end" },
     dateBackdrop: {
       ...StyleSheet.absoluteFill,

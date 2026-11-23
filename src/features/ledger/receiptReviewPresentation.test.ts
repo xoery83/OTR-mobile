@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+import { advanceAccountGeneration, getAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  bindLedgerReceiptReviewPicker, openLedgerReceiptReview, readLedgerReceiptReviewPicker,
+  readLedgerReceiptReview, releaseLedgerReceiptReviewPicker, releaseLedgerReceiptReview, updateLedgerReceiptReview,
+} from "./ledgerReceiptReviewSheet";
 import {
   activeReceiptId,
   amountTagSelected,
@@ -37,6 +42,54 @@ const draft = (id: string, scanOrder: number) => ({
 const pending = () =>
   addReceiptScanDocument(createReceiptScanSession("session"), draft("one", 0));
 const reviewState = () => createReceiptReviewState(pending(), "NZD", "USD");
+
+it("keeps the hosted review bound to the original scan, current picker and account", () => {
+  const owner = {
+    visible: true,
+    session: pending(),
+    review: reviewState(),
+    journeyCurrency: "NZD",
+    defaultCurrency: "USD",
+    onChange: vi.fn(),
+    onCancel: vi.fn(),
+    onConfirm: vi.fn(),
+    onRetry: vi.fn(),
+    onRemove: vi.fn(),
+    onScanAnother: vi.fn(),
+    canScanAnother: true,
+    scanBusy: false,
+  };
+  const generation = getAccountGeneration();
+  const id = openLedgerReceiptReview(owner, generation);
+  expect(id).toBeDefined();
+  expect(openLedgerReceiptReview(owner, generation)).toBeUndefined();
+  const choice = { kind: "currency" as const, title: "Currency", selected: "NZD", suggestions: ["NZD"], isCurrent: () => true, choose: vi.fn() };
+  const selection = bindLedgerReceiptReviewPicker(id, choice);
+  expect(selection).toBeDefined();
+  expect(bindLedgerReceiptReviewPicker(id, choice)).toBeUndefined();
+  expect(readLedgerReceiptReviewPicker(id, selection)?.kind).toBe("currency");
+  releaseLedgerReceiptReviewPicker(id, "stale");
+  expect(readLedgerReceiptReviewPicker(id, selection)?.kind).toBe("currency");
+  const selecting = { ...owner, isPickingSource: () => true };
+  updateLedgerReceiptReview(id, selecting);
+  updateLedgerReceiptReview(id, { ...owner, session: createReceiptScanSession("another-scan") });
+  expect(readLedgerReceiptReview(id)).toBe(selecting);
+  releaseLedgerReceiptReviewPicker(id, selection);
+  expect(bindLedgerReceiptReviewPicker(id, choice)).toBeUndefined();
+  updateLedgerReceiptReview(id, owner);
+  const next = bindLedgerReceiptReviewPicker(id, choice);
+  expect(next).toBeDefined();
+  const revised = { ...owner, session: { ...owner.session, revision: owner.session.revision + 1 } };
+  updateLedgerReceiptReview(id, revised);
+  updateLedgerReceiptReview(id, owner);
+  expect(readLedgerReceiptReview(id)).toBe(revised);
+  expect(readLedgerReceiptReviewPicker(id, next)).toBeUndefined();
+  advanceAccountGeneration();
+  expect(readLedgerReceiptReview(id)).toBeUndefined();
+  expect(readLedgerReceiptReviewPicker(id, next)).toBeUndefined();
+  expect(openLedgerReceiptReview(owner, generation)).toBeUndefined();
+  releaseLedgerReceiptReview(id);
+});
 
 it("packs actual widths into two rows and reserves the final 44pt overflow", () => {
   expect(candidateRows([70, 70, 70, 70, 70, 70], 240)).toEqual({
@@ -263,8 +316,8 @@ it("wires only three fields, unified candidate groups, capacity and accepted C4 
   expect(sheet).toContain("alwaysOverflow");
   expect(sheet).toContain("onOverflow={openCurrency}");
   expect(sheet).toContain("setOverflow(null)");
-  expect(sheet).toContain('setOverflow("Title")');
-  expect(sheet).toContain('setOverflow("Amount")');
+  expect(sheet).toContain('openCandidates("Title")');
+  expect(sheet).toContain('openCandidates("Amount")');
   expect(sheet.indexOf('t("ui.scanAnotherPart2")')).toBeLessThan(
     sheet.indexOf('t("ui.receiptReviewTitle")'),
   );
@@ -291,7 +344,7 @@ it("keeps drawer accessible, native zoom separate from collapse, and explicit re
   expect(sheet).toMatch(/t\("receipt\.remove",\s*\{\s*number: active\.number,?\s*\}\)/);
   expect(sheet).toContain("onRetry(active.documentId)");
   expect(sheet).toContain('t("ui.hideImage")');
-  expect(sheet).toContain('setOverflow("Currency")');
+  expect(sheet).toContain('openCandidates("Currency")');
   expect(sheet).toContain("backgroundColor: colors.overlay");
   expect(sheet).toContain("backgroundColor: colors.transparent");
   expect(sheet).toContain("compare && styles.compareOverflowSheet");
@@ -334,5 +387,5 @@ it("keeps landscape scan controls in the form pane and adapts financial fields",
   expect(sheet).toContain("{compare && !landscape ? (");
   expect(sheet).toContain("landscape && panes.form >= 280 * window.fontScale");
   expect(sheet).toContain("compactFinancial && styles.financialRow");
-  expect(sheet).toContain('edges={["left", "right", "bottom"]}');
+  expect(sheet).toContain('edges={hosted ? [] : ["left", "right", "bottom"]}');
 });
