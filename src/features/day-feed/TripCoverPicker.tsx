@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -28,6 +28,18 @@ import { builtInTripCoverSource, tripCoverId, tripCoverSource } from "./tripCove
 import { suggestedCoverIds, tripCoverDescription } from "./tripCoverRecommendations";
 import { TripCoverVisual } from "./TripCoverVisual";
 
+export type CoverPhotoHandoff = {
+  isCurrent(): boolean;
+  returnToEditor(): boolean;
+};
+
+export type TripCoverSheetValue = {
+  trip: CoverMetadata;
+  selectedRaw?: string | null;
+  onSelect(id: TripCoverChoice | null): Promise<void>;
+  onChoosePhoto?(processing: () => Promise<void>, handoff?: CoverPhotoHandoff): Promise<boolean>;
+};
+
 export function TripCoverPicker({
   trip,
   selectedRaw,
@@ -36,16 +48,19 @@ export function TripCoverPicker({
   presentation = "editor",
   onClose,
   hosted,
-}: {
-  trip: CoverMetadata;
-  selectedRaw?: string | null;
-  onSelect(id: TripCoverChoice | null): Promise<void>;
-  onChoosePhoto?(processing: () => Promise<void>): Promise<boolean>;
+  openLibrary,
+}: TripCoverSheetValue & {
+  openLibrary?(cover: TripCoverSheetValue): void;
   presentation?: "editor" | "standalone";
   onClose?(): void;
   hosted?: {
     setBusy(value: boolean): void;
     canInteract(): boolean;
+    child?: {
+      onBack(): void;
+      onSelect(id: TripCoverChoice | null, closeAfter: boolean): Promise<void>;
+      action?: ComponentProps<typeof SheetRoutePanel>["action"];
+    };
   };
 }) {
   useUiLocale();
@@ -80,7 +95,8 @@ export function TripCoverPicker({
     setError(false);
     setPhotoSaved(false);
     try {
-      await onSelect(id);
+      if (hosted?.child) await hosted.child.onSelect(id, closeAfter);
+      else await onSelect(id);
     } catch {
       if (alive.current) setError(true);
       return;
@@ -89,7 +105,7 @@ export function TripCoverPicker({
       hosted?.setBusy(false);
       if (alive.current) setSaving(false);
     }
-    if (closeAfter && alive.current) dismiss();
+    if (closeAfter && alive.current && !hosted?.child) dismiss();
   };
   const choosePhoto = async () => {
     if (busy.current || !onChoosePhoto || hosted?.canInteract() === false) return;
@@ -107,7 +123,7 @@ export function TripCoverPicker({
           requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
         );
       });
-      if (chosen && alive.current) {
+      if (chosen && alive.current && !hosted?.child) {
         if (presentation === "standalone") setPhotoSaved(true);
         else dismiss();
       }
@@ -218,7 +234,10 @@ export function TripCoverPicker({
   );
   if (hosted) {
     return (
-      <SheetRoutePanel title={t("myTrips.chooseCover")} leadingDisabled={saving}>
+      <SheetRoutePanel title={t("myTrips.chooseCover")} leadingDisabled={saving}
+        onBack={hosted.child?.onBack}
+        action={hosted.child?.action && { ...hosted.child.action, disabled: saving || hosted.child.action.disabled }}
+      >
         {library}
       </SheetRoutePanel>
     );
@@ -230,8 +249,11 @@ export function TripCoverPicker({
           accessibilityRole="button"
           accessibilityLabel={t("myTrips.chooseCover")}
           onPress={() => {
-            setError(false);
-            setOpen(true);
+            if (openLibrary) openLibrary({ trip, selectedRaw, onSelect, onChoosePhoto });
+            else {
+              setError(false);
+              setOpen(true);
+            }
           }}
           style={styles.preview}
         >
@@ -247,7 +269,7 @@ export function TripCoverPicker({
           </View>
         </Pressable>
       ) : null}
-      <Modal
+      {openLibrary ? null : <Modal
         visible={open}
         presentationStyle="pageSheet"
         animationType="slide"
@@ -266,7 +288,7 @@ export function TripCoverPicker({
             {library}
           </ScrollView>
         </SafeAreaView>
-      </Modal>
+      </Modal>}
     </View>
   );
 }

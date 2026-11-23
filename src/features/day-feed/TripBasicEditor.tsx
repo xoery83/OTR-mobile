@@ -59,6 +59,7 @@ export function TripBasicEditor({
   readGuestRecoveryContext,
   onHandoffFrozenChange,
   SheetPanel,
+  openCoverLibrary,
 }: {
   trip: Pick<
     Trip,
@@ -73,6 +74,7 @@ export function TripBasicEditor({
   >;
   metadataEditable: boolean;
   SheetPanel?: ComponentType<ComponentProps<typeof SheetRoutePanel>>;
+  openCoverLibrary?: ComponentProps<typeof TripCoverPicker>["openLibrary"];
   onSelectCover(id: BuiltInTripCoverId | null): Promise<void>;
   onSaveMetadata(
     before: TripMetadata,
@@ -168,6 +170,7 @@ export function TripBasicEditor({
     [end, setEnd] = useState(trip.endDate ?? ""),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(false),
+    [coverPhotoError, setCoverPhotoError] = useState(false),
     [saved, setSaved] = useState(false);
   const after = {
     name: name.trim(),
@@ -473,6 +476,12 @@ export function TripBasicEditor({
     {coverAvailable ? (
       <UiSection title={t("tripHome.coverTools")}>
         <TripCoverPicker
+          openLibrary={metadataEditable && openCoverLibrary ? cover => {
+            if (current() && !busy.current) {
+              setCoverPhotoError(false);
+              openCoverLibrary(cover);
+            }
+          } : undefined}
           trip={{
             ...trip,
             name: after.name,
@@ -494,7 +503,7 @@ export function TripBasicEditor({
             if (metadataEditable) {
               if (beforeCover === undefined)
                 throw new Error("TRIP_COVER_STATE_UNAVAILABLE");
-              if (!busy.current) {
+              if (current() && !busy.current) {
                 setDraftCover(id);
                 setCoverChanged(true);
                 setSaved(false);
@@ -505,10 +514,10 @@ export function TripBasicEditor({
           }}
           onChoosePhoto={
             metadataEditable && beforeCover !== undefined
-              ? async (processing) => {
-                  const current = () =>
-                    alive.current && generation === getAccountGeneration();
-                  if (!current() || busy.current) return false;
+              ? async (processing, handoff) => {
+                  const canContinue = () => current() && (handoff?.isCurrent() ?? true);
+                  if (!canContinue() || busy.current) return false;
+                  if (handoff) setCoverPhotoError(false);
                   const choice = await ImagePicker.launchImageLibraryAsync({
                     mediaTypes: ["images"],
                     allowsMultipleSelection: false,
@@ -516,25 +525,46 @@ export function TripBasicEditor({
                     base64: false,
                     exif: false,
                   });
-                  if (!current() || choice.canceled) return false;
+                  if (!canContinue() || choice.canceled) return false;
                   await processing?.();
-                  if (!current()) return false;
+                  if (!canContinue()) return false;
                   const repo = await readLocalTripPhotoRepository();
-                  if (!current()) return false;
+                  if (!canContinue()) return false;
                   const uri = choice.assets[0]?.uri;
                   if (!uri?.startsWith("file://"))
                     throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
-                  const photo = await repo.addTripPhoto(trip.id, uri);
-                  if (!current()) return false;
-                  if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
-                  setDraftCover(tripPhotoCoverRef(photo.assetId));
-                  setCoverChanged(true);
-                  setSaved(false);
-                  return true;
+                  if (handoff && (!handoff.returnToEditor() || !current() || busy.current)) return false;
+                  if (handoff) {
+                    busy.current = true;
+                    onSavingChange?.(true);
+                    setSaving(true);
+                  }
+                  try {
+                    const photo = await repo.addTripPhoto(trip.id, uri);
+                    if (!current()) return false;
+                    if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
+                    setDraftCover(tripPhotoCoverRef(photo.assetId));
+                    setCoverChanged(true);
+                    setSaved(false);
+                    return true;
+                  } catch (error) {
+                    if (!handoff) throw error;
+                    if (current()) setCoverPhotoError(true);
+                    return false;
+                  } finally {
+                    if (handoff) {
+                      busy.current = false;
+                      onSavingChange?.(false);
+                      if (current()) setSaving(false);
+                    }
+                  }
                 }
               : undefined
           }
         />
+        {coverPhotoError ? (
+          <UiText accessibilityRole="alert" style={styles.error}>{t("myTrips.coverFailed")}</UiText>
+        ) : null}
       </UiSection>
     ) : null}
     <TripCurrencyRow

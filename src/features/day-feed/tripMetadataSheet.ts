@@ -2,11 +2,12 @@ import type { ComponentProps, ReactElement } from "react";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { createCalendarRangePickerHandoff } from "./calendarRangePickerHandoff";
 
+import { tripMetadataCoverBusy } from "./tripCoverSheet";
 import type { TripBasicEditor } from "./TripBasicEditor";
 
 export const hostedTripMetadataEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_SETUP_QA === "true";
 
-export type MetadataEditorElement = ReactElement<Pick<ComponentProps<typeof TripBasicEditor>, "SheetPanel">>;
+export type MetadataEditorElement = ReactElement<Pick<ComponentProps<typeof TripBasicEditor>, "SheetPanel" | "openCoverLibrary">>;
 
 type MetadataEditor = {
   editor: MetadataEditorElement | null;
@@ -52,7 +53,7 @@ export function updateTripMetadataSheet(id: string | undefined, value: MetadataE
 export function interceptTripMetadataClose(id: string | undefined) {
   const sheet = readTripMetadataSheet(id);
   if (!sheet?.open) return false;
-  sheet.requestClose();
+  if (!tripMetadataCoverBusy(id)) sheet.requestClose();
   return true;
 }
 

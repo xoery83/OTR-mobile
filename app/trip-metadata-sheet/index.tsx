@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { usePreventRemove } from "expo-router/react-navigation";
+import { usePreventRemove, useRoute } from "expo-router/react-navigation";
 import { cloneElement, useEffect, useRef, useSyncExternalStore } from "react";
 import { useSheetMotion } from "@/components/SheetHost";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { openTripCoverSheet, releaseTripMetadataCoverOwner } from "@/features/day-feed/tripCoverSheet";
 import { OpenCalendarRangePickerContext } from "@/features/day-feed/calendarRangePickerHandoff";
 import {
   metadataCalendar, readTripMetadataSheet, releaseTripMetadataSheet, subscribeTripMetadataSheet,
@@ -17,6 +19,7 @@ export default function TripMetadataSheetRoute() {
   const { requestClose, isExitPending } = useSheetMotion();
   const sheet = useSyncExternalStore(subscribeTripMetadataSheet, () => readTripMetadataSheet(invocation));
   const opened = useRef(false);
+  const route = useRoute();
   usePreventRemove(!!sheet?.open, () => {
     if (navigation.isFocused()) requestClose();
   });
@@ -25,7 +28,10 @@ export default function TripMetadataSheetRoute() {
     else if (opened.current) requestClose();
   }, [requestClose, sheet]);
   useEffect(() => () => {
-    queueMicrotask(() => releaseTripMetadataSheet(invocation));
+    queueMicrotask(() => {
+      releaseTripMetadataCoverOwner(invocation);
+      releaseTripMetadataSheet(invocation);
+    });
   }, [invocation]);
   if (!sheet?.open || !sheet.editor) return <SheetRoutePanel title={t("tripHome.edit")}>{null}</SheetRoutePanel>;
   return (
@@ -36,7 +42,18 @@ export default function TripMetadataSheetRoute() {
       router.push({ pathname: "/trip-metadata-sheet/dates", params: { invocation, selection } });
       return true;
     }}>
-      {cloneElement(sheet.editor, { SheetPanel: SheetRoutePanel })}
+      {cloneElement(sheet.editor, {
+        SheetPanel: SheetRoutePanel,
+        openCoverLibrary: cover => {
+          if (!invocation || !navigation.isFocused() || isExitPending() ||
+              !readTripMetadataSheet(invocation)?.open) return;
+          const selection = openTripCoverSheet(getAccountGeneration(), cover, invocation);
+          if (!selection) return;
+          router.push({ pathname: "/trip-metadata-sheet/cover", params: {
+            invocation, selection, editorKey: route.key,
+          } });
+        },
+      })}
     </OpenCalendarRangePickerContext.Provider>
   );
 }

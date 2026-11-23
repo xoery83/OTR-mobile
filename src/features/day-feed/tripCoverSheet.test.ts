@@ -2,9 +2,12 @@ import { expect, it, vi } from "vitest";
 import {
   openTripCoverSheet,
   readTripCoverSheet,
+  readTripMetadataCover,
   releaseTripCoverSheet,
+  releaseTripMetadataCover,
   setTripCoverSheetBusy,
   tripCoverSheetBusy,
+  tripMetadataCoverBusy,
   updateTripCoverSheet,
 } from "./tripCoverSheet";
 
@@ -40,4 +43,22 @@ it("keeps cover updates and the in-flight close guard within the owning Trip and
   releaseTripCoverSheet(invocation);
   expect(readTripCoverSheet(next)).toBe(cover);
   releaseTripCoverSheet(next);
+});
+
+it("only exposes and releases a metadata choice for its exact editor invocation", () => {
+  const cover = { trip: { id: "trip" }, onSelect: vi.fn() };
+  const hero = openTripCoverSheet(account.generation, cover);
+  expect(readTripMetadataCover("editor", hero)).toBeUndefined();
+  releaseTripCoverSheet(hero);
+
+  const choice = openTripCoverSheet(account.generation, cover, "editor");
+  setTripCoverSheetBusy(choice, true);
+  expect(readTripMetadataCover("editor", choice)).toBe(cover);
+  expect(readTripMetadataCover("other", choice)).toBeUndefined();
+  expect(tripMetadataCoverBusy("editor")).toBe(true);
+  expect(tripMetadataCoverBusy("other")).toBe(false);
+  releaseTripMetadataCover("other", choice);
+  expect(readTripMetadataCover("editor", choice)).toBe(cover);
+  releaseTripMetadataCover("editor", choice);
+  expect(tripMetadataCoverBusy("editor")).toBe(false);
 });
