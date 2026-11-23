@@ -767,3 +767,32 @@ it("keeps intake recovery and unattached batches on the original history flow", 
   expect(renderToStaticMarkup(createElement(CaptureProgress, { ...defaults, model: attached })))
     .toContain("historical-detail");
 });
+
+it("opens a retained personal original from the hosted historical fallback while the owner is current", async () => {
+  vi.stubGlobal("__DEV__", false);
+  const f = fixture();
+  const request = await f.submit();
+  const model = await f.submissions.reopen(request.jobId);
+  const input = model.inputs[0];
+  expect(input.state).toBe("ACCEPTED");
+  const open = vi.fn();
+  let current = true;
+  const props = {
+    model, historical: true, accountId: model.batch.accountId,
+    busy: false, reading: false, error: false, canRetry: false,
+    onRetry: vi.fn(), onRecover: vi.fn(), onOpenJob: vi.fn(),
+    onActivity: vi.fn(), onNewImport: vi.fn(), isCurrent: () => current,
+    onOpenHistoricalMaterial: open,
+  };
+  const action = () => state.buttons.find(({ label }) => label === t("importDocuments.openOriginal"));
+  renderToStaticMarkup(createElement(CaptureProgress, props));
+  expect(action()).toBeUndefined();
+  renderToStaticMarkup(createElement(CaptureProgress, { ...props, hosted: true }));
+  const original = action();
+  expect(original).toBeDefined();
+  original.onPress();
+  expect(open).toHaveBeenCalledExactlyOnceWith(input.state === "ACCEPTED" && input.captureId, undefined);
+  current = false;
+  original.onPress();
+  expect(open).toHaveBeenCalledTimes(1);
+});

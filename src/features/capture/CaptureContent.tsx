@@ -119,12 +119,15 @@ export function CaptureContent({
   }>();
   const localPositions = useRef<Record<string, number>>({});
   const positionsRef = activityPositionsRef ?? localPositions;
-  const [documents, setDocuments] = useState<{
+  const [documentLocation, setDocuments] = useState<{
     scope: ImportDocumentScope;
     captureId?: string;
     historyTripId?: string;
+    historyBatchId?: string;
     fromHistory?: boolean;
   } | null>(null);
+  const documents = documentLocation?.fromHistory && documentLocation.historyBatchId !== model?.batch.batchId
+    ? null : documentLocation;
   const [reading, setReading] = useState(!!jobId);
   const [readError, setReadError] = useState(false);
   const readEpoch = useRef(0);
@@ -376,9 +379,11 @@ export function CaptureContent({
       const result = await staging.pick(source);
       if (current()) setDuplicate(!!result?.duplicates);
     };
+    const materialReadEpoch = readEpoch.current;
     const progressContent = accountId ? (
       <CaptureProgress
         historical={reopening && !attempted}
+        hosted={hostedComposer}
         historicalTripName={
           (model?.batch.context.tripPrior?.id ?? model?.assignedTripId) ===
           selectedTripPrior
@@ -386,11 +391,14 @@ export function CaptureContent({
             : undefined
         }
         onOpenHistoricalMaterial={(captureId, tripId) => {
-          if (current())
+          const batchId = model?.batch.batchId;
+          if (batchId && current() && materialReadEpoch === readEpoch.current
+            && modelRef.current?.batch.batchId === batchId)
             setDocuments({
               scope: tripId ? "TRIP" : "PERSONAL_INBOX",
               captureId,
               historyTripId: tripId,
+              historyBatchId: batchId,
               fromHistory: true,
             });
         }}
@@ -683,13 +691,13 @@ export function CaptureContent({
                 >
                   {progressContent}
                 </View>
-                {historyViewer && model ? (
+                {historyViewer?.historyBatchId ? (
                   <ImportDocumentsPanel
                     accountId={accountId}
                     tripId={historyViewer.historyTripId ?? null}
                     scope={historyViewer.scope}
                     captureId={historyViewer.captureId}
-                    originalBatchId={model.batch.batchId}
+                    originalBatchId={historyViewer.historyBatchId}
                     onOriginalDismiss={() => {
                       if (current()) setDocuments(null);
                     }}

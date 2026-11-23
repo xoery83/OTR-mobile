@@ -33,6 +33,7 @@ const UniversalResults = lazy(() =>
 export function CaptureProgress({
   model,
   historical = false,
+  hosted = false,
   historicalTripName,
   onOpenHistoricalMaterial,
   readTripTargets,
@@ -58,6 +59,7 @@ export function CaptureProgress({
 }: {
   model: CaptureJobReadModel | null;
   historical?: boolean;
+  hosted?: boolean;
   historicalTripName?: string;
   onOpenHistoricalMaterial?(captureId: string, tripId?: string): void;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
@@ -378,91 +380,99 @@ export function CaptureProgress({
               <UiText accessibilityRole="header" style={styles.copy}>
                 {t("capture.ai.originals")}
               </UiText>
-              {activity.currentInputs.map((item) => (
-                <View key={item.inputId} style={styles.fact}>
-                  <UiText style={styles.copy}>
-                    {item.originalFilename ??
-                      t(
-                        model?.inputs.find((input) => input.id === item.inputId)?.kind ===
-                          "TEXT"
-                          ? "capture.ai.submittedText"
-                          : "capture.unnamed",
-                      )}
-                  </UiText>
-                  <UiText style={styles.secondary}>
-                    {t(
-                      item.state === "ACCEPTED"
-                        ? "capture.accepted"
-                        : item.state === "FAILED"
-                          ? "capture.failed"
-                          : "capture.pending",
-                    )}
-                  </UiText>
-                  {showLegacyPhotoReview &&
-                  photoRelevanceCopy &&
-                  isCurrent &&
-                  model &&
-                  !reading &&
-                  !error
-                    ? (() => {
-                        const input = model.inputs.find(
-                          (input) => input.id === item.inputId,
-                        );
-                        return input &&
-                          (isPhotoImportMaterial(input) ||
-                            (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED ===
-                              "true" &&
-                              isV3PhotoImportMaterial(input))) &&
-                          input.state === "ACCEPTED" ? (
-                          <UniversalPhotoRelevanceRow
-                            model={model}
-                            input={input}
-                            isCurrent={isCurrent}
-                            copy={photoRelevanceCopy}
-                          />
-                        ) : null;
-                      })()
-                    : null}
-                  {item.failureCode ? (
-                    <UiText style={styles.secondary}>
-                      {t(`capture.failure.${item.failureCode}`)}
+              {activity.currentInputs.map((item) => {
+                const input = model?.inputs.find(({ id }) => id === item.inputId);
+                const captureId = input?.kind === "TEXT" && input.state === "ACCEPTED"
+                  ? input.captureId : undefined;
+                return (
+                  <View key={item.inputId} style={styles.fact}>
+                    <UiText style={styles.copy}>
+                      {item.originalFilename ??
+                        t(
+                          input?.kind === "TEXT"
+                            ? "capture.ai.submittedText"
+                            : "capture.unnamed",
+                        )}
                     </UiText>
-                  ) : null}
-                  {activity.recoveryInputIds.includes(item.inputId) ? (
-                    <UiButton
-                      label={t(
-                        model?.inputs.find((input) => input.id === item.inputId)
-                          ?.contentSha256
-                          ? "capture.recoverPinned"
-                          : model?.inputs.find((input) => input.id === item.inputId)
-                                ?.acquisitionSource === "photos"
-                            ? "capture.continueMissingPhoto"
-                            : "capture.continueMissing",
+                    <UiText style={styles.secondary}>
+                      {t(
+                        item.state === "ACCEPTED"
+                          ? "capture.accepted"
+                          : item.state === "FAILED"
+                            ? "capture.failed"
+                            : "capture.pending",
                       )}
-                      variant="secondary"
-                      disabled={busy || reading}
-                      onPress={() => onRecover(item.inputId)}
-                    />
-                  ) : null}
-                  {item.continuesFromJobId ? (
-                    <UiButton
-                      label={t("capture.priorJob")}
-                      variant="text"
-                      disabled={busy || reading}
-                      onPress={() => onOpenJob(item.continuesFromJobId!)}
-                    />
-                  ) : null}
-                  {item.continuedIn.map((link) => (
-                    <UiButton
-                      key={link.inputId}
-                      label={t("capture.nextJob")}
-                      variant="text"
-                      disabled={busy || reading}
-                      onPress={() => onOpenJob(link.jobId)}
-                    />
-                  ))}
-                </View>
-              ))}
+                    </UiText>
+                    {showLegacyPhotoReview &&
+                    photoRelevanceCopy &&
+                    isCurrent &&
+                    model &&
+                    !reading &&
+                    !error
+                      ? (() => {
+                          return input &&
+                            (isPhotoImportMaterial(input) ||
+                              (process.env.EXPO_PUBLIC_OTR_UNIVERSAL_LOCAL_FIRST_ENABLED ===
+                                "true" &&
+                                isV3PhotoImportMaterial(input))) &&
+                            input.state === "ACCEPTED" ? (
+                            <UniversalPhotoRelevanceRow
+                              model={model}
+                              input={input}
+                              isCurrent={isCurrent}
+                              copy={photoRelevanceCopy}
+                            />
+                          ) : null;
+                        })()
+                      : null}
+                    {hosted && historical && captureId && onOpenHistoricalMaterial && isCurrent ? (
+                      <UiButton
+                        label={t("importDocuments.openOriginal")}
+                        variant="text"
+                        onPress={() => {
+                          if (isCurrent()) onOpenHistoricalMaterial(captureId, trip ?? undefined);
+                        }}
+                      />
+                    ) : null}
+                    {item.failureCode ? (
+                      <UiText style={styles.secondary}>
+                        {t(`capture.failure.${item.failureCode}`)}
+                      </UiText>
+                    ) : null}
+                    {activity.recoveryInputIds.includes(item.inputId) ? (
+                      <UiButton
+                        label={t(
+                          input?.contentSha256
+                            ? "capture.recoverPinned"
+                            : input?.acquisitionSource === "photos"
+                              ? "capture.continueMissingPhoto"
+                              : "capture.continueMissing",
+                        )}
+                        variant="secondary"
+                        disabled={busy || reading}
+                        onPress={() => onRecover(item.inputId)}
+                      />
+                    ) : null}
+                    {item.continuesFromJobId ? (
+                      <UiButton
+                        label={t("capture.priorJob")}
+                        variant="text"
+                        disabled={busy || reading}
+                        onPress={() => onOpenJob(item.continuesFromJobId!)}
+                      />
+                    ) : null}
+                    {item.continuedIn.map((link) => (
+                      <UiButton
+                        key={link.inputId}
+                        label={t("capture.nextJob")}
+                        variant="text"
+                        disabled={busy || reading}
+                        onPress={() => onOpenJob(link.jobId)}
+                      />
+                    ))}
+                  </View>
+                );
+              })}
             </>
           ) : null}
         </>
