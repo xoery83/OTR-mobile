@@ -92,7 +92,7 @@ export function DocumentSearchFilterFields({
             {t(key === "from" ? "documents.dateFrom" : "documents.dateTo")}
           </UiText>
           {useDateWheels && facets[key] ? (
-            <UiText>{formatUiDate(facets[key], { dateStyle: "long" })}</UiText>
+            <UiText style={styles.meta}>{formatUiDate(facets[key], { dateStyle: "long" })}</UiText>
           ) : null}
           <UiDatePicker
             value={facets[key] ?? new Date()}
