@@ -6,7 +6,7 @@ import { destinationDraft, destinationInputs } from "./tripDestinationDraft";
 import type { LocalTripDestinationsChange } from "@/domain/trip/localTripDestinationUpdate";
 import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestination";
 import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type ComponentType } from "react";
 import { Alert, Modal, ScrollView, StyleSheet, View } from "react-native";
 import type { BuiltInTripCoverId, Trip } from "@/domain/trip/types";
 import {
@@ -27,6 +27,7 @@ import {
 } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripCurrencyRow } from "./TripSetupRows";
 import { SheetHeader } from "@/components/SheetHeader";
+import type { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { rawTripCover } from "@/features/trip-cover/coverDecision";
 import {
   isTripCoverAssetId,
@@ -57,6 +58,7 @@ export function TripBasicEditor({
   guestLocal = false,
   readGuestRecoveryContext,
   onHandoffFrozenChange,
+  SheetPanel,
 }: {
   trip: Pick<
     Trip,
@@ -70,6 +72,7 @@ export function TripBasicEditor({
     | "selectedCoverAssetIdRaw"
   >;
   metadataEditable: boolean;
+  SheetPanel?: ComponentType<ComponentProps<typeof SheetRoutePanel>>;
   onSelectCover(id: BuiltInTripCoverId | null): Promise<void>;
   onSaveMetadata(
     before: TripMetadata,
@@ -417,6 +420,177 @@ export function TripBasicEditor({
         if (current()) setSaving(false);
       });
   };
+  const fields = (
+    <>
+    <UiSection>
+      {!metadataEditable ? (
+        <UiText style={styles.hint}>{t("tripHome.editor.metadataReadOnly")}</UiText>
+      ) : null}
+      <TripMetadataFields
+        name={name}
+        destination={destination}
+        range={{ start, end }}
+        disabled={!metadataEditable || saving || handoffFrozen}
+        onName={(value) => {
+          changeDraft("name", value, setName);
+        }}
+        onDestination={(value) => {
+          changeDraft("destination", value, setDestination);
+        }}
+        destinationEntry={
+          <CreateTripDestinations
+            name={name}
+            tripId={trip.id}
+            editorId={editorId}
+            generation={generation}
+            items={destinationItems}
+            onChange={(items) => {
+              changeDraft("destinationItems", items, setDestinationItems);
+            }}
+            onQueryDirty={(query) => {
+              if (!alive.current || generation !== getAccountGeneration()) return;
+              interactions.current.query = query;
+              setDestinationQueryDirty(query);
+            }}
+            onBusy={(busy) => {
+              if (!alive.current || generation !== getAccountGeneration()) return;
+              interactions.current.busy = busy;
+              setDestinationBusy(busy);
+            }}
+            disabled={!metadataEditable || saving || handoffFrozen}
+          />
+        }
+        onCalendarOpenChange={(open) => {
+          if (!current()) return false;
+          calendarOpen.current = open;
+        }}
+        onRange={(range) => {
+          changeDraft("start", range.start, setStart);
+          changeDraft("end", range.end, setEnd);
+        }}
+      />
+    </UiSection>
+    {coverAvailable ? (
+      <UiSection title={t("tripHome.coverTools")}>
+        <TripCoverPicker
+          trip={{
+            ...trip,
+            name: after.name,
+            destinations: destinationItems.map((item) => ({
+              displayLabel: item.text,
+            })),
+            destination: destinationItems.length
+              ? destinationItems.map((item) => item.text).join(" · ")
+              : after.destination,
+          }}
+          selectedRaw={
+            metadataEditable
+              ? coverChanged
+                ? draftCover
+                : beforeCover
+              : rawTripCover(trip)
+          }
+          onSelect={async (id) => {
+            if (metadataEditable) {
+              if (beforeCover === undefined)
+                throw new Error("TRIP_COVER_STATE_UNAVAILABLE");
+              if (!busy.current) {
+                setDraftCover(id);
+                setCoverChanged(true);
+                setSaved(false);
+              }
+            } else if (id === null || isTripCoverAssetId(id)) {
+              await onSelectCover(id);
+            } else throw new Error("TRIP_COVER_NOT_EDITABLE");
+          }}
+          onChoosePhoto={
+            metadataEditable && beforeCover !== undefined
+              ? async (processing) => {
+                  const current = () =>
+                    alive.current && generation === getAccountGeneration();
+                  if (!current() || busy.current) return false;
+                  const choice = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ["images"],
+                    allowsMultipleSelection: false,
+                    quality: 1,
+                    base64: false,
+                    exif: false,
+                  });
+                  if (!current() || choice.canceled) return false;
+                  await processing?.();
+                  if (!current()) return false;
+                  const repo = await readLocalTripPhotoRepository();
+                  if (!current()) return false;
+                  const uri = choice.assets[0]?.uri;
+                  if (!uri?.startsWith("file://"))
+                    throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
+                  const photo = await repo.addTripPhoto(trip.id, uri);
+                  if (!current()) return false;
+                  if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
+                  setDraftCover(tripPhotoCoverRef(photo.assetId));
+                  setCoverChanged(true);
+                  setSaved(false);
+                  return true;
+                }
+              : undefined
+          }
+        />
+      </UiSection>
+    ) : null}
+    <TripCurrencyRow
+      setup={currencySetup ?? setup}
+      onOpen={saving || !currencyAvailable ? undefined : () => setCurrencyOpen(true)}
+    />
+    {saved || error ? (
+      <UiSection>
+        {saved ? (
+          <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
+        ) : null}
+        {error ? (
+          <UiText accessibilityRole="alert" style={styles.error}>
+            {t("tripCreate.saveFailed")}
+          </UiText>
+        ) : null}
+      </UiSection>
+    ) : null}
+    </>
+  );
+  const currencyEditor = (
+    <Modal
+      visible={currencyOpen}
+      presentationStyle="pageSheet"
+      animationType="slide"
+      allowSwipeDismissal
+      onRequestClose={closeCurrency}
+    >
+      <SafeAreaView edges={["bottom"]} style={styles.container}>
+        <SheetHeader
+          category="form"
+          title={t("currencySettings.heading")}
+          leftLabel={t("common.back")}
+          safeTop={false}
+          onLeft={closeCurrency}
+        />
+        {currencyOpen ? (
+          <CurrencySettingsScreen key={trip.id} journeyId={trip.id} />
+        ) : null}
+      </SafeAreaView>
+    </Modal>
+  );
+  if (SheetPanel) return (
+    <SheetPanel
+      title={t("tripHome.edit")}
+      leadingDisabled={saving || handoffFrozen}
+      action={metadataEditable ? {
+        label: t("ui.save"),
+        onPress: save,
+        disabled: handoffFrozen || saving || destinationBusy || !valid || !dirty,
+      } : undefined}
+      overlay={currencyEditor}
+    >
+      <View style={styles.root}>{fields}</View>
+    </SheetPanel>
+  );
   return (
     <View style={styles.container}>
       <SheetHeader
@@ -435,158 +609,9 @@ export function TripBasicEditor({
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
       >
-        <UiSection>
-          {!metadataEditable ? (
-            <UiText style={styles.hint}>{t("tripHome.editor.metadataReadOnly")}</UiText>
-          ) : null}
-          <TripMetadataFields
-            name={name}
-            destination={destination}
-            range={{ start, end }}
-            disabled={!metadataEditable || saving || handoffFrozen}
-            onName={(value) => {
-              changeDraft("name", value, setName);
-            }}
-            onDestination={(value) => {
-              changeDraft("destination", value, setDestination);
-            }}
-            destinationEntry={
-              <CreateTripDestinations
-                name={name}
-                tripId={trip.id}
-                editorId={editorId}
-                generation={generation}
-                items={destinationItems}
-                onChange={(items) => {
-                  changeDraft("destinationItems", items, setDestinationItems);
-                }}
-                onQueryDirty={(query) => {
-                  if (!alive.current || generation !== getAccountGeneration()) return;
-                  interactions.current.query = query;
-                  setDestinationQueryDirty(query);
-                }}
-                onBusy={(busy) => {
-                  if (!alive.current || generation !== getAccountGeneration()) return;
-                  interactions.current.busy = busy;
-                  setDestinationBusy(busy);
-                }}
-                disabled={!metadataEditable || saving || handoffFrozen}
-              />
-            }
-            onCalendarOpenChange={(open) => {
-              if (!current()) return false;
-              calendarOpen.current = open;
-            }}
-            onRange={(range) => {
-              changeDraft("start", range.start, setStart);
-              changeDraft("end", range.end, setEnd);
-            }}
-          />
-        </UiSection>
-        {coverAvailable ? (
-          <UiSection title={t("tripHome.coverTools")}>
-            <TripCoverPicker
-              trip={{
-                ...trip,
-                name: after.name,
-                destinations: destinationItems.map((item) => ({
-                  displayLabel: item.text,
-                })),
-                destination: destinationItems.length
-                  ? destinationItems.map((item) => item.text).join(" · ")
-                  : after.destination,
-              }}
-              selectedRaw={
-                metadataEditable
-                  ? coverChanged
-                    ? draftCover
-                    : beforeCover
-                  : rawTripCover(trip)
-              }
-              onSelect={async (id) => {
-                if (metadataEditable) {
-                  if (beforeCover === undefined)
-                    throw new Error("TRIP_COVER_STATE_UNAVAILABLE");
-                  if (!busy.current) {
-                    setDraftCover(id);
-                    setCoverChanged(true);
-                    setSaved(false);
-                  }
-                } else if (id === null || isTripCoverAssetId(id)) {
-                  await onSelectCover(id);
-                } else throw new Error("TRIP_COVER_NOT_EDITABLE");
-              }}
-              onChoosePhoto={
-                metadataEditable && beforeCover !== undefined
-                  ? async (processing) => {
-                      const current = () =>
-                        alive.current && generation === getAccountGeneration();
-                      if (!current() || busy.current) return false;
-                      const choice = await ImagePicker.launchImageLibraryAsync({
-                        mediaTypes: ["images"],
-                        allowsMultipleSelection: false,
-                        quality: 1,
-                        base64: false,
-                        exif: false,
-                      });
-                      if (!current() || choice.canceled) return false;
-                      await processing?.();
-                      if (!current()) return false;
-                      const repo = await readLocalTripPhotoRepository();
-                      if (!current()) return false;
-                      const uri = choice.assets[0]?.uri;
-                      if (!uri?.startsWith("file://"))
-                        throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
-                      const photo = await repo.addTripPhoto(trip.id, uri);
-                      if (!current()) return false;
-                      if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
-                      setDraftCover(tripPhotoCoverRef(photo.assetId));
-                      setCoverChanged(true);
-                      setSaved(false);
-                      return true;
-                    }
-                  : undefined
-              }
-            />
-          </UiSection>
-        ) : null}
-        <TripCurrencyRow
-          setup={currencySetup ?? setup}
-          onOpen={saving || !currencyAvailable ? undefined : () => setCurrencyOpen(true)}
-        />
-        {saved || error ? (
-          <UiSection>
-            {saved ? (
-              <UiText style={styles.hint}>{t("actionIsland.savedLocally")}</UiText>
-            ) : null}
-            {error ? (
-              <UiText accessibilityRole="alert" style={styles.error}>
-                {t("tripCreate.saveFailed")}
-              </UiText>
-            ) : null}
-          </UiSection>
-        ) : null}
+        {fields}
       </ScrollView>
-      <Modal
-        visible={currencyOpen}
-        presentationStyle="pageSheet"
-        animationType="slide"
-        allowSwipeDismissal
-        onRequestClose={closeCurrency}
-      >
-        <SafeAreaView edges={["bottom"]} style={styles.container}>
-          <SheetHeader
-            category="form"
-            title={t("currencySettings.heading")}
-            leftLabel={t("common.back")}
-            safeTop={false}
-            onLeft={closeCurrency}
-          />
-          {currencyOpen ? (
-            <CurrencySettingsScreen key={trip.id} journeyId={trip.id} />
-          ) : null}
-        </SafeAreaView>
-      </Modal>
+      {currencyEditor}
     </View>
   );
 }

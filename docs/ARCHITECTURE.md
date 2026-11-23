@@ -128,6 +128,9 @@ The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.
 
+The default-off Trip Settings Sheet retains the existing editor and save
+owner. Its date selector returns a draft choice only to that editor.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.
