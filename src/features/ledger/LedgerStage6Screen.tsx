@@ -1654,6 +1654,7 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
             }}
             rightLabel={t("navigation.myLedger")}
             title={t("ledger.chooseJourneyTitle")}
+            wrapActions
           />
           <TextInput
             accessibilityLabel={t("ledger.searchJourneys")}
