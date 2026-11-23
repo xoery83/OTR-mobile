@@ -19,6 +19,7 @@ const SheetMotionContext = createContext<{
   drag: SheetDrag;
   exitPending: boolean;
   isExitPending(): boolean;
+  getExitAttempt(): number;
   mode: SheetHostHeight["mode"];
 } | null>(null);
 
@@ -77,6 +78,7 @@ export function SheetHost({ children, height, headerHeight, interceptClose, conf
   const [exitPending, setExitPending] = useState(false);
   const hasOpened = useRef(false);
   const closePending = useRef(false);
+  const exitAttempt = useRef(0);
   const active = useRef(true);
   const contentHeight = height.mode === "content" && height.measuredHeight !== undefined
     ? height.measuredHeight + bottom
@@ -122,6 +124,7 @@ export function SheetHost({ children, height, headerHeight, interceptClose, conf
       settle();
       return;
     }
+    exitAttempt.current += 1;
     closePending.current = true;
     setExitPending(true);
     const approval = confirmClose();
@@ -163,6 +166,7 @@ export function SheetHost({ children, height, headerHeight, interceptClose, conf
     },
   }), [offset, requestClose, settle]);
   const isExitPending = useCallback(() => closePending.current, []);
+  const getExitAttempt = useCallback(() => exitAttempt.current, []);
 
   const translateY = useMemo(() => Animated.add(
     progress.interpolate({ inputRange: [0, 1], outputRange: [layoutHeight, 0] }),
@@ -201,7 +205,7 @@ export function SheetHost({ children, height, headerHeight, interceptClose, conf
               edges={["left", "right", "bottom"]}
               style={styles.safeContent}
             >
-              <SheetMotionContext.Provider value={{ requestClose, requestCloseWithAction, drag, exitPending, isExitPending, mode: height.mode }}>
+              <SheetMotionContext.Provider value={{ requestClose, requestCloseWithAction, drag, exitPending, isExitPending, getExitAttempt, mode: height.mode }}>
                 {children}
               </SheetMotionContext.Provider>
             </SafeAreaView>

@@ -29,7 +29,7 @@ function TripChoices({ invocation, picker }: {
   picker: NonNullable<ReturnType<typeof readDocumentsTripPicker>>;
 }) {
   const { accountId, generation } = picker;
-  const { exitPending, isExitPending, requestCloseWithAction } = useSheetMotion();
+  const { exitPending, isExitPending, getExitAttempt, requestCloseWithAction } = useSheetMotion();
   const [trips, setTrips] = useState<Awaited<ReturnType<typeof listCaptureTripPriors>>>();
   const [error, setError] = useState(false);
   const [selecting, setSelecting] = useState(false);
@@ -46,11 +46,12 @@ function TripChoices({ invocation, picker }: {
 
   const choose = async (id: string) => {
     if (busy.current || isExitPending() || readDocumentsTripPicker(invocation) !== picker) return;
+    const exitAttempt = getExitAttempt();
     busy.current = true;
     setSelecting(true);
     try {
       const trip = await readCaptureTripPrior(id, { accountId, generation });
-      if (isExitPending() || readDocumentsTripPicker(invocation) !== picker) return;
+      if (exitAttempt !== getExitAttempt() || readDocumentsTripPicker(invocation) !== picker) return;
       if (!trip || trip.id !== id) {
         setError(true);
         return;
@@ -59,7 +60,7 @@ function TripChoices({ invocation, picker }: {
         if (readDocumentsTripPicker(invocation) === picker) picker.select(trip);
       });
     } catch {
-      if (readDocumentsTripPicker(invocation) === picker) setError(true);
+      if (exitAttempt === getExitAttempt() && readDocumentsTripPicker(invocation) === picker) setError(true);
     } finally {
       busy.current = false;
       if (readDocumentsTripPicker(invocation) === picker) setSelecting(false);

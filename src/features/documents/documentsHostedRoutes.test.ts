@@ -10,6 +10,7 @@ const qa = vi.hoisted(() => ({
   useState: vi.fn(),
   invocation: "",
   exitPending: false,
+  exitAttempt: 0,
   readPrior: vi.fn(),
 }));
 
@@ -26,6 +27,7 @@ vi.mock("@/components/SheetHost", () => ({
   useSheetMotion: () => ({
     exitPending: qa.exitPending,
     isExitPending: () => qa.exitPending,
+    getExitAttempt: () => qa.exitAttempt,
     requestCloseWithAction: qa.close,
   }),
 }));
@@ -42,6 +44,7 @@ afterEach(() => {
   releaseDocumentSearchFilters(qa.invocation);
   releaseDocumentsTripPicker(qa.invocation);
   qa.exitPending = false;
+  qa.exitAttempt = 0;
   vi.resetAllMocks();
 });
 
@@ -90,8 +93,22 @@ it("clears Trip selection busy state during close so an interrupted close can be
     if (!Array.isArray(rows)) throw new Error("Expected cached Trip choices");
     return rows[0];
   };
+  let resolvePrior: (value: typeof trip) => void = () => {};
+  qa.readPrior.mockReturnValueOnce(new Promise<typeof trip>((resolve) => { resolvePrior = resolve; }));
+  render(false).props.onPress();
+  // A cancel starts and is interrupted while the prior read is outstanding.
+  qa.exitAttempt += 1;
+  resolvePrior(trip);
+  await Promise.resolve();
+  expect(setSelecting.mock.calls).toEqual([[true], [false]]);
+  expect(qa.close).not.toHaveBeenCalled();
+  setSelecting.mockClear();
+
   qa.readPrior.mockResolvedValue(trip);
-  qa.close.mockImplementation(() => { qa.exitPending = true; });
+  qa.close.mockImplementation(() => {
+    qa.exitAttempt += 1;
+    qa.exitPending = true;
+  });
   render(false).props.onPress();
   await Promise.resolve();
   expect(setSelecting.mock.calls).toEqual([[true], [false]]);
