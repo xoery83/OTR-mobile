@@ -87,7 +87,7 @@ async function tripCurrencyCloudReady(tripId: string) {
   return trip === null || trip.serverId === tripId;
 }
 
-export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
+export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }: { journeyId?: string; hostLookupPickers?: boolean }) {
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
   const network = useNetworkState();
@@ -570,6 +570,7 @@ export function CurrencySettingsScreen({ journeyId }: { journeyId?: string }) {
         ) : null}
         {journey && !guestLocal ? (
           <ExchangeRateLookup
+            hostPickers={hostLookupPickers}
             journeyId={journey.journeyId}
             key={`${journey.journeyId}:${journey.settlementCurrency}`}
             online={online}

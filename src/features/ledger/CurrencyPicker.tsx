@@ -6,6 +6,7 @@ import type { UiColors } from "@/ui/palette";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useSheetScrollDismissal } from "@/components/SheetHost";
 import { AppIcon } from "@/components/AppIcon";
 import {
   currencyName,
@@ -15,13 +16,15 @@ import {
 
 type Props = {
   selected: string;
+  hosted?: boolean;
   suggestions: string[];
   onSelect: (code: string) => void;
 };
 
-export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
+export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false }: Props) {
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
+  const dismissal = useSheetScrollDismissal(hosted);
   const [query, setQuery] = useState("");
   useUiLocale();
   const locale = getFormatLocale();
@@ -42,6 +45,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect }: Props) {
         value={query}
       />
       <FlatList
+        {...dismissal}
         contentContainerStyle={styles.listContent}
         data={rows}
         keyExtractor={(item) => item}

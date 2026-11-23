@@ -1,3 +1,4 @@
+import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
@@ -145,6 +146,18 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="documents-search-filters"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedLedgerCurrencySheetEnabled}>
+              <Stack.Screen
+                name="ledger-currency-picker"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",

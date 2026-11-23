@@ -1,3 +1,4 @@
+import { useLedgerCurrencySheet } from "./ledgerCurrencySheet";
 import { systemMessage } from "@/ui/domainLabels";
 import { t, getFormatLocale } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
@@ -25,10 +26,12 @@ import { SheetHeader } from "@/components/SheetHeader";
 
 export function ExchangeRateLookup({
   journeyId,
+  hostPickers = false,
   online,
   settlementCurrency,
 }: {
   journeyId: string;
+  hostPickers?: boolean;
   online: boolean;
   settlementCurrency: string;
 }) {
@@ -50,6 +53,23 @@ export function ExchangeRateLookup({
     setResult(null);
     setChecking(false);
     setMessage(null);
+  };
+
+  const openHostedPicker = useLedgerCurrencySheet(journeyId, "exchange-rate-lookup", hostPickers);
+  const chooseCurrency = (target: "FROM" | "TO", code: string) => {
+    reset();
+    if (target === "FROM") setFrom(code);
+    else setTo(code);
+    setPicker(null);
+  };
+  const openCurrency = (target: "FROM" | "TO") => {
+    if (!openHostedPicker({
+      kind: "currency",
+      titleKey: target === "FROM" ? "ui.fromCurrency" : "ui.toCurrency",
+      selected: target === "FROM" ? from : to,
+      suggestions: [settlementCurrency, from, to, "EUR", "USD"],
+      choose: code => chooseCurrency(target, code),
+    })) setPicker(target);
   };
 
   useEffect(() => {
@@ -93,18 +113,27 @@ export function ExchangeRateLookup({
         <View style={styles.fields}>
           <CurrencyField
             label={t("ui.from")}
-            onPress={() => setPicker("FROM")}
+            onPress={() => openCurrency("FROM")}
             value={from}
           />
-          <CurrencyField label={t("ui.to")} onPress={() => setPicker("TO")} value={to} />
+          <CurrencyField label={t("ui.to")} onPress={() => openCurrency("TO")} value={to} />
         </View>
         <Text style={styles.fieldLabel}>{t("ui.date")}</Text>
         <Pressable
           accessibilityLabel={t("rate.referenceDate", { date })}
           accessibilityRole="button"
           onPress={() => {
-            setPendingDate(new Date(`${date}T12:00:00`));
-            setDateOpen(true);
+            const initial = new Date(`${date}T12:00:00`);
+            if (!openHostedPicker({
+              kind: "date",
+              titleKey: "ui.referenceDate2",
+              initial,
+              maximumDate: new Date(),
+              choose: next => { reset(); setDate(localDateKey(next)); },
+            })) {
+              setPendingDate(initial);
+              setDateOpen(true);
+            }
           }}
           style={styles.dateField}
         >
@@ -129,12 +158,7 @@ export function ExchangeRateLookup({
           title={picker === "FROM" ? t("ui.fromCurrency") : t("ui.toCurrency")}
         />
         <CurrencyPicker
-          onSelect={(code) => {
-            reset();
-            if (picker === "FROM") setFrom(code);
-            if (picker === "TO") setTo(code);
-            setPicker(null);
-          }}
+          onSelect={code => { if (picker) chooseCurrency(picker, code); }}
           selected={picker === "FROM" ? from : to}
           suggestions={[settlementCurrency, from, to, "EUR", "USD"]}
         />

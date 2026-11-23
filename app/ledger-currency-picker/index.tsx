@@ -1,0 +1,53 @@
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { Keyboard, StyleSheet, View } from "react-native";
+import { SheetRoutePanel } from "@/components/SheetRoutePanel";
+import { useSheetMotion } from "@/components/SheetHost";
+import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
+import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
+import { readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
+import { UiDatePicker } from "@/ui/forms";
+import { t } from "@/ui/locale";
+import { useUiLocale } from "@/ui/useUiLocale";
+import { visual } from "@/ui/visual";
+
+export default function LedgerCurrencyPickerRoute() {
+  useUiLocale();
+  useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
+  const { invocation } = useLocalSearchParams<{ invocation?: string }>();
+  const picker = readLedgerCurrencySheet(invocation);
+  const [date, setDate] = useState(() => picker?.kind === "date" ? picker.initial : new Date());
+  const { requestCloseWithAction, isExitPending, exitPending } = useSheetMotion();
+  useEffect(() => () => {
+    queueMicrotask(() => releaseLedgerCurrencySheet(invocation));
+  }, [invocation]);
+
+  function select(apply: () => void) {
+    if (isExitPending() || !picker || readLedgerCurrencySheet(invocation) !== picker) return;
+    Keyboard.dismiss();
+    requestCloseWithAction(() => {
+      if (readLedgerCurrencySheet(invocation) !== picker) return;
+      releaseLedgerCurrencySheet(invocation);
+      apply();
+    });
+  }
+
+  const title = t(picker?.titleKey ?? "currencySettings.copy31");
+  if (picker?.kind === "currency") {
+    return <SheetRoutePanel title={title} ownsScroll>
+      <CurrencyPicker hosted selected={picker.selected} suggestions={picker.suggestions} onSelect={code => select(() => picker.choose(code))} />
+    </SheetRoutePanel>;
+  }
+  return <SheetRoutePanel title={title} action={picker?.kind === "date" ? {
+    label: t("common.done"), disabled: exitPending, onPress: () => select(() => picker.choose(date)),
+  } : undefined}>
+    {picker?.kind === "date" ? <View style={styles.clock}>
+      <UiDatePicker display="spinner" maximumDate={picker.maximumDate} mode="date" value={date}
+        accessibilityLabel={title} onChange={(_, next) => { if (next) setDate(next); }} />
+    </View> : null}
+  </SheetRoutePanel>;
+}
+
+const styles = StyleSheet.create({
+  clock: { alignItems: "center", padding: visual.space.page },
+});
