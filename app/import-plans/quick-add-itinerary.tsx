@@ -10,6 +10,7 @@ import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import {
   hostedManualItineraryEnabled,
   readManualItinerary,
+  subscribeManualItinerary,
   releaseManualItinerary,
 } from "@/features/day-feed/hostedManualItinerary";
 import {
@@ -29,7 +30,7 @@ function HostedQuickAddItinerary() {
   useUiLocale();
   useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
-  const entry = readManualItinerary(invocation);
+  const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
   const { isExitPending } = useSheetMotion();
   const navigation = useNavigation();
   useEffect(

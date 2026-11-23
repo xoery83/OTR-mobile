@@ -1,6 +1,7 @@
-import { ManualEditorHeader } from "./ManualEditorHeader";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { HostedManualEditorIntent, ManualEditorHeader } from "./ManualEditorHeader";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -149,6 +150,8 @@ export function P6ActivityEditor({
   onSaved(itemId: string): void;
 }) {
   useUiLocale();
+  const hostedIntent = useContext(HostedManualEditorIntent);
+  const FormScroll = hostedIntent ? SheetScrollView : ScrollView;
   const styles = useThemedStyles(createStyles);
   const generation = getAccountGeneration();
   const alive = useRef(true);
@@ -196,7 +199,7 @@ export function P6ActivityEditor({
     };
   }, [tripId, itemId, initialDate, opened, generation]);
   const current = () =>
-    alive.current && !closedRef.current && generation === getAccountGeneration();
+    alive.current && (hostedIntent?.() ?? true) && !closedRef.current && generation === getAccountGeneration();
   const change = (next: Partial<ManualActivityFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
     const value = { ...fieldsRef.current, ...next };
@@ -209,7 +212,7 @@ export function P6ActivityEditor({
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
     if (!dirty && !frozenRef.current) {
-      closedRef.current = true;
+      if (!hostedIntent) closedRef.current = true;
       then();
       return;
     }
@@ -220,7 +223,7 @@ export function P6ActivityEditor({
         style: "destructive",
         onPress: () => {
           if (current() && !busyRef.current) {
-            closedRef.current = true;
+            if (!hostedIntent) closedRef.current = true;
             then();
           }
         },
@@ -364,7 +367,7 @@ export function P6ActivityEditor({
           style={styles.body}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ScrollView
+          <FormScroll
             ref={formScroll}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
@@ -520,7 +523,7 @@ export function P6ActivityEditor({
                 </View>
               </>
             ) : null}
-          </ScrollView>
+          </FormScroll>
         </KeyboardAvoidingView>
         {placeSearch ? (
           <PlaceSearchSheet

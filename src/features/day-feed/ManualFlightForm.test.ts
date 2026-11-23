@@ -3,6 +3,8 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import { ManualFlightForm, ManualFlightEditor } from "./ManualFlightForm";
+import { HostedManualEditorIntent } from "./ManualEditorHeader";
+vi.mock("@/components/SheetScrollView", () => ({ SheetScrollView: ({ children }: { children: ReactNode }) => createElement("main", null, children) }));
 vi.mock("./SyntheticFormScan", () => ({
   FormScanEntry: (p: any) => {
     state.nodes.push({ ...p, label: "formAutofill.scan" });
@@ -148,14 +150,16 @@ const flush = async () => {
   for (let i = 0; i < 20; i++) await Promise.resolve();
 };
 let editorMode = false;
+let hostedIntent: (() => boolean) | null = null;
 function render() {
   state.cursor = 0;
   state.refCursor = 0;
   state.nodes = [];
+  const form = editorMode
+    ? createElement(ManualFlightEditor, props)
+    : createElement(ManualFlightForm, props);
   const html = renderToStaticMarkup(
-    editorMode
-      ? createElement(ManualFlightEditor, props)
-      : createElement(ManualFlightForm, props),
+    createElement(HostedManualEditorIntent.Provider, { value: hostedIntent }, form),
   );
   for (const f of state.effects.splice(0)) {
     const cleanup = f();
@@ -184,6 +188,7 @@ beforeEach(() => {
   advanceAccountGeneration();
   vi.clearAllMocks();
   editorMode = false;
+  hostedIntent = null;
   props.initialDate = null;
   props.tripStartDate = null;
 });
@@ -314,6 +319,26 @@ it("the embedded Flight wrapper protects dirty cancel and blocks dismissal durin
   pending.resolve({ status: "LOCAL_COMMITTED", itemId: "item-a" });
   await flush();
   expect(props.onSaved).toHaveBeenCalledWith("item-a");
+});
+
+it("can retry hosted Flight dismissal after interruption, while a stale owner cannot save", async () => {
+  editorMode = true;
+  const owner = vi.fn(() => true);
+  hostedIntent = owner;
+  const { repo } = await ready();
+  state.presentationClose!();
+  state.alert.mock.calls[0][2][1].onPress();
+  expect(props.onClose).toHaveBeenCalledOnce();
+
+  // The host refused the close and kept the same mounted, dirty form.
+  render();
+  state.presentationClose!();
+  state.alert.mock.calls[1][2][1].onPress();
+  expect(props.onClose).toHaveBeenCalledTimes(2);
+  owner.mockReturnValue(false);
+  node("ui.save").onPress();
+  await flush();
+  expect(repo.save).not.toHaveBeenCalled();
 });
 
 it("saves manually entered endpoint fields without truncating to the sparse writer", async () => {

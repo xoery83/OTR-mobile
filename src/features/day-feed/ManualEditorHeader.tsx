@@ -2,6 +2,7 @@ import { createContext, useContext, type ComponentProps, type ReactNode } from "
 import { SheetHeader } from "@/components/SheetHeader";
 
 export type ManualEditorHeaderProps = ComponentProps<typeof SheetHeader>;
+export const HostedManualEditorIntent = createContext<(() => boolean) | null>(null);
 export const HostedManualEditorContext = createContext<((props: ManualEditorHeaderProps) => ReactNode) | null>(null);
 
 export function ManualEditorHeader(props: ManualEditorHeaderProps) {

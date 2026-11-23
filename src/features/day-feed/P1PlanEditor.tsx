@@ -1,4 +1,5 @@
-import { ManualEditorHeader } from "./ManualEditorHeader";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { HostedManualEditorIntent, ManualEditorHeader } from "./ManualEditorHeader";
 import {
   p3PlaceSelectionDraft,
   currentP3PlaceSelection,
@@ -14,7 +15,7 @@ import {
 } from "@/data/places/applePlaceProvider";
 import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useContext, useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -196,6 +197,8 @@ export function P1PlanEditor({
   previewParticipationKnown?: boolean;
 }) {
   useUiLocale();
+  const hostedIntent = useContext(HostedManualEditorIntent);
+  const FormScroll = hostedIntent ? SheetScrollView : ScrollView;
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const preview = typeof __DEV__ !== "undefined" && __DEV__ ? previewFields : undefined;
@@ -298,11 +301,11 @@ export function P1PlanEditor({
   }, [tripId, itemId, initialDate, initialStartTime, opened, generation, preview]);
   const current = useCallback(
     () =>
-      alive.current &&
+      alive.current && (hostedIntent?.() ?? true) &&
       !closedRef.current &&
       generation === getAccountGeneration() &&
       (!sourceRef.current || sourceRef.current.generation === generation),
-    [generation],
+    [generation, hostedIntent],
   );
   function changePickerOpen(which: "date" | "start" | "end", open: boolean) {
     if (!current() || handoffRef.current) return false;
@@ -478,7 +481,7 @@ export function P1PlanEditor({
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
     if (!dirty && !frozenRef.current) {
-      closedRef.current = true;
+      if (!hostedIntent) closedRef.current = true;
       then();
       return;
     }
@@ -489,7 +492,7 @@ export function P1PlanEditor({
         style: "destructive",
         onPress: () => {
           if (current() && !handoffRef.current && !busyRef.current) {
-            closedRef.current = true;
+            if (!hostedIntent) closedRef.current = true;
             then();
           }
         },
@@ -590,7 +593,7 @@ export function P1PlanEditor({
           leftDisabled={saving || handoffFrozen}
           onLeft={() => close()}
         />
-        <ScrollView
+        <FormScroll
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
           keyboardDismissMode="interactive"
@@ -784,7 +787,7 @@ export function P1PlanEditor({
               </View>
             </>
           ) : null}
-        </ScrollView>
+        </FormScroll>
         {placeSearch &&
         placeSearch.binding.tripId === tripId &&
         placeSearch.binding.editorId === source?.draft.itemId &&

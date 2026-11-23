@@ -9,10 +9,10 @@ import { useSheetMotion } from "@/components/SheetHost";
 import { useSheetRouteLayout } from "@/components/sheetRouteContext";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
-import { HostedManualEditorContext, type ManualEditorHeaderProps } from "@/features/day-feed/ManualEditorHeader";
+import { HostedManualEditorContext, HostedManualEditorIntent, type ManualEditorHeaderProps } from "@/features/day-feed/ManualEditorHeader";
 import { isManualItineraryFamily, ManualItineraryContent } from "@/features/day-feed/ManualItineraryContent";
 import { FlightAirportHandoffContext, OpenFlightAirportContext } from "@/features/day-feed/hostedFlightAirport";
-import { hostedManualItineraryEnabled, ManualItineraryExitContext, readManualItinerary } from "@/features/day-feed/hostedManualItinerary";
+import { hostedManualItineraryEnabled, ManualItineraryExitContext, readManualItinerary, subscribeManualItinerary } from "@/features/day-feed/hostedManualItinerary";
 import { t } from "@/ui/locale";
 
 export default function QuickAddItineraryEditorRoute() {
@@ -20,12 +20,12 @@ export default function QuickAddItineraryEditorRoute() {
   return <HostedQuickAddEditor />;
 }
 
-type Exit = { kind: "back" | "close" } | { kind: "saved"; id: string };
+type Exit = { kind: "back" | "close"; afterClose?: () => void } | { kind: "saved"; id: string };
 
 function HostedQuickAddEditor() {
   const { invocation, family } = useLocalSearchParams<{ invocation?: string; family?: string }>();
   useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
-  const entry = readManualItinerary(invocation);
+  const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
   const navigation = useNavigation();
   const route = useRoute();
   const exit = useContext(ManualItineraryExitContext);
@@ -34,19 +34,27 @@ function HostedQuickAddEditor() {
   const dismiss = useRef<(() => void) | null>(null);
   const intent = useRef<"back" | "close">("back");
   const dispatched = useRef(false);
+  const savedId = useRef<string | null>(null);
   const [approved, setApproved] = useState<Exit>();
   const familyAllowed = entry && family && isManualItineraryFamily(family, entry.localOnly) ? family : null;
 
-  const goBack = useCallback(() => {
+  const canEdit = useCallback(() =>
+    !savedId.current && !isExitPending() && Boolean(readManualItinerary(invocation)),
+  [invocation, isExitPending]);
+  const goBack = useCallback((afterClose?: () => void) => {
     const state = navigation.getState();
     if (state?.routes[state.index]?.key !== route.key) return;
     navigation.dispatch({ type: "GO_BACK", target: state.key, source: route.key });
+    afterClose?.();
   }, [navigation, route.key]);
   const registerDismissHandler = useCallback((handler: () => void) => {
     dismiss.current = handler;
     const unregister = exit?.registerClose(() => {
-      intent.current = "close";
-      handler();
+      if (savedId.current) setApproved({ kind: "saved", id: savedId.current });
+      else {
+        intent.current = "close";
+        handler();
+      }
     });
     return () => {
       if (dismiss.current === handler) dismiss.current = null;
@@ -54,8 +62,11 @@ function HostedQuickAddEditor() {
     };
   }, [exit]);
   const back = () => {
-    intent.current = "back";
-    dismiss.current?.();
+    if (savedId.current) setApproved({ kind: "saved", id: savedId.current });
+    else {
+      intent.current = "back";
+      dismiss.current?.();
+    }
   };
   usePreventRemove(Boolean(familyAllowed && !approved), ({ data: { action } }) => {
     if (action.type !== "GO_BACK" && action.type !== "POP") return;
@@ -68,12 +79,15 @@ function HostedQuickAddEditor() {
     if (!approved || dispatched.current) return;
     dispatched.current = true;
     if (approved.kind === "back") {
-      goBack();
+      goBack(approved.afterClose);
       return;
     }
     exit?.allowClose();
     requestCloseWithAction(() => {
-      if (approved.kind === "saved") readManualItinerary(invocation)?.onSaved(approved.id);
+      if (approved.kind === "saved") {
+        savedId.current = null;
+        readManualItinerary(invocation)?.onSaved(approved.id);
+      } else approved.afterClose?.();
     });
   }, [approved, exit, goBack, invocation, requestCloseWithAction]);
   useEffect(() => {
@@ -85,23 +99,30 @@ function HostedQuickAddEditor() {
   if (!entry || !familyAllowed)
     return <SheetRoutePanel title={t("formEntry.title")} onBack={goBack}>{null}</SheetRoutePanel>;
   return (
-    <HostedManualEditorContext.Provider value={props => <HostedHeader {...props} onLeft={back} />}>
-      <OpenFlightAirportContext.Provider value={read => {
-        if (!airport || !navigation.isFocused() || isExitPending() || !readManualItinerary(invocation)) return false;
-        const selection = airport.stage(read);
-        if (!selection) return false;
-        router.push({ pathname: "/import-plans/quick-add-airport", params: { invocation, selection } });
-        return true;
-      }}>
-        <ManualItineraryContent
-          {...entry}
-          hostedFamily={familyAllowed}
-          registerDismissHandler={registerDismissHandler}
-          onClose={() => setApproved({ kind: intent.current })}
-          onSaved={id => setApproved({ kind: "saved", id })}
-        />
-      </OpenFlightAirportContext.Provider>
-    </HostedManualEditorContext.Provider>
+    <HostedManualEditorIntent.Provider value={canEdit}>
+      <HostedManualEditorContext.Provider value={props => (
+        <HostedHeader {...props} onLeft={back} rightDisabled={props.rightDisabled || Boolean(savedId.current)} />
+      )}>
+        <OpenFlightAirportContext.Provider value={read => {
+          if (!airport || !navigation.isFocused() || isExitPending() || !readManualItinerary(invocation)) return false;
+          const selection = airport.stage(read);
+          if (!selection) return false;
+          router.push({ pathname: "/import-plans/quick-add-airport", params: { invocation, selection } });
+          return true;
+        }}>
+          <ManualItineraryContent
+            {...entry}
+            hostedFamily={familyAllowed}
+            registerDismissHandler={registerDismissHandler}
+            onClose={afterClose => setApproved({ kind: intent.current, afterClose })}
+            onSaved={id => {
+              savedId.current = id;
+              setApproved({ kind: "saved", id });
+            }}
+          />
+        </OpenFlightAirportContext.Provider>
+      </HostedManualEditorContext.Provider>
+    </HostedManualEditorIntent.Provider>
   );
 }
 

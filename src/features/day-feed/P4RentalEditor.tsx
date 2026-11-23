@@ -1,9 +1,10 @@
-import { ManualEditorHeader } from "./ManualEditorHeader";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { HostedManualEditorIntent, ManualEditorHeader } from "./ManualEditorHeader";
 import { FormScanEntry } from "./SyntheticFormScan";
 import { AppIcon } from "@/components/AppIcon";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -156,6 +157,8 @@ export function P4RentalEditor({
   onChooseTransport?(): void;
 }) {
   useUiLocale();
+  const hostedIntent = useContext(HostedManualEditorIntent);
+  const FormScroll = hostedIntent ? SheetScrollView : ScrollView;
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const [sameReturnLocation, setSameReturnLocation] = useState(
@@ -235,7 +238,7 @@ export function P4RentalEditor({
     };
   }, [tripId, itemId, initialDate, opened, generation]);
   const current = () =>
-    alive.current &&
+    alive.current && (hostedIntent?.() ?? true) &&
     !closedRef.current &&
     generation === getAccountGeneration() &&
     identity.current.tripId === tripId &&
@@ -325,7 +328,7 @@ export function P4RentalEditor({
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
     if (!dirty && !frozenRef.current) {
-      closedRef.current = true;
+      if (!hostedIntent) closedRef.current = true;
       then();
       return;
     }
@@ -336,7 +339,7 @@ export function P4RentalEditor({
         style: "destructive",
         onPress: () => {
           if (current() && !busyRef.current) {
-            closedRef.current = true;
+            if (!hostedIntent) closedRef.current = true;
             then();
           }
         },
@@ -421,7 +424,7 @@ export function P4RentalEditor({
           style={styles.body}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ScrollView
+          <FormScroll
             ref={formScroll}
             onLayout={() => {
               if (notesFocused.current)
@@ -625,7 +628,7 @@ export function P4RentalEditor({
                 </View>
               </>
             ) : null}
-          </ScrollView>
+          </FormScroll>
         </KeyboardAvoidingView>
         {placeSearch ? (
           <PlaceSearchSheet

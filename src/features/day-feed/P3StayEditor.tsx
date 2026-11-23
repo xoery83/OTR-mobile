@@ -1,7 +1,8 @@
-import { ManualEditorHeader } from "./ManualEditorHeader";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { HostedManualEditorIntent, ManualEditorHeader } from "./ManualEditorHeader";
 import { retainGuestStayEditor } from "./guestStayEditorLease";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -177,13 +178,15 @@ export function P3StayEditor({
   opened?: Opened;
   sourceScan?: P3SourceInterpreter;
   syntheticScan?: import("./formScanResponse").FormScanConsumer<SyntheticStayResult>;
-  onClose(): void;
+  onClose(afterClose?: () => void): void;
   onSaved(itemId: string): void;
   onChoosePlan?(): void;
   onChooseRental?(): void;
   onChooseTransport?(): void;
 }) {
   useUiLocale();
+  const hostedIntent = useContext(HostedManualEditorIntent);
+  const FormScroll = hostedIntent ? SheetScrollView : ScrollView;
   // A prop refresh must not replace this Form's retained UNKNOWN intake session.
   const [sourcePort] = useState(() => sourceScan);
   const styles = useThemedStyles(createStyles);
@@ -354,7 +357,7 @@ export function P3StayEditor({
     };
   }, [tripId, itemId, initialDate, opened, generation]);
   const current = () =>
-    alive.current &&
+    alive.current && (hostedIntent?.() ?? true) &&
     !closedRef.current &&
     generation === getAccountGeneration() &&
     principalScope.current === JSON.stringify([tripId, itemId ?? null, generation]);
@@ -373,13 +376,21 @@ export function P3StayEditor({
   };
   const close = (then = onClose) => {
     if (!current() || busyRef.current) return;
+    const finish = () => {
+      if (hostedIntent && then === onClose) {
+        const lease = guestLease.current;
+        onClose(lease ? () => lease.release() : undefined);
+      } else {
+        closedRef.current = true;
+        guestLease.current?.release();
+        then();
+      }
+    };
     const dirty =
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
     if (!dirty && !frozenRef.current) {
-      closedRef.current = true;
-      guestLease.current?.release();
-      then();
+      finish();
       return;
     }
     Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
@@ -389,9 +400,7 @@ export function P3StayEditor({
         style: "destructive",
         onPress: () => {
           if (current() && !busyRef.current) {
-            closedRef.current = true;
-            guestLease.current?.release();
-            then();
+            finish();
           }
         },
       },
@@ -495,7 +504,7 @@ export function P3StayEditor({
           style={styles.body}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ScrollView
+          <FormScroll
             ref={formScroll}
             onLayout={() => {
               if (notesFocused.current)
@@ -755,7 +764,7 @@ export function P3StayEditor({
                 </View>
               </>
             ) : null}
-          </ScrollView>
+          </FormScroll>
         </KeyboardAvoidingView>
       </SafeAreaProvider>
     </ManualEditorPresentation>

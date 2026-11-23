@@ -32,7 +32,7 @@ export type ManualItineraryProps = {
   initialStartTime?: string | null;
   tripStartDate?: string | null;
   tripEndDate?: string | null;
-  onClose(): void;
+  onClose(afterClose?: () => void): void;
   registerDismissHandler?: (handler: () => void) => () => void;
   onSaved(itemId: string): void;
 };

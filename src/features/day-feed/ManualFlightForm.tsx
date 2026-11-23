@@ -3,6 +3,7 @@ import { FlightEnrichmentAction } from "./FlightEnrichmentAction";
 import {
   useCallback,
   useEffect,
+  useContext,
   useLayoutEffect,
   useRef,
   useState,
@@ -10,7 +11,8 @@ import {
 } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ManualEditorHeader } from "./ManualEditorHeader";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { HostedManualEditorIntent, ManualEditorHeader } from "./ManualEditorHeader";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -408,6 +410,8 @@ export function ManualFlightEditor({
   registerDismissHandler?: (handler: () => void) => () => void;
 }) {
   useUiLocale();
+  const hostedIntent = useContext(HostedManualEditorIntent);
+  const FormScroll = hostedIntent ? SheetScrollView : ScrollView;
   const styles = useThemedStyles(createStyles);
   const generation = useRef(getAccountGeneration());
   const closed = useRef(false);
@@ -424,12 +428,14 @@ export function ManualFlightEditor({
     };
   }, []);
   const current = () =>
-    alive.current && !closed.current && generation.current === getAccountGeneration();
+    alive.current && (hostedIntent?.() ?? true) && !closed.current && generation.current === getAccountGeneration();
   const close = () => {
     if (!current() || busy.current) return;
     if (!dirty.current) {
-      closed.current = true;
-      saveAction.current = null;
+      if (!hostedIntent) {
+        closed.current = true;
+        saveAction.current = null;
+      }
       onClose();
       return;
     }
@@ -440,8 +446,10 @@ export function ManualFlightEditor({
         style: "destructive",
         onPress: () => {
           if (current() && !busy.current) {
-            closed.current = true;
-            saveAction.current = null;
+            if (!hostedIntent) {
+              closed.current = true;
+              saveAction.current = null;
+            }
             onClose();
           }
         },
@@ -465,7 +473,7 @@ export function ManualFlightEditor({
           leftDisabled={saving}
           onLeft={close}
         />
-        <ScrollView
+        <FormScroll
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           automaticallyAdjustKeyboardInsets
@@ -493,7 +501,7 @@ export function ManualFlightEditor({
               if (current()) onSaved(itemId);
             }}
           />
-        </ScrollView>
+        </FormScroll>
       </SafeAreaProvider>
     </ManualEditorPresentation>
   );

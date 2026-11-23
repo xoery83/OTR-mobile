@@ -11,11 +11,22 @@ export const ManualItineraryExitContext = createContext<{
 
 let sequence = 0;
 let pending: { id: string; read(): ManualItineraryProps | undefined } | undefined;
-subscribeAccountGeneration(() => { pending = undefined; });
+const listeners = new Set<() => void>();
+const publish = () => listeners.forEach(listener => listener());
+subscribeAccountGeneration(() => {
+  pending = undefined;
+  publish();
+});
+
+export function subscribeManualItinerary(listener: () => void) {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
 
 export function stageManualItinerary(read: () => ManualItineraryProps | undefined) {
   const id = String(++sequence);
   pending = { id, read };
+  publish();
   return id;
 }
 
@@ -26,5 +37,7 @@ export function readManualItinerary(id: string | undefined) {
 }
 
 export function releaseManualItinerary(id: string | undefined) {
-  if (pending?.id === id) pending = undefined;
+  if (!pending || pending.id !== id) return;
+  pending = undefined;
+  publish();
 }

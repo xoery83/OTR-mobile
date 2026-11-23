@@ -7,7 +7,7 @@ import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { SheetScrollView } from "@/components/SheetScrollView";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
-import { hostedManualItineraryEnabled, readManualItinerary } from "@/features/day-feed/hostedManualItinerary";
+import { hostedManualItineraryEnabled, readManualItinerary, subscribeManualItinerary } from "@/features/day-feed/hostedManualItinerary";
 import { FlightAirportPicker } from "@/features/day-feed/FlightAirportField";
 import { FlightAirportHandoffContext, type FlightAirportChoice } from "@/features/day-feed/hostedFlightAirport";
 import { t } from "@/ui/locale";
@@ -27,7 +27,8 @@ function HostedQuickAddAirport() {
   const route = useRoute();
   const { isExitPending } = useSheetMotion();
   const completed = useRef(false);
-  const current = readManualItinerary(invocation) ? airport?.read(selection) : null;
+  const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
+  const current = entry ? airport?.read(selection) : null;
   useEffect(() => () => {
     airport?.read(selection)?.onClose();
     airport?.release(selection);

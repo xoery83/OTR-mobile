@@ -133,7 +133,8 @@ export function TripQuickAddPanel({
   useLayoutEffect(
     () => () => {
       request.current += 1;
-      queueMicrotask(() => releaseManualItinerary(itineraryInvocation.current));
+      const invocation = itineraryInvocation.current;
+      queueMicrotask(() => releaseManualItinerary(invocation));
     },
     [],
   );
@@ -362,14 +363,15 @@ export function TripQuickAddPanel({
                 return;
               }
               if (readManualItinerary(itineraryInvocation.current)) return;
-              const invocation = stageManualItinerary(() => current() ? {
+              const entry = {
                 tripId,
                 generation,
                 initialDate: showDate ? knownDate : null,
                 localOnly,
                 onClose: () => {},
                 onSaved: onManualSaved,
-              } : undefined);
+              };
+              const invocation = stageManualItinerary(() => current() ? entry : undefined);
               itineraryInvocation.current = invocation;
               router.push({ pathname: "/import-plans/quick-add-itinerary", params: { invocation } });
             }}

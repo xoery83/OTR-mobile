@@ -1,7 +1,8 @@
-import { ManualEditorHeader } from "./ManualEditorHeader";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { HostedManualEditorIntent, ManualEditorHeader } from "./ManualEditorHeader";
 import { FormScanEntry } from "./SyntheticFormScan";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   ActionSheetIOS,
   Alert,
@@ -153,6 +154,8 @@ export function P5TransportEditor({
   onChooseRental?(): void;
 }) {
   useUiLocale();
+  const hostedIntent = useContext(HostedManualEditorIntent);
+  const FormScroll = hostedIntent ? SheetScrollView : ScrollView;
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const generation = getAccountGeneration();
@@ -200,7 +203,7 @@ export function P5TransportEditor({
     };
   }, [tripId, itemId, initialDate, opened, generation]);
   const current = () =>
-    alive.current && !closedRef.current && generation === getAccountGeneration();
+    alive.current && (hostedIntent?.() ?? true) && !closedRef.current && generation === getAccountGeneration();
   const change = (next: Partial<ManualTransportFields>) => {
     if (!current() || frozenRef.current || busyRef.current || !fieldsRef.current) return;
     const value = { ...fieldsRef.current, ...next };
@@ -213,7 +216,7 @@ export function P5TransportEditor({
       fieldsRef.current !== null &&
       JSON.stringify(fieldsRef.current) !== initialRef.current;
     if (!dirty && !frozenRef.current) {
-      closedRef.current = true;
+      if (!hostedIntent) closedRef.current = true;
       then();
       return;
     }
@@ -224,7 +227,7 @@ export function P5TransportEditor({
         style: "destructive",
         onPress: () => {
           if (current() && !busyRef.current) {
-            closedRef.current = true;
+            if (!hostedIntent) closedRef.current = true;
             then();
           }
         },
@@ -387,7 +390,7 @@ export function P5TransportEditor({
           style={styles.body}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ScrollView
+          <FormScroll
             ref={formScroll}
             keyboardDismissMode="interactive"
             keyboardShouldPersistTaps="handled"
@@ -582,7 +585,7 @@ export function P5TransportEditor({
                 </View>
               </>
             ) : null}
-          </ScrollView>
+          </FormScroll>
         </KeyboardAvoidingView>
         {placeSearch ? (
           <PlaceSearchSheet
