@@ -1,3 +1,4 @@
+import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
 import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
@@ -159,6 +160,18 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedLedgerCurrencySheetEnabled}>
               <Stack.Screen
                 name="ledger-currency-picker"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedLedgerSearchFiltersEnabled}>
+              <Stack.Screen
+                name="ledger-search-filters"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",

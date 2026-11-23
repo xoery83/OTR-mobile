@@ -1,3 +1,4 @@
+import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { systemMessage, categoryLabel } from "@/ui/domainLabels";
 import { UiTextInput as TextInput } from "@/ui/forms";
 import { t } from "@/ui/locale";
@@ -5,11 +6,21 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import {
   ActionSheetIOS,
   ActivityIndicator,
   FlatList,
+  Keyboard,
   Modal,
   Pressable,
   ScrollView,
@@ -41,6 +52,15 @@ import {
   searchDateLabel,
   type LedgerDatePreset,
 } from "./searchFilters";
+
+import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  hostedLedgerSearchFiltersEnabled,
+  openLedgerSearchFilters,
+  readLedgerSearchFilters,
+  releaseLedgerSearchFilters,
+  type LedgerSearchChoice,
+} from "./ledgerSearchFilterInvocation";
 
 const pageSize = 50;
 
@@ -116,72 +136,72 @@ export function LedgerSearchScreen() {
   });
   const [request] = useState(createLatestRequest);
   const [moreRequest] = useState(createLatestRequest);
+  const filterOwner = useRef<symbol | null>(null);
+  const filterInvocation = useRef<string>(undefined);
+  const generation = useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
+  useLayoutEffect(() => {
+    filterOwner.current = Symbol();
+    return () => {
+      filterOwner.current = null;
+      releaseLedgerSearchFilters(filterInvocation.current);
+    };
+  }, [generation, params.journeyId, memberId, scope, authoritativeOnly, paidMemberId, positiveShare, queryText]);
   const retryRequest = useRef({ filters: initialFilters, query: "" });
 
-  const load = useCallback(
-    async (filters: ReportingFilters, query: string) => {
-      if (!params.journeyId || !memberId) return false;
-      const id = request.begin();
-      retryRequest.current = { filters, query };
-      moreRequest.cancel();
-      setLoadingMore(false);
-      const key = JSON.stringify({
-        filters,
-        query,
+  const readResults = useCallback(
+    async (filters: ReportingFilters, query: string, isCurrent?: () => boolean): Promise<SearchView | null> => {
+      if (!params.journeyId || !memberId) return null;
+      const repository = await getDefaultLedgerReportingRepository();
+      if (isCurrent && !isCurrent()) return null;
+      const reportQuery = {
+        journeyId: params.journeyId,
+        memberId,
         scope,
         authoritativeOnly,
         positiveShare,
-        paidMemberId,
-      });
-      setUpdating(true);
-      setError(null);
-      setMoreError(null);
-      try {
-        const repository = await getDefaultLedgerReportingRepository();
-        const reportQuery = {
-          journeyId: params.journeyId,
-          memberId,
-          scope,
-          authoritativeOnly,
-          positiveShare,
-          ...filters,
-          payerMemberId: paidMemberId ?? filters.payerMemberId,
-          query,
-        };
-        const [rows, summary, resultCount] = await Promise.all([
-          repository.listExpenses(reportQuery, pageSize),
-          repository.summarize(reportQuery),
-          repository.countExpenses(reportQuery),
-        ]);
-        if (!request.isCurrent(id)) return false;
-        setView({
-          key,
-          filters,
-          query,
-          rows,
-          resultCount,
-          hasMore: rows.length === pageSize,
-          summary,
-        });
-        return true;
-      } catch {
-        if (request.isCurrent(id)) setError(t("search.updateFailed"));
-        return false;
-      } finally {
-        if (request.isCurrent(id)) setUpdating(false);
-      }
+        ...filters,
+        payerMemberId: paidMemberId ?? filters.payerMemberId,
+        query,
+      };
+      const [rows, summary, resultCount] = await Promise.all([
+        repository.listExpenses(reportQuery, pageSize),
+        repository.summarize(reportQuery),
+        repository.countExpenses(reportQuery),
+      ]);
+      return {
+        key: JSON.stringify({ filters, query, scope, authoritativeOnly, positiveShare, paidMemberId }),
+        filters,
+        query,
+        rows,
+        resultCount,
+        hasMore: rows.length === pageSize,
+        summary,
+      };
     },
-    [
-      authoritativeOnly,
-      memberId,
-      moreRequest,
-      paidMemberId,
-      params.journeyId,
-      request,
-      scope,
-      positiveShare,
-    ],
+    [authoritativeOnly, memberId, paidMemberId, params.journeyId, scope, positiveShare],
   );
+
+  const load = useCallback(async (filters: ReportingFilters, query: string) => {
+    if (!params.journeyId || !memberId) return false;
+    const id = request.begin();
+    retryRequest.current = { filters, query };
+    moreRequest.cancel();
+    setLoadingMore(false);
+    setUpdating(true);
+    setError(null);
+    setMoreError(null);
+    try {
+      const result = await readResults(filters, query);
+      if (!result || !request.isCurrent(id)) return false;
+      setView(result);
+      return true;
+    } catch {
+      if (request.isCurrent(id)) setError(t("search.updateFailed"));
+      return false;
+    } finally {
+      if (request.isCurrent(id)) setUpdating(false);
+    }
+  }, [memberId, moreRequest, params.journeyId, readResults, request]);
 
   useEffect(() => {
     let active = true;
@@ -233,6 +253,56 @@ export function LedgerSearchScreen() {
     if (applied) setFilterOpen(false);
     return applied;
   };
+
+  function openFilters() {
+    if (!hostedLedgerSearchFiltersEnabled) {
+      setFilterOpen(true);
+      return;
+    }
+    const owner = filterOwner.current;
+    if (
+      !owner ||
+      generation !== getAccountGeneration() ||
+      readLedgerSearchFilters(filterInvocation.current)
+    )
+      return;
+    Keyboard.dismiss();
+    const current = () => filterOwner.current === owner && generation === getAccountGeneration();
+    const invocation = openLedgerSearchFilters({
+      generation,
+      isCurrent: current,
+      fields: {
+        initial: filters,
+        lockedPayer: Boolean(paidMemberId),
+        scope,
+        prepareApply: async next => {
+          const qualified = () => current() && Boolean(readLedgerSearchFilters(invocation));
+          if (!qualified()) return undefined;
+          try {
+            const prepared = await readResults(next, queryText, qualified);
+            if (!prepared || !qualified()) return undefined;
+            return () => {
+              if (!current()) return;
+              request.cancel();
+              moreRequest.cancel();
+              retryRequest.current = { filters: next, query: queryText };
+              setUpdating(false);
+              setLoadingMore(false);
+              setError(null);
+              setMoreError(null);
+              setView(prepared);
+            };
+          } catch {
+            return undefined;
+          }
+        },
+        options,
+      },
+    });
+    if (!invocation) return;
+    filterInvocation.current = invocation;
+    router.push({ pathname: "/ledger-search-filters", params: { invocation } });
+  }
 
   const removeFilter = (key: keyof ReportingFilters) => {
     const next = { ...filters };
@@ -375,7 +445,7 @@ export function LedgerSearchScreen() {
             active: filterCount ? t("search.activeFilters", { count: filterCount }) : "",
           })}
           icon="line.3.horizontal.decrease"
-          onPress={() => setFilterOpen(true)}
+          onPress={openFilters}
         >
           {filterCount ? (
             <Stack.Toolbar.Badge
@@ -564,7 +634,7 @@ export function LedgerSearchScreen() {
         windowSize={7}
       />
       {filterOpen ? (
-        <FilterSheet
+        <LedgerSearchFilterForm
           initial={filters}
           lockedPayer={Boolean(paidMemberId)}
           scope={scope}
@@ -641,21 +711,34 @@ function parseAnalysisCategories(value?: string): string[] | undefined {
   }
 }
 
-function FilterSheet({
-  initial,
-  lockedPayer,
-  scope,
-  onApply,
-  onCancel,
-  options,
-}: {
+type ToolbarAction = { label: string; onPress(): void; disabled: boolean };
+type ChoiceOption = { label: string; value: string | undefined };
+
+export type LedgerSearchFilterProps = {
   initial: ReportingFilters;
   lockedPayer: boolean;
   scope: ReportingScope;
   onApply: (filters: ReportingFilters) => Promise<boolean>;
   onCancel: () => void;
   options: Options;
-}) {
+  openChoice?: (choice: LedgerSearchChoice) => void;
+  exitPending?: boolean;
+  isExitPending?(): boolean;
+  hosted?: boolean;
+};
+
+export function LedgerSearchFilterForm({
+  initial,
+  lockedPayer,
+  scope,
+  onApply,
+  onCancel,
+  options,
+  hosted = false,
+  openChoice,
+  exitPending = false,
+  isExitPending,
+}: LedgerSearchFilterProps) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 2;
@@ -667,13 +750,32 @@ function FilterSheet({
   const [rangeEnd, setRangeEnd] = useState(() => inclusiveEnd(initial.to));
   const [dateError, setDateError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+  const busy = useRef(false);
+  const canEditDraft = () => !hosted || (!busy.current && !isExitPending?.());
   const [page, setPage] = useState<"main" | "currency" | "attention">("main");
+  const [applyError, setApplyError] = useState(false);
+  function updateChoice(key: keyof ReportingFilters, value: ChoiceOption["value"]) {
+    setDraft((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === "category" ? { categories: undefined } : {}),
+    }));
+  }
+  function back() {
+    setPage("main");
+  }
 
-  const choose = (
-    title: string,
-    values: { label: string; value: string | undefined }[],
-    key: keyof ReportingFilters,
-  ) => {
+  const choose = (title: string, values: ChoiceOption[], key: keyof ReportingFilters) => {
+    if (openChoice) {
+      openChoice({
+        kind: "options",
+        title,
+        values,
+        selected: values.find(option => option.value === draft[key])?.value,
+        onChoose: value => updateChoice(key, value),
+      });
+      return;
+    }
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title,
@@ -682,26 +784,251 @@ function FilterSheet({
       },
       (index) => {
         const selected = values[index];
-        if (selected)
-          setDraft((current) => ({
-            ...current,
-            [key]: selected.value,
-            ...(key === "category" ? { categories: undefined } : {}),
-          }));
+        if (selected) updateChoice(key, selected.value);
       },
     );
   };
 
-  const apply = async () => {
+  const apply = useCallback(async () => {
+    if (busy.current || isExitPending?.()) return;
     const date = ledgerDateFilter(dateMode, null, "", rangeStart, rangeEnd);
     if (!date) {
       setDateError(t("search.invalidDates"));
       return;
     }
+    setDateError(null);
+    setApplyError(false);
+    busy.current = true;
     setApplying(true);
-    await onApply({ ...draft, from: date.from, to: date.to });
-    setApplying(false);
-  };
+    try {
+      setApplyError(!(await onApply({ ...draft, from: date.from, to: date.to })));
+    } finally {
+      busy.current = false;
+      setApplying(false);
+    }
+  }, [dateMode, draft, isExitPending, onApply, rangeEnd, rangeStart]);
+
+  const isRoot = page === "main";
+  const title = isRoot ? t("search.filters") : page === "currency" ? t("navigation.currency") : t("ledger.needsAttention");
+  const actionLabel = isRoot ? t(applying ? "common.applying" : "common.apply") : t("common.done");
+  const actionDisabled = applying || exitPending;
+  const currencies = [
+    { label: t("common.any"), value: undefined },
+    ...options.currencies.map(value => ({ label: value, value })),
+  ];
+
+  const body = (
+    <>
+      {applyError && isRoot ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          style={styles.error}
+        >
+          {t("search.updateFailed")}
+        </Text>
+      ) : null}
+      {page === "main" ? (
+        <>
+          <FilterSection title={t("search.time")}>
+            <View style={styles.wrap}>
+              {(
+                [
+                  ["ANY", t("search.all")],
+                  ["TODAY", t("search.today")],
+                  ["YESTERDAY", t("search.yesterday")],
+                  ["LAST_30", t("search.last30")],
+                  ["RANGE", t("search.custom")],
+                ] as [LedgerDatePreset, string][]
+              ).map(([value, label]) => (
+                <Choice
+                  key={value}
+                  label={label}
+                  onPress={() => {
+                    if (!canEditDraft()) return;
+                    setDateMode(value);
+                    setDateError(null);
+                  }}
+                  selected={value !== "ANY" && dateMode === value}
+                />
+              ))}
+            </View>
+            {dateMode === "RANGE" ? (
+              <View style={[styles.dateRow, largeText && styles.dateRowLarge]}>
+                <DateInput
+                  label={t("search.start")}
+                  onChange={value => { if (canEditDraft()) setRangeStart(value); }}
+                  value={rangeStart}
+                />
+                <DateInput
+                  label={t("search.end")}
+                  onChange={value => { if (canEditDraft()) setRangeEnd(value); }}
+                  value={rangeEnd}
+                />
+              </View>
+            ) : null}
+            {dateError ? (
+              <Text accessibilityLiveRegion="polite" style={styles.error}>
+                {dateError}
+              </Text>
+            ) : null}
+          </FilterSection>
+          <FilterSection title={t("search.details")}>
+            <FilterRow
+              active={!!draft.category}
+              label={t("search.category")}
+              onPress={() =>
+                choose(
+                  t("search.category"),
+                  [
+                    { label: t("common.any"), value: undefined },
+                    ...options.categories.map((value) => ({
+                      label: categoryLabel(value),
+                      value,
+                    })),
+                  ],
+                  "category",
+                )
+              }
+              value={draft.category ? categoryLabel(draft.category) : t("common.any")}
+            />
+            {!lockedPayer ? (
+              <FilterRow
+                active={!!draft.payerMemberId}
+                label={t("search.paidBy")}
+                onPress={() =>
+                  choose(t("search.paidBy"), memberChoices(options), "payerMemberId")
+                }
+                value={optionLabel(options, draft.payerMemberId)}
+              />
+            ) : null}
+            {scope === "GROUP" ? (
+              <FilterRow
+                active={!!draft.participantMemberId}
+                label={t("search.participant")}
+                onPress={() =>
+                  choose(
+                    t("search.participant"),
+                    memberChoices(options),
+                    "participantMemberId",
+                  )
+                }
+                value={optionLabel(options, draft.participantMemberId)}
+              />
+            ) : null}
+          </FilterSection>
+          <FilterSection title={t("search.more")}>
+            <FilterRow
+              active={!!draft.currency}
+              label={t("navigation.currency")}
+              onPress={() => {
+                if (!openChoice) { setPage("currency"); return; }
+                openChoice({
+                  kind: "options", title: t("navigation.currency"), values: currencies, selected: draft.currency,
+                  confirm: true, onChoose: value => updateChoice("currency", value),
+                });
+              }}
+              value={draft.currency ?? t("common.any")}
+            />
+            <FilterRow
+              active={!!draft.valuation || !!draft.conflict}
+              label={t("ledger.needsAttention")}
+              onPress={() => {
+                if (!openChoice) { setPage("attention"); return; }
+                openChoice({
+                  kind: "attention", title: t("ledger.needsAttention"),
+                  initial: { valuation: draft.valuation, conflict: draft.conflict },
+                  onChoose: next => setDraft(current => ({ ...current, ...next })),
+                });
+              }}
+              value={
+                [
+                  draft.valuation === "RATE_REQUIRED" ? t("search.journeyValue") : null,
+                  draft.conflict === "OPEN" ? t("search.conflict") : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || t("search.none")
+              }
+            />
+          </FilterSection>
+        </>
+      ) : page === "currency" ? (
+        <FilterSection title={t("navigation.currency")}>
+          {currencies.map((item) => (
+            <FilterRow
+              active={item.value !== undefined && draft.currency === item.value}
+              key={item.label}
+              label={item.label}
+              value={draft.currency === item.value ? "✓" : ""}
+              onPress={() =>
+                setDraft((current) => ({ ...current, currency: item.value }))
+              }
+            />
+          ))}
+        </FilterSection>
+      ) : (
+        <FilterSection title={t("ledger.needsAttention")}>
+          <View style={styles.attentionChoices}>
+            <Choice
+              label={t("search.journeyValueUnavailable")}
+              checkbox
+              onPress={() =>
+                setDraft((current) => ({
+                  ...current,
+                  valuation:
+                    current.valuation === "RATE_REQUIRED" ? undefined : "RATE_REQUIRED",
+                }))
+              }
+              selected={draft.valuation === "RATE_REQUIRED"}
+            />
+            <Choice
+              label={t("search.conflictReview")}
+              checkbox
+              onPress={() =>
+                setDraft((current) => ({
+                  ...current,
+                  conflict: current.conflict === "OPEN" ? undefined : "OPEN",
+                }))
+              }
+              selected={draft.conflict === "OPEN"}
+            />
+          </View>
+        </FilterSection>
+      )}
+      {isRoot && countLedgerFilters(draft) ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            if (!canEditDraft()) return;
+            setDraft({});
+            setDateMode("ANY");
+            setDateError(null);
+          }}
+          style={styles.clearButton}
+        >
+          <Text style={styles.error}>{t("search.clearAll")}</Text>
+        </Pressable>
+      ) : null}
+    </>
+  );
+  if (hosted) {
+    const frozen = applying || exitPending;
+    return (
+      <SheetRoutePanel
+        title={title}
+        action={{ label: actionLabel, onPress: apply, disabled: actionDisabled }}
+      >
+        <View
+          style={styles.hostedFilterForm}
+          pointerEvents={frozen ? "none" : "auto"}
+          accessibilityElementsHidden={frozen}
+          importantForAccessibility={frozen ? "no-hide-descendants" : "auto"}
+        >
+          {body}
+        </View>
+      </SheetRoutePanel>
+    );
+  }
 
   return (
     <Modal
@@ -712,205 +1039,60 @@ function FilterSheet({
     >
       <View style={styles.sheet}>
         <SheetHeader
-          leftLabel={page === "main" ? t("common.cancel") : t("common.back")}
-          onLeft={page === "main" ? onCancel : () => setPage("main")}
-          onRight={page === "main" ? () => void apply() : () => setPage("main")}
-          rightDisabled={applying}
-          rightLabel={
-            page === "main"
-              ? applying
-                ? t("common.applying")
-                : t("common.apply")
-              : t("common.done")
-          }
-          title={
-            page === "main"
-              ? t("search.filters")
-              : page === "currency"
-                ? t("navigation.currency")
-                : t("ledger.needsAttention")
-          }
+          leftLabel={isRoot ? t("common.cancel") : t("common.back")}
+          onLeft={isRoot ? onCancel : back}
+          onRight={isRoot ? apply : back}
+          rightDisabled={actionDisabled}
+          rightLabel={actionLabel}
+          title={title}
         />
         <ScrollView
           contentContainerStyle={styles.form}
           keyboardShouldPersistTaps="handled"
         >
-          {page === "main" ? (
-            <>
-              <FilterSection title={t("search.time")}>
-                <View style={styles.wrap}>
-                  {(
-                    [
-                      ["ANY", t("search.all")],
-                      ["TODAY", t("search.today")],
-                      ["YESTERDAY", t("search.yesterday")],
-                      ["LAST_30", t("search.last30")],
-                      ["RANGE", t("search.custom")],
-                    ] as [LedgerDatePreset, string][]
-                  ).map(([value, label]) => (
-                    <Choice
-                      key={value}
-                      label={label}
-                      onPress={() => {
-                        setDateMode(value);
-                        setDateError(null);
-                      }}
-                      selected={value !== "ANY" && dateMode === value}
-                    />
-                  ))}
-                </View>
-                {dateMode === "RANGE" ? (
-                  <View style={[styles.dateRow, largeText && styles.dateRowLarge]}>
-                    <DateInput
-                      label={t("search.start")}
-                      onChange={setRangeStart}
-                      value={rangeStart}
-                    />
-                    <DateInput
-                      label={t("search.end")}
-                      onChange={setRangeEnd}
-                      value={rangeEnd}
-                    />
-                  </View>
-                ) : null}
-                {dateError ? (
-                  <Text accessibilityLiveRegion="polite" style={styles.error}>
-                    {dateError}
-                  </Text>
-                ) : null}
-              </FilterSection>
-              <FilterSection title={t("search.details")}>
-                <FilterRow
-                  active={!!draft.category}
-                  label={t("search.category")}
-                  onPress={() =>
-                    choose(
-                      t("search.category"),
-                      [
-                        { label: t("common.any"), value: undefined },
-                        ...options.categories.map((value) => ({
-                          label: categoryLabel(value),
-                          value,
-                        })),
-                      ],
-                      "category",
-                    )
-                  }
-                  value={draft.category ? categoryLabel(draft.category) : t("common.any")}
-                />
-                {!lockedPayer ? (
-                  <FilterRow
-                    active={!!draft.payerMemberId}
-                    label={t("search.paidBy")}
-                    onPress={() =>
-                      choose(t("search.paidBy"), memberChoices(options), "payerMemberId")
-                    }
-                    value={optionLabel(options, draft.payerMemberId)}
-                  />
-                ) : null}
-                {scope === "GROUP" ? (
-                  <FilterRow
-                    active={!!draft.participantMemberId}
-                    label={t("search.participant")}
-                    onPress={() =>
-                      choose(
-                        t("search.participant"),
-                        memberChoices(options),
-                        "participantMemberId",
-                      )
-                    }
-                    value={optionLabel(options, draft.participantMemberId)}
-                  />
-                ) : null}
-              </FilterSection>
-              <FilterSection title={t("search.more")}>
-                <FilterRow
-                  active={!!draft.currency}
-                  label={t("navigation.currency")}
-                  onPress={() => setPage("currency")}
-                  value={draft.currency ?? t("common.any")}
-                />
-                <FilterRow
-                  active={!!draft.valuation || !!draft.conflict}
-                  label={t("ledger.needsAttention")}
-                  onPress={() => setPage("attention")}
-                  value={
-                    [
-                      draft.valuation === "RATE_REQUIRED"
-                        ? t("search.journeyValue")
-                        : null,
-                      draft.conflict === "OPEN" ? t("search.conflict") : null,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || t("search.none")
-                  }
-                />
-              </FilterSection>
-            </>
-          ) : page === "currency" ? (
-            <FilterSection title={t("navigation.currency")}>
-              {[
-                { label: t("common.any"), value: undefined },
-                ...options.currencies.map((value) => ({ label: value, value })),
-              ].map((item) => (
-                <FilterRow
-                  active={item.value !== undefined && draft.currency === item.value}
-                  key={item.label}
-                  label={item.label}
-                  value={draft.currency === item.value ? "✓" : ""}
-                  onPress={() =>
-                    setDraft((current) => ({ ...current, currency: item.value }))
-                  }
-                />
-              ))}
-            </FilterSection>
-          ) : (
-            <FilterSection title={t("ledger.needsAttention")}>
-              <View style={styles.attentionChoices}>
-                <Choice
-                  label={t("search.journeyValueUnavailable")}
-                  checkbox
-                  onPress={() =>
-                    setDraft((current) => ({
-                      ...current,
-                      valuation:
-                        current.valuation === "RATE_REQUIRED"
-                          ? undefined
-                          : "RATE_REQUIRED",
-                    }))
-                  }
-                  selected={draft.valuation === "RATE_REQUIRED"}
-                />
-                <Choice
-                  label={t("search.conflictReview")}
-                  checkbox
-                  onPress={() =>
-                    setDraft((current) => ({
-                      ...current,
-                      conflict: current.conflict === "OPEN" ? undefined : "OPEN",
-                    }))
-                  }
-                  selected={draft.conflict === "OPEN"}
-                />
-              </View>
-            </FilterSection>
-          )}
-          {page === "main" && countLedgerFilters(draft) ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                setDraft({});
-                setDateMode("ANY");
-                setDateError(null);
-              }}
-              style={styles.clearButton}
-            >
-              <Text style={styles.error}>{t("search.clearAll")}</Text>
-            </Pressable>
-          ) : null}
+          {body}
         </ScrollView>
       </View>
     </Modal>
+  );
+}
+
+export function LedgerSearchChoiceForm({ choice, complete, render }: {
+  choice: LedgerSearchChoice;
+  complete(commit: () => void): void;
+  render(body: ReactNode, action?: ToolbarAction): ReactNode;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const [selected, setSelected] = useState(choice.kind === "options" ? choice.selected : undefined);
+  const [attention, setAttention] = useState(choice.kind === "attention" ? choice.initial : undefined);
+  if (choice.kind === "options") {
+    return render(
+      <FilterSection title={choice.title}>
+        {choice.values.map(item => (
+          <FilterRow key={item.value ?? item.label} label={item.label}
+            value={selected === item.value ? "✓" : ""} active={selected === item.value} onPress={() => {
+              if (choice.confirm) setSelected(item.value);
+              else complete(() => choice.onChoose(item.value));
+            }} />
+        ))}
+      </FilterSection>,
+      choice.confirm ? {
+        label: t("common.done"), disabled: false, onPress: () => complete(() => choice.onChoose(selected)),
+      } : undefined,
+    );
+  }
+  if (!attention) return null;
+  return render(
+    <FilterSection title={choice.title}>
+      <View style={styles.attentionChoices}>
+        <Choice label={t("search.journeyValueUnavailable")} checkbox selected={attention.valuation === "RATE_REQUIRED"}
+          onPress={() => setAttention({ ...attention, valuation: attention.valuation === "RATE_REQUIRED" ? undefined : "RATE_REQUIRED" })} />
+        <Choice label={t("search.conflictReview")} checkbox selected={attention.conflict === "OPEN"}
+          onPress={() => setAttention({ ...attention, conflict: attention.conflict === "OPEN" ? undefined : "OPEN" })} />
+      </View>
+    </FilterSection>,
+    { label: t("common.done"), disabled: false, onPress: () => complete(() => choice.onChoose(attention)) },
   );
 }
 
@@ -924,15 +1106,18 @@ function inclusiveEnd(to?: string) {
 function memberChoices(options: Options) {
   return [
     { label: t("common.any"), value: undefined },
-    ...options.members.map((item) => ({ label: item.label, value: item.id })),
+    ...options.members.map((item) => ({
+      label: item.label.trim() || t("search.selectedTraveller"),
+      value: item.id,
+    })),
   ];
 }
 
 function optionLabel(options: Options, id?: string) {
   return id
-    ? (options.members.find((item) => item.id === id)?.label ??
-        t("search.selectedTraveller"))
-    : "Any";
+    ? options.members.find((item) => item.id === id)?.label.trim() ||
+        t("search.selectedTraveller")
+    : t("common.any");
 }
 
 function FilterSection({
@@ -1157,6 +1342,7 @@ const createStyles = (colors: UiColors) =>
     },
     sheet: { backgroundColor: colors.background, flex: 1 },
     form: { gap: 16, padding: 16, paddingBottom: 40 },
+    hostedFilterForm: { padding: cv.space.page, gap: cv.space.card },
     section: { backgroundColor: colors.surface, borderRadius: 12, gap: 10, padding: 14 },
     sectionTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: "700" },
     wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
