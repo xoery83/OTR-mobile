@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { advanceAccountGeneration, getAccountGeneration } from "@/data/auth/accountGeneration";
 
 import {
   createLedgerExpenseRepository,
@@ -664,6 +665,47 @@ describe("Ledger Expense repository", () => {
       revision: 4,
       eventType: "ECONOMIC_DATE_COMPLETED",
     });
+  });
+
+  it("rejects stale date confirmation across Expense revisions and Accounts before writing", async () => {
+    const { database, expenses, operations, auditEvents, valuations } =
+      createInMemoryLedgerDatabase();
+    let accountChangesOnLookup = false;
+    const repository = createLedgerExpenseRepository(database, async () => {
+      if (accountChangesOnLookup) {
+        advanceAccountGeneration();
+        return "user-b";
+      }
+      return activeUser();
+    });
+    const created = await repository.createExpense(command);
+    const row = expenses.get(created.id)!;
+    Object.assign(row, {
+      revision: 3, serverRevision: 3, serverId: "server-expense",
+      syncStatus: "SYNCED", localOwnerUserId: null, economicDate: null,
+      businessStatus: "RATE_REQUIRED",
+    });
+    valuations.delete(created.id);
+    operations.length = 0;
+    auditEvents.length = 0;
+    const expected = {
+      accountGeneration: getAccountGeneration(), journeyId: command.journeyId, revision: 3,
+    };
+
+    await expect(repository.completeEconomicDate(
+      created.id, "2026-07-25", "USER_CONFIRMED_V1", { ...expected, revision: 2 },
+    )).rejects.toThrow("Expense changed");
+    await expect(repository.completeEconomicDate(
+      created.id, "2026-07-25", "USER_CONFIRMED_V1", { ...expected, journeyId: "other-trip" },
+    )).rejects.toThrow("Expense changed");
+
+    accountChangesOnLookup = true;
+    await expect(repository.completeEconomicDate(
+      created.id, "2026-07-25", "USER_CONFIRMED_V1", expected,
+    )).rejects.toThrow("active Account changed");
+    expect(row.economicDate).toBeNull();
+    expect(operations).toHaveLength(0);
+    expect(auditEvents).toHaveLength(0);
   });
 
   it("does not backfill ambiguous UTC or offset legacy dates", async () => {

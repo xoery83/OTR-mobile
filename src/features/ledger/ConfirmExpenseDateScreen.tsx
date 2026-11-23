@@ -125,18 +125,21 @@ function ConfirmExpenseDateForm({ expenseId, onClose, hosted, isCurrent }: {
     setBusy(true);
     setMessage(null);
     try {
-      const result = await confirmExpenseEconomicDate(expense.id, date);
+      const { followUp } = await confirmExpenseEconomicDate(expense.id, date, {
+        accountGeneration: generation,
+        journeyId: expense.journeyId,
+        revision: expense.revision,
+      });
       if (!canUseForm()) return;
       completed.current = true;
       setSaved(true);
-      if (result.state === "VALUED") setShouldClose(true);
-      else {
-        setMessage(
-          result.state === "SAVED_WAITING"
-            ? t("ui.dateSavedOnThisIphoneItWillSyncWhenPossible")
-            : t("ui.dateConfirmedTheTrustedReferenceRateIsStillResolving"),
-        );
-      }
+      setMessage(t("ui.dateSavedOnThisIphoneItWillSyncWhenPossible"));
+      void followUp.then(({ state }) => {
+        if (!canUseForm()) return;
+        if (state === "VALUED") setShouldClose(true);
+        if (state === "RATE_WAITING")
+          setMessage(t("ui.dateConfirmedTheTrustedReferenceRateIsStillResolving"));
+      });
     } catch (error) {
       if (canUseForm()) {
         setMessage(

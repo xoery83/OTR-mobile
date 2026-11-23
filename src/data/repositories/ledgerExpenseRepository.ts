@@ -116,6 +116,12 @@ export type ExpenseAttachmentEdit = {
   expectedRevision: number;
 };
 
+export type ExpenseEconomicDateSnapshot = {
+  accountGeneration: number;
+  journeyId: string;
+  revision: number;
+};
+
 export type LedgerExpenseRepository = {
   createExpense(
     command: LedgerExpenseCommand,
@@ -132,6 +138,7 @@ export type LedgerExpenseRepository = {
     id: string,
     date: string,
     source: "USER_CONFIRMED_V1" | "STAGE9_DATE_ONLY_V1",
+    expected?: ExpenseEconomicDateSnapshot,
   ): Promise<LedgerExpense>;
   listExpensesForJourney(
     journeyId: string,
@@ -553,10 +560,18 @@ export function createLedgerExpenseRepository(
       };
     },
 
-    async completeEconomicDate(id, date, source) {
+    async completeEconomicDate(id, date, source, expected) {
       economicDateSchema.parse(date);
+      const assertCurrentAccount = () => {
+        if (expected && expected.accountGeneration !== getAccountGeneration())
+          throw new Error("The active Account changed while confirming the date.");
+      };
+      assertCurrentAccount();
       const userId = await getActiveUserId();
+      assertCurrentAccount();
       const current = await requireExpense(database, id, userId);
+      if (expected && (current.journeyId !== expected.journeyId || current.revision !== expected.revision))
+        throw new Error("The Expense changed while its date was being confirmed.");
       assertReplayFixtureWritable(current.journeyId);
       if (
         current.syncStatus !== "SYNCED" ||
@@ -596,6 +611,7 @@ export function createLedgerExpenseRepository(
         updatedAt: now,
       };
       await database.withTransactionAsync(async () => {
+        assertCurrentAccount();
         const updated = await database.runAsync(
           `UPDATE ledger_expenses SET economic_date = ?, revision = ?, sync_status = 'PENDING_UPDATE',
              local_owner_user_id = ?, updated_at = ?
@@ -618,6 +634,7 @@ export function createLedgerExpenseRepository(
           now,
           next,
         );
+        assertCurrentAccount();
         await enqueueOperation(
           database,
           next,
@@ -628,6 +645,7 @@ export function createLedgerExpenseRepository(
           next,
           current,
         );
+        assertCurrentAccount();
       });
       return next;
     },
