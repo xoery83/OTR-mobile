@@ -1,4 +1,5 @@
 import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
+import { hostedSignInEnabled } from "@/features/auth/hostedSignIn";
 import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
@@ -256,6 +257,18 @@ export default function RootLayout() {
               name="trip-validation"
               options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}
             />
+            <Stack.Protected guard={hostedSignInEnabled}>
+              <Stack.Screen
+                name="account-sign-in"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
             <Stack.Screen
               name="foundation"
               options={{ headerShown: true, headerTitle: t("navigation.signIn") }}

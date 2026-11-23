@@ -3,7 +3,8 @@ import Module from "node:module";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
 const native = vi.hoisted(() => ({ get: vi.fn(() => ({} as object | null)) }));
-vi.mock("react-native", () => ({ Platform: { OS: "ios" }, TurboModuleRegistry: native }));
+vi.mock("react-native", () => ({
+  StyleSheet: { create: (styles: unknown) => styles }, Platform: { OS: "ios" }, TurboModuleRegistry: native }));
 vi.mock("@/ui/controls", () => ({ UiButton: "UiButton" }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 afterEach(() => { vi.restoreAllMocks(); native.get.mockReturnValue({}); });

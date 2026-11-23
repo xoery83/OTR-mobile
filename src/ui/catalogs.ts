@@ -451,6 +451,7 @@ export const en = {
     "The processing outcome is unknown. Check status before trying again.",
 
   "auth.emailTitle": "Sign in or create an account",
+  "auth.verifyTitle": "Enter verification code",
   "auth.continueGoogle": "Continue with Google",
   "auth.continueApple": "Continue with Apple",
   "auth.appleLinkTitle": "Connect Apple Account",
@@ -4125,6 +4126,7 @@ export const zhHans: Record<MessageKey, string> = {
   "capture.ai.task.UNKNOWN": "尚无法确认处理结果，请先查询状态再继续。",
 
   "auth.emailTitle": "登录或创建账户",
+  "auth.verifyTitle": "输入验证码",
   "auth.continueGoogle": "使用 Google 继续",
   "auth.continueApple": "使用 Apple 继续",
   "auth.appleLinkTitle": "连接 Apple 账户",
