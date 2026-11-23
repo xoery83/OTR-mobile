@@ -51,7 +51,10 @@ subscribeAccountGeneration(() => {
     retained.current = null;
   }
 });
-export default function CaptureRoute({ overlay = false, hosted = false, hostedChild = false, onHostedClose }: { overlay?: boolean; hosted?: boolean; hostedChild?: boolean; onHostedClose?: () => void } = {}) {
+export default function CaptureRoute({ overlay = false, hosted = false, hostedChild = false, onHostedClose, canUseHostedSource }: {
+  overlay?: boolean; hosted?: boolean; hostedChild?: boolean; onHostedClose?: () => void;
+  canUseHostedSource?: () => boolean;
+} = {}) {
   const { jobId, origin, originGeneration, tripId } = useLocalSearchParams<{
     tripId?: string;
     jobId?: string;
@@ -104,7 +107,7 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
       setDraftWarning(false);
       void withAccountApplyGate(readLocalSession)
         .then(async (session) => {
-          if (!active || getAccountGeneration() !== generation) return;
+          if (!active || getAccountGeneration() !== generation || canUseHostedSource?.() === false) return;
           const accountId = session?.identity?.userId;
           if (accountId) {
             const next = { accountId, generation };
@@ -113,13 +116,13 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
               typeof tripId === "string" && tripId
                 ? await readCaptureTripPrior(tripId, next)
                 : null;
-            if (!active || generation !== getAccountGeneration()) return;
+            if (!active || generation !== getAccountGeneration() || canUseHostedSource?.() === false) return;
             if (tripId && !prior) throw new Error("CAPTURE_PRIOR_UNAVAILABLE");
             const owner = { accountId, tripPrior: prior?.id ?? null };
             const lease = () => {
               try {
                 assertAccountRequestGeneration({ ...next, tripId: "" });
-                return active && next.generation === getAccountGeneration();
+                return active && next.generation === getAccountGeneration() && canUseHostedSource?.() !== false;
               } catch {
                 return false;
               }
@@ -228,7 +231,7 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
             originGeneration: undefined,
           });
       };
-    }, [generation, navigation, tripId, retained, overlay, hosted]),
+    }, [generation, navigation, tripId, retained, overlay, hosted, canUseHostedSource]),
   );
   const isCurrent = () => {
     if (
@@ -255,6 +258,9 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
           embeddedComposer={overlay}
           hostedComposer={hosted}
           hostedChild={hostedChild}
+          onHostedBack={hostedChild && onHostedClose ? () => {
+            if (isCurrent()) onHostedClose();
+          } : undefined}
           activityPositionsRef={activityPositionsRef}
           activityScope={hosted ? admission.current : undefined}
           onOpenAcceptedItem={(target) => {

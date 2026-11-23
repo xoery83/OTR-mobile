@@ -1,3 +1,5 @@
+import { hostedImportEnabled } from "@/features/capture/hostedImport";
+import { releaseStartTrip, stageStartTrip } from "@/features/sheet-navigation/startTripHandoff";
 import { releaseStaleHostedQuickAdd } from "@/features/sheet-navigation/quickAddHandoff";
 import { openTripHome } from "./openTripHome";
 import { isTripWorkspacePath } from "./tripShellNavigation";
@@ -30,7 +32,7 @@ import { requireActiveUserId } from "@/data/auth/authRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { canEditLedgerExpense } from "@/data/repositories/ledgerExpenseEditAccess";
 import { UiText as Text } from "@/ui/controls";
-import { router, useGlobalSearchParams, usePathname } from "expo-router";
+import { router, useGlobalSearchParams, useNavigationContainerRef, usePathname } from "expo-router";
 import {
   AccessibilityInfo,
   Alert,
@@ -80,6 +82,7 @@ export function ExperienceBottomShell({
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 1.5;
   const activePath = usePathname();
+  const rootNavigation = useNavigationContainerRef();
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [reducedTransparency, setReducedTransparency] = useState(false);
   const [startTripTarget, setStartTripTarget] = useState<symbol | null>(null);
@@ -167,6 +170,8 @@ export function ExperienceBottomShell({
   const renderedTarget = useMemo(() => Symbol(targetKey), [targetKey]);
   const currentTarget = useRef<symbol | null>(null);
   const startTripLease = useRef<symbol | null>(null);
+  const hostedStartTrip = useRef<string | undefined>(undefined);
+  useLayoutEffect(() => () => releaseStartTrip(hostedStartTrip.current), []);
   const quickAddOwner = useRef<{ key: string; scope: string } | null>(null);
   const quickAddScope = JSON.stringify([generation, workingTrip?.tripId, view?.tripId]);
   const sheetActive = activePath === "/import-plans" || activePath.startsWith("/import-plans/");
@@ -204,6 +209,20 @@ export function ExperienceBottomShell({
   const startTrip = () => {
     if (generation !== getAccountGeneration() || renderedTarget !== currentTarget.current)
       return;
+    if (hostedImportEnabled) {
+      const currentRouteKey = () => (rootNavigation.getCurrentRoute() as { key: string } | undefined)?.key;
+      const originalKey = currentRouteKey();
+      if (!originalKey) return;
+      const invocation = stageStartTrip(() => {
+        if (generation === getAccountGeneration() && currentRouteKey() === originalKey)
+          router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+      });
+      if (invocation) {
+        hostedStartTrip.current = invocation;
+        router.push({ pathname: "/import-plans/start-trip", params: { invocation } });
+      }
+      return;
+    }
     startTripLease.current = renderedTarget;
     setStartTripTarget(renderedTarget);
   };

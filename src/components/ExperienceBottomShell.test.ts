@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { lightPalette, darkPalette, type UiColors } from "@/ui/palette";
 import { ExperienceBottomShell } from "./ExperienceBottomShell";
+import { readStartTrip, releaseStartTrip } from "@/features/sheet-navigation/startTripHandoff";
 vi.mock("expo-modules-core", () => ({
   requireOptionalNativeModule: () => state.glassCapability,
 }));
@@ -35,6 +36,9 @@ const state = vi.hoisted(() => ({
   activePath: "",
   quickAddOwnerRef: { current: null as { key: string; scope: string } | null },
   startTripRef: { current: null as symbol | null },
+  hostedStartTripRef: { current: undefined as string | undefined },
+  hostedImport: false,
+  currentRouteKey: "trips",
   resolveReduced: null as null | ((value: boolean) => void),
   reducedListener: null as null | ((value: boolean) => void),
   effectCleanup: null as null | (() => void),
@@ -63,9 +67,12 @@ vi.mock("@/features/updates/useUpdatesSignal", () => ({
 }));
 vi.mock("./TripQuickAddMenu", () => ({ TripQuickAddMenu: "TripQuickAddMenu" }));
 vi.mock("./StartTripSheet", () => ({ StartTripSheet: "StartTripSheet" }));
+vi.mock("@/features/capture/hostedImport", () => ({
+  get hostedImportEnabled() { return state.hostedImport; },
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useRef: () => [state.targetRef, state.startTripRef, state.quickAddOwnerRef][state.refCalls++ % 3],
+  useRef: () => [state.targetRef, state.startTripRef, state.hostedStartTripRef, state.quickAddOwnerRef][state.refCalls++ % 4],
   useContext: () => state.reportHeight,
   useState: (initial: unknown) =>
     initial === null
@@ -110,6 +117,7 @@ vi.mock("expo-router", () => ({
   usePathname: () => state.activePath,
   router: state,
   useGlobalSearchParams: () => state.params,
+  useNavigationContainerRef: () => ({ getCurrentRoute: () => ({ key: state.currentRouteKey }) }),
 }));
 vi.mock("expo-router/js-tabs", () => ({ BottomTabBarHeightCallbackContext: {} }));
 vi.mock("react-native", () => ({
@@ -201,6 +209,10 @@ beforeEach(() => {
   state.quickAddOwnerRef.current = null;
   state.startTripTarget = null;
   state.startTripRef.current = null;
+  releaseStartTrip(state.hostedStartTripRef.current);
+  state.hostedStartTripRef.current = undefined;
+  state.hostedImport = false;
+  state.currentRouteKey = "trips";
   state.glassCapability = null;
   state.dark = false;
   state.view = null;
@@ -914,4 +926,21 @@ it("retains the original Quick Add lease through its sheet and rejects a same-ge
   state.workingTrip = { tripId: "b", generation: 1 };
   ExperienceBottomShell({ visible: true, pathname: "/trip-home" });
   expect(launch.props.canOpenCapture()).toBe(false);
+});
+
+it("stages a hosted start chooser and launches Create only from the exact restored Trips route", () => {
+  state.hostedImport = true;
+  pressables(ExperienceBottomShell({ visible: true, pathname: "/trip" }))[0].props.onPress?.();
+  const invocation = state.hostedStartTripRef.current;
+  expect(state.push).toHaveBeenCalledExactlyOnceWith({
+    pathname: "/import-plans/start-trip", params: { invocation },
+  });
+  const entry = readStartTrip(invocation);
+  expect(entry).toBeDefined();
+  state.currentRouteKey = "other-trip-route";
+  entry?.create();
+  expect(state.setParams).not.toHaveBeenCalled();
+  state.currentRouteKey = "trips";
+  entry?.create();
+  expect(state.setParams).toHaveBeenCalledExactlyOnceWith({ tripId: "", date: "", zone: "", view: "create" });
 });

@@ -45,6 +45,7 @@ export function CaptureContent({
   embeddedComposer = false,
   hostedComposer = false,
   hostedChild = false,
+  onHostedBack,
   accountId,
 }: {
   isCurrent: () => boolean;
@@ -65,6 +66,7 @@ export function CaptureContent({
   embeddedComposer?: boolean;
   hostedComposer?: boolean;
   hostedChild?: boolean;
+  onHostedBack?: () => void;
   accountId?: string;
 }) {
   useUiLocale();
@@ -148,6 +150,10 @@ export function CaptureContent({
   };
   const hide = () => {
     if (draftStaging && !current()) return;
+    if (onHostedBack) {
+      onHostedBack();
+      return;
+    }
     if (hostedComposer && !hostedChild) {
       onCancel();
       return;

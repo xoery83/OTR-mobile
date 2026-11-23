@@ -29,8 +29,7 @@ export function StartTripSheet({
   onCreate(): void;
 }) {
   useUiLocale();
-  const styles = useThemedStyles(createStyles),
-    colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
   const { height } = useWindowDimensions();
   const [presented, setPresented] = useState(visible);
   const [progress] = useState(() => new Animated.Value(0));
@@ -102,44 +101,8 @@ export function StartTripSheet({
                 leftLabel={t("common.cancel")}
                 onLeft={onClose}
               />
-              <ScrollView
-                style={styles.scroll}
-                contentContainerStyle={styles.content}
-                keyboardShouldPersistTaps="handled"
-              >
-                <UiText style={styles.meta}>{t("createTripV2.startHint")}</UiText>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("actionIsland.importPlans")}
-                  onPress={onImport}
-                  style={styles.row}
-                >
-                  <View style={styles.icon}>
-                    <AppIcon name="doc.badge.arrow.up" color={colors.accent} size={24} />
-                  </View>
-                  <View style={styles.copy}>
-                    <UiText style={styles.title}>{t("actionIsland.importPlans")}</UiText>
-                    <UiText style={styles.meta}>{t("createTripV2.importHint")}</UiText>
-                  </View>
-                  <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("actionIsland.createManually")}
-                  onPress={onCreate}
-                  style={styles.row}
-                >
-                  <View style={styles.icon}>
-                    <AppIcon name="map" color={colors.accent} size={24} />
-                  </View>
-                  <View style={styles.copy}>
-                    <UiText style={styles.title}>
-                      {t("actionIsland.createManually")}
-                    </UiText>
-                    <UiText style={styles.meta}>{t("createTripV2.manualHint")}</UiText>
-                  </View>
-                  <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
-                </Pressable>
+              <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled">
+                <StartTripChoices onImport={onImport} onCreate={onCreate} />
               </ScrollView>
             </SafeAreaView>
           </Animated.View>
@@ -148,6 +111,53 @@ export function StartTripSheet({
     </Modal>
   );
 }
+export function StartTripChoices({
+  onImport,
+  onCreate,
+}: {
+  onImport(): void;
+  onCreate(): void;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
+  return (
+    <View style={styles.content}>
+      <UiText style={styles.meta}>{t("createTripV2.startHint")}</UiText>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("actionIsland.importPlans")}
+        onPress={onImport}
+        style={styles.row}
+      >
+        <View style={styles.icon}>
+          <AppIcon name="doc.badge.arrow.up" color={colors.accent} size={24} />
+        </View>
+        <View style={styles.copy}>
+          <UiText style={styles.title}>{t("actionIsland.importPlans")}</UiText>
+          <UiText style={styles.meta}>{t("createTripV2.importHint")}</UiText>
+        </View>
+        <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("actionIsland.createManually")}
+        onPress={onCreate}
+        style={styles.row}
+      >
+        <View style={styles.icon}>
+          <AppIcon name="map" color={colors.accent} size={24} />
+        </View>
+        <View style={styles.copy}>
+          <UiText style={styles.title}>{t("actionIsland.createManually")}</UiText>
+          <UiText style={styles.meta}>{t("createTripV2.manualHint")}</UiText>
+        </View>
+        <AppIcon name="chevron.right" color={colors.textSecondary} size={16} />
+      </Pressable>
+    </View>
+  );
+}
+
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     host: { flex: 1 },

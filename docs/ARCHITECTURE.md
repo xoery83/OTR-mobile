@@ -124,6 +124,10 @@ available to the legacy callers and with the flag off. Existing capture draft,
 Operation and permissions continue to belong to Capture. An external Quick Add
 handoff applies only after the originating Sheet's own successful close.
 
+The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
+existing composer. Manual creation closes the chooser before opening the
+original Trip Create workspace.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.
