@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Stack } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
 import { ActivityIndicator, ScrollView, StyleSheet } from "react-native";
 import type { createAccountProfileRepository } from "@/data/auth/accountProfileRepository";
 import type { AccountScope } from "@/data/auth/accountRequestContext";
@@ -10,8 +12,10 @@ import {
   privateProfileDraft,
   privateProfileNameDraftSchema,
   type PrivateProfileNameDraft,
+  type PendingProfileAlias,
+  withPendingProfileAlias,
 } from "@/domain/auth/privateAccountProfile";
-import { UiButton, UiSection, UiText } from "@/ui/controls";
+import { UiButton, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import type { UiColors } from "@/ui/palette";
 import { useThemedStyles } from "@/ui/theme";
@@ -28,18 +32,19 @@ type Lane = {
   active: boolean;
   busy: boolean;
   draft: PrivateProfileNameDraft | null;
+  pendingAlias: PendingProfileAlias | null;
 };
 type Feedback = "draftSaved" | "loadFailed" | "saveFailed";
 
-// Unmounted local-draft candidate. No cloud write or sync acceptance is implied.
+// The native editor saves the existing account-scoped draft on this device.
 export function AccountPrivateProfileScreen({
   scope,
   local,
-  onCancel,
+  onSaved,
 }: {
   scope: AccountScope;
   local: LocalProfile;
-  onCancel?(): void;
+  onSaved(): void;
 }) {
   useUiLocale();
   const { accountId, generation: accountGeneration } = scope;
@@ -61,7 +66,7 @@ export function AccountPrivateProfileScreen({
   } | null>(null);
 
   useEffect(() => {
-    const current: Lane = { key, local, active: true, busy: false, draft: null };
+    const current: Lane = { key, local, active: true, busy: false, draft: null, pendingAlias: null };
     lane.current = current;
     const valid = () =>
       current.active &&
@@ -104,73 +109,79 @@ export function AccountPrivateProfileScreen({
     current.busy = true;
     setView((prior) => prior && { ...prior, busy: true, feedback: undefined });
     try {
-      const draft = privateProfileNameDraftSchema.parse(current.draft);
+      const draft = privateProfileNameDraftSchema.parse(
+        withPendingProfileAlias(current.draft, current.pendingAlias),
+      );
       const result = await local.saveDraft(Object.freeze({ ...scope }), draft);
       if (!valid(current)) return;
       if (result.accountId !== scope.accountId)
         throw Error("PRIVATE_PROFILE_ACCOUNT_MISMATCH");
-      setView((prior) => prior && { ...prior, feedback: "draftSaved" });
+      setView((prior) => prior && { ...prior, busy: false, feedback: "draftSaved" });
     } catch {
-      if (valid(current))
-        setView((prior) => prior && { ...prior, feedback: "saveFailed" });
-    } finally {
-      if (valid(current)) {
-        current.busy = false;
-        setView((prior) => prior && { ...prior, busy: false });
-      }
+      if (!valid(current)) return;
+      current.busy = false;
+      setView((prior) => prior && { ...prior, busy: false, feedback: "saveFailed" });
     }
   };
+  const visible = generation === accountGeneration && view?.key === key && view.local === local
+    ? view
+    : null;
+  const readyToClose = visible?.feedback === "draftSaved";
+  usePreventRemove(visible?.busy === true, () => {});
+  // Wait for the pending-save navigation guard to release before returning.
+  useEffect(() => {
+    const current = lane.current;
+    if (!readyToClose || !current?.active || current.key !== key ||
+        current.local !== local || getAccountGeneration() !== accountGeneration) return;
+    current.active = false;
+    onSaved();
+  }, [readyToClose, key, local, accountGeneration, onSaved]);
   if (generation !== accountGeneration) return null;
-  const visible = view?.key === key && view.local === local ? view : null;
   return (
-    <ScrollView
-      keyboardShouldPersistTaps="handled"
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-    >
-      <UiSection title={t("privateProfile.title")}>
+    <>
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          accessibilityLabel={t("ui.save")}
+          disabled={!visible?.draft || visible.busy || readyToClose}
+          onPress={() => void save()}
+        >
+          {t("ui.save")}
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="interactive"
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+      >
         <UiText style={styles.hint}>{t("privateProfile.draftOnlyHint")}</UiText>
         {!visible ? <ActivityIndicator accessibilityLabel={t("common.loading")} /> : null}
-        {visible?.draft ? (
-          <>
-            <PrivateProfileNameFields
-              scope={scope}
-              draft={visible.draft}
-              disabled={visible.busy}
-              onChange={(draft) => {
-                const current = lane.current;
-                if (!valid(current) || current.busy) return;
-                current.draft = draft;
-                setView((prior) => prior && { ...prior, draft, feedback: undefined });
-              }}
-            />
-            <UiButton
-              label={t("privateProfile.saveDraft")}
-              disabled={visible.busy}
-              onPress={() => void save()}
-            />
-          </>
-        ) : null}
-        {onCancel ? (
-          <UiButton
-            label={t("common.cancel")}
-            variant="secondary"
-            disabled={visible?.busy ?? false}
-            onPress={() => {
-              const current = lane.current;
-              if (!valid(current) || current.busy) return;
-              current.active = false;
-              onCancel();
-            }}
-          />
-        ) : null}
-        {visible?.feedback ? (
+        {visible?.feedback && !readyToClose ? (
           <UiText
             accessibilityLiveRegion="polite"
-            style={visible.feedback === "draftSaved" ? styles.hint : styles.error}
+            style={styles.error}
           >
             {t(`privateProfile.${visible.feedback}`)}
           </UiText>
+        ) : null}
+        {visible?.draft ? (
+          <PrivateProfileNameFields
+            key={key}
+            scope={scope}
+            draft={visible.draft}
+            disabled={visible.busy || readyToClose}
+            onPendingAliasChange={(pending) => {
+              const current = lane.current;
+              if (valid(current) && !current.busy) current.pendingAlias = pending;
+            }}
+            onChange={(draft) => {
+              const current = lane.current;
+              if (!valid(current) || current.busy) return;
+              current.draft = draft;
+              setView((prior) => prior && { ...prior, draft, feedback: undefined });
+            }}
+          />
         ) : null}
         {visible?.feedback === "loadFailed" ? (
           <UiButton
@@ -182,15 +193,18 @@ export function AccountPrivateProfileScreen({
             }}
           />
         ) : null}
-      </UiSection>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
-    content: { padding: visual.space.page, gap: visual.space.section },
+    content: {
+      width: "100%", maxWidth: 640, alignSelf: "center",
+      padding: visual.space.page, gap: visual.space.row,
+    },
     hint: { ...visual.type.meta, color: colors.textSecondary },
     error: { ...visual.type.meta, color: colors.destructive },
   });

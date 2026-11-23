@@ -20,6 +20,7 @@ const hooks = vi.hoisted(() => ({
   effects: [] as (() => void)[],
   generation: 4,
   writes: 0,
+  preventRemove: false,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -45,10 +46,14 @@ vi.mock("react", async (original) => ({
     const prior = hooks.values[index];
     if (prior && deps.every((value, n) => Object.is(value, prior.deps[n]))) return;
     hooks.effects.push(() => {
-      prior?.cleanup();
+      prior?.cleanup?.();
       hooks.values[index] = { deps, cleanup: effect() };
     });
   },
+}));
+vi.mock("expo-router", () => ({ Stack: { Toolbar: Object.assign(() => null, { Button: "ToolbarButton" }) } }));
+vi.mock("expo-router/react-navigation", () => ({
+  usePreventRemove: (blocked: boolean) => { hooks.preventRemove = blocked; },
 }));
 vi.mock("react-native", () => ({
   ScrollView: "Scroll",
@@ -93,7 +98,7 @@ function deferred<T>() {
   });
   return { promise, resolve };
 }
-function fixture(withCancel = false) {
+function fixture() {
   let scope = a;
   const read = vi.fn(async () => null as any);
   const saveDraft = vi.fn(async (input, draft): Promise<PrivateProfileLocalState> => ({
@@ -103,13 +108,14 @@ function fixture(withCancel = false) {
   }));
   let local = { read, saveDraft };
   const onCancel = vi.fn();
+  const onSaved = vi.fn(() => expect(hooks.preventRemove).toBe(false));
   const render = () => {
     hooks.cursor = 0;
     const tree = nodes(
       AccountPrivateProfileScreen({
         scope,
         local,
-        ...(withCancel ? { onCancel } : {}),
+        onSaved,
       }),
     );
     for (const effect of hooks.effects.splice(0)) effect();
@@ -117,14 +123,20 @@ function fixture(withCancel = false) {
   };
   const field = () => render().find((v) => v.type === "Fields").props;
   const save = () =>
-    render().find((v) => v.props.label === "privateProfile.saveDraft").props;
+    render().find((v) => v.props.accessibilityLabel === "ui.save").props;
   return {
     local,
     render,
     field,
     save,
     onCancel,
-    cancel: () => render().find((v) => v.props.label === "common.cancel").props,
+    onSaved,
+    back() {
+      render();
+      if (hooks.preventRemove || onCancel.mock.calls.length) return;
+      unmount();
+      onCancel();
+    },
     replaceLocal() {
       local = { read: vi.fn(async () => null), saveDraft: vi.fn() };
       return local;
@@ -141,18 +153,22 @@ beforeEach(() => {
   hooks.effects = [];
   hooks.generation = 4;
   hooks.writes = 0;
+  hooks.preventRemove = false;
   vi.mocked(getDefaultAccountPrivateProfileEditor).mockReset();
 });
 
+function unmount() {
+  for (const value of hooks.values) value?.cleanup?.();
+}
 function pageFixture() {
-  const onCancel = vi.fn();
+  const onSignIn = vi.fn();
   const render = () => {
     hooks.cursor = 0;
-    const tree = nodes(AccountPrivateProfilePage({ onCancel }));
+    const tree = nodes(AccountPrivateProfilePage({ onSignIn, onSaved: vi.fn() }));
     for (const effect of hooks.effects.splice(0)) effect();
     return tree;
   };
-  return { render, onCancel };
+  return { render, onSignIn };
 }
 
 it("loads the normal page through the existing local repository entry", async () => {
@@ -164,9 +180,19 @@ it("loads the normal page through the existing local repository entry", async ()
   const screen = page.render().find((v) => v.type === AccountPrivateProfileScreen);
   expect(screen.props.scope).toEqual(a);
   expect(screen.props.local).toBe(editor.local);
-  screen.props.onCancel();
-  screen.props.onCancel();
-  expect(page.onCancel).toHaveBeenCalledOnce();
+  expect(page.render().some((v) => v.props.label === "common.cancel")).toBe(false);
+});
+
+it("offers sign-in to a committed Guest without showing a draft read error", async () => {
+  vi.mocked(getDefaultAccountPrivateProfileEditor).mockResolvedValueOnce(null);
+  const page = pageFixture();
+  page.render();
+  await tick();
+  const tree = page.render();
+  expect(tree.some((v) => v.props.children === "privateProfile.signInRequired")).toBe(true);
+  expect(tree.some((v) => v.props.label === "common.tryAgain")).toBe(false);
+  tree.find((v) => v.props.label === "navigation.signIn").props.onPress();
+  expect(page.onSignIn).toHaveBeenCalledOnce();
 });
 
 it("hides A and ignores its late page entry after switching to B", async () => {
@@ -200,25 +226,22 @@ it("retries a failed entry and cannot show a canceled late response", async () =
     .find((v) => v.props.label === "common.tryAgain")
     .props.onPress();
   page.render();
-  const cancel = page.render().find((v) => v.props.label === "common.cancel").props;
-  cancel.onPress();
+  unmount();
   const writes = hooks.writes;
   pending.resolve({ scope: a, local: fixture().local });
   await tick();
   expect(hooks.writes).toBe(writes);
-  expect(page.onCancel).toHaveBeenCalledOnce();
 });
 
 it("cancels once without saving edits or accepting retained callbacks", async () => {
-  const f = fixture(true);
+  const f = fixture();
   f.render();
   await tick();
   f.field().onChange({ ...privateProfileDraft(), displayName: "unsaved" });
   const save = f.save();
   const field = f.field();
-  const cancel = f.cancel();
-  cancel.onPress();
-  cancel.onPress();
+  f.back();
+  f.back();
   save.onPress();
   field.onChange({ ...privateProfileDraft(), displayName: "late" });
   expect(f.onCancel).toHaveBeenCalledOnce();
@@ -226,28 +249,29 @@ it("cancels once without saving edits or accepting retained callbacks", async ()
 });
 
 it("does not cancel a local save already in progress", async () => {
-  const f = fixture(true);
+  const f = fixture();
   const pending = deferred<any>();
   f.local.saveDraft.mockImplementationOnce(() => pending.promise);
   f.render();
   await tick();
-  const cancel = f.cancel();
   f.save().onPress();
-  expect(f.cancel().disabled).toBe(true);
-  cancel.onPress();
+  f.render();
+  expect(hooks.preventRemove).toBe(true);
+  f.back();
   expect(f.onCancel).not.toHaveBeenCalled();
   pending.resolve({ accountId: a.accountId });
   await tick();
-  f.cancel().onPress();
-  expect(f.onCancel).toHaveBeenCalledOnce();
+  f.render();
+  expect(f.onSaved).toHaveBeenCalledOnce();
+  expect(f.onCancel).not.toHaveBeenCalled();
 });
 
 it("ignores a pending read after cancellation", async () => {
-  const f = fixture(true);
+  const f = fixture();
   const pending = deferred<any>();
   f.local.read.mockImplementationOnce(() => pending.promise);
   f.render();
-  f.cancel().onPress();
+  f.back();
   const writes = hooks.writes;
   pending.resolve({ accountId: a.accountId, draft: privateProfileDraft() });
   await tick();
@@ -255,21 +279,7 @@ it("ignores a pending read after cancellation", async () => {
   expect(f.onCancel).toHaveBeenCalledOnce();
 });
 
-it("does not let A's retained cancel callback dismiss B", async () => {
-  const f = fixture(true);
-  f.render();
-  await tick();
-  const cancel = f.cancel();
-  f.switch();
-  f.render();
-  await tick();
-  cancel.onPress();
-  expect(f.onCancel).not.toHaveBeenCalled();
-  f.cancel().onPress();
-  expect(f.onCancel).toHaveBeenCalledOnce();
-});
-
-it("saves through the existing repository, cancels later edits and restores the saved draft after SQLite reopen", async () => {
+it("returns after saving through the existing repository and restores the draft after SQLite reopen", async () => {
   const folder = mkdtempSync(join(tmpdir(), "otr-profile-editor-"));
   const path = join(folder, "profile.db");
   let sql = new DatabaseSync(path);
@@ -301,7 +311,7 @@ it("saves through the existing repository, cancels later edits and restores the 
       undefined,
       database,
     );
-    const f = fixture(true);
+    const f = fixture();
     f.local.read.mockImplementation(() => repository.local!.read(a));
     f.local.saveDraft.mockImplementation((scope, draft) =>
       repository.local!.saveDraft(scope, draft),
@@ -323,13 +333,11 @@ it("saves through the existing repository, cancels later edits and restores the 
     };
     f.field().onChange(draft);
     f.save().onPress();
-    await vi.waitFor(() =>
-      expect(
-        f.render().some((v) => v.props.children === "privateProfile.draftSaved"),
-      ).toBe(true),
-    );
-    f.field().onChange({ ...draft, fullName: "unsaved edit" });
-    f.cancel().onPress();
+    await vi.waitFor(() => {
+      f.render();
+      expect(f.onSaved).toHaveBeenCalledOnce();
+    });
+    f.back();
     for (const value of hooks.values) value?.cleanup?.();
     hooks.values = [];
     hooks.effects = [];
@@ -361,9 +369,25 @@ it("reads and saves an optional private Unicode draft without making a cloud cal
   f.save().onPress();
   await tick();
   expect(f.local.saveDraft).toHaveBeenCalledExactlyOnceWith(a, draft);
-  expect(f.render().some((v) => v.props.children === "privateProfile.draftSaved")).toBe(
-    true,
-  );
+  f.render();
+  f.render();
+  expect(f.onSaved).toHaveBeenCalledOnce();
+});
+
+it("includes an alias still in the field when toolbar Save is tapped", async () => {
+  const f = fixture();
+  f.render();
+  await tick();
+  const draft = { ...privateProfileDraft(), globalAkaDraft: ["Original", "Keep"] };
+  f.field().onChange(draft);
+  f.field().onPendingAliasChange({ value: "  林 e\u0301  ", index: 0 });
+  f.save().onPress();
+  await tick();
+  f.render();
+  expect(f.local.saveDraft).toHaveBeenCalledExactlyOnceWith(a, {
+    ...draft, globalAkaDraft: ["  林 e\u0301  ", "Keep"],
+  });
+  expect(f.onSaved).toHaveBeenCalledOnce();
 });
 
 it("fences duplicate presses and edits during a pending save", async () => {
@@ -382,7 +406,8 @@ it("fences duplicate presses and edits during a pending save", async () => {
   expect(f.field().draft.displayName).toBe("");
   pending.resolve({ accountId: a.accountId });
   await tick();
-  expect(f.field().disabled).toBe(false);
+  expect(f.field().disabled).toBe(true);
+  expect(f.onSaved).toHaveBeenCalledOnce();
 });
 
 it("preserves entered names and exposes retryable feedback after local save failure", async () => {
@@ -394,6 +419,7 @@ it("preserves entered names and exposes retryable feedback after local save fail
   f.save().onPress();
   await tick();
   expect(f.field().draft.displayName).toBe("原文");
+  expect(f.onSaved).not.toHaveBeenCalled();
   expect(f.render().some((v) => v.props.children === "privateProfile.saveFailed")).toBe(
     true,
   );
@@ -436,9 +462,8 @@ it("ignores A's late save result and retained callbacks after B is mounted", asy
   await tick();
   expect(f.field().draft.displayName).toBe("");
   expect(f.local.saveDraft).toHaveBeenCalledTimes(1);
-  expect(f.render().some((v) => v.props.children === "privateProfile.draftSaved")).toBe(
-    false,
-  );
+  f.render();
+  expect(f.onSaved).not.toHaveBeenCalled();
 });
 
 it("does not expose a foreign or unreadable persisted draft", async () => {
@@ -459,18 +484,16 @@ it("does not expose a foreign or unreadable persisted draft", async () => {
 });
 
 it("rejects retained callbacks when the same Account receives a different repository", async () => {
-  const f = fixture(true);
+  const f = fixture();
   f.render();
   await tick();
   const oldField = f.field();
   const oldSave = f.save();
-  const oldCancel = f.cancel();
   const replacement = f.replaceLocal();
   f.render();
   await tick();
   oldField.onChange({ ...privateProfileDraft(), displayName: "old store" });
   oldSave.onPress();
-  oldCancel.onPress();
   expect(f.field().draft.displayName).toBe("");
   expect(f.local.saveDraft).not.toHaveBeenCalled();
   expect(replacement.saveDraft).not.toHaveBeenCalled();

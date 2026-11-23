@@ -13,9 +13,12 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { AccountPrivateProfileScreen } from "./AccountPrivateProfileScreen";
 
-type Editor = Awaited<ReturnType<typeof getDefaultAccountPrivateProfileEditor>>;
+type Editor = NonNullable<Awaited<ReturnType<typeof getDefaultAccountPrivateProfileEditor>>>;
 
-export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
+export function AccountPrivateProfilePage({
+  onSignIn,
+  onSaved,
+}: { onSignIn(): void; onSaved(): void }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const generation = useSyncExternalStore(
@@ -29,6 +32,7 @@ export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
     generation: number;
     editor?: Editor;
     failed?: boolean;
+    guest?: boolean;
   } | null>(null);
   useEffect(() => {
     const current = { generation, active: true };
@@ -38,6 +42,10 @@ export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
     void getDefaultAccountPrivateProfileEditor()
       .then((editor) => {
         if (!valid()) return;
+        if (!editor) {
+          setView({ generation, guest: true });
+          return;
+        }
         if (editor.scope.generation !== generation)
           throw Error("PRIVATE_PROFILE_ENTRY_GENERATION_MISMATCH");
         setView({ generation, editor });
@@ -61,12 +69,9 @@ export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
     current.active = false;
     return true;
   };
-  const cancel = () => {
-    if (closeLane()) onCancel();
-  };
   const visible = view?.generation === generation ? view : null;
   if (visible?.editor)
-    return <AccountPrivateProfileScreen {...visible.editor} onCancel={cancel} />;
+    return <AccountPrivateProfileScreen {...visible.editor} onSaved={onSaved} />;
   return (
     <ScrollView
       style={styles.screen}
@@ -74,7 +79,12 @@ export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
       keyboardShouldPersistTaps="handled"
     >
       <UiSection>
-        {visible?.failed ? (
+        {visible?.guest ? (
+          <>
+            <UiText style={styles.hint}>{t("privateProfile.signInRequired")}</UiText>
+            <UiButton label={t("navigation.signIn")} onPress={onSignIn} />
+          </>
+        ) : visible?.failed ? (
           <>
             <UiText accessibilityLiveRegion="polite" style={styles.error}>
               {t("privateProfile.loadFailed")}
@@ -91,7 +101,6 @@ export function AccountPrivateProfilePage({ onCancel }: { onCancel(): void }) {
         ) : (
           <ActivityIndicator accessibilityLabel={t("common.loading")} />
         )}
-        <UiButton label={t("common.cancel")} variant="secondary" onPress={cancel} />
       </UiSection>
     </ScrollView>
   );
@@ -101,5 +110,6 @@ const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
     content: { padding: visual.space.page, gap: visual.space.section },
+    hint: { ...visual.type.row, color: colors.textSecondary },
     error: { ...visual.type.meta, color: colors.destructive },
   });

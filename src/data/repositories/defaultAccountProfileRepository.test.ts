@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { getDefaultAccountPrivateProfileEditor } from "./defaultAccountProfileRepository";
-import { requireAdoptedUserId } from "@/data/auth/authRepository";
+import { readCommittedLocalPrincipal, requireAdoptedUserId } from "@/data/auth/authRepository";
 import { readInitializedDatabase } from "@/data/db/database";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import { privateProfileDraft } from "@/domain/auth/privateAccountProfile";
 
-vi.mock("@/data/auth/authRepository", () => ({ requireAdoptedUserId: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({ readCommittedLocalPrincipal: vi.fn(), requireAdoptedUserId: vi.fn() }));
 vi.mock("@/data/db/database", () => ({ readInitializedDatabase: vi.fn() }));
 vi.mock("@/data/auth/sessionAccessToken", () => ({ sessionAccessToken: vi.fn() }));
 const a = "11111111-1111-4111-8111-111111111111";
@@ -17,6 +17,7 @@ const database = {
 };
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(readCommittedLocalPrincipal).mockResolvedValue({ kind: "ACCOUNT", accountId: a });
   vi.mocked(requireAdoptedUserId).mockResolvedValue(a);
   vi.mocked(readInitializedDatabase).mockResolvedValue(database as never);
   vi.stubGlobal(
@@ -30,6 +31,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 it("opens the existing Account-scoped local editor without network or migration", async () => {
   const editor = await getDefaultAccountPrivateProfileEditor();
+  if (!editor) throw Error("EXPECTED_ACCOUNT_EDITOR");
   expect(editor.scope.accountId).toBe(a);
   expect(Object.isFrozen(editor.scope)).toBe(true);
   await editor.local.saveDraft(editor.scope, privateProfileDraft());
@@ -37,7 +39,14 @@ it("opens the existing Account-scoped local editor without network or migration"
   expect(fetch).not.toHaveBeenCalled();
 });
 
-it("does not open a database for a Guest or uncommitted Account", async () => {
+it("reports a committed Guest without opening the Account database", async () => {
+  vi.mocked(readCommittedLocalPrincipal).mockResolvedValueOnce({ kind: "GUEST", localId: a });
+  await expect(getDefaultAccountPrivateProfileEditor()).resolves.toBeNull();
+  expect(requireAdoptedUserId).not.toHaveBeenCalled();
+  expect(readInitializedDatabase).not.toHaveBeenCalled();
+});
+
+it("does not treat an uncommitted Account as a Guest", async () => {
   vi.mocked(requireAdoptedUserId).mockRejectedValueOnce(Error("NO_COMMITTED_ACCOUNT"));
   await expect(getDefaultAccountPrivateProfileEditor()).rejects.toThrow();
   expect(readInitializedDatabase).not.toHaveBeenCalled();
@@ -61,6 +70,7 @@ it("creates a fresh B editor and fences retained A callbacks", async () => {
   advanceAccountGeneration();
   vi.mocked(requireAdoptedUserId).mockResolvedValue(b);
   const current = await getDefaultAccountPrivateProfileEditor();
+  if (!old || !current) throw Error("EXPECTED_ACCOUNT_EDITORS");
   expect(current.scope.accountId).toBe(b);
   await expect(old.local.saveDraft(old.scope, privateProfileDraft())).rejects.toThrow();
   await current.local.read(current.scope);

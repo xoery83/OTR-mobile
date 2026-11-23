@@ -34,6 +34,19 @@ export const privateProfileNameDraftSchema = z.strictObject({
 });
 export type PrivateProfileNameDraft = Readonly<z.infer<typeof privateProfileNameDraftSchema>>;
 
+export type PendingProfileAlias = Readonly<{ value: string; index: number | null }>;
+
+export function withPendingProfileAlias(
+  draft: PrivateProfileNameDraft,
+  pending: PendingProfileAlias | null,
+): PrivateProfileNameDraft {
+  if (!pending?.value.trim()) return draft;
+  const aliases = [...(draft.globalAkaDraft ?? [])];
+  if (pending.index === null) aliases.push(pending.value);
+  else if (pending.index < aliases.length) aliases[pending.index] = pending.value;
+  return { ...draft, globalAkaDraft: aliases };
+}
+
 export function privateProfileDraft(
   fields: PrivateAccountProfileFields = {},
 ): PrivateProfileNameDraft {
