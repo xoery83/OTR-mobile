@@ -106,11 +106,13 @@ export default function SettingsRoute() {
         />
         <SettingRow
           icon="person"
-          label={t(kind === "GUEST" ? "navigation.signIn" : "navigation.account")}
+          label={t(kind === "GUEST" ? "navigation.signIn" : "settings.manageAccount")}
           onPress={() => router.push(kind === "GUEST" ? "/foundation" : "/account")}
         />
       </View>
-      <AppleAccountConnection />
+      <AppleAccountConnection
+        headingStyle={[styles.sectionTitle, { textTransform: "none" }]}
+      />
       <Text accessibilityRole="header" style={styles.sectionTitle}>
         {t("settings.preferences")}
       </Text>

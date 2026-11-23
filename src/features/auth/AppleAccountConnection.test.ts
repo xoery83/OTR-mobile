@@ -49,7 +49,7 @@ vi.mock("./AppleSignInButton", () => ({ AppleSignInButton: "AppleButton" }));
 
 function render() {
   state.cursor = state.refCursor = 0;
-  return AppleAccountConnection();
+  return AppleAccountConnection({ headingStyle: {} });
 }
 async function openConfirmation() {
   render();
@@ -58,7 +58,8 @@ async function openConfirmation() {
     expect(state.values[0]).toEqual({ id: "account-a", generation: 1 }),
   );
   const node = render()!;
-  const button = node.props.children.find((child: any) => child?.type === "AppleButton");
+  const section = node.props.children.find((child: any) => child?.type === "Section");
+  const button = section.props.children.find((child: any) => child?.type === "AppleButton");
   button.props.onPress();
   const confirm = state.alert.mock.calls[0][2][1].onPress;
   return { cleanup, confirm };

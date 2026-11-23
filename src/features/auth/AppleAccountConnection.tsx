@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Alert } from "react-native";
+import { Alert, type TextProps } from "react-native";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -11,7 +11,7 @@ import { UiSection, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { AppleSignInButton } from "./AppleSignInButton";
 
-export function AppleAccountConnection() {
+export function AppleAccountConnection({ headingStyle }: { headingStyle: TextProps["style"] }) {
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
@@ -76,21 +76,26 @@ export function AppleAccountConnection() {
     }
   }
   return (
-    <UiSection title={t("auth.appleLinkTitle")}>
-      <UiText>{t("auth.appleLinkExplanation")}</UiText>
-      <AppleSignInButton
-        disabled={status === "busy" || status === "done"}
-        onPress={() => {
-          Alert.alert(t("auth.appleLinkTitle"), t("auth.appleLinkConfirmation"), [
-            { text: t("account.cancel"), style: "cancel" },
-            { text: t("auth.appleLinkConfirm"), onPress: () => void connect() },
-          ]);
-        }}
-      />
-      {status === "failed" ? (
-        <UiText accessibilityRole="alert">{t("account.loginFailed")}</UiText>
-      ) : null}
-      {status === "done" ? <UiText>{t("auth.appleLinked")}</UiText> : null}
-    </UiSection>
+    <>
+      <UiText accessibilityRole="header" style={headingStyle}>
+        {t("auth.appleLinkTitle")}
+      </UiText>
+      <UiSection>
+        <UiText>{t("auth.appleLinkExplanation")}</UiText>
+        <AppleSignInButton
+          disabled={status === "busy" || status === "done"}
+          onPress={() => {
+            Alert.alert(t("auth.appleLinkTitle"), t("auth.appleLinkConfirmation"), [
+              { text: t("account.cancel"), style: "cancel" },
+              { text: t("auth.appleLinkConfirm"), onPress: () => void connect() },
+            ]);
+          }}
+        />
+        {status === "failed" ? (
+          <UiText accessibilityRole="alert">{t("account.loginFailed")}</UiText>
+        ) : null}
+        {status === "done" ? <UiText>{t("auth.appleLinked")}</UiText> : null}
+      </UiSection>
+    </>
   );
 }
