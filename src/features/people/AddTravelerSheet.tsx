@@ -1,11 +1,13 @@
 import {
+  type ComponentType,
+  type ReactNode,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import { Keyboard, Modal, ScrollView, StyleSheet } from "react-native";
+import { Keyboard, Modal, ScrollView, StyleSheet, View } from "react-native";
 import { SheetHeader } from "@/components/SheetHeader";
 import {
   getAccountGeneration,
@@ -28,6 +30,14 @@ import type { TripPersonEditorDraftPort } from "@/data/repositories/tripPersonEd
 export type AddTravelerInput = Readonly<
   Pick<PersonCloudCreate, "operationId" | "personId" | "displayName">
 >;
+export type AddTravelerSurfaceProps = {
+  title: string;
+  close(): void;
+  closeDisabled: boolean;
+  action: { label: string; disabled: boolean; onPress(): void };
+  children: ReactNode;
+};
+
 type Props = {
   visible: boolean;
   onClose(): void;
@@ -41,7 +51,17 @@ export function AddTravelerSheet(props: Props) {
   return props.visible ? <AddTravelerForm {...props} /> : null;
 }
 
-function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: Props) {
+export function AddTravelerForm({
+  onClose,
+  onSave,
+  draft,
+  submissionEnabled = true,
+  HostedSurface,
+  registerDismissHandler,
+}: Omit<Props, "visible"> & {
+  HostedSurface?: ComponentType<AddTravelerSurfaceProps>;
+  registerDismissHandler?(handler: (afterClose: () => void) => void): () => void;
+}) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const currentGeneration = useSyncExternalStore(
@@ -156,11 +176,11 @@ function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: P
       onClose();
     }
   }
-  const close = () => {
+  const close = (afterClose: () => void = onClose) => {
     if (!valid() || running.current) return;
     if (!draft || !ready || attempt.current) {
-      alive.current = false;
-      onClose();
+      if (!HostedSurface) alive.current = false;
+      afterClose();
       return;
     }
     running.current = true;
@@ -169,8 +189,8 @@ function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: P
       .discard()
       .then(() => {
         if (valid()) {
-          alive.current = false;
-          onClose();
+          if (!HostedSurface) alive.current = false;
+          afterClose();
         }
       })
       .catch(() => {
@@ -181,88 +201,99 @@ function AddTravelerForm({ onClose, onSave, draft, submissionEnabled = true }: P
         if (valid()) setBusy(false);
       });
   };
+  useLayoutEffect(() => registerDismissHandler?.(close));
   if (generation !== currentGeneration || originalDraft !== draft) return null;
+  const action = {
+    label: t(!ready ? "common.tryAgain" : failed ? "people.retrySave" : "ui.save"),
+    onPress: () => void (!ready ? loadDraft() : save()),
+    disabled:
+      busy ||
+      (ready && !submissionEnabled) ||
+      (!ready ? draftError?.key !== "people.draftLoadFailed" : !parsed.success),
+  };
+  const content = (
+    <View style={styles.content}>
+      {draftError ? (
+        <UiText accessibilityRole="alert" style={styles.error}>
+          {t(draftError.key)}
+        </UiText>
+      ) : null}
+      {failed ? (
+        <UiText
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+          style={styles.error}
+        >
+          {t("people.saveUnconfirmed")}
+        </UiText>
+      ) : null}
+      <UiTextInput
+        testID="people-add-traveler-name"
+        accessibilityLabel={t("people.travelerName")}
+        placeholder={t("people.travelerName")}
+        value={name}
+        onChangeText={(value) => {
+          if (
+            !valid() ||
+            (!draft && !latestSubmission.current) ||
+            running.current ||
+            !ready ||
+            attempt.current
+          )
+            return;
+          currentName.current = value;
+          setName(value);
+          if (draft)
+            void draft
+              .saveName(value)
+              .then(() => {
+                if (valid()) setDraftFeedback(null);
+              })
+              .catch(() => {
+                if (valid()) setDraftFeedback({ key: "people.draftSaveFailed" });
+              });
+        }}
+        editable={ready && !busy && !submitted && (!!draft || submissionEnabled)}
+        maxLength={256}
+        autoCapitalize="words"
+      />
+      <UiText style={styles.hint}>
+        {t(submissionEnabled ? "people.addTravelerHint" : "people.draftOnlyHint")}
+      </UiText>
+    </View>
+  );
+  if (HostedSurface)
+    return (
+      <HostedSurface
+        title={t("people.addTraveler")}
+        close={() => close()}
+        closeDisabled={busy}
+        action={action}
+      >
+        {content}
+      </HostedSurface>
+    );
   return (
     <Modal
       visible
       presentationStyle="pageSheet"
       animationType="slide"
       allowSwipeDismissal={!busy}
-      onRequestClose={close}
+      onRequestClose={() => close()}
     >
       <SheetHeader
         wrapActions
         category="form"
         title={t("people.addTraveler")}
         leftLabel={t(submitted ? "common.close" : "common.cancel")}
-        onLeft={close}
+        onLeft={() => close()}
         leftDisabled={busy}
-        rightLabel={t(
-          !ready
-            ? "common.tryAgain"
-            : failed
-              ? "people.retrySave"
-              : "ui.save",
-        )}
-        onRight={() => void (!ready ? loadDraft() : save())}
-        rightDisabled={
-          busy ||
-          (ready && !submissionEnabled) ||
-          (!ready ? draftError?.key !== "people.draftLoadFailed" : !parsed.success)
-        }
+        rightLabel={action.label}
+        onRight={action.onPress}
+        rightDisabled={action.disabled}
       />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        style={styles.body}
-        contentContainerStyle={styles.content}
-      >
-        {draftError ? (
-          <UiText accessibilityRole="alert" style={styles.error}>
-            {t(draftError.key)}
-          </UiText>
-        ) : null}
-        {failed ? (
-          <UiText
-            accessibilityRole="alert"
-            accessibilityLiveRegion="polite"
-            style={styles.error}
-          >
-            {t("people.saveUnconfirmed")}
-          </UiText>
-        ) : null}
-        <UiTextInput
-          testID="people-add-traveler-name"
-          accessibilityLabel={t("people.travelerName")}
-          placeholder={t("people.travelerName")}
-          value={name}
-          onChangeText={(value) => {
-            if (
-              !valid() ||
-              (!draft && !latestSubmission.current) ||
-              running.current ||
-              !ready ||
-              attempt.current
-            )
-              return;
-            currentName.current = value;
-            setName(value);
-            if (draft)
-              void draft
-                .saveName(value)
-                .then(() => {
-                  if (valid()) setDraftFeedback(null);
-                })
-                .catch(() => {
-                  if (valid()) setDraftFeedback({ key: "people.draftSaveFailed" });
-                });
-          }}
-          editable={ready && !busy && !submitted && (!!draft || submissionEnabled)}
-          maxLength={256}
-          autoCapitalize="words"
-        />
-        <UiText style={styles.hint}>
-          {t(submissionEnabled ? "people.addTravelerHint" : "people.draftOnlyHint")}
-        </UiText>
+      <ScrollView keyboardShouldPersistTaps="handled" style={styles.body}>
+        {content}
       </ScrollView>
     </Modal>
   );

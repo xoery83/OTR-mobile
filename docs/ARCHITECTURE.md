@@ -128,6 +128,13 @@ The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.
 
+For the default-off Trip Members QA entry, the roster and Add Traveler share
+one native Sheet Stack. The launching Trip and Account generation own the
+roster invocation. The child uses the existing editor, dismissal guard and
+save callback. Directed Invite opens after the owning roster dismisses and
+rechecks the exact local member. See the Sheet acceptance matrix for device
+and role coverage.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.

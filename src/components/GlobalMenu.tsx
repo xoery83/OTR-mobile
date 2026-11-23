@@ -374,6 +374,7 @@ export function GlobalMenu({
         sections={sections}
       />
       <TripMembersSheet
+        tripId={tripContextId ?? undefined}
         visible={
           membersVisible?.tripId === tripContextId &&
           membersVisible?.generation === generation &&

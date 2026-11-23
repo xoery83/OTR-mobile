@@ -1,6 +1,7 @@
 import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
 import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
+import { hostedTripMembersEnabled } from "@/features/day-feed/hostedTripMembers";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
@@ -135,6 +136,18 @@ export default function RootLayout() {
             }}
           >
             <Stack.Screen name="(tabs)" />
+            <Stack.Protected guard={hostedTripMembersEnabled}>
+              <Stack.Screen
+                name="trip-members-sheet"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
             <Stack.Protected guard={hostedDocumentsTripPickerEnabled}>
               <Stack.Screen
                 name="documents-trip-picker"
