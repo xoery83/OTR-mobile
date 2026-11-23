@@ -1,5 +1,5 @@
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AppState,
   KeyboardAvoidingView,
@@ -53,7 +53,15 @@ import { captureActivityTime } from "./CaptureActivity";
 
 type Owner = Awaited<ReturnType<typeof openUniversalV3Review>>;
 type Candidate = V3AdmissionRow["candidate"];
-export function ImportExceptionReviewScreen({ hosted = false }: { hosted?: boolean } = {}) {
+export function ImportExceptionReviewScreen({
+  hosted = false,
+  standalone = false,
+  requiredGeneration,
+}: {
+  hosted?: boolean;
+  standalone?: boolean;
+  requiredGeneration?: string;
+} = {}) {
   useUiLocale();
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
   const [model, setModel] = useState<CaptureJobReadModel>();
@@ -63,9 +71,13 @@ export function ImportExceptionReviewScreen({ hosted = false }: { hosted?: boole
   const [statuses, setStatuses] = useState<Record<string, V3SaveObservation>>({});
   const [unavailable, setUnavailable] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
-  const alive = useRef(true),
-    generation = useRef(getAccountGeneration());
-  const current = () => alive.current && generation.current === getAccountGeneration();
+  const alive = useRef(true);
+  const [generation] = useState(getAccountGeneration);
+  const generationMatches = requiredGeneration === undefined || requiredGeneration === String(generation);
+  const current = useCallback(
+    () => generationMatches && alive.current && generation === getAccountGeneration(),
+    [generationMatches, generation],
+  );
   useEffect(() => {
     alive.current = true;
     let active = true,
@@ -77,7 +89,11 @@ export function ImportExceptionReviewScreen({ hosted = false }: { hosted?: boole
       try {
         if (!jobId) throw Error("IMPORT_REVIEW_CONTEXT");
         const batch = await reopenDefaultCaptureJob(jobId);
-        if (!batch || !active || !current()) return;
+        if (!active || !current()) return;
+        if (!batch) {
+          setUnavailable(true);
+          return;
+        }
         const state = await readUniversalV3ReviewExecution(batch);
         if (state?.state !== "REVIEW_READY") throw Error("IMPORT_REVIEW_NOT_READY");
         const submission = await readImportSubmission(batch);
@@ -137,7 +153,7 @@ export function ImportExceptionReviewScreen({ hosted = false }: { hosted?: boole
       clearTimeout(timer);
       subscription.remove();
     };
-  }, [jobId, refreshVersion]);
+  }, [jobId, refreshVersion, current]);
   const confirm = async (
     candidate: Candidate,
     decision: UniversalV3Decision,
@@ -187,14 +203,14 @@ export function ImportExceptionReviewScreen({ hosted = false }: { hosted?: boole
         rows={rows}
         statuses={statuses}
         intent={intent}
-        unavailable={unavailable}
+        unavailable={unavailable || !generationMatches}
         isCurrent={current}
         onConfirm={confirm}
       />
   );
   if (hosted) {
     return (
-      <SheetRoutePanel title={t("common.review")} onBack={() => router.back()} ownsScroll>
+      <SheetRoutePanel title={t("common.review")} onBack={standalone ? undefined : () => router.back()} ownsScroll>
         {content}
       </SheetRoutePanel>
     );
@@ -349,9 +365,11 @@ export function ImportExceptionReviewContent({
               {captureActivityTime(model.batch.createdAt)}
             </UiText>
           ) : null}
-          <UiText style={styles.remaining} accessibilityLiveRegion="polite">
-            {t("capture.review.remaining", { count: exceptions.length })}
-          </UiText>
+          {model ? (
+            <UiText style={styles.remaining} accessibilityLiveRegion="polite">
+              {t("capture.review.remaining", { count: exceptions.length })}
+            </UiText>
+          ) : null}
         </View>
         <ScrollView
           style={styles.screen}
@@ -359,10 +377,10 @@ export function ImportExceptionReviewContent({
           keyboardShouldPersistTaps="handled"
           maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         >
-          {!model ? <UiText style={styles.meta}>{t("capture.jobLoading")}</UiText> : null}
+          {!model && !unavailable ? <UiText style={styles.meta}>{t("capture.jobLoading")}</UiText> : null}
           {unavailable ? (
             <UiText style={styles.meta} accessibilityLiveRegion="polite">
-              {t("capture.review.offlineRead")}
+              {t(model ? "capture.review.offlineRead" : "capture.review.batchUnavailable")}
             </UiText>
           ) : null}
           {exceptions.map((row) => {

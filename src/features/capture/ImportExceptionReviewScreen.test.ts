@@ -1,7 +1,9 @@
 import { createElement } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
-import { ImportExceptionReviewContent } from "./ImportExceptionReviewScreen";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { reopenDefaultCaptureJob } from "@/data/operations/defaultCaptureSubmission";
+import { ImportExceptionReviewScreen, ImportExceptionReviewContent } from "./ImportExceptionReviewScreen";
 import { setUiLocale, t } from "@/ui/locale";
 import { localImportDocumentId } from "@/domain/trip/universalImportIdentity";
 import {
@@ -15,14 +17,15 @@ const h = vi.hoisted(() => ({
   buttons: [] as any[],
   inputs: [] as any[],
   scrolls: [] as any[],
+  effects: [] as (() => void | (() => void))[],
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useEffect: () => {},
+  useEffect: (effect: () => void | (() => void)) => { h.effects.push(effect); },
   useRef: (initial: unknown) => ({ current: initial }),
   useState: (initial: any) => {
     const index = h.cursor++;
-    if (!(index in h.hooks)) h.hooks[index] = initial;
+    if (!(index in h.hooks)) h.hooks[index] = typeof initial === "function" ? initial() : initial;
     return [
       h.hooks[index],
       (value: any) => {
@@ -32,7 +35,7 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("react-native", () => ({
-  AppState: { currentState: "active" },
+  AppState: { currentState: "active", addEventListener: () => ({ remove() {} }) },
   Platform: { OS: "ios" },
   StyleSheet: { create: (s: any) => s, hairlineWidth: 1 },
   View: "div",
@@ -49,7 +52,7 @@ vi.mock("react-native", () => ({
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "div" }));
 vi.mock("expo-router", () => ({
   Stack: { Screen: () => null },
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => ({ jobId: "qa-retained-job" }),
 }));
 vi.mock("@/components/navigationChrome", () => ({ NavigationContextTitle: () => null }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
@@ -85,6 +88,10 @@ vi.mock("@/data/auth/authRepository", () => ({ requireAdoptedUserId: vi.fn() }))
 vi.mock("@/data/repositories/importSubmissionRepository", () => ({
   readImportSubmission: vi.fn(),
   updateImportSubmission: vi.fn(),
+}));
+vi.mock("@/components/SheetRoutePanel", () => ({
+  SheetRoutePanel: ({ children, onBack }: { children: React.ReactNode; onBack?: () => void }) =>
+    createElement("section", { "data-nav": onBack ? "child" : "root" }, children),
 }));
 vi.mock("./CaptureActivity", () => ({ captureActivityTime: (at: string) => at }));
 const account = "00000000-0000-4000-8000-000000000001",
@@ -142,6 +149,9 @@ const button = (label: string) =>
   h.buttons.find((b) => b.label === label || b.accessibilityLabel?.startsWith(label));
 beforeEach(() => {
   h.hooks = [];
+  h.effects = [];
+  h.cursor = 0;
+  vi.mocked(reopenDefaultCaptureJob).mockClear();
   setUiLocale("en");
 });
 it.each(["en", "zh-Hans"] as const)(
@@ -227,4 +237,21 @@ it("UX-C2 offline, unknown and version conflict retain the original answer and u
   expect(button(t("ui.confirm"))).toBeUndefined();
 });
 
-vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: () => null }));
+
+it("uses root Close and refuses reader work for a stale direct Updates Review", () => {
+  type ReviewProps = NonNullable<Parameters<typeof ImportExceptionReviewScreen>[0]>;
+  const review = createElement<ReviewProps>(ImportExceptionReviewScreen, {
+    hosted: true,
+    standalone: true,
+    requiredGeneration: String(getAccountGeneration() + 1),
+  });
+  const html = renderToStaticMarkup(review);
+  expect(html).toContain('data-nav="root"');
+  expect(html).toContain(t("capture.review.batchUnavailable"));
+  expect(html).not.toContain(t("capture.jobLoading"));
+  expect(html).not.toContain(t("capture.review.remaining", { count: 0 }));
+  expect(h.effects.length).toBeGreaterThan(0);
+  const cleanups = h.effects.splice(0).map(effect => effect());
+  expect(reopenDefaultCaptureJob).not.toHaveBeenCalled();
+  for (const cleanup of cleanups) cleanup?.();
+});

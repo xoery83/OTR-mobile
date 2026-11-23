@@ -12,6 +12,7 @@ import {
   advanceAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { randomUUID } from "node:crypto";
+import { ImportUpdatesSection } from "./ImportUpdatesSection";
 import { UpdatesInboxScreen, updatesNoticeTime } from "./UpdatesInboxScreen";
 import { setUiLocale, t } from "@/ui/locale";
 
@@ -23,6 +24,7 @@ const s = vi.hoisted(() => ({
   push: vi.fn(),
   trip: null as any,
   fontScale: 1,
+  hostedImport: false,
 }));
 const same = (a: any[], b: any[]) =>
   a?.length === b.length && a.every((value, i) => Object.is(value, b[i]));
@@ -60,6 +62,9 @@ vi.mock("react", async (original) => ({
       s.slots[i] = { deps, cleanup: callback() };
     }
   },
+}));
+vi.mock("@/features/capture/hostedImport", () => ({
+  get hostedImportEnabled() { return s.hostedImport; },
 }));
 vi.mock("expo-router", () => ({
   router: { push: s.push, setParams: vi.fn() },
@@ -114,7 +119,7 @@ function render(): any {
 const flush = async () => {
   for (let i = 0; i < 60; i++) await Promise.resolve();
 };
-function nodes(node: ReactNode, type: string): any[] {
+function nodes(node: ReactNode, type: string | typeof ImportUpdatesSection): any[] {
   if (!isValidElement(node)) return [];
   return [
     ...(node.type === type ? [node.props] : []),
@@ -135,6 +140,7 @@ beforeEach(() => {
   s.slots = [];
   s.cursor = 0;
   s.fontScale = 1;
+  s.hostedImport = false;
   s.queued = [];
   key = null;
   s.open.mockReset();
@@ -401,6 +407,21 @@ it("keeps the Updates search editable as the input grows and returns to its defa
   expect(input().style.minHeight).toBeGreaterThan(52);
   expect(input().value).toBe("QA");
   s.fontScale = 1;
+  s.hostedImport = false;
   expect(input().style).toBeUndefined();
   expect(input().value).toBe("QA");
+});
+
+it.each([true, false])("routes an authorized Updates Review to the expected presenter (hosted=%s)", async (hosted) => {
+  s.hostedImport = hosted;
+  const { request, context } = await setup();
+  const openReview = nodes(render(), ImportUpdatesSection)[0].onOpen;
+  openReview(request.jobId, context.generation, "REVIEW");
+  expect(s.push).toHaveBeenCalledExactlyOnceWith({
+    pathname: hosted ? "/import-plans/review" : "/import-review",
+    params: { jobId: request.jobId, origin: "UPDATES", originGeneration: String(context.generation) },
+  });
+  advanceAccountGeneration();
+  openReview(request.jobId, context.generation, "REVIEW");
+  expect(s.push).toHaveBeenCalledOnce();
 });

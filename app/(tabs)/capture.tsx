@@ -304,7 +304,12 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
               if (openingHostedReview.current) return;
               openingHostedReview.current = true;
             } else navigation.setParams({ jobId: id });
-            router.push({ pathname: hosted ? "/import-plans/review" : "/import-review", params: { jobId: id } });
+            if (hosted) {
+              router.push({
+                pathname: "/import-plans/review",
+                params: { jobId: id, originGeneration: String(generation) },
+              });
+            } else router.push({ pathname: "/import-review", params: { jobId: id } });
           }}
           onCancel={() => {
             const target = captureOriginPath(

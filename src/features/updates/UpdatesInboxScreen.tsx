@@ -1,3 +1,4 @@
+import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { ImportUpdatesSection } from "./ImportUpdatesSection";
 import {
   useCallback,
@@ -390,8 +391,9 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
               originGeneration !== generation
             )
               return;
+            const review = hostedImportEnabled ? "/import-plans/review" : "/import-review";
             router.push({
-              pathname: destination === "REVIEW" ? "/import-review" : "/import-plans",
+              pathname: destination === "REVIEW" ? review : "/import-plans",
               params: {
                 jobId,
                 origin: "UPDATES",

@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, usePathname } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useUiTheme } from "@/ui/theme";
 import { SheetRouteLayout } from "@/components/SheetRouteLayout";
@@ -11,10 +11,11 @@ export const unstable_settings = { initialRouteName: "index" };
 export default function ImportSheetLayout() {
   const colors = useUiTheme();
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
+  const pathname = usePathname();
   if (!hostedImportEnabled) {
     return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.transparent } }} />;
   }
-  return <HostedImportRoutes immersive={Boolean(jobId)} />;
+  return <HostedImportRoutes immersive={Boolean(jobId) || pathname === "/import-plans/review"} />;
 }
 
 function HostedImportRoutes({ immersive }: { immersive: boolean }) {
