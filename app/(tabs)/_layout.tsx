@@ -66,6 +66,7 @@ export default function TabsLayout() {
           title: t("navigation.capture"),
         }}
       />
+      <Tabs.Screen name="updates" options={{ href: null, headerShown: false }} />
       <Tabs.Screen
         name="trip"
         options={{
