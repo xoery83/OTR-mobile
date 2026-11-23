@@ -1,10 +1,12 @@
-import { createElement, type ReactNode } from "react";
+import { createElement, type ContextType, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { FlightAirportField } from "./FlightAirportField";
+import { OpenFlightAirportContext } from "./hostedFlightAirport";
 const state = vi.hoisted(() => ({ cursor: 0, values: [] as any[], nodes: [] as any[] }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useLayoutEffect: (effect: () => void) => { effect(); },
   useState: (initial: any) => {
     const i = state.cursor++;
     if (!(i in state.values)) state.values[i] = initial;
@@ -59,21 +61,21 @@ beforeEach(() => {
   state.values = [];
   state.nodes = [];
 });
-function setup() {
+function setup(open?: ContextType<typeof OpenFlightAirportContext>) {
   const onChange = vi.fn(),
     onEditingChange = vi.fn();
   const render = () => {
     state.cursor = 0;
     state.nodes = [];
     return renderToStaticMarkup(
-      createElement(FlightAirportField, {
+      createElement(OpenFlightAirportContext.Provider, { value: open ?? null }, createElement(FlightAirportField, {
         label: "Airport",
         code: "AKL",
         name: "Auckland",
         disabled: false,
         onChange,
         onEditingChange,
-      }),
+      })),
     );
   };
   render();
@@ -117,4 +119,17 @@ it("retains explicitly authored airport text without inventing a time zone", () 
     name: "My private airfield",
     zone: null,
   });
+});
+
+it("hands existing airport text to a hosted route without opening a second modal", () => {
+  const open = vi.fn<NonNullable<ContextType<typeof OpenFlightAirportContext>>>(() => true);
+  const f = setup(open);
+  expect(state.nodes.some(n => n.kind === "modal")).toBe(false);
+  expect(open).toHaveBeenCalledOnce();
+  const entry = open.mock.calls[0][0]()!;
+  expect(entry.initialQuery).toBe("AKL");
+  expect(f.onEditingChange.mock.calls).toEqual([[true]]);
+  entry.onClose();
+  expect(f.onEditingChange.mock.calls).toEqual([[true], [false]]);
+  expect(f.onChange).not.toHaveBeenCalled();
 });

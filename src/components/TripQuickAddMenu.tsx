@@ -1,3 +1,4 @@
+import { hostedManualItineraryEnabled, readManualItinerary, releaseManualItinerary, stageManualItinerary } from "@/features/day-feed/hostedManualItinerary";
 import { router, useFocusEffect } from "expo-router";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
@@ -116,6 +117,7 @@ export function TripQuickAddPanel({
   const openedContext = useRef<{ tripId: string; generation: number } | null>(null);
   const openingComposer = useRef(false);
   useFocusEffect(useCallback(() => { openingComposer.current = false; }, []));
+  const itineraryInvocation = useRef<string | undefined>(undefined);
   const manualDismiss = useRef<(() => void) | null>(null);
   const current = () =>
     openedContext.current?.tripId === tripId &&
@@ -129,6 +131,7 @@ export function TripQuickAddPanel({
   useLayoutEffect(
     () => () => {
       request.current += 1;
+      queueMicrotask(() => releaseManualItinerary(itineraryInvocation.current));
     },
     [],
   );
@@ -348,8 +351,25 @@ export function TripQuickAddPanel({
             }
             onPress={() => {
               if (!current()) return;
-              if (onManualSaved) setManual(true);
-              else run(itinerary ? () => itinerary(knownDate) : undefined);
+              if (!onManualSaved) {
+                run(itinerary ? () => itinerary(knownDate) : undefined);
+                return;
+              }
+              if (!hosted || !hostedManualItineraryEnabled) {
+                setManual(true);
+                return;
+              }
+              if (readManualItinerary(itineraryInvocation.current)) return;
+              const invocation = stageManualItinerary(() => current() ? {
+                tripId,
+                generation,
+                initialDate: showDate ? knownDate : null,
+                localOnly,
+                onClose: () => {},
+                onSaved: onManualSaved,
+              } : undefined);
+              itineraryInvocation.current = invocation;
+              router.push({ pathname: "/import-plans/quick-add-itinerary", params: { invocation } });
             }}
           />
         </View>

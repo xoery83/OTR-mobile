@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Keyboard, Modal, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
@@ -15,30 +15,32 @@ import {
   airportSuggestions,
   manualAirport,
 } from "./airportSuggestions";
-export function FlightAirportField({
-  label,
-  code,
-  name,
-  disabled,
-  onChange,
-  onEditingChange,
-}: {
-  label: string;
-  code: string;
-  name: string;
-  disabled: boolean;
-  onEditingChange?(open: boolean): void;
-  onChange(value: { code: string; name: string; zone: string | null }): void;
-}) {
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import {
+  OpenFlightAirportContext,
+  type FlightAirportChoice,
+  type FlightAirportFieldProps,
+} from "./hostedFlightAirport";
+
+export function FlightAirportField(props: FlightAirportFieldProps) {
   useUiLocale();
+  const { label, code, name, disabled, onChange, onEditingChange } = props;
   const styles = useThemedStyles(createStyles);
-  const [query, setQuery] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const results = open ? airportSuggestions(query ?? (code || name)) : [];
+  const host = useContext(OpenFlightAirportContext);
+  const latest = useRef<FlightAirportFieldProps | null>(null);
+  const hostedOpen = useRef(false);
+  const generation = getAccountGeneration();
+  useLayoutEffect(() => {
+    latest.current = props;
+    return () => {
+      latest.current = null;
+    };
+  }, [props]);
+
   const close = () => {
     setOpen(false);
     onEditingChange?.(false);
-    setQuery(null);
     Keyboard.dismiss();
   };
   return (
@@ -50,10 +52,27 @@ export function FlightAirportField({
         value={airportLabel(code, name) || t("manualFlight.airportPlaceholder")}
         disabled={disabled}
         onPress={() => {
+          if (disabled || hostedOpen.current) return;
           Keyboard.dismiss();
-          setQuery(code || name);
-          setOpen(true);
-          onEditingChange?.(true);
+          if (host) {
+            const closeHosted = () => {
+              hostedOpen.current = false;
+              latest.current?.onEditingChange?.(false);
+            };
+            hostedOpen.current = true;
+            onEditingChange?.(true);
+            const initialQuery = code || name;
+            if (
+              !host(() => {
+                if (generation !== getAccountGeneration() || !latest.current) return null;
+                return { ...latest.current, initialQuery, onClose: closeHosted };
+              })
+            )
+              closeHosted();
+          } else {
+            setOpen(true);
+            onEditingChange?.(true);
+          }
         }}
       />
       <Modal
@@ -62,73 +81,111 @@ export function FlightAirportField({
         presentationStyle="fullScreen"
         onRequestClose={close}
       >
-        <SafeAreaProvider>
-          <SafeAreaView style={styles.host}>
-            <SheetHeader
-              category="picker"
-              safeTop={false}
-              title={label}
-              leftLabel={t("common.cancel")}
-              onLeft={close}
-            />
-            <View style={styles.search}>
-              <UiTextInput
-                accessibilityLabel={label}
-                placeholder={t("manualFlight.airportPlaceholder")}
-                value={query ?? ""}
-                maxLength={255}
-                autoFocus
-                autoCapitalize="none"
-                autoCorrect={false}
-                onChangeText={setQuery}
+        {open && !disabled ? (
+          <SafeAreaProvider>
+            <SafeAreaView style={styles.host}>
+              <SheetHeader
+                category="picker"
+                safeTop={false}
+                title={label}
+                leftLabel={t("common.cancel")}
+                onLeft={close}
               />
-            </View>
-            <ScrollView
-              style={styles.results}
-              contentContainerStyle={styles.search}
-              automaticallyAdjustKeyboardInsets
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="interactive"
-            >
-              {results.map((airport) => (
-                <UiButton
-                  key={`${airport.iata}:${airport.icao}:${airport.name}:${airport.country}`}
-                  variant="text"
-                  label={`${airportLabel(airport.iata ?? airport.icao ?? "", airport.name)} · ${airport.country}`}
-                  onPress={() => {
-                    onChange({
-                      code: airport.iata ?? airport.icao ?? "",
-                      name: airport.name,
-                      zone: airportTimeZone(airport),
-                    });
-                    close();
-                  }}
-                />
-              ))}
-              {(query ?? "").trim() ? (
-                <>
-                  {!results.length ? (
-                    <UiText style={styles.meta}>
-                      {t("manualFlight.airportNoMatch")}
-                    </UiText>
-                  ) : null}
-                  <UiButton
-                    variant="text"
-                    label={t("manualFlight.keepAirport", { value: query!.trim() })}
-                    onPress={() => {
-                      onChange({ ...manualAirport(query!), zone: null });
-                      close();
-                    }}
-                  />
-                </>
-              ) : (
-                <UiButton variant="text" label={t("common.done")} onPress={close} />
-              )}
-            </ScrollView>
-          </SafeAreaView>
-        </SafeAreaProvider>
+              <FlightAirportPicker
+                label={label}
+                initialQuery={code || name}
+                onClose={close}
+                onSelect={(value) => {
+                  onChange(value);
+                  close();
+                }}
+              >
+                {(search, results) => (
+                  <>
+                    {search}
+                    <ScrollView
+                      style={styles.results}
+                      automaticallyAdjustKeyboardInsets
+                      keyboardShouldPersistTaps="handled"
+                      keyboardDismissMode="interactive"
+                    >
+                      {results}
+                    </ScrollView>
+                  </>
+                )}
+              </FlightAirportPicker>
+            </SafeAreaView>
+          </SafeAreaProvider>
+        ) : null}
       </Modal>
     </View>
+  );
+}
+
+export function FlightAirportPicker({
+  label,
+  initialQuery,
+  onClose,
+  onSelect,
+  doneInToolbar = false,
+  children,
+}: {
+  label: string;
+  initialQuery: string;
+  onClose(): void;
+  onSelect(value: FlightAirportChoice): void;
+  doneInToolbar?: boolean;
+  children(search: ReactNode, results: ReactNode): ReactNode;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const [query, setQuery] = useState(initialQuery);
+  const results = airportSuggestions(query);
+  return children(
+    <View style={styles.search}>
+      <UiTextInput
+        accessibilityLabel={label}
+        placeholder={t("manualFlight.airportPlaceholder")}
+        value={query ?? ""}
+        maxLength={255}
+        autoFocus
+        autoCapitalize="none"
+        autoCorrect={false}
+        onChangeText={setQuery}
+      />
+    </View>,
+    <View style={styles.search}>
+      {results.map((airport) => (
+        <UiButton
+          key={`${airport.iata}:${airport.icao}:${airport.name}:${airport.country}`}
+          variant="text"
+          label={`${airportLabel(airport.iata ?? airport.icao ?? "", airport.name)} · ${airport.country}`}
+          onPress={() => {
+            onSelect({
+              code: airport.iata ?? airport.icao ?? "",
+              name: airport.name,
+              zone: airportTimeZone(airport),
+            });
+          }}
+        />
+      ))}
+      {query.trim() ? (
+        <>
+          {!results.length ? (
+            <UiText style={styles.meta}>{t("manualFlight.airportNoMatch")}</UiText>
+          ) : null}
+          <UiButton
+            variant="text"
+            label={t("manualFlight.keepAirport", { value: query.trim() })}
+            onPress={() => {
+              onSelect({ ...manualAirport(query), zone: null });
+            }}
+          />
+        </>
+      ) : doneInToolbar ? null : (
+        <UiButton variant="text" label={t("common.done")} onPress={onClose} />
+      )}
+    </View>,
   );
 }
 const createStyles = (colors: UiColors) =>

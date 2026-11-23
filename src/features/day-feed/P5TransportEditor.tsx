@@ -1,3 +1,4 @@
+import { ManualEditorHeader } from "./ManualEditorHeader";
 import { FormScanEntry } from "./SyntheticFormScan";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
@@ -370,7 +371,7 @@ export function P5TransportEditor({
       onClose={() => close()}
     >
       <SafeAreaProvider style={styles.body}>
-        <SheetHeader
+        <ManualEditorHeader
           title={t(itemId ? "tripCreate.editTransport" : "tripCreate.newTransport")}
           category="form"
           rightLabel={t("ui.save")}

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { SheetHeader } from "@/components/SheetHeader";
+import { ManualEditorHeader } from "./ManualEditorHeader";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -455,7 +455,7 @@ export function ManualFlightEditor({
       registerDismissHandler={registerDismissHandler}
     >
       <SafeAreaProvider style={styles.body}>
-        <SheetHeader
+        <ManualEditorHeader
           category="form"
           title={t(itemId ? "manualFlight.editFlight" : "manualFlight.newFlight")}
           rightLabel={t("ui.save")}

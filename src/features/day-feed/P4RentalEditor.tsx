@@ -1,3 +1,4 @@
+import { ManualEditorHeader } from "./ManualEditorHeader";
 import { FormScanEntry } from "./SyntheticFormScan";
 import { AppIcon } from "@/components/AppIcon";
 import { readLocalTripRepository } from "@/data/repositories/tripRepository";
@@ -404,7 +405,7 @@ export function P4RentalEditor({
       onClose={() => close()}
     >
       <SafeAreaProvider style={styles.body}>
-        <SheetHeader
+        <ManualEditorHeader
           title={t(itemId ? "tripCreate.editRental" : "tripCreate.newRental")}
           category="form"
           rightLabel={t("ui.save")}

@@ -1,3 +1,4 @@
+import { ManualEditorHeader } from "./ManualEditorHeader";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -347,7 +348,7 @@ export function P6ActivityEditor({
       onClose={() => close()}
     >
       <SafeAreaProvider style={styles.body}>
-        <SheetHeader
+        <ManualEditorHeader
           title={t(itemId ? "p6.edit" : "p6.form.new")}
           category="form"
           rightLabel={t("ui.save")}

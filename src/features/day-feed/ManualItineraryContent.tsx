@@ -23,19 +23,8 @@ import { P5TransportEditor } from "./P5TransportEditor";
 import { P6ActivityEditor } from "./P6ActivityEditor";
 
 import { manualItineraryTypes } from "./manualItineraryTypes";
-type Family = "P2" | "P1" | "P3" | "P4" | "P5" | "P6";
-export function ManualItineraryContent({
-  localOnly = false,
-  tripId,
-  generation,
-  initialDate,
-  initialStartTime,
-  tripStartDate,
-  tripEndDate,
-  onClose,
-  registerDismissHandler,
-  onSaved,
-}: {
+export type ManualItineraryFamily = "P2" | "P1" | "P3" | "P4" | "P5" | "P6";
+export type ManualItineraryProps = {
   localOnly?: boolean;
   tripId: string;
   generation: number;
@@ -46,14 +35,34 @@ export function ManualItineraryContent({
   onClose(): void;
   registerDismissHandler?: (handler: () => void) => () => void;
   onSaved(itemId: string): void;
-}) {
+};
+
+export function isManualItineraryFamily(id: string, localOnly = false): id is ManualItineraryFamily {
+  return manualItineraryTypes.some(type => type.id === id && type.enabled) &&
+    (!localOnly || id === "P1" || id === "P3");
+}
+
+export function ManualItineraryContent({
+  hostedFamily,
+  localOnly = false,
+  tripId,
+  generation,
+  initialDate,
+  initialStartTime,
+  tripStartDate,
+  tripEndDate,
+  onClose,
+  registerDismissHandler,
+  onSaved,
+}: ManualItineraryProps & { hostedFamily?: ManualItineraryFamily }) {
   useUiLocale();
   const currentGeneration = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
   );
   const styles = useThemedStyles(createStyles);
-  const [family, setFamily] = useState<Family | null>(null);
+  const [selectedFamily, setFamily] = useState<ManualItineraryFamily | null>(null);
+  const family = hostedFamily ?? selectedFamily;
   const [startDate, setStartDate] = useState(tripStartDate ?? null);
   const [endDate, setEndDate] = useState(tripEndDate ?? null);
   useEffect(() => {
@@ -106,21 +115,51 @@ export function ManualItineraryContent({
     <ManualItineraryChooser
       localOnly={localOnly}
       onClose={onClose}
-      onChoose={(id) => {
-        if (generation === getAccountGeneration() && (!localOnly || id === "P1" || id === "P3"))
-          setFamily(id as Family);
+      onChoose={id => {
+        if (generation === getAccountGeneration() && isManualItineraryFamily(id, localOnly))
+          setFamily(id);
       }}
     />
   );
 }
 
-export function ManualItineraryChooser({
+export function ManualItineraryChooser(props: {
+  onClose(): void;
+  onChoose(id: string): void;
+  contextLabel?: string;
+  localOnly?: boolean;
+}) {
+  const styles = useThemedStyles(createStyles);
+  return (
+    <View style={styles.backdrop}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("common.close")}
+        style={StyleSheet.absoluteFill}
+        onPress={props.onClose}
+      />
+      <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
+        <SheetHeader
+          category="action"
+          surface="background"
+          safeTop={false}
+          title={t("formEntry.title")}
+          leftLabel={t("common.close")}
+          onLeft={props.onClose}
+        />
+        <ScrollView keyboardShouldPersistTaps="handled" style={styles.choices}>
+          <ManualItineraryChoices {...props} />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+export function ManualItineraryChoices({
   localOnly = false,
-  onClose,
   onChoose,
   contextLabel,
 }: {
-  onClose(): void;
   onChoose(id: string): void;
   contextLabel?: string;
   localOnly?: boolean;
@@ -170,38 +209,16 @@ export function ManualItineraryChooser({
     );
   };
   return (
-    <View style={styles.backdrop}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t("common.close")}
-        style={StyleSheet.absoluteFill}
-        onPress={onClose}
-      />
-      <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheet}>
-        <SheetHeader
-          category="action"
-          surface="background"
-          safeTop={false}
-          title={t("formEntry.title")}
-          leftLabel={t("common.close")}
-          onLeft={onClose}
-        />
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          style={styles.choices}
-          contentContainerStyle={styles.content}
-        >
-          <UiText style={styles.prompt}>{t("formEntry.prompt")}</UiText>
-          {localOnly ? <UiText style={styles.meta}>{t("formEntry.localOnlyHint")}</UiText> : null}
-          {contextLabel ? <UiText style={styles.meta}>{contextLabel}</UiText> : null}
-          <View style={styles.row}>
-            {manualItineraryTypes.slice(0, 2).map((type) => choice(type, false))}
-          </View>
-          <View style={styles.row}>
-            {manualItineraryTypes.slice(2).map((type) => choice(type, true))}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+    <View style={styles.content}>
+      <UiText style={styles.prompt}>{t("formEntry.prompt")}</UiText>
+      {localOnly ? <UiText style={styles.meta}>{t("formEntry.localOnlyHint")}</UiText> : null}
+      {contextLabel ? <UiText style={styles.meta}>{contextLabel}</UiText> : null}
+      <View style={styles.row}>
+        {manualItineraryTypes.slice(0, 2).map(type => choice(type, false))}
+      </View>
+      <View style={styles.row}>
+        {manualItineraryTypes.slice(2).map(type => choice(type, true))}
+      </View>
     </View>
   );
 }

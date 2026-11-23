@@ -1,3 +1,4 @@
+import { ManualEditorHeader } from "./ManualEditorHeader";
 import {
   p3PlaceSelectionDraft,
   currentP3PlaceSelection,
@@ -573,7 +574,7 @@ export function P1PlanEditor({
       onClose={() => close()}
     >
       <SafeAreaProvider style={styles.body}>
-        <SheetHeader
+        <ManualEditorHeader
           category="form"
           title={t(itemId ? "tripCreate.editPlan" : "tripCreate.newPlan")}
           rightLabel={t("ui.save")}

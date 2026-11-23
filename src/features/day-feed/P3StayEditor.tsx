@@ -1,3 +1,4 @@
+import { ManualEditorHeader } from "./ManualEditorHeader";
 import { retainGuestStayEditor } from "./guestStayEditorLease";
 import { ManualEditorPresentation } from "./ManualEditorPresentation";
 import { useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
@@ -480,7 +481,7 @@ export function P3StayEditor({
       onClose={() => close()}
     >
       <SafeAreaProvider style={styles.body}>
-        <SheetHeader
+        <ManualEditorHeader
           title={t(itemId ? "tripCreate.editStay" : "tripCreate.newStay")}
           category="form"
           rightLabel={t("ui.save")}
