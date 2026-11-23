@@ -1068,9 +1068,9 @@ export function LedgerSearchChoiceForm({ choice, complete, render }: {
   const [attention, setAttention] = useState(choice.kind === "attention" ? choice.initial : undefined);
   if (choice.kind === "options") {
     return render(
-      <FilterSection title={choice.title}>
+      <FilterSection>
         {choice.values.map(item => (
-          <FilterRow key={item.value ?? item.label} label={item.label}
+          <FilterRow choice key={item.value ?? item.label} label={item.label}
             value={selected === item.value ? "✓" : ""} active={selected === item.value} onPress={() => {
               if (choice.confirm) setSelected(item.value);
               else complete(() => choice.onChoose(item.value));
@@ -1084,7 +1084,7 @@ export function LedgerSearchChoiceForm({ choice, complete, render }: {
   }
   if (!attention) return null;
   return render(
-    <FilterSection title={choice.title}>
+    <FilterSection>
       <View style={styles.attentionChoices}>
         <Choice label={t("search.journeyValueUnavailable")} checkbox selected={attention.valuation === "RATE_REQUIRED"}
           onPress={() => setAttention({ ...attention, valuation: attention.valuation === "RATE_REQUIRED" ? undefined : "RATE_REQUIRED" })} />
@@ -1125,12 +1125,12 @@ function FilterSection({
   title,
 }: {
   children: React.ReactNode;
-  title: string;
+  title?: string;
 }) {
   const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      {title ? <Text style={styles.sectionTitle}>{title}</Text> : null}
       {children}
     </View>
   );
@@ -1138,11 +1138,13 @@ function FilterSection({
 
 function FilterRow({
   active = false,
+  choice = false,
   label,
   onPress,
   value,
 }: {
   active?: boolean;
+  choice?: boolean;
   label: string;
   onPress: () => void;
   value: string;
@@ -1151,8 +1153,9 @@ function FilterRow({
   const largeText = useWindowDimensions().fontScale > 2;
   return (
     <Pressable
-      accessibilityLabel={`${label}, ${value}`}
-      accessibilityRole="button"
+      accessibilityLabel={choice ? label : `${label}, ${value}`}
+      accessibilityRole={choice ? "radio" : "button"}
+      accessibilityState={choice ? { checked: active } : undefined}
       onPress={onPress}
       style={[styles.filterRow, largeText && styles.filterRowLarge]}
     >
@@ -1164,7 +1167,7 @@ function FilterRow({
           largeText && styles.filterRowValueLarge,
         ]}
       >
-        {value} ›
+        {value}{choice ? null : " ›"}
       </Text>
     </Pressable>
   );
