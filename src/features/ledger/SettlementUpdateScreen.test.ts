@@ -31,6 +31,7 @@ vi.mock("expo-router", () => ({
 }));
 vi.mock("@/data/repositories/defaultLedgerExpenseRepository", () => ({}));
 vi.mock("@/data/repositories/defaultLedgerReportingRepository", () => ({}));
+vi.mock("./ConfirmExpenseDateScreen", () => ({ useOpenExpenseDateConfirmation: () => () => {} }));
 vi.mock("./SettlementRateAcceptance", () => ({ SettlementRateAcceptance: () => null }));
 vi.mock("@/hooks/useStage7Settlement", () => ({
   useStage7Settlement: () => ({

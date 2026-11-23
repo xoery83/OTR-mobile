@@ -44,6 +44,7 @@ import { ExpenseSettlementTag } from "./ExpenseSettlementTag";
 import { shouldShowGroupSettlement } from "./expenseDraft";
 import { expenseSharingSummary } from "./expenseEntryPresentation";
 
+import { useOpenExpenseDateConfirmation } from "./ConfirmExpenseDateScreen";
 import { ExpenseFxDetails } from "./ExpenseFxDetails";
 import type { DisplayEstimate } from "./displayEstimate";
 import { formatLedgerDate } from "./format";
@@ -56,6 +57,7 @@ export function LedgerExpenseDetailScreen() {
   const largeText = useWindowDimensions().fontScale > 2;
   const { id } = useLocalSearchParams<{ id: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
+  const openExpenseDate = useOpenExpenseDateConfirmation(expense?.journeyId, id);
   const [syncResult, setSyncResult] = useState<ExpenseOperationResult | null>(null);
   const [blockingResult, setBlockingResult] = useState<ExpenseOperationResult | null>(
     null,
@@ -505,13 +507,7 @@ export function LedgerExpenseDetailScreen() {
                 : fxAccess.canChange &&
                     expense.status === "RATE_REQUIRED" &&
                     expense.economicDate === null
-                  ? () =>
-                      router.push({
-                        pathname: "/expenses/confirm-date",
-                        params: {
-                          expenseId: expense.id,
-                        },
-                      } as never)
+                  ? () => openExpenseDate(expense.id)
                   : undefined
             }
             style={styles.warning}

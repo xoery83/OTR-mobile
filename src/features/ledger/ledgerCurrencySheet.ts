@@ -20,6 +20,7 @@ export type LedgerCurrencyChoice = {
     subscribeOptions(listener: () => void): () => void;
     choose(code: string): void;
   }
+  | { kind: "confirm-date"; expenseId: string; journeyId: string; busy: { current: boolean } }
   | { kind: "date"; initial: Date; maximumDate?: Date; choose(date: Date): void }
   | ({ kind: "sharing" } & ExpenseSharingInputs)
   | { kind: "category"; selected: string; choose(category: string): void }
@@ -33,6 +34,11 @@ subscribeAccountGeneration(() => { active = undefined; });
 export function readLedgerCurrencySheet(id: string | undefined) {
   return active && active.id === id && active.current() && active.choice.isCurrent?.() !== false
     ? active.choice : undefined;
+}
+
+export function interceptLedgerCurrencySheetClose(id: string | undefined) {
+  const choice = readLedgerCurrencySheet(id);
+  return choice?.kind === "confirm-date" && choice.busy.current;
 }
 
 export function releaseLedgerCurrencySheet(id: string | undefined) {

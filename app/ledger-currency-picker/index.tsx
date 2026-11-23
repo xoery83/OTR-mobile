@@ -4,6 +4,7 @@ import { Keyboard, StyleSheet, View } from "react-native";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
+import { HostedConfirmExpenseDate } from "@/features/ledger/ConfirmExpenseDateScreen";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { ExpenseSharingSheet } from "@/features/ledger/ExpenseSharingSheet";
 import { ExpenseCategoryPicker } from "@/features/ledger/ExpenseCategoryPicker";
@@ -31,6 +32,13 @@ export default function LedgerCurrencyPickerRoute() {
   }
 
   const title = t(picker?.titleKey ?? "currencySettings.copy31");
+  if (picker?.kind === "confirm-date") {
+    return <HostedConfirmExpenseDate
+      key={invocation}
+      choice={picker}
+      isCurrent={() => !isExitPending() && readLedgerCurrencySheet(invocation) === picker}
+    />;
+  }
   if (picker?.kind === "currency") {
     return <SheetRoutePanel title={title} ownsScroll>
       <CurrencyPicker hosted selected={picker.selected} suggestions={picker.suggestions} onSelect={code => select(() => picker.choose(code))} />

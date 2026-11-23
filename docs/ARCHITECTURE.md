@@ -469,3 +469,5 @@ Source/Task authority. Only bytes and bounded producer output cross this port;
 existing original rereads, output validation and owning SQL still decide proof.
 No listener/startup, host mount or service activation is installed. A future host
 execution/mount change requires its exact protected deployment review and approval.
+
+The Ledger QA Sheet presents transaction date confirmation from Expense Detail and the two Settlement entry points. The parent supplies the expense and Journey scope, and the same repository operation confirms the date. The compatibility route remains available when the Sheet gate is off.

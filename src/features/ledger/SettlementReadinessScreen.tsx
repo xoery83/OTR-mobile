@@ -6,6 +6,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
+import { useOpenExpenseDateConfirmation } from "./ConfirmExpenseDateScreen";
 import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
 import { ExpenseConflictList } from "./ExpenseConflictList";
 import { settlementRateCandidates } from "./settlementRateCandidates";
@@ -566,6 +567,7 @@ function SummarySection({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const openExpenseDate = useOpenExpenseDateConfirmation(settlement.journeyId);
   const projection = settlement.summaryProjection;
   const confirmationRefreshing = settlement.journeyId
     ? isSettlementConfirmationRefreshing(settlement.journeyId, projection)
@@ -667,11 +669,7 @@ function SummarySection({
                 key={issue.id}
                 onPress={() => {
                   const expenseId = expenseFor(issue.id)?.id ?? issue.id;
-                  if (issue.missingDate)
-                    router.push({
-                      pathname: "/expenses/confirm-date",
-                      params: { expenseId },
-                    } as never);
+                  if (issue.missingDate) openExpenseDate(expenseId);
                   else router.push(`/expenses/expense/${expenseId}`);
                 }}
                 style={styles.rateIssue}

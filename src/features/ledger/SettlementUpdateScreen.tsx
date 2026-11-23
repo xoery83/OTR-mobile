@@ -5,6 +5,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { t } from "@/ui/locale";
 import { systemMessage } from "@/ui/domainLabels";
 import { MoneyText } from "./MoneyText";
+import { useOpenExpenseDateConfirmation } from "./ConfirmExpenseDateScreen";
 import { SettlementRateAcceptance } from "./SettlementRateAcceptance";
 import { settlementRateCandidates } from "./settlementRateCandidates";
 import { useCallback, useRef, useState } from "react";
@@ -41,6 +42,7 @@ export function SettlementUpdateScreen() {
     journeyTitle?: string;
   }>();
   const settlement = useStage7Settlement(journeyId, true);
+  const openExpenseDate = useOpenExpenseDateConfirmation(journeyId);
   const refreshSettlement = settlement.refresh;
   const [reason, setReason] = useState("");
   const [debugMode, setDebugMode] = useState(false);
@@ -100,10 +102,7 @@ export function SettlementUpdateScreen() {
   const openRateReview = (id: string, localId: string, removed: boolean) => {
     const expense = expenses.find((item) => item.id === localId || item.serverId === id);
     if (expense?.economicDate === null) {
-      router.push({
-        pathname: "/expenses/confirm-date",
-        params: { expenseId: localId },
-      } as never);
+      openExpenseDate(localId);
       return;
     }
     if (removed && journeyId)
