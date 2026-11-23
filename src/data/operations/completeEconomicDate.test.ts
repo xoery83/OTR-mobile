@@ -11,6 +11,7 @@ const deps = vi.hoisted(() => ({
   refresh: vi.fn(),
 }));
 
+vi.mock("@/data/auth/authRepository", () => ({ requireActiveUserId: async () => "qa-user" }));
 vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => deps.generation,
 }));
@@ -27,7 +28,7 @@ vi.mock("@/data/sync/ledgerSettlementCoordinator", () => ({
   preflightSettlementFx: deps.preflight,
 }));
 vi.mock("@/data/sync/ledgerReportingCoordinator", () => ({
-  refreshJourneyLedger: deps.refresh,
+  refreshJourneyLedgerWithStatus: deps.refresh,
 }));
 
 const snapshot = { accountGeneration: 4, journeyId: "trip", revision: 3 };
@@ -67,4 +68,17 @@ it("ignores an old Account's in-flight sync completion", async () => {
   expect(deps.read).not.toHaveBeenCalled();
   expect(deps.preflight).not.toHaveBeenCalled();
   expect(deps.refresh).not.toHaveBeenCalled();
+});
+
+it("passes the same request scope to preflight and refresh", async () => {
+  deps.sync.mockResolvedValue(undefined);
+  deps.read
+    .mockResolvedValueOnce({ syncStatus: "SYNCED" })
+    .mockResolvedValueOnce({ status: "ACCEPTED", valuation: {} });
+
+  const { followUp } = await confirmExpenseEconomicDate("expense", "2026-11-24", snapshot);
+  await expect(followUp).resolves.toEqual({ state: "VALUED" });
+  const context = deps.preflight.mock.calls[0]?.[2];
+  expect(context).toEqual({ accountId: "qa-user", generation: 4, tripId: "trip" });
+  expect(deps.refresh.mock.calls[0]?.[1]).toBe(context);
 });

@@ -1,3 +1,4 @@
+import { assertAccountRequestContext, type AccountRequestContext } from "@/data/auth/accountRequestContext";
 import { ApiClientError, createApiClient } from "@/data/api/client";
 import { createAuthenticatedApiClient } from "@/data/api/authenticatedClient";
 import {
@@ -30,10 +31,16 @@ type Dependencies = {
   createClient?: (accessToken: string) => ReturnType<typeof createApiClient>;
 };
 
-async function client(dependencies: Dependencies, timeoutMs = 15_000) {
+async function client(
+  dependencies: Dependencies,
+  timeoutMs = 15_000,
+  context?: AccountRequestContext,
+) {
   if (!dependencies.readSession && !dependencies.createClient)
-    return createAuthenticatedApiClient({ timeoutMs });
+    return createAuthenticatedApiClient({ timeoutMs }, undefined, context);
   const session = await (dependencies.readSession ?? readLocalSession)();
+  if (context)
+    await assertAccountRequestContext(context, async () => session?.identity.userId ?? "");
   if (!session?.accessToken)
     throw new ApiClientError(
       "Authentication is unavailable.",
@@ -48,8 +55,9 @@ async function client(dependencies: Dependencies, timeoutMs = 15_000) {
 
 export function createLedgerSettlementTransport(dependencies: Dependencies = {}) {
   return {
-    async preflight(journeyId: string, forceRetry = false) {
-      return (await client(dependencies, 45_000)).post(
+    async preflight(journeyId: string, forceRetry = false, context?: AccountRequestContext) {
+      if (context && context.tripId !== journeyId) throw new Error("Journey context mismatch.");
+      return (await client(dependencies, 45_000, context)).post(
         `/v2/trips/${journeyId}/settlements/fx-preflight`,
         { forceRetry },
         z.object({

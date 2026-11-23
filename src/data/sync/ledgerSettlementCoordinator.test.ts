@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { advanceAccountGeneration, getAccountGeneration } from "@/data/auth/accountGeneration";
 
 const preflight = vi.fn();
 vi.mock("./ledgerSettlementTransport", () => ({
@@ -39,6 +40,17 @@ describe("foreground settlement FX preflight", () => {
       ["journey-one", true],
       ["journey-one", false],
     ]);
+  });
+
+  it("stops a scoped preflight before a second batch when the Account changes", async () => {
+    const context = { accountId: "qa-user", generation: getAccountGeneration(), tripId: "journey-one" };
+    preflight.mockImplementationOnce(async () => {
+      advanceAccountGeneration();
+      return { claimed: 4, accepted: 4, unavailableExpenseIds: [], pendingPublicationExpenseIds: [] };
+    });
+
+    await expect(preflightSettlementFx("journey-one", true, context)).rejects.toThrow("Account changed");
+    expect(preflight).toHaveBeenCalledExactlyOnceWith("journey-one", true, context);
   });
 
   it("caps a continuously full queue and propagates failure to the caller", async () => {

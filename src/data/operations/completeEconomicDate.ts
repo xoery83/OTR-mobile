@@ -1,7 +1,9 @@
+import { requireActiveUserId } from "@/data/auth/authRepository";
+import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import type { ExpenseEconomicDateSnapshot, LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
-import { refreshJourneyLedger } from "@/data/sync/ledgerReportingCoordinator";
+import { refreshJourneyLedgerWithStatus } from "@/data/sync/ledgerReportingCoordinator";
 import { runLedgerOperationalSync } from "@/data/sync/ledgerOperationalSync";
 import { preflightSettlementFx } from "@/data/sync/ledgerSettlementCoordinator";
 
@@ -41,9 +43,11 @@ async function resolveExpenseDate(saved: LedgerExpense, accountGeneration: numbe
   }
   if (!accountIsCurrent() || synced?.syncStatus !== "SYNCED") return { state: "SAVED_WAITING" as const };
   try {
-    await preflightSettlementFx(saved.journeyId, true);
+    const context = await captureAccountRequestContext(saved.journeyId, requireActiveUserId);
+    if (context.generation !== accountGeneration) return { state: "SAVED_WAITING" as const };
+    await preflightSettlementFx(saved.journeyId, true, context);
     if (!accountIsCurrent()) return { state: "SAVED_WAITING" as const };
-    await refreshJourneyLedger(saved.journeyId);
+    await refreshJourneyLedgerWithStatus(saved.journeyId, context);
   } catch {
     return { state: "RATE_WAITING" as const };
   }

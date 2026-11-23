@@ -1,3 +1,4 @@
+import { assertAccountRequestGeneration, type AccountRequestContext } from "@/data/auth/accountRequestContext";
 import { getDefaultLedgerSettlementRepository } from "@/data/repositories/defaultLedgerSettlementRepository";
 import { createLocalId } from "@/domain/localId";
 import type {
@@ -8,16 +9,25 @@ import { assertReplayFixtureWritable } from "@/data/repositories/replayFixtureGu
 
 import { createLedgerSettlementTransport } from "./ledgerSettlementTransport";
 
-export async function preflightSettlementFx(journeyId: string, forceRetry = false) {
+export async function preflightSettlementFx(
+  journeyId: string,
+  forceRetry = false,
+  requestContext?: AccountRequestContext,
+) {
+  if (requestContext && requestContext.tripId !== journeyId)
+    throw new Error("Journey context mismatch.");
   const unavailable = new Set<string>();
   const pendingPublication = new Set<string>();
   // Each call claims at most four demands on the shared 45-second lease.
   // ponytail: eight batches cap one foreground action at 32 pairs; paginate further if journeys exceed that.
   for (let batch = 0; batch < 8; batch++) {
-    const result = await createLedgerSettlementTransport().preflight(
-      journeyId,
-      forceRetry && batch === 0,
-    );
+    if (requestContext) assertAccountRequestGeneration(requestContext);
+    const transport = createLedgerSettlementTransport();
+    const force = forceRetry && batch === 0;
+    const result = requestContext
+      ? await transport.preflight(journeyId, force, requestContext)
+      : await transport.preflight(journeyId, force);
+    if (requestContext) assertAccountRequestGeneration(requestContext);
     result.unavailableExpenseIds.forEach((id) => unavailable.add(id));
     result.pendingPublicationExpenseIds.forEach((id) => pendingPublication.add(id));
     if (result.claimed < 4 && result.accepted < 4) break;
