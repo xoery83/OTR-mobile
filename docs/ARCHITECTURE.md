@@ -128,6 +128,10 @@ The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.
 
+The Ledger Analysis date and category selectors share one hosted route. The routed
+selector owns the transient date draft, with successful choices returned once to
+the exact Analysis page. The underlying reports continue using the same Reader.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.

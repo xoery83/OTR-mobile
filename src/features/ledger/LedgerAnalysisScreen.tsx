@@ -1,8 +1,9 @@
 import { segmentedControlTokens } from "@/ui/segmented";
 import { formatExpenseCount } from "./searchFilters";
-import { categoryLabel, systemMessage } from "@/ui/domainLabels";
+import { systemMessage } from "@/ui/domainLabels";
 import { t } from "@/ui/locale";
-import { UiTextInput as TextInput } from "@/ui/forms";
+import { AnalysisPickerFields } from "./AnalysisPickerFields";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { useUiTheme, useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -26,14 +27,11 @@ import { getDefaultLedgerReportingRepository } from "@/data/repositories/default
 import {
   aggregateAnalysisPeople,
   addAnalysisDays,
-  analysisDateBounds,
-  analysisPresetBounds,
   analysisRangePresets,
   buildSpendingAnalysis,
   type AnalysisDataset,
   type AnalysisExpense,
   type AnalysisRange,
-  type AnalysisRangePreset,
 } from "@/domain/ledger/spendingAnalysis";
 import type { ReportingScope } from "@/domain/ledger/reporting";
 import { createLatestRequest } from "./latestRequest";
@@ -57,13 +55,13 @@ import {
   type AnalysisDrilldown,
 } from "./SpendingAnalysisSections";
 
-const rangeLabels = (): Record<AnalysisRangePreset, string> => ({
-  ENTIRE: t("extra.copy21"),
-  LAST_30: t("extra.copy22"),
-  MONTH: t("extra.copy23"),
-  YEAR: t("extra.copy24"),
-  CUSTOM: t("extra.copy25"),
-});
+import {
+  hostedLedgerAnalysisPickerEnabled,
+  openAnalysisPicker,
+  readAnalysisPicker,
+  releaseAnalysisPicker,
+  type AnalysisPicker,
+} from "./analysisPickerInvocation";
 
 function exclusionReason(expense: AnalysisExpense, scope: ReportingScope) {
   if (expense.hasOpenConflict) return t("ui.changesNeedReview");
@@ -97,8 +95,6 @@ export function LedgerAnalysisScreen() {
   const [updating, setUpdating] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rangeOpen, setRangeOpen] = useState(false);
-  const [rangeDraft, setRangeDraft] = useState({ from: "", through: "" });
-  const [rangeError, setRangeError] = useState<string | null>(null);
   const [completenessOpen, setCompletenessOpen] = useState(false);
   const [biggestCategory, setBiggestCategory] = useState<string | null>(null);
   const [travellerCategory, setTravellerCategory] = useState<string | null>(null);
@@ -108,6 +104,18 @@ export function LedgerAnalysisScreen() {
   >(null);
   const [scopeHeight, setScopeHeight] = useState(52);
   const rangeRef = useRef<AnalysisRange>({});
+  const pendingRange = useRef<AnalysisRange | null>(null);
+  const pickerId = useRef<string>(undefined);
+  const generation = getAccountGeneration();
+  const pickerOwner = useRef<symbol | null>(null);
+  useLayoutEffect(() => {
+    pickerOwner.current = Symbol();
+    pendingRange.current = null;
+    return () => {
+      pickerOwner.current = null;
+      releaseAnalysisPicker(pickerId.current);
+    };
+  }, [generation, params.journeyId, params.memberId, scope]);
   const repository = useRef<ReturnType<
     typeof getDefaultLedgerReportingRepository
   > | null>(null);
@@ -146,7 +154,9 @@ export function LedgerAnalysisScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void load(rangeRef.current);
+      const range = pendingRange.current ?? rangeRef.current;
+      pendingRange.current = null;
+      void load(range);
       return () => request.cancel();
     }, [load, request]),
   );
@@ -225,23 +235,62 @@ export function LedgerAnalysisScreen() {
       },
     });
   };
-  const changeRange = (preset: AnalysisRangePreset) => {
-    if (preset === "CUSTOM") {
-      setRangeDraft({
-        from:
-          view?.range.from?.slice(0, 10) ??
-          view?.dataset.journey.startDate?.slice(0, 10) ??
-          today,
-        through: view?.range.to
-          ? addAnalysisDays(view.range.to.slice(0, 10), -1)
-          : (view?.dataset.journey.endDate?.slice(0, 10) ?? today),
-      });
-      setRangeError(null);
+  function openHostedPicker(picker: AnalysisPicker) {
+    const owner = pickerOwner.current;
+    if (
+      !owner ||
+      generation !== getAccountGeneration() ||
+      readAnalysisPicker(pickerId.current)
+    )
       return;
-    }
-    setRangeOpen(false);
-    void load(analysisPresetBounds(preset, today));
+    const invocation = openAnalysisPicker(picker, () => pickerOwner.current === owner);
+    pickerId.current = invocation;
+    router.push({ pathname: "/ledger-analysis-picker", params: { invocation } });
+  }
+
+  const rangePicker: AnalysisPicker = {
+    kind: "range",
+    presets,
+    today,
+    initial: {
+      from:
+        view?.range.from?.slice(0, 10) ??
+        view?.dataset.journey.startDate?.slice(0, 10) ??
+        today,
+      through: view?.range.to
+        ? addAnalysisDays(view.range.to.slice(0, 10), -1)
+        : (view?.dataset.journey.endDate?.slice(0, 10) ?? today),
+    },
+    choose: (range) => {
+      if (hostedLedgerAnalysisPickerEnabled) pendingRange.current = range;
+      else {
+        setRangeOpen(false);
+        void load(range);
+      }
+    },
   };
+  function categoryPicker(menu: NonNullable<typeof categoryMenu>): AnalysisPicker {
+    const { selected, setSelected } =
+      menu === "BIGGEST"
+        ? { selected: biggestCategory, setSelected: setBiggestCategory }
+        : menu === "TRAVELLER"
+          ? { selected: travellerCategory, setSelected: setTravellerCategory }
+          : { selected: payerCategory, setSelected: setPayerCategory };
+    return {
+      kind: "category",
+      options: categoryChoices,
+      selected,
+      choose: (category) => {
+        setSelected(category);
+        setCategoryMenu(null);
+      },
+    };
+  }
+  function chooseCategory(menu: NonNullable<typeof categoryMenu>) {
+    if (hostedLedgerAnalysisPickerEnabled) openHostedPicker(categoryPicker(menu));
+    else setCategoryMenu(menu);
+  }
+
   const scopeControl = (
     <View
       accessibilityRole="tablist"
@@ -301,8 +350,8 @@ export function LedgerAnalysisScreen() {
           icon="calendar"
           selected={Boolean(view?.range.from)}
           onPress={() => {
-            setRangeDraft({ from: "", through: "" });
-            setRangeOpen(true);
+            if (hostedLedgerAnalysisPickerEnabled) openHostedPicker(rangePicker);
+            else setRangeOpen(true);
           }}
         />
       </Stack.Toolbar>
@@ -434,7 +483,7 @@ export function LedgerAnalysisScreen() {
                           <AnalysisCategoryMenu
                             title={t("ui.travellers")}
                             value={travellerCategory}
-                            onPress={() => setCategoryMenu("TRAVELLER")}
+                            onPress={() => chooseCategory("TRAVELLER")}
                           />
                         }
                       />
@@ -452,7 +501,7 @@ export function LedgerAnalysisScreen() {
                           <AnalysisCategoryMenu
                             title={t("ui.whoPaid")}
                             value={payerCategory}
-                            onPress={() => setCategoryMenu("PAYER")}
+                            onPress={() => chooseCategory("PAYER")}
                           />
                         }
                       />
@@ -479,7 +528,7 @@ export function LedgerAnalysisScreen() {
                         <AnalysisCategoryMenu
                           title={t("ui.biggestExpenses2")}
                           value={biggestCategory}
-                          onPress={() => setCategoryMenu("BIGGEST")}
+                          onPress={() => chooseCategory("BIGGEST")}
                         />
                       }
                     >
@@ -581,112 +630,49 @@ export function LedgerAnalysisScreen() {
           </View>
         </Modal>
       ) : null}
-      <Modal
-        visible={rangeOpen}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setRangeOpen(false)}
-      >
-        <View style={styles.modalPage}>
-          <SheetHeader
-            title={t("ui.analysisDates")}
-            leftLabel={t("ui.cancel")}
-            onLeft={() => setRangeOpen(false)}
-          />
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.modalContent}
-          >
-            {presets.map((preset) => (
-              <Pressable
-                accessibilityRole="button"
-                key={preset}
-                onPress={() => changeRange(preset)}
-                style={styles.rangeOption}
-              >
-                <Text style={shared.link}>{rangeLabels()[preset]}</Text>
-              </Pressable>
-            ))}
-            {rangeDraft.from ? (
-              <>
-                <Text style={shared.meta}>{t("ui.startDate")}</Text>
-                <TextInput
-                  accessibilityLabel={t("ui.analysisStartDate")}
-                  placeholder={t("ui.yyyymmdd")}
-                  value={rangeDraft.from}
-                  onChangeText={(from) => setRangeDraft((draft) => ({ ...draft, from }))}
-                  style={styles.dateInput}
-                />
-                <Text style={shared.meta}>{t("ui.endDate")}</Text>
-                <TextInput
-                  accessibilityLabel={t("ui.analysisEndDate")}
-                  placeholder={t("ui.yyyymmdd")}
-                  value={rangeDraft.through}
-                  onChangeText={(through) =>
-                    setRangeDraft((draft) => ({ ...draft, through }))
-                  }
-                  style={styles.dateInput}
-                />
-                {rangeError ? (
-                  <Text accessibilityLiveRegion="polite" style={shared.error}>
-                    {rangeError}
-                  </Text>
-                ) : null}
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    const range = analysisDateBounds(rangeDraft.from, rangeDraft.through);
-                    if (!range) {
-                      setRangeError(t("ui.enterValidDatesAsYyyymmddWithTheEndOnOr"));
-                      return;
-                    }
-                    setRangeOpen(false);
-                    void load(range);
-                  }}
-                  style={styles.rangeOption}
-                >
-                  <Text style={shared.link}>{t("ui.applyCustomRange")}</Text>
-                </Pressable>
-              </>
-            ) : null}
-          </ScrollView>
-        </View>
-      </Modal>
-      <Modal
-        visible={categoryMenu !== null}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setCategoryMenu(null)}
-      >
-        <View style={styles.modalPage}>
-          <SheetHeader
-            title={t("ui.chooseCategory")}
-            onLeft={() => setCategoryMenu(null)}
-          />
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.modalContent}
-          >
-            {[null, ...categoryChoices].map((category) => (
-              <Pressable
-                accessibilityRole="button"
-                key={category ?? "__all__"}
-                onPress={() => {
-                  if (categoryMenu === "BIGGEST") setBiggestCategory(category);
-                  if (categoryMenu === "TRAVELLER") setTravellerCategory(category);
-                  if (categoryMenu === "PAYER") setPayerCategory(category);
-                  setCategoryMenu(null);
-                }}
-                style={styles.rangeOption}
-              >
-                <Text style={shared.link}>
-                  {category ? categoryLabel(category) : t("ui.allCategories")}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-      </Modal>
+      {rangeOpen ? (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setRangeOpen(false)}
+        >
+          <View style={styles.modalPage}>
+            <SheetHeader
+              title={t("ui.analysisDates")}
+              leftLabel={t("ui.cancel")}
+              onLeft={() => setRangeOpen(false)}
+            />
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalContent}
+            >
+              <AnalysisPickerFields picker={rangePicker} />
+            </ScrollView>
+          </View>
+        </Modal>
+      ) : null}
+      {categoryMenu ? (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setCategoryMenu(null)}
+        >
+          <View style={styles.modalPage}>
+            <SheetHeader
+              title={t("ui.chooseCategory")}
+              onLeft={() => setCategoryMenu(null)}
+            />
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalContent}
+            >
+              <AnalysisPickerFields picker={categoryPicker(categoryMenu)} />
+            </ScrollView>
+          </View>
+        </Modal>
+      ) : null}
     </View>
   );
 }
@@ -740,22 +726,5 @@ const createStyles = (colors: UiColors) => {
     surface: { backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden" },
     modalPage: { flex: 1, backgroundColor: colors.background },
     modalContent: { padding: 16, gap: 10 },
-    rangeOption: {
-      minHeight: 48,
-      justifyContent: "center",
-      padding: 12,
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-    },
-    dateInput: {
-      minHeight: 48,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: colors.separator,
-      borderRadius: 10,
-      backgroundColor: colors.surface,
-      color: colors.textPrimary,
-      fontSize: 16,
-    },
   });
 };
