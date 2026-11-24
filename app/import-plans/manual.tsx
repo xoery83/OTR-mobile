@@ -1,10 +1,11 @@
-import { Redirect, router, useLocalSearchParams, useNavigation } from "expo-router";
+import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useRoute } from "expo-router/react-navigation";
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
+import { activeImportSheetPage, ownsImportSheetOrigin } from "@/features/capture/importSheetNavigation";
 import { readImportManualFallback, releaseImportManualFallback } from "@/features/capture/hostedImportManual";
 import { useImportManualTripChoices } from "@/features/capture/useImportManualTripChoices";
 import {
@@ -33,13 +34,11 @@ function HostedImportManual({ fallback, generation }: { fallback?: string; gener
   const { isExitPending } = useSheetMotion();
   const owner = readImportManualFallback(fallback);
   const invocation = useRef<string | undefined>(undefined);
-  const stack = navigation.getState();
-  const position = stack?.routes.findIndex(candidate => candidate.key === route.key) ?? -1;
-  const belongsToBatch = !!owner && editorKey === owner.sourceKey && position > 0 &&
-    stack?.routes[position - 1]?.key === owner.sourceKey;
+  const belongsToBatch = () => !!owner && editorKey === owner.sourceKey &&
+    ownsImportSheetOrigin(navigation, route.key, owner.sourceKey);
   const { choices, target, failed, current, setTarget } = useImportManualTripChoices({
     tripId: owner?.tripId,
-    originGeneration: belongsToBatch ? String(owner.generation) : undefined,
+    originGeneration: owner && belongsToBatch() ? String(owner.generation) : undefined,
   }, generation);
   useEffect(() => () => {
     const staged = invocation.current;
@@ -50,7 +49,7 @@ function HostedImportManual({ fallback, generation }: { fallback?: string; gener
   }, [fallback]);
 
   function canAct() {
-    return belongsToBatch && owner === readImportManualFallback(fallback) && current &&
+    return belongsToBatch() && owner === readImportManualFallback(fallback) && current &&
       !failed && navigation.isFocused() && hasEditor() && !isExitPending();
   }
 
@@ -59,13 +58,15 @@ function HostedImportManual({ fallback, generation }: { fallback?: string; gener
     else back();
   }
 
-  const usable = belongsToBatch && current && !failed;
+  const usable = belongsToBatch() && current && !failed;
   return (
     <SheetRoutePanel title={t(usable && target ? "formEntry.title" : "capture.results.addManually")} onBack={cancel}>
       {usable && target && owner ? (
         <ManualItineraryChoices onChoose={family => {
           if (!fallback || !canAct() || !isManualItineraryFamily(family) ||
               readManualItinerary(invocation.current)) return;
+          const state = activeImportSheetPage(navigation, route.key);
+          if (!state) return;
           let id: string;
           const editor: HostedManualItinerary = {
             tripId: target,
@@ -77,10 +78,18 @@ function HostedImportManual({ fallback, generation }: { fallback?: string; gener
           };
           id = stageManualItinerary(() => readImportManualFallback(fallback) === owner ? editor : undefined);
           invocation.current = id;
-          router.push({
-            pathname: "/import-plans/quick-add-edit",
-            params: { invocation: id, family, fallback, chooserKey: route.key },
+          navigation.dispatch({
+            type: "PUSH", target: state.key, source: route.key,
+            payload: { name: "quick-add-edit", params: { invocation: id, family, fallback, chooserKey: route.key } },
           });
+          const next = navigation.getState();
+          const top = next?.routes[next.index];
+          if (next?.key !== state.key || top?.name !== "quick-add-edit" ||
+              next.routes[next.index - 1]?.key !== route.key ||
+              !top.params || !("invocation" in top.params) || top.params.invocation !== id) {
+            releaseManualItinerary(id);
+            invocation.current = undefined;
+          }
         }} />
       ) : (
         <>

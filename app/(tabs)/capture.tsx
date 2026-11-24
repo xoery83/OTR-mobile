@@ -22,7 +22,7 @@ import { activeImportSheetPage } from "@/features/capture/importSheetNavigation"
 import { createCaptureStaging } from "@/features/capture/captureStaging";
 import { pickCaptureMaterial } from "@/native/capturePicker";
 import { CaptureContent } from "@/features/capture/CaptureContent";
-import { stageImportManualFallback } from "@/features/capture/hostedImportManual";
+import { releaseImportManualFallback, stageImportManualFallback } from "@/features/capture/hostedImportManual";
 import { hostedManualItineraryEnabled } from "@/features/day-feed/hostedManualItinerary";
 import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -254,10 +254,17 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
             if (!state || !isCurrent() || canUseHostedSource?.() === false) return;
             const sourceKey = route.key;
             const fallback = stageImportManualFallback({ ...request, generation, sourceKey });
-            if (fallback) navigation.dispatch({
+            if (!fallback) return;
+            navigation.dispatch({
               type: "PUSH", target: state.key, source: sourceKey,
               payload: { name: "manual", params: { fallback, editorKey: sourceKey } },
             });
+            const next = navigation.getState();
+            const top = next?.routes[next.index];
+            if (next?.key !== state.key || top?.name !== "manual" ||
+                next.routes[next.index - 1]?.key !== sourceKey ||
+                !top.params || !("fallback" in top.params) || top.params.fallback !== fallback)
+              releaseImportManualFallback(fallback);
           } : undefined}
           activityPositionsRef={activityPositionsRef}
           activityScope={hosted ? admission.current : undefined}
