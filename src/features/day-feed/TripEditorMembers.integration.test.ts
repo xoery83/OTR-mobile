@@ -1,4 +1,3 @@
-vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
@@ -25,7 +24,9 @@ import { TripBasicEditor } from "./TripBasicEditor";
 import { TripMetadataFields } from "./TripMetadataFields";
 import { TripCoverPicker } from "./TripCoverPicker";
 import { TripMembersSummary } from "./TripSetupRows";
-import { TripMembersSheet } from "./TripMembersSheet";
+import { TripMembersRoster, TripMembersSheet } from "./TripMembersSheet";
+
+vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
 
 const hooks = vi.hoisted(() => ({
   values: [] as any[],
@@ -106,8 +107,12 @@ function nodes(node: ReactNode): Node[] {
     : [];
 }
 function membersBody(props: Parameters<typeof TripMembersSheet>[0]) {
-  const mounted = TripMembersSheet(props);
-  return mounted ? nodes((mounted.type as any)(mounted.props)) : [];
+  // Exercise the standalone roster here; the hosted owner is covered by hostedTripMembers.test.ts.
+  const mounted = TripMembersSheet({ ...props, tripId: undefined });
+  if (!mounted) return [];
+  const shell = nodes((mounted.type as any)(mounted.props));
+  const roster = shell.find((node) => node.type === TripMembersRoster);
+  return roster ? [...shell, ...nodes(TripMembersRoster(roster.props))] : shell;
 }
 function remount() {
   hooks.values = [];

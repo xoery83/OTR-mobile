@@ -16,6 +16,13 @@ reviews passed. TypeScript, UI Guard, scoped lint and diff check passed.
 Six-module regression: 2,525 tests passed, with the same 48 failing assertions
 and seven failing suites as unmodified Main. No new failures.
 
+A follow-up repaired the existing Import layout, named-member roster and
+Ledger journey-context test harnesses without changing the app. The seven
+focused suites passed all 19 tests. The six-module rerun passed 2,533 tests
+with 42 baseline failing assertions in three Day Feed suites and one
+remaining Capture lifecycle suite startup failure. All four failures
+were reproduced on the pre-activation Main baseline.
+
 ## Latest ordinary MCP closure — 21 November 2026 NZDT
 
 Same Google normal Consent → MCP title-only Edit → original APPLIED Receipt recovery → independent PG/fresh MCP read → iPhone process-cold Details PASS. Source fixes only: consent fragment change unmounts stale UI/reloads with late-response guards; Core execution logs recognize fixed PG connect timeout strings without raw error text. Existing Source/Auth/Import/AI candidates are not merged by this change. Actual Shared DEV ec9 remains compatible/default-closed AI, unchanged by this Main source integration. Connection timeout and Transportclosed causes remain OPEN; AI/C04/Beta whole-package not declared complete. Evidence: ops/native-mcp-closure-20261121/ACCEPTANCE.json.

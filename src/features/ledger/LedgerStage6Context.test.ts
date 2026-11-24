@@ -54,6 +54,7 @@ function mountedContext() {
     const env = {
       explicitTrip: target,
       explicitTripRef,
+      journeySelection: { current: null },
       contextRequest,
       request,
       memberRequest: createLatestRequest(),
