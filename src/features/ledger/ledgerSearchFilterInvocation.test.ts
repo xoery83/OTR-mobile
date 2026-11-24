@@ -4,6 +4,7 @@ import {
   getAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import {
+  captureLedgerSearchOrigin,
   openLedgerSearchChoice,
   openLedgerSearchFilters,
   readLedgerSearchChoice,
@@ -48,4 +49,28 @@ it("binds drafts to the originating query context and drops stale account invoca
   advanceAccountGeneration();
   expect(readLedgerSearchFilters(current)).toBeUndefined();
   expect(prepareApply).not.toHaveBeenCalled();
+});
+
+it("admits only the originally presenting search and its exact covering Sheet", () => {
+  const search = { key: "search-a", name: "ledger-search" };
+  const sheet = { key: "filters-a", name: "ledger-search-filters" };
+  const otherSearch = { ...search, key: "search-b" };
+  const otherSheet = { ...sheet, key: "filters-b" };
+  const root = (routes: { key: string; name: string }[], key = "root") => ({ key, index: routes.length - 1, routes });
+  const readRoot = vi.fn(() => root([search]));
+  const focused = vi.fn(() => true);
+  const origin = captureLedgerSearchOrigin(readRoot, focused)!;
+  focused.mockReturnValue(false);
+  readRoot.mockReturnValue(root([search, sheet]));
+  expect(origin.isCurrent()).toBe(true);
+  expect(origin.returnedToOrigin()).toBe(false);
+  readRoot.mockReturnValue(root([search, otherSheet]));
+  expect(origin.isCurrent()).toBe(false);
+  readRoot.mockReturnValue(root([otherSearch, sheet]));
+  expect(origin.isCurrent()).toBe(false);
+  focused.mockReturnValue(true);
+  readRoot.mockReturnValue(root([search], "other-root"));
+  expect(origin.returnedToOrigin()).toBe(false);
+  readRoot.mockReturnValue(root([search]));
+  expect(origin.returnedToOrigin()).toBe(true);
 });

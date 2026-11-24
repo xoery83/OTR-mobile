@@ -16,6 +16,39 @@ export type LedgerSearchChoice = { title: string } & (
   | { kind: "attention"; initial: AttentionChoice; onChoose(value: AttentionChoice): void }
 );
 
+type RootState = {
+  key: string;
+  index: number;
+  routes: readonly { key: string; name: string }[];
+};
+
+export function captureLedgerSearchOrigin(readRoot: () => RootState | undefined, isFocused: () => boolean) {
+  const root = readRoot();
+  const origin = root?.routes[root.index];
+  if (!root || !origin || !isFocused()) return;
+  const rootKey = root.key;
+  const originKey = origin.key;
+  let sheetKey: string | undefined;
+
+  function returnedToOrigin() {
+    const state = readRoot();
+    return state?.key === rootKey && state.routes[state.index]?.key === originKey && isFocused();
+  }
+
+  return {
+    returnedToOrigin,
+    isCurrent() {
+      if (returnedToOrigin()) return true;
+      const state = readRoot();
+      if (state?.key !== rootKey) return false;
+      const top = state.routes[state.index];
+      if (top?.name !== "ledger-search-filters" || state.routes[state.index - 1]?.key !== originKey) return false;
+      sheetKey ??= top.key;
+      return sheetKey === top.key;
+    },
+  };
+}
+
 type SearchFilterInvocation = {
   generation: number;
   isCurrent(): boolean;

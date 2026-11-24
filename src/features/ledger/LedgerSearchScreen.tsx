@@ -29,7 +29,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
 
 import { visual as cv } from "@/ui/visual";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
@@ -55,6 +55,7 @@ import {
 
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import {
+  captureLedgerSearchOrigin,
   hostedLedgerSearchFiltersEnabled,
   openLedgerSearchFilters,
   readLedgerSearchFilters,
@@ -85,6 +86,8 @@ export function LedgerSearchScreen() {
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const largeText = useWindowDimensions().fontScale > 2;
+  const navigation = useNavigation();
+  const rootNavigation = useNavigation("/");
   const params = useLocalSearchParams<{
     journeyId: string;
     memberId: string;
@@ -146,6 +149,7 @@ export function LedgerSearchScreen() {
       releaseLedgerSearchFilters(filterInvocation.current);
     };
   }, [generation, params.journeyId, memberId, scope, authoritativeOnly, paidMemberId, positiveShare, queryText]);
+  const committedFilters = useRef(initialFilters);
   const retryRequest = useRef({ filters: initialFilters, query: "" });
 
   const readResults = useCallback(
@@ -193,6 +197,7 @@ export function LedgerSearchScreen() {
     try {
       const result = await readResults(filters, query);
       if (!result || !request.isCurrent(id)) return false;
+      committedFilters.current = result.filters;
       setView(result);
       return true;
     } catch {
@@ -228,11 +233,9 @@ export function LedgerSearchScreen() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      void load(view?.filters ?? initialFilters, queryText);
+      void load(committedFilters.current, queryText);
     }, 200);
     return () => clearTimeout(timeout);
-    // A committed filter change is loaded explicitly, not by this typing debounce.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, queryText]);
 
   useEffect(
@@ -260,14 +263,12 @@ export function LedgerSearchScreen() {
       return;
     }
     const owner = filterOwner.current;
-    if (
-      !owner ||
-      generation !== getAccountGeneration() ||
-      readLedgerSearchFilters(filterInvocation.current)
-    )
-      return;
+    const origin = captureLedgerSearchOrigin(rootNavigation.getState, navigation.isFocused);
+    if (!owner || !origin || generation !== getAccountGeneration() ||
+        readLedgerSearchFilters(filterInvocation.current)) return;
     Keyboard.dismiss();
-    const current = () => filterOwner.current === owner && generation === getAccountGeneration();
+    const ownsSearch = () => filterOwner.current === owner && generation === getAccountGeneration();
+    const current = () => ownsSearch() && origin.isCurrent();
     const invocation = openLedgerSearchFilters({
       generation,
       isCurrent: current,
@@ -282,9 +283,10 @@ export function LedgerSearchScreen() {
             const prepared = await readResults(next, queryText, qualified);
             if (!prepared || !qualified()) return undefined;
             return () => {
-              if (!current()) return;
+              if (!ownsSearch() || !origin.returnedToOrigin()) return;
               request.cancel();
               moreRequest.cancel();
+              committedFilters.current = prepared.filters;
               retryRequest.current = { filters: next, query: queryText };
               setUpdating(false);
               setLoadingMore(false);
