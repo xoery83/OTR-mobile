@@ -10,11 +10,29 @@ const route = vi.hoisted(() => ({
   push: vi.fn(),
   origin: { key: "chooser", params: { view: "day", tripId: "trip" } },
   previousRootKey: "day",
+  tab: "trip",
+  nested: false,
   focused: true,
 }));
 vi.mock("expo-router", () => ({
   useLocalSearchParams: () => route.params,
-  useNavigation: () => ({ isFocused: () => route.focused, getState: () => ({ index: 0, routes: [route.origin] }) }),
+  useNavigation: (target?: string) => {
+    const root = {
+      isFocused: () => route.focused,
+      getState: () => ({ key: "root", index: 0, routes: [route.nested ? { key: "(tabs)" } : route.origin] }),
+      getParent: () => undefined,
+    };
+    if (target === "/" || !route.nested) return root;
+    const tabs = {
+      getState: () => ({ key: "tabs", index: 0, routes: [{ key: route.tab }] }),
+      getParent: () => root,
+    };
+    return {
+      isFocused: () => route.focused,
+      getState: () => ({ key: "trip-stack", index: 0, routes: [route.origin] }),
+      getParent: () => tabs,
+    };
+  },
   router: { navigate: route.navigate, push: route.push },
 }));
 vi.mock("expo-router/react-navigation", () => ({ useRoute: () => ({ key: "chooser" }) }));
@@ -117,5 +135,24 @@ it("captures the same Day bounds while covered, but rejects stale triggers and r
   expect(onSaved).toHaveBeenCalledOnce();
 
   route.origin.params.view = "day";
+  releaseManualItinerary(invocation);
+});
+
+it("retires a tab Day invocation if its parent switches tabs under the same root", () => {
+  route.nested = true;
+  route.push.mockClear();
+  const generation = getAccountGeneration();
+  const onSaved = vi.fn();
+  const show = useHostedDayInsertion({ active: true, today: true, tripId: "trip", generation, localOnly: true, onSaved });
+  show({ date: "2026-11-24", startTime: null });
+  const invocation = route.push.mock.calls[0]?.[0].params.invocation;
+  const entry = readManualItinerary(invocation);
+  expect(entry?.dayInsertionOriginKey).toBe("(tabs)");
+  route.tab = "expenses";
+  expect(readManualItinerary(invocation)).toBeUndefined();
+  entry?.onSaved("stale");
+  expect(onSaved).not.toHaveBeenCalled();
+  route.tab = "trip";
+  route.nested = false;
   releaseManualItinerary(invocation);
 });

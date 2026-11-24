@@ -3,6 +3,7 @@ import { useRoute } from "expo-router/react-navigation";
 import { useLayoutEffect, useRef } from "react";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
+import { captureActiveChildRoutes } from "@/features/sheet-navigation/captureActiveChildRoutes";
 import { hostedManualItineraryEnabled, readManualItinerary, releaseManualItinerary, stageManualItinerary } from "./hostedManualItinerary";
 
 export function useHostedDayInsertion({
@@ -30,12 +31,10 @@ export function useHostedDayInsertion({
     };
   }, [active, generation, localOnly, route.key, today, tripId]);
 
-  const hasOrigin = (rootOriginKey: string) => {
-    const state = navigation.getState();
-    const origin = state?.routes.find(candidate => candidate.key === route.key);
+  const hasOrigin = () => {
+    const origin = navigation.getState()?.routes.find(candidate => candidate.key === route.key);
     const params = origin?.params;
-    return Boolean(origin && (rootOriginKey === route.key || state?.routes[state.index]?.key === route.key) &&
-      generation === getAccountGeneration() && (today ||
+    return Boolean(origin && generation === getAccountGeneration() && (today ||
       (params && "view" in params && params.view === "day" && "tripId" in params && params.tripId === tripId)));
   };
 
@@ -43,9 +42,12 @@ export function useHostedDayInsertion({
     if (!hostedImportEnabled || !hostedManualItineraryEnabled) return false;
     const root = rootNavigation.getState();
     const rootOriginKey = root?.routes[root.index]?.key;
+    const originRemainsSelected = root && captureActiveChildRoutes(navigation, root.key);
     const scope = current.current;
-    if (!rootOriginKey || scope?.tripId !== tripId || scope.generation !== generation ||
-        !navigation.isFocused() || !hasOrigin(rootOriginKey) || readManualItinerary(scope.invocation)) return true;
+    if (!rootOriginKey || !originRemainsSelected || scope?.tripId !== tripId ||
+        scope.generation !== generation || !navigation.isFocused() || !hasOrigin() ||
+        readManualItinerary(scope.invocation)) return true;
+    const isCurrent = () => current.current === scope && originRemainsSelected() && hasOrigin();
 
     const entry = {
       entryPoint: "day-insertion" as const,
@@ -59,12 +61,12 @@ export function useHostedDayInsertion({
       tripEndDate,
       onClose: () => {},
       onSaved: () => {
-        if (current.current === scope && hasOrigin(rootOriginKey) && navigation.isFocused())
+        if (isCurrent() && navigation.isFocused())
           onSaved(tripId, generation);
       },
     };
     const invocation = stageManualItinerary(() =>
-      current.current === scope && hasOrigin(rootOriginKey) ? entry : undefined);
+      isCurrent() ? entry : undefined);
     scope.invocation = invocation;
     router.push({ pathname: "/import-plans/quick-add-itinerary", params: { invocation, entryPoint: entry.entryPoint } });
     return true;
