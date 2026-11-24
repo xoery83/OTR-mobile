@@ -174,6 +174,11 @@ the common Sheet. The move must still belong to the originating Day and
 account. Dismissal runs the existing cancel callback only after returning
 to that Day, and a write in progress guards exit.
 
+The Plan Detail document picker uses the existing scoped document Reader and
+link Operation in the shared Sheet. Opening the Sheet repeats the authorized
+read for the same item revision. A queued result refreshes only the original
+Detail after verified return.
+
 The default-off Import QA entry places Trip Quick Add, its Import composer and
 hosted Review inside the native Sheet Stack. Existing standalone routes remain
 available to the legacy callers and with the flag off. Existing capture draft,

@@ -14,6 +14,7 @@ import { hostedTripPhotosEnabled } from "@/features/day-feed/hostedTripPhotos";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDayMoveEnabled } from "@/features/day-feed/dayMoveConfirmationSheet";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
+import { hostedP1DocumentLinkEnabled } from "@/features/day-feed/p1DocumentLinkSheet";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
@@ -265,6 +266,18 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="ledger-receipt-review"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedP1DocumentLinkEnabled}>
+              <Stack.Screen
+                name="p1-document-link"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",
