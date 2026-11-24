@@ -64,7 +64,7 @@ export function GoogleSignInPill({
         source={require("../../../assets/google-sign-in-mark.png")}
         style={styles.mark}
       />
-      <UiText style={styles.label}>{label}</UiText>
+      <UiText style={styles.label} maxFontSizeMultiplier={1.2}>{label}</UiText>
     </Pressable>
   );
 }
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: visual.space.page,
-    paddingVertical: visual.space.row,
+    paddingVertical: visual.space.heading,
     gap: visual.space.heading,
     borderRadius: visual.radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...visual.type.row,
-    // Match the iOS Apple sign-in control at the 52 pt sheet row height.
+    // Match the neighboring Apple control, whose native label stays proportional to the button.
     fontSize: 20,
     flexShrink: 1,
     textAlign: "center",

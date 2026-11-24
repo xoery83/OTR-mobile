@@ -284,6 +284,7 @@ export function EmailOtpSignIn({
                 returnKeyType="send"
                 submitBehavior="submit"
                 variant="bare"
+                maxFontSizeMultiplier={1.5}
                 editable={!unavailable}
                 value={email}
                 style={styles.emailInput}
