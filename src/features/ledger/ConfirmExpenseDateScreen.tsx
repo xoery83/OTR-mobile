@@ -3,7 +3,7 @@ import { t } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { UiDatePicker as DateTimePicker } from "@/ui/forms";
 import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
@@ -11,7 +11,7 @@ import { usePreventRemove } from "expo-router/react-navigation";
 
 import { useSheetMotion } from "@/components/SheetHost";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
-import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { UiButton } from "@/ui/controls";
 
 import { confirmExpenseEconomicDate } from "@/data/operations/completeEconomicDate";
@@ -50,7 +50,12 @@ function localDate(value: string) {
 
 export function ConfirmExpenseDateScreen() {
   const { expenseId } = useLocalSearchParams<{ expenseId?: string }>();
-  return <ConfirmExpenseDateForm key={expenseId} expenseId={expenseId} onClose={() => router.back()} />;
+  const generation = useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
+  return <ConfirmExpenseDateForm
+    key={JSON.stringify([expenseId, generation])}
+    expenseId={expenseId}
+    onClose={() => router.back()}
+  />;
 }
 
 export function HostedConfirmExpenseDate({
@@ -79,7 +84,7 @@ function ConfirmExpenseDateForm({ expenseId, onClose, hosted, isCurrent }: {
   const navigation = useNavigation();
   const inFlight = useRef(false);
   const completed = useRef(false);
-  const generation = getAccountGeneration();
+  const [generation] = useState(getAccountGeneration);
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const [date, setDate] = useState<string | null>(null);
   const [suggested, setSuggested] = useState(false);

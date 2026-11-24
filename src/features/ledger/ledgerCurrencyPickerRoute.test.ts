@@ -28,6 +28,7 @@ vi.mock("@/components/SheetHost", () => ({
   }),
 }));
 vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "panel" }));
+vi.mock("@/features/ledger/ConfirmExpenseDateScreen", () => ({ HostedConfirmExpenseDate: "confirm-date" }));
 vi.mock("@/features/ledger/CurrencyPicker", () => ({ CurrencyPicker: "currency-picker" }));
 vi.mock("@/features/ledger/ExpenseSharingSheet", () => ({ ExpenseSharingSheet: "expense-sharing" }));
 vi.mock("@/features/ledger/ExpenseCategoryPicker", () => ({ ExpenseCategoryPicker: "expense-category-picker" }));
@@ -140,4 +141,23 @@ it("applies staged expense sharing only after the same Sheet closes", () => {
   state.exit?.();
   state.exit?.();
   expect(onApply).toHaveBeenCalledExactlyOnceWith(staged);
+});
+
+it("hands date confirmation the exact expense and retires it during an exit or owner replacement", () => {
+  const choice = {
+    kind: "confirm-date" as const,
+    titleKey: "ui.transactionDate" as const,
+    expenseId: "expense", journeyId: "journey", isBusy: () => false, setBusy: vi.fn(),
+  };
+  state.choice = choice;
+  const route = LedgerCurrencyPickerRoute();
+  expect(route.type).toBe("confirm-date");
+  expect(route.props.choice).toBe(choice);
+  expect(route.props.isCurrent()).toBe(true);
+  state.exitPending = true;
+  expect(route.props.isCurrent()).toBe(false);
+  state.exitPending = false;
+  state.choice = { ...choice, expenseId: "different-expense" };
+  expect(route.props.isCurrent()).toBe(false);
+  expect(state.exit).toBeUndefined();
 });

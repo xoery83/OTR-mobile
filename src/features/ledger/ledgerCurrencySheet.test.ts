@@ -123,3 +123,22 @@ it("consumes a field tap while the expense source is preparing, then allows the 
   expect(open(choice)).toBe(true);
   expect(state.push).toHaveBeenCalledOnce();
 });
+
+it("blocks host dismissal only for the exact transaction-date operation in flight", async () => {
+  const { interceptLedgerCurrencySheetClose, useLedgerCurrencySheet } = await import("./ledgerCurrencySheet");
+  const open = useLedgerCurrencySheet("journey", "expense-detail");
+  let busy = false;
+  const choice = {
+    kind: "confirm-date" as const, titleKey: "ui.transactionDate" as const,
+    expenseId: "expense", journeyId: "journey",
+    isBusy: () => busy, setBusy: (next: boolean) => { busy = next; },
+  };
+  expect(open(choice)).toBe(true);
+  const { invocation } = state.push.mock.lastCall?.[0].params;
+  expect(interceptLedgerCurrencySheetClose(invocation)).toBe(false);
+  choice.setBusy(true);
+  expect(interceptLedgerCurrencySheetClose(invocation)).toBe(true);
+  expect(interceptLedgerCurrencySheetClose("different-invocation")).toBe(false);
+  choice.setBusy(false);
+  expect(interceptLedgerCurrencySheetClose(invocation)).toBe(false);
+});
