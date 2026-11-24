@@ -8,7 +8,7 @@ import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/ac
 import { LedgerJourneyPickerFields } from "@/features/ledger/LedgerStage6Screen";
 import { LedgerJourneyCloseContext } from "@/features/ledger/LedgerJourneyCloseContext";
 import { readLedgerJourneySheet, releaseLedgerJourneySheet } from "@/features/ledger/ledgerJourneySheet";
-import { UiText } from "@/ui/controls";
+import { UiButton, UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { visual } from "@/ui/visual";
@@ -19,7 +19,7 @@ export default function LedgerJourneyPickerRoute() {
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
   const close = useContext(LedgerJourneyCloseContext);
   const candidate = readLedgerJourneySheet(invocation);
-  const entry = candidate && close?.hasOrigin(candidate.originKey, candidate.ledgerRouteKey) ? candidate : undefined;
+  const entry = candidate && close?.hasOrigin(candidate.originKey) ? candidate : undefined;
   const [query, setQuery] = useState(entry?.initialQuery ?? "");
   const [busy, setBusy] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -41,19 +41,21 @@ export default function LedgerJourneyPickerRoute() {
     if (completed && busy === null && focused && !exitPending) requestClose();
   }, [busy, completed, exitPending, focused, requestClose]);
 
-  return <SheetRoutePanel title={t("ledger.chooseJourneyTitle")} ownsScroll leadingDisabled={busy !== null}
-    action={entry ? {
-      label: t("navigation.myLedger"), disabled: busy !== null || completed || exitPending,
-      onPress: () => {
+  return <SheetRoutePanel title={t("ledger.chooseJourneyTitle")} ownsScroll leadingDisabled={busy !== null}>
+    {entry ? <UiButton
+      label={t("navigation.myLedger")}
+      variant="text"
+      disabled={busy !== null || completed || exitPending}
+      onPress={() => {
         if (selecting.current || completedRef.current || isExitPending() ||
-            readLedgerJourneySheet(invocation) !== entry || !close?.hasOrigin(entry.originKey, entry.ledgerRouteKey)) return;
+            readLedgerJourneySheet(invocation) !== entry || !close?.hasOrigin(entry.originKey)) return;
         requestCloseWithAction(() => {
           if (readLedgerJourneySheet(invocation) !== entry || !entry.originFocused()) return;
           releaseLedgerJourneySheet(invocation);
           router.push("/expenses/all-journeys");
         });
-      },
-    } : undefined}>
+      }}
+    /> : null}
     {failed ? <UiText accessibilityRole="alert" style={styles.error}>{t("ledger.selectionFailed")}</UiText> : null}
     {entry ? <LedgerJourneyPickerFields
       hosted
@@ -64,7 +66,7 @@ export default function LedgerJourneyPickerRoute() {
       selectedJourney={entry.selected}
       selectingJourneyId={busy}
       onChoose={item => {
-        const isPresent = () => alive.current && Boolean(close?.hasOrigin(entry.originKey, entry.ledgerRouteKey));
+        const isPresent = () => alive.current && Boolean(close?.hasOrigin(entry.originKey));
         if (selecting.current || completedRef.current || isExitPending() || !isPresent() ||
             readLedgerJourneySheet(invocation) !== entry) return;
         selecting.current = true;

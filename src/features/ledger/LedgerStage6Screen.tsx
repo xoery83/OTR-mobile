@@ -1,4 +1,4 @@
-import { hostedLedgerJourneySheetEnabled, stageLedgerJourneySheet, releaseLedgerJourneySheet } from "./ledgerJourneySheet";
+import { captureLedgerJourneyOrigin, hostedLedgerJourneySheetEnabled, stageLedgerJourneySheet, releaseLedgerJourneySheet } from "./ledgerJourneySheet";
 import {
   captureAccountScope,
   assertAccountRequestGeneration,
@@ -45,7 +45,6 @@ import {
 } from "react-native";
 import { router, Stack, useFocusEffect, useNavigation } from "expo-router";
 import { useSheetScrollDismissal } from "@/components/SheetHost";
-import { useRoute } from "expo-router/react-navigation";
 import type { NavigationProp } from "expo-router/react-navigation";
 import PagerView from "react-native-pager-view";
 
@@ -211,7 +210,6 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   useUiLocale();
   const owningNavigation = useNavigation<NavigationProp<Record<string, { journeyId?: string } | undefined>>>();
   const rootNavigation = useNavigation("/");
-  const ledgerRoute = useRoute();
   const { workingTrip, switchTrip } = useTripView();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
@@ -271,7 +269,9 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   const [journeyPickerOpen, setJourneyPickerOpen] = useState(false);
   const [journeyQuery, setJourneyQuery] = useState("");
   const [journeySearchVisible, setJourneySearchVisible] = useState(false);
-  const [selectingJourneyId, setSelectingJourneyId] = useState<string | null>(null);
+  const [selectingJourney, setSelectingJourney] = useState<{ id: string; generation: number; tripId?: string } | null>(null);
+  const selectingJourneyId = selectingJourney?.generation === accountGeneration &&
+    selectingJourney.tripId === explicitTrip ? selectingJourney.id : null;
   const [debugMode, setDebugMode] = useState(false);
   const [ledgerChangeSeq, setLedgerChangeSeq] = useState(0);
   const journey =
@@ -709,7 +709,6 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   const journeyOwner = useRef<object | null>(null);
   useLayoutEffect(() => {
     journeyOwner.current = {};
-    setSelectingJourneyId(null);
     return () => {
       journeyOwner.current = null;
       journeySelection.current = null;
@@ -722,14 +721,14 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
     if (!owner || journeySelection.current || !isCurrent()) return false;
     const generation = getAccountGeneration();
     const tripAtStart = explicitTripRef.current;
-    const selection = {};
+    const selection = { id: selected.journeyId, generation, tripId: tripAtStart };
     journeySelection.current = selection;
     const ownsSelection = () => journeyOwner.current === owner &&
       journeySelection.current === selection && generation === getAccountGeneration() &&
       explicitTripRef.current === tripAtStart;
     const canCommit = () => ownsSelection() && isCurrent();
     contextRequest.cancel();
-    setSelectingJourneyId(selected.journeyId);
+    setSelectingJourney(selection);
     try {
       const context = await captureAccountScope(requireActiveUserId);
       if (!canCommit() || context.generation !== generation) return false;
@@ -756,8 +755,8 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
     } finally {
       if (journeySelection.current === selection) {
         journeySelection.current = null;
-        setSelectingJourneyId(null);
       }
+      setSelectingJourney(current => current === selection ? null : current);
     }
   };
 
@@ -770,17 +769,18 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
     if (!owner || !owningNavigation.isFocused() || !journey) return;
     const root = rootNavigation.getState();
     const originKey = root?.routes[root.index]?.key;
-    if (!originKey) return;
+    if (!root || !originKey) return;
+    const originRemainsSelected = captureLedgerJourneyOrigin(owningNavigation, root.key);
+    if (!originRemainsSelected) return;
     const tripAtOpen = explicitTrip;
     const isCurrent = () => journeyOwner.current === owner && getAccountGeneration() === accountGeneration &&
-      explicitTripRef.current === tripAtOpen;
+      explicitTripRef.current === tripAtOpen && originRemainsSelected();
     const invocation = stageLedgerJourneySheet({
       selected: journey.journeyId,
       initialQuery: journeyQuery,
       sections: query => journeyPickerSections(journeys, localToday(), journey.journeyId, query, debugMode),
       isCurrent,
       originKey,
-      ledgerRouteKey: ledgerRoute.key,
       originFocused: () => owningNavigation.isFocused(),
       choose: (item, isPresent) => chooseJourney(item, () => isCurrent() && isPresent()),
     });

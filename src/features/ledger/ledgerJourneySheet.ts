@@ -10,20 +10,29 @@ export type LedgerJourneySheetEntry = {
   sections(query: string): JourneyPickerSection[];
   isCurrent(): boolean;
   originKey: string;
-  ledgerRouteKey: string;
   originFocused(): boolean;
   choose(item: LedgerJourneyContext, isPresent: () => boolean): Promise<boolean>;
 };
 
-type NavigationRoute = {
-  key?: string;
-  state?: { index?: number; routes: readonly NavigationRoute[] };
+type OriginNavigation = {
+  getState(): { key: string; index: number; routes: readonly { key: string }[] } | undefined;
+  getParent(): OriginNavigation | undefined;
 };
 
-export function isLedgerJourneyOrigin(route: NavigationRoute | undefined, ledgerRouteKey: string): boolean {
-  if (!route) return false;
-  if (route.key === ledgerRouteKey) return true;
-  return isLedgerJourneyOrigin(route.state?.routes[route.state.index ?? 0], ledgerRouteKey);
+export function captureLedgerJourneyOrigin(navigation: OriginNavigation, rootKey: string) {
+  const activeRoutes: (() => boolean)[] = [];
+  for (let navigator: OriginNavigation | undefined = navigation; navigator; navigator = navigator.getParent()) {
+    const current = navigator;
+    const state = current.getState();
+    const routeKey = state?.routes[state.index]?.key;
+    if (!state || !routeKey) return undefined;
+    if (state.key === rootKey) return () => activeRoutes.every(isActive => isActive());
+    activeRoutes.push(() => {
+      const latest = current.getState();
+      return latest?.key === state.key && latest.routes[latest.index]?.key === routeKey;
+    });
+  }
+  return undefined;
 }
 
 let sequence = 0;

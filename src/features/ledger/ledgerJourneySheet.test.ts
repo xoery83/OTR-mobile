@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
-import { isLedgerJourneyOrigin, readLedgerJourneySheet, releaseLedgerJourneySheet, stageLedgerJourneySheet } from "./ledgerJourneySheet";
+import { captureLedgerJourneyOrigin, readLedgerJourneySheet, releaseLedgerJourneySheet, stageLedgerJourneySheet } from "./ledgerJourneySheet";
 
 it("accepts only the original active Ledger scope and releases its selection lease", () => {
   let current = true;
@@ -8,7 +8,6 @@ it("accepts only the original active Ledger scope and releases its selection lea
     selected: "trip-a", initialQuery: "local",
     sections: () => [],
     originKey: "ledger",
-    ledgerRouteKey: "ledger",
     originFocused: () => true,
     isCurrent: () => current,
     choose: vi.fn(async () => true),
@@ -29,12 +28,21 @@ it("accepts only the original active Ledger scope and releases its selection lea
   expect(entry.choose).not.toHaveBeenCalled();
 });
 
-it("requires the active Ledger route within the original tab stack", () => {
-  const ledger = { key: "ledger", state: { index: 0, routes: [{ key: "ledger-home" }, { key: "ledger-detail" }] } };
-  const tabs = { key: "tabs", state: { index: 1, routes: [{ key: "trip-home" }, ledger] } };
-  expect(isLedgerJourneyOrigin(tabs, "ledger-home")).toBe(true);
-  expect(isLedgerJourneyOrigin(tabs, "ledger-detail")).toBe(false);
-  tabs.state.index = 0;
-  expect(isLedgerJourneyOrigin(tabs, "ledger-home")).toBe(false);
-  expect(isLedgerJourneyOrigin({ key: "scoped-ledger" }, "scoped-ledger")).toBe(true);
+it("checks the original active navigator chain while the root Sheet has focus", () => {
+  const rootState = { key: "root", index: 0, routes: [{ key: "tabs" }, { key: "sheet" }] };
+  const tabsState = { key: "tabs-state", index: 1, routes: [{ key: "trip-home" }, { key: "ledger" }] };
+  const ledgerState = { key: "ledger-state", index: 0, routes: [{ key: "ledger-home" }, { key: "ledger-detail" }] };
+  const root = { getState: () => rootState, getParent: () => undefined };
+  const tabs = { getState: () => tabsState, getParent: () => root };
+  const ledger = { getState: () => ledgerState, getParent: () => tabs };
+  const isCurrent = captureLedgerJourneyOrigin(ledger, "root");
+
+  rootState.index = 1;
+  expect(isCurrent?.()).toBe(true);
+  ledgerState.index = 1;
+  expect(isCurrent?.()).toBe(false);
+  ledgerState.index = 0;
+  tabsState.index = 0;
+  expect(isCurrent?.()).toBe(false);
+  expect(captureLedgerJourneyOrigin(ledger, "other-root")).toBeUndefined();
 });
