@@ -1,4 +1,5 @@
 import { hostedTripMetadataEnabled } from "@/features/day-feed/tripMetadataSheet";
+import { hostedTripCoverEnabled } from "@/features/day-feed/tripCoverSheet";
 import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
 import { hostedExpenseFieldsEnabled, hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
@@ -156,6 +157,18 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedTripMetadataEnabled}>
               <Stack.Screen
                 name="trip-metadata-sheet"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedTripCoverEnabled}>
+              <Stack.Screen
+                name="trip-cover-picker"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",

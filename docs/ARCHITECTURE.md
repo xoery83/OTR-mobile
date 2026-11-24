@@ -187,6 +187,8 @@ opens only after the Sheet returns to its originating My Trips route.
 
 The default-off Trip Settings Sheet retains the existing editor and save
 owner. Its date selector returns a draft choice only to that editor.
+The personal cover chooser uses its own Sheet route and keeps the current Trip
+and Account bound through the original system Photos handoff.
 
 For the default-off Trip Members QA entry, the roster and Add Traveler share
 one native Sheet Stack. The launching Trip and Account generation own the

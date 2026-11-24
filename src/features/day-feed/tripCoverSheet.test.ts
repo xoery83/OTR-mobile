@@ -1,9 +1,12 @@
 import { expect, it, vi } from "vitest";
 import {
   openTripCoverSheet,
+  personalTripCoverBusy,
+  readPersonalTripCoverSheet,
   readTripCoverSheet,
   readTripMetadataCover,
   releaseTripCoverSheet,
+  releasePersonalTripCoverSheet,
   releaseTripMetadataCover,
   setTripCoverSheetBusy,
   tripCoverSheetBusy,
@@ -53,6 +56,9 @@ it("only exposes and releases a metadata choice for its exact editor invocation"
 
   const choice = openTripCoverSheet(account.generation, cover, "editor");
   setTripCoverSheetBusy(choice, true);
+  expect(readPersonalTripCoverSheet(choice)).toBeUndefined();
+  expect(personalTripCoverBusy(choice)).toBe(false);
+  releasePersonalTripCoverSheet(choice);
   expect(readTripMetadataCover("editor", choice)).toBe(cover);
   expect(readTripMetadataCover("other", choice)).toBeUndefined();
   expect(tripMetadataCoverBusy("editor")).toBe(true);

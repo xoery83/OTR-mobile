@@ -4,7 +4,14 @@ import type { TripCoverSheetValue } from "./TripCoverPicker";
 export const hostedTripCoverEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_SETUP_QA === "true";
 
 let sequence = 0;
-let active: { id: string; generation: number; cover: TripCoverSheetValue; busy: boolean; metadataOwner?: string } | undefined;
+let active: {
+  id: string;
+  generation: number;
+  cover: TripCoverSheetValue;
+  busy: boolean;
+  metadataOwner?: string;
+  isCurrent?(): boolean;
+} | undefined;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach(listener => listener());
 
@@ -18,16 +25,22 @@ export function subscribeTripCoverSheet(listener: () => void) {
   return () => { listeners.delete(listener); };
 }
 
-export function openTripCoverSheet(generation: number, cover: TripCoverSheetValue, metadataOwner?: string) {
+export function openTripCoverSheet(
+  generation: number,
+  cover: TripCoverSheetValue,
+  metadataOwner?: string,
+  isCurrent?: () => boolean,
+) {
   if (active || generation !== getAccountGeneration()) return undefined;
   const id = String(++sequence);
-  active = { id, generation, cover, busy: false, metadataOwner };
+  active = { id, generation, cover, busy: false, metadataOwner, isCurrent };
   notify();
   return id;
 }
 
 export function readTripCoverSheet(id: string | undefined) {
-  return active && active.id === id && active.generation === getAccountGeneration()
+  return active && active.id === id && active.generation === getAccountGeneration() &&
+    active.isCurrent?.() !== false
     ? active.cover : undefined;
 }
 
@@ -45,6 +58,18 @@ export function setTripCoverSheetBusy(id: string | undefined, busy: boolean) {
 
 export function tripCoverSheetBusy(id: string | undefined) {
   return Boolean(readTripCoverSheet(id) && active?.busy);
+}
+
+export function readPersonalTripCoverSheet(id: string | undefined) {
+  return active?.metadataOwner === undefined ? readTripCoverSheet(id) : undefined;
+}
+
+export function personalTripCoverBusy(id: string | undefined) {
+  return Boolean(readPersonalTripCoverSheet(id) && tripCoverSheetBusy(id));
+}
+
+export function releasePersonalTripCoverSheet(id: string | undefined) {
+  if (active?.metadataOwner === undefined) releaseTripCoverSheet(id);
 }
 
 export function readTripMetadataCover(invocation: string | undefined, selection: string | undefined) {

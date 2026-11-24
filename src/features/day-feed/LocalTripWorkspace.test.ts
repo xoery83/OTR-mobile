@@ -17,6 +17,8 @@ import {
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { router } from "expo-router";
+import { launchImageLibraryAsync } from "expo-image-picker";
+import { readPersonalTripCoverSheet } from "./tripCoverSheet";
 vi.mock("@/components/SheetRoutePanel", () => ({
   SheetRoutePanel: (panel: { title: string; action: unknown; children: ReactNode }) => {
     state.nodes.push({ hostedTripCreate: panel.action });
@@ -184,7 +186,9 @@ const state = vi.hoisted(() => ({
   focused: true,
   blur: null as null | (() => void),
   hostedMetadata: false,
+  hostedCover: false,
   routeView: "home",
+  coverAboveHome: false,
   focusReturned: false,
   foreground: null as null | ((state: string) => void),
   finance: null as TripHomeWidget | null,
@@ -207,6 +211,10 @@ vi.mock("./useTripPersonalCover", () => ({ useTripPersonalCover: () => state.per
 vi.mock("./tripMetadataSheet", async (original) => ({
   ...(await original<typeof import("./tripMetadataSheet")>()),
   get hostedTripMetadataEnabled() { return state.hostedMetadata; },
+}));
+vi.mock("./tripCoverSheet", async original => ({
+  ...(await original<typeof import("./tripCoverSheet")>()),
+  get hostedTripCoverEnabled() { return state.hostedCover; },
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -500,7 +508,9 @@ beforeEach(() => {
   state.focused = true;
   state.blur = null;
   state.hostedMetadata = false;
+  state.hostedCover = false;
   state.routeView = "home";
+  state.coverAboveHome = false;
   state.focusReturned = false;
   state.repo.mockReset();
   state.saveTraveler.mockReset();
@@ -958,6 +968,45 @@ it("non-Creator Home opens the independent preference Gallery without metadata a
   picker.onClose();
   render();
   expect(state.nodes.some((node) => node.coverPicker)).toBe(false);
+});
+
+it("keeps pending cover admission and late Photos completion on the original Home", async () => {
+  state.hostedCover = true;
+  vi.mocked(router.push).mockClear();
+  state.repo.mockResolvedValue(repository([trip("local-a", "Local A")]));
+  state.personal.selection = { raw: "coast" };
+  const read = deferred<boolean>();
+  state.personal.open.mockReturnValueOnce(read.promise).mockResolvedValue(true);
+  props.tripId = "local-a";
+  render();
+  await flush();
+  render();
+  const refused = button("myTrips.chooseCover").onPress();
+  state.routeView = "day";
+  read.resolve(true);
+  await refused;
+  expect(router.push).not.toHaveBeenCalled();
+
+  state.routeView = "home";
+  render();
+  await button("myTrips.chooseCover").onPress();
+  const invocation = vi.mocked(router.push).mock.lastCall?.[0];
+  expect(invocation).toMatchObject({ pathname: "/trip-cover-picker" });
+  const id = typeof invocation === "object" ? invocation.params?.invocation as string : undefined;
+  state.coverAboveHome = true;
+  const cover = readPersonalTripCoverSheet(id);
+  expect(cover).toMatchObject({ trip: { id: "local-a" }, selectedRaw: "coast" });
+  const photo = deferred<Awaited<ReturnType<typeof launchImageLibraryAsync>>>();
+  vi.mocked(launchImageLibraryAsync).mockReturnValueOnce(photo.promise);
+  const processing = vi.fn();
+  const result = cover!.onChoosePhoto!(processing);
+  await flush();
+  expect(launchImageLibraryAsync).toHaveBeenCalled();
+  state.routeView = "day";
+  photo.resolve({ canceled: false, assets: [{ uri: "file://late.jpg", width: 10, height: 10 }] });
+  await expect(result).resolves.toBe(false);
+  expect(processing).not.toHaveBeenCalled();
+  expect(state.personal.select).not.toHaveBeenCalled();
 });
 
 it("normal Home Hero action opens the same Editor and saves through the owning metadata repository", async () => {
@@ -3180,11 +3229,16 @@ it.each(["cancel", "failure", "generation"])(
 vi.mock("expo-router", () => ({
   router: { push: vi.fn() },
   useNavigation: () => ({
-    isFocused: () => state.focused,
+    isFocused: () => state.focused && !state.coverAboveHome,
     getState: () => ({
-      index: 0,
-      routes: [{ key: "workspace", params: { tripId: props.tripId, view: state.routeView } }],
+      key: "root",
+      index: state.coverAboveHome ? 1 : 0,
+      routes: [
+        { key: "workspace", name: "trip-home", params: { tripId: props.tripId, view: state.routeView } },
+        ...(state.coverAboveHome ? [{ key: "cover", name: "trip-cover-picker" }] : []),
+      ],
     }),
+    getParent: () => undefined,
     addListener: (_event: "blur", callback: () => void) => {
       state.blur = callback;
       return () => { if (state.blur === callback) state.blur = null; };

@@ -32,7 +32,12 @@ import { TripCreatePickerFields } from "./TripCreatePickerFields";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import * as ImagePicker from "expo-image-picker";
 import { readLocalTripPhotoRepository } from "@/data/repositories/tripPhotoRepository";
-import { TripCoverPicker } from "./TripCoverPicker";
+import { TripCoverPicker, type TripCoverSheetValue } from "./TripCoverPicker";
+import {
+  hostedTripCoverEnabled, openTripCoverSheet, readPersonalTripCoverSheet,
+  releasePersonalTripCoverSheet, updateTripCoverSheet,
+} from "./tripCoverSheet";
+import { captureActiveChildRoutes } from "@/features/sheet-navigation/captureActiveChildRoutes";
 import { useTripPersonalCover } from "./useTripPersonalCover";
 import { isTripCoverAssetId, tripPhotoCoverRef } from "@/domain/trip/tripCoverAssets";
 import type { LocalManualRead } from "@/data/repositories/tripLocalManualReadRepository";
@@ -188,6 +193,7 @@ function LocalTripContent({
 }: Props & { generation: number }) {
   useUiLocale();
   const navigation = useNavigation();
+  const rootNavigation = useNavigation("/");
   const route = useRoute();
   const styles = useThemedStyles(createStyles);
   const [trips, setTrips] = useState<Trip[]>([]),
@@ -240,20 +246,26 @@ function LocalTripContent({
   const [coverOpen, setCoverOpen] = useState(false);
   const metadataOpenAttempt = useRef(0);
   const qualifiedMetadataOpen = useRef<number | undefined>(undefined);
+  const coverInvocation = useRef<string | undefined>(undefined);
+  const coverLaunch = useRef<symbol | undefined>(undefined);
   const retireMetadataOpen = useCallback(() => {
     metadataOpenAttempt.current += 1;
+    coverLaunch.current = undefined;
   }, []);
+  useLayoutEffect(() => () => releasePersonalTripCoverSheet(coverInvocation.current), []);
   useLayoutEffect(() => {
     if (hostedTripMetadataEnabled) return navigation.addListener("blur", retireMetadataOpen);
   }, [navigation, retireMetadataOpen]);
-  const isMetadataHome = useCallback(() => {
-    const state = navigation.getState();
-    const top = state?.routes[state.index];
-    const params = top?.params as { tripId?: string; view?: string } | undefined;
-    return navigation.isFocused() && top?.key === route.key && !!tripId &&
-      params?.tripId === tripId &&
+  const hasHomeRoute = useCallback(() => {
+    const origin = navigation.getState()?.routes.find(candidate => candidate.key === route.key);
+    const params = origin?.params as { tripId?: string; view?: string } | undefined;
+    return !!tripId && params?.tripId === tripId &&
       params.view !== "day" && params.view !== "trips" && params.view !== "create";
   }, [navigation, route.key, tripId]);
+  const isMetadataHome = useCallback(() => {
+    const state = navigation.getState();
+    return navigation.isFocused() && state?.routes[state.index]?.key === route.key && hasHomeRoute();
+  }, [hasHomeRoute, navigation, route.key]);
   useLayoutEffect(() => {
     if (hostedTripMetadataEnabled && tripId && !isMetadataHome()) retireMetadataOpen();
   }, [isMetadataHome, retireMetadataOpen, route.params, tripId]);
@@ -995,6 +1007,7 @@ function LocalTripContent({
     )
       return;
     const attempt = ++metadataOpenAttempt.current;
+    coverLaunch.current = undefined;
     const isCurrent = () =>
       alive.current &&
       generation === getAccountGeneration() &&
@@ -1281,15 +1294,86 @@ function LocalTripContent({
     metadata && personalCover.selection
       ? { ...metadata, selectedCoverAssetIdRaw: personalCover.selection.raw }
       : metadata;
-  const openPersonalCover = personalCover.selection
+  const choosePersonalCoverPhoto = async (
+    processing: () => Promise<void>,
+    requestedTripId: string,
+    invocation?: string,
+  ) => {
+    const current = () =>
+      alive.current && tripId === requestedTripId && generation === getAccountGeneration() &&
+      (invocation === undefined || Boolean(readPersonalTripCoverSheet(invocation)));
+    if (!current() || !(await personalCover.open()) || !current()) return false;
+    const choice = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: false,
+      quality: 1,
+      base64: false,
+      exif: false,
+    });
+    if (!current() || choice.canceled) return false;
+    await processing();
+    if (!current()) return false;
+    const uri = choice.assets[0]?.uri;
+    if (!uri?.startsWith("file://")) throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
+    const repository = await readLocalTripPhotoRepository();
+    if (!current()) return false;
+    const photo = await repository.addTripPhoto(requestedTripId, uri);
+    if (!current()) return false;
+    if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
+    await personalCover.select(tripPhotoCoverRef(photo.assetId));
+    return true;
+  };
+  const personalSheetValue = displayCover && personalCover.selection
+    ? (readInvocation: () => string | undefined): TripCoverSheetValue => ({
+        trip: displayCover,
+        selectedRaw: personalCover.selection?.raw,
+        onSelect: async choice => {
+          if (readPersonalTripCoverSheet(readInvocation())) await personalCover.select(choice);
+        },
+        onChoosePhoto: processing => {
+          const invocation = readInvocation();
+          return invocation ? choosePersonalCoverPhoto(processing, displayCover.id, invocation) : Promise.resolve(false);
+        },
+      })
+    : undefined;
+  useLayoutEffect(() => {
+    const invocation = coverInvocation.current;
+    if (invocation && personalSheetValue && readPersonalTripCoverSheet(invocation))
+      updateTripCoverSheet(invocation, personalSheetValue(() => invocation));
+  });
+  const openPersonalCover = personalSheetValue
     ? async () => {
+        if (hostedTripCoverEnabled && (!isMetadataHome() || coverOpen || menuMembersTrip || itemFormOpen ||
+          readPersonalTripCoverSheet(coverInvocation.current))) return;
         retireMetadataOpen();
-        if (await personalCover.open()) {
-          if (alive.current && generation === getAccountGeneration()) {
-            retireMetadataOpen();
-            setPersonalCoverOpen(true);
-          }
+        const launch = Symbol();
+        coverLaunch.current = launch;
+        if (!(await personalCover.open()) || !alive.current || generation !== getAccountGeneration())
+          return;
+        if (!hostedTripCoverEnabled) {
+          retireMetadataOpen();
+          setPersonalCoverOpen(true);
+          return;
         }
+        if (coverLaunch.current !== launch || !isMetadataHome()) return;
+        coverLaunch.current = undefined;
+        const root = rootNavigation.getState();
+        const originKey = root?.routes[root.index]?.key;
+        const originRemainsSelected = root && captureActiveChildRoutes(navigation, root.key);
+        if (!originKey || !originRemainsSelected) return;
+        const isCurrent = () => {
+          const state = rootNavigation.getState();
+          const top = state?.routes[state.index];
+          return alive.current && originRemainsSelected() && hasHomeRoute() && (
+            (top?.key === originKey && isMetadataHome()) ||
+            (top?.name === "trip-cover-picker" && state?.routes[state.index - 1]?.key === originKey)
+          );
+        };
+        let invocation: string | undefined;
+        invocation = openTripCoverSheet(generation, personalSheetValue(() => invocation), undefined, isCurrent);
+        if (!invocation) return;
+        coverInvocation.current = invocation;
+        router.push({ pathname: "/trip-cover-picker", params: { invocation } });
       }
     : undefined;
   const lifecycleGroups = metadata
@@ -1614,30 +1698,7 @@ function LocalTripContent({
           selectedRaw={personalCover.selection.raw}
           onClose={() => setPersonalCoverOpen(false)}
           onSelect={personalCover.select}
-          onChoosePhoto={async (processing) => {
-            const current = () => alive.current && generation === getAccountGeneration();
-            if (!current() || !(await personalCover.open())) return false;
-            const choice = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ["images"],
-              allowsMultipleSelection: false,
-              quality: 1,
-              base64: false,
-              exif: false,
-            });
-            if (!current() || choice.canceled) return false;
-            await processing();
-            if (!current()) return false;
-            const uri = choice.assets[0]?.uri;
-            if (!uri?.startsWith("file://"))
-              throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
-            const repository = await readLocalTripPhotoRepository();
-            if (!current()) return false;
-            const photo = await repository.addTripPhoto(displayCover.id, uri);
-            if (!current()) return false;
-            if (!photo.localUri) throw new Error("TRIP_PHOTO_FILE_UNAVAILABLE");
-            await personalCover.select(tripPhotoCoverRef(photo.assetId));
-            return true;
-          }}
+          onChoosePhoto={processing => choosePersonalCoverPhoto(processing, displayCover.id)}
         />
       ) : null}
       {error && !selected && !remoteSelected ? (
