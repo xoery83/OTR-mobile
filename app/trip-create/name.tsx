@@ -41,7 +41,7 @@ export default function TripCreateNameRoute() {
   };
   const title = t(name?.self ? "createTripV2.editName" : "createTripV2.editTraveler");
   return (
-    <SheetRoutePanel title={title} onBack={boundToOwner ? back : undefined} action={name ? { label: t("common.done"), onPress: apply, disabled: name.disabled || exitPending } : undefined}>
+    <SheetRoutePanel title={title} onBack={boundToOwner ? back : undefined} preferNativeScroll action={name ? { label: t("common.done"), onPress: apply, disabled: name.disabled || exitPending } : undefined}>
       {name ? (
         <View style={styles.fields}>
           <UiTextInput

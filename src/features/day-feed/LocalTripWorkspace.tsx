@@ -1540,6 +1540,7 @@ function LocalTripContent({
         title={t("createTripV2.title")}
         leadingDisabled={saving || createFrozen}
         action={{ label: t("createTripV2.create"), disabled: createDisabled, onPress: () => void save() }}
+        preferNativeScroll
       >
         <TripCreatePickerFields generation={generation}>
           <View style={styles.form}>{createFields}</View>
