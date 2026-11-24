@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
+import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { AppIcon } from "@/components/AppIcon";
 import { UiText } from "@/ui/controls";
 import { t } from "@/ui/locale";
@@ -34,6 +35,7 @@ export function TripCoverPicker({
   onChoosePhoto,
   presentation = "editor",
   onClose,
+  hosted,
 }: {
   trip: CoverMetadata;
   selectedRaw?: string | null;
@@ -41,6 +43,10 @@ export function TripCoverPicker({
   onChoosePhoto?(processing: () => Promise<void>): Promise<boolean>;
   presentation?: "editor" | "standalone";
   onClose?(): void;
+  hosted?: {
+    setBusy(value: boolean): void;
+    canInteract(): boolean;
+  };
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -63,28 +69,32 @@ export function TripCoverPicker({
   const personal = parseTripPhotoCoverRef(selectedRaw) !== null;
   const order = open ? suggestedCoverIds(trip, personal ? selectedRaw : currentId) : [];
   const dismiss = () => {
-    setOpen(false);
+    if (!hosted) setOpen(false);
     onClose?.();
   };
   const select = async (id: TripCoverChoice | null, closeAfter = true) => {
-    if (busy.current) return;
+    if (busy.current || hosted?.canInteract() === false) return;
     busy.current = true;
+    hosted?.setBusy(true);
     setSaving(true);
     setError(false);
     setPhotoSaved(false);
     try {
       await onSelect(id);
-      if (closeAfter) dismiss();
     } catch {
-      setError(true);
+      if (alive.current) setError(true);
+      return;
     } finally {
       busy.current = false;
-      setSaving(false);
+      hosted?.setBusy(false);
+      if (alive.current) setSaving(false);
     }
+    if (closeAfter && alive.current) dismiss();
   };
   const choosePhoto = async () => {
-    if (busy.current || !onChoosePhoto) return;
+    if (busy.current || !onChoosePhoto || hosted?.canInteract() === false) return;
     busy.current = true;
+    hosted?.setBusy(true);
     setSaving(true);
     setError(false);
     setPhotoSaved(false);
@@ -105,6 +115,7 @@ export function TripCoverPicker({
       if (alive.current) setError(true);
     } finally {
       busy.current = false;
+      hosted?.setBusy(false);
       if (alive.current) {
         setSaving(false);
         setProcessingPhoto(false);
@@ -114,6 +125,104 @@ export function TripCoverPicker({
   const close = () => {
     if (!busy.current) dismiss();
   };
+  const library = (
+    <View style={styles.list}>
+      <View style={styles.firstRow}>
+        <View style={styles.tile}>
+          <TripCoverVisual
+            tripId={trip.id}
+            rawSelection={selectedRaw}
+            source={tripCoverSource(current)}
+            assetId={currentId}
+            style={styles.image}
+          />
+          <UiText style={styles.caption}>{t("coverLibrary.current")}</UiText>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("coverLibrary.choosePhoto")}
+          accessibilityState={{ disabled: saving || !onChoosePhoto }}
+          disabled={saving || !onChoosePhoto}
+          onPress={() => void choosePhoto()}
+          style={[
+            styles.tile,
+            styles.upload,
+            (saving || !onChoosePhoto) && styles.disabled,
+          ]}
+        >
+          <AppIcon name="photo.badge.plus" color={colors.accent} size={28} />
+          <UiText style={styles.caption}>{t("coverLibrary.choosePhoto")}</UiText>
+        </Pressable>
+      </View>
+      {processingPhoto ? (
+        <View accessibilityState={{ busy: true }} style={styles.progress}>
+          <ActivityIndicator color={colors.accent} />
+          <UiText accessibilityLiveRegion="polite" style={styles.meta}>
+            {t("coverLibrary.processingPhoto")}
+          </UiText>
+        </View>
+      ) : photoSaved ? (
+        <UiText accessibilityLiveRegion="polite" style={styles.meta}>
+          {t("coverLibrary.photoSaved")}
+        </UiText>
+      ) : null}
+      {selectedRaw !== null &&
+      selectedRaw !== undefined &&
+      !isTripCoverAssetId(selectedRaw) &&
+      !personal ? (
+        <UiText style={styles.meta}>{t("coverLibrary.unavailable")}</UiText>
+      ) : null}
+      <View style={styles.grid}>
+        {order.map((id, index) => (
+          <Pressable
+            key={id}
+            accessibilityRole="button"
+            accessibilityLabel={t("coverLibrary.option", {
+              number: index + 1,
+              description: tripCoverDescription(id),
+            })}
+            accessibilityState={{ disabled: saving }}
+            disabled={saving}
+            onPress={() => void select(id)}
+            style={styles.tile}
+          >
+            <TripCoverVisual
+              source={builtInTripCoverSource(id)}
+              assetId={id}
+              style={styles.image}
+            />
+          </Pressable>
+        ))}
+      </View>
+      {error ? (
+        <UiText accessibilityRole="alert" style={styles.error}>
+          {t("myTrips.coverFailed")}
+        </UiText>
+      ) : null}
+      <View style={styles.automatic}>
+        <UiText style={styles.caption}>{t("coverLibrary.automatic")}</UiText>
+        <Switch
+          accessibilityLabel={t("coverLibrary.automatic")}
+          value={selectedRaw === null}
+          disabled={saving || selectedRaw === undefined}
+          onValueChange={(automatic) => {
+            if (automatic) void select(null, false);
+            else if (selectedRaw === null) {
+              if (isTripCoverAssetId(currentId)) void select(currentId, false);
+              else setError(true);
+            }
+          }}
+        />
+      </View>
+    </View>
+  );
+  if (hosted) {
+    return (
+      <SheetRoutePanel title={t("myTrips.chooseCover")} leadingDisabled={saving}>
+        {library}
+      </SheetRoutePanel>
+    );
+  }
   return (
     <View>
       {presentation === "editor" ? (
@@ -153,98 +262,8 @@ export function TripCoverPicker({
             leftDisabled={saving}
             safeTop={false}
           />
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            style={styles.root}
-            contentContainerStyle={styles.list}
-          >
-            <View style={styles.firstRow}>
-              <View style={styles.tile}>
-                <TripCoverVisual
-                  tripId={trip.id}
-                  rawSelection={selectedRaw}
-                  source={tripCoverSource(current)}
-                  assetId={currentId}
-                  style={styles.image}
-                />
-                <UiText style={styles.caption}>{t("coverLibrary.current")}</UiText>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("coverLibrary.choosePhoto")}
-                accessibilityState={{ disabled: saving || !onChoosePhoto }}
-                disabled={saving || !onChoosePhoto}
-                onPress={() => void choosePhoto()}
-                style={[
-                  styles.tile,
-                  styles.upload,
-                  (saving || !onChoosePhoto) && styles.disabled,
-                ]}
-              >
-                <AppIcon name="photo.badge.plus" color={colors.accent} size={28} />
-                <UiText style={styles.caption}>{t("coverLibrary.choosePhoto")}</UiText>
-              </Pressable>
-            </View>
-            {processingPhoto ? (
-              <View accessibilityState={{ busy: true }} style={styles.progress}>
-                <ActivityIndicator color={colors.accent} />
-                <UiText accessibilityLiveRegion="polite" style={styles.meta}>
-                  {t("coverLibrary.processingPhoto")}
-                </UiText>
-              </View>
-            ) : photoSaved ? (
-              <UiText accessibilityLiveRegion="polite" style={styles.meta}>
-                {t("coverLibrary.photoSaved")}
-              </UiText>
-            ) : null}
-            {selectedRaw !== null &&
-            selectedRaw !== undefined &&
-            !isTripCoverAssetId(selectedRaw) &&
-            !personal ? (
-              <UiText style={styles.meta}>{t("coverLibrary.unavailable")}</UiText>
-            ) : null}
-            <View style={styles.grid}>
-              {order.map((id, index) => (
-                <Pressable
-                  key={id}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("coverLibrary.option", {
-                    number: index + 1,
-                    description: tripCoverDescription(id),
-                  })}
-                  accessibilityState={{ disabled: saving }}
-                  disabled={saving}
-                  onPress={() => void select(id)}
-                  style={styles.tile}
-                >
-                  <TripCoverVisual
-                    source={builtInTripCoverSource(id)}
-                    assetId={id}
-                    style={styles.image}
-                  />
-                </Pressable>
-              ))}
-            </View>
-            {error ? (
-              <UiText accessibilityRole="alert" style={styles.error}>
-                {t("myTrips.coverFailed")}
-              </UiText>
-            ) : null}
-            <View style={styles.automatic}>
-              <UiText style={styles.caption}>{t("coverLibrary.automatic")}</UiText>
-              <Switch
-                accessibilityLabel={t("coverLibrary.automatic")}
-                value={selectedRaw === null}
-                disabled={saving || selectedRaw === undefined}
-                onValueChange={(automatic) => {
-                  if (automatic) void select(null, false);
-                  else if (selectedRaw === null) {
-                    if (isTripCoverAssetId(currentId)) void select(currentId, false);
-                    else setError(true);
-                  }
-                }}
-              />
-            </View>
+          <ScrollView keyboardShouldPersistTaps="handled" style={styles.root}>
+            {library}
           </ScrollView>
         </SafeAreaView>
       </Modal>
