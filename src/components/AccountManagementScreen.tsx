@@ -49,12 +49,15 @@ export function AccountManagementScreen({ authBoundary = false }) {
   const hostedInvocation = useRef<string>(undefined);
   const navigation = useNavigation();
   useEffect(() => () => releaseSignIn(hostedInvocation.current), []);
+  const getScreenScope = useCallback(() => {
+    if (screenScope.current.signal.aborted) screenScope.current = new AbortController();
+    return screenScope.current;
+  }, []);
   useFocusEffect(
     useCallback(() => {
-      const scope = new AbortController();
-      screenScope.current = scope;
+      const scope = getScreenScope();
       return () => scope.abort();
-    }, []),
+    }, [getScreenScope]),
   );
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
@@ -257,9 +260,8 @@ export function AccountManagementScreen({ authBoundary = false }) {
           generation: result.generation,
           apply: () => {
             queueMicrotask(() => {
-              const ownerSignal = screenScope.current.signal;
               if (hostedInvocation.current === invocation && navigation.isFocused() &&
-                  !ownerSignal.aborted && result.generation === getAccountGeneration()) result.finish(ownerSignal);
+                  result.generation === getAccountGeneration()) result.finish(getScreenScope().signal);
             });
           },
         };

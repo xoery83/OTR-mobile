@@ -64,6 +64,10 @@ export function interceptSignInClose(id: string | undefined) {
   return !!active && active.id === id && active.installing;
 }
 
+export function hasSignInResult(id: string | undefined) {
+  return Boolean(active && active.id === id && active.result);
+}
+
 export function finishSignIn(id: string | undefined) {
   if (!active || active.id !== id) return;
   const result = active.result;

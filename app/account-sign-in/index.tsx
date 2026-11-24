@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
@@ -14,6 +14,7 @@ export default function AccountSignInRoute() {
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
   const [entry] = useState(() => readSignIn(invocation));
   const motion = useSheetMotion();
+  const navigation = useNavigation();
   useEffect(() => () => { queueMicrotask(() => releaseSignIn(invocation)); }, [invocation]);
   if (!entry || (!entry.installing && !entry.result && readSignIn(invocation) !== entry))
     return <SheetRoutePanel title={t("auth.emailTitle")}>{null}</SheetRoutePanel>;
@@ -25,7 +26,7 @@ export default function AccountSignInRoute() {
       onCancel={motion.requestClose}
       isExitPending={motion.isExitPending}
       exitPending={motion.exitPending}
-      isCurrent={() => readSignIn(invocation) === entry}
+      isCurrent={() => navigation.isFocused() && readSignIn(invocation) === entry}
       onAuthenticated={(session, generation) => completeSignIn(invocation, session, generation)}
     />
   );
