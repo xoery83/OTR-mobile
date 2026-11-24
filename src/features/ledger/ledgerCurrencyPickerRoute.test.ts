@@ -73,6 +73,22 @@ it("does not use a currency selection after cancellation or when the owner has c
   expect(choose).not.toHaveBeenCalled();
 });
 
+it("ignores a currency row tap while a Close is already pending", () => {
+  const choose = vi.fn();
+  state.choice = {
+    kind: "currency",
+    titleKey: "ui.fromCurrency",
+    selected: "NZD",
+    suggestions: [],
+    choose,
+  };
+  const route = LedgerCurrencyPickerRoute();
+  state.exitPending = true;
+  route.props.children.props.onSelect("AFN");
+  expect(state.exit).toBeUndefined();
+  expect(choose).not.toHaveBeenCalled();
+});
+
 it("applies an expense category only when its own dismissal completes", () => {
   const choose = vi.fn();
   state.choice = { kind: "category", titleKey: "ui.category", selected: "other", choose };
