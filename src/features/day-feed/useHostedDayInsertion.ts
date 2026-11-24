@@ -18,6 +18,7 @@ export function useHostedDayInsertion({
   onSaved(tripId: string, generation: number): void;
 }) {
   const navigation = useNavigation();
+  const rootNavigation = useNavigation("/");
   const route = useRoute();
   const current = useRef<{ tripId: string; generation: number; invocation?: string } | null>(null);
   useLayoutEffect(() => {
@@ -29,21 +30,26 @@ export function useHostedDayInsertion({
     };
   }, [active, generation, localOnly, route.key, today, tripId]);
 
-  const hasOrigin = () => {
-    const origin = navigation.getState()?.routes.find(candidate => candidate.key === route.key);
+  const hasOrigin = (rootOriginKey: string) => {
+    const state = navigation.getState();
+    const origin = state?.routes.find(candidate => candidate.key === route.key);
     const params = origin?.params;
-    return Boolean(origin && generation === getAccountGeneration() && (today ||
+    return Boolean(origin && (rootOriginKey === route.key || state?.routes[state.index]?.key === route.key) &&
+      generation === getAccountGeneration() && (today ||
       (params && "view" in params && params.view === "day" && "tripId" in params && params.tripId === tripId)));
   };
 
   return ({ date, startTime }: { date: string; startTime: string | null }) => {
     if (!hostedImportEnabled || !hostedManualItineraryEnabled) return false;
+    const root = rootNavigation.getState();
+    const rootOriginKey = root?.routes[root.index]?.key;
     const scope = current.current;
-    if (scope?.tripId !== tripId || scope.generation !== generation || !navigation.isFocused() ||
-        !hasOrigin() || readManualItinerary(scope.invocation)) return true;
+    if (!rootOriginKey || scope?.tripId !== tripId || scope.generation !== generation ||
+        !navigation.isFocused() || !hasOrigin(rootOriginKey) || readManualItinerary(scope.invocation)) return true;
 
     const entry = {
       entryPoint: "day-insertion" as const,
+      dayInsertionOriginKey: rootOriginKey,
       localOnly,
       tripId,
       generation,
@@ -53,10 +59,12 @@ export function useHostedDayInsertion({
       tripEndDate,
       onClose: () => {},
       onSaved: () => {
-        if (current.current === scope && hasOrigin() && navigation.isFocused()) onSaved(tripId, generation);
+        if (current.current === scope && hasOrigin(rootOriginKey) && navigation.isFocused())
+          onSaved(tripId, generation);
       },
     };
-    const invocation = stageManualItinerary(() => current.current === scope && hasOrigin() ? entry : undefined);
+    const invocation = stageManualItinerary(() =>
+      current.current === scope && hasOrigin(rootOriginKey) ? entry : undefined);
     scope.invocation = invocation;
     router.push({ pathname: "/import-plans/quick-add-itinerary", params: { invocation, entryPoint: entry.entryPoint } });
     return true;

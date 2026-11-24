@@ -9,16 +9,18 @@ const route = vi.hoisted(() => ({
   navigate: vi.fn(),
   push: vi.fn(),
   origin: { key: "chooser", params: { view: "day", tripId: "trip" } },
+  previousRootKey: "day",
   focused: true,
 }));
 vi.mock("expo-router", () => ({
   useLocalSearchParams: () => route.params,
-  useNavigation: () => ({ isFocused: () => route.focused, getState: () => ({ routes: [route.origin] }) }),
+  useNavigation: () => ({ isFocused: () => route.focused, getState: () => ({ index: 0, routes: [route.origin] }) }),
   router: { navigate: route.navigate, push: route.push },
 }));
 vi.mock("expo-router/react-navigation", () => ({ useRoute: () => ({ key: "chooser" }) }));
 vi.mock("react", async original => ({
   ...await original<typeof import("react")>(),
+  useContext: () => ({ hasOrigin: (key: string) => key === route.previousRootKey }),
   useEffect: () => {},
   useLayoutEffect: (effect: () => void) => effect(),
   useRef: (current: unknown) => ({ current }),
@@ -40,7 +42,7 @@ vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 it("opens a root chooser on Day and carries only its active insertion into the editor", () => {
   route.navigate.mockClear();
   const entry = {
-    entryPoint: "day-insertion" as const, localOnly: true, tripId: "trip",
+    entryPoint: "day-insertion" as const, dayInsertionOriginKey: "day", localOnly: true, tripId: "trip",
     generation: getAccountGeneration(), initialDate: "2026-11-24", initialStartTime: "10:30",
     onClose: vi.fn(), onSaved: vi.fn(),
   };
@@ -57,6 +59,12 @@ it("opens a root chooser on Day and carries only its active insertion into the e
     pathname: "/import-plans/quick-add-edit", params: { invocation, family: "P1", chooserKey: "chooser" },
   });
   expect(entry.onSaved).not.toHaveBeenCalled();
+
+  route.previousRootKey = "different-page";
+  expect(Chooser().props.children).toBeNull();
+  result.props.children.props.onChoose("P1");
+  expect(route.navigate).toHaveBeenCalledOnce();
+  route.previousRootKey = "day";
 
   releaseManualItinerary(invocation);
   result.props.children.props.onChoose("P1");

@@ -1,6 +1,6 @@
 import { Redirect, router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useRoute } from "expo-router/react-navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useContext, useEffect, useSyncExternalStore } from "react";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import {
@@ -10,6 +10,7 @@ import {
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import {
   hostedManualItineraryEnabled,
+  ManualItineraryExitContext,
   readManualItinerary,
   subscribeManualItinerary,
   releaseManualItinerary,
@@ -32,10 +33,10 @@ function HostedQuickAddItinerary() {
   useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
   const { invocation, entryPoint } = useLocalSearchParams<{ invocation?: string; entryPoint?: string }>();
   const root = entryPoint === "day-insertion";
-  const entry = useSyncExternalStore(subscribeManualItinerary, () => {
-    const candidate = readManualItinerary(invocation);
-    return candidate && (candidate.entryPoint === "day-insertion") === root ? candidate : undefined;
-  });
+  const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
+  const exit = useContext(ManualItineraryExitContext);
+  const ownsChooser = () => entry && (entry.entryPoint === "day-insertion") === root &&
+    (!root || (!!entry.dayInsertionOriginKey && exit?.hasOrigin?.(entry.dayInsertionOriginKey) === true));
   const { isExitPending } = useSheetMotion();
   const navigation = useNavigation();
   const route = useRoute();
@@ -53,13 +54,14 @@ function HostedQuickAddItinerary() {
         if (current()) router.back();
       }}
     >
-      {entry ? (
+      {entry && ownsChooser() ? (
         <ManualItineraryChoices
           localOnly={entry.localOnly}
           onChoose={(family) => {
             const latest = readManualItinerary(invocation);
             if (
               !current() ||
+              !ownsChooser() ||
               !latest || latest !== entry ||
               !isManualItineraryFamily(family, latest.localOnly)
             )

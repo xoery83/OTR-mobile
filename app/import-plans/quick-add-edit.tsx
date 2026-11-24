@@ -61,7 +61,8 @@ function HostedQuickAddEditor() {
   }, [chooserKey, navigation, route.key]);
   const belongsToOwner = useCallback(() => {
     const origin = entry?.detailEdit;
-    if (!origin) return !standalone && hasChooser();
+    if (!origin) return !standalone && hasChooser() && (entry?.entryPoint !== "day-insertion" ||
+      (!!entry.dayInsertionOriginKey && exit?.hasOrigin?.(entry.dayInsertionOriginKey) === true));
     return standalone && !chooserKey && origin.family === family && exit?.hasOrigin?.(origin.originKey) === true;
   }, [chooserKey, entry, exit, family, hasChooser, standalone]);
   const familyAllowed = entry && belongsToOwner() && family && isManualItineraryFamily(family, entry.localOnly) ? family : null;
