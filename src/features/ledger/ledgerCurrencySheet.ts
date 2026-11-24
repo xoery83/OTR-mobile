@@ -5,8 +5,8 @@ import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/ac
 import type { MessageKey } from "@/ui/locale";
 import type { ExpenseSharingInputs } from "./ExpenseSharingSheet";
 
-export const hostedLedgerCurrencySheetEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_CURRENCY_QA === "true";
-export const hostedExpenseFieldsEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_EXPENSE_FIELDS_QA === "true";
+export const hostedLedgerCurrencySheetEnabled: boolean = true;
+export const hostedExpenseFieldsEnabled: boolean = true;
 
 export type LedgerCurrencyChoice = {
   titleKey: MessageKey;

@@ -1,7 +1,7 @@
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import type { DayMoveConfirmation } from "./useP1Move";
 
-export const hostedDayMoveEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_DAY_MOVE_QA === "true";
+export const hostedDayMoveEnabled: boolean = true;
 
 type Entry = {
   generation: number;

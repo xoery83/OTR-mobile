@@ -1,6 +1,6 @@
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 
-export const hostedDocumentsTripPickerEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_DOCUMENTS_TRIP_QA === "true";
+export const hostedDocumentsTripPickerEnabled: boolean = true;
 
 type TripChoice = { id: string; name: string };
 type Picker = {

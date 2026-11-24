@@ -3,7 +3,7 @@ import { createItineraryPickerHandoff } from "./itineraryPickerHandoff";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { createCalendarRangePickerHandoff } from "./calendarRangePickerHandoff";
 
-export const hostedTripCreatePickersEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_SETUP_QA === "true";
+export const hostedTripCreatePickersEnabled: boolean = true;
 
 const listeners = new Set<() => void>();
 let version = 0;

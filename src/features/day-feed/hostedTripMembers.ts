@@ -12,7 +12,7 @@ export type TripMembersProps = {
   onInvitePerson?(personId: string): void;
 };
 
-export const hostedTripMembersEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_MEMBERS_QA === "true";
+export const hostedTripMembersEnabled: boolean = true;
 export const TripMembersExitContext = createContext<{
   register(handler: () => void): () => void;
   allowClose(): void;

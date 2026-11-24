@@ -20,13 +20,11 @@ vi.mock("react", async original => ({
 }));
 
 beforeEach(() => {
-  vi.stubEnv("EXPO_PUBLIC_OTR_SHEET_LEDGER_CURRENCY_QA", "true");
   state.focused = true;
   state.push.mockClear();
 });
 afterEach(() => {
   state.cleanup?.();
-  vi.unstubAllEnvs();
 });
 
 it("uses a single scoped selection and drops it on permission, account or owner change", async () => {

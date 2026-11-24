@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 
 const state = vi.hoisted(() => ({
@@ -29,12 +29,10 @@ vi.mock("expo-router", () => ({
 }));
 
 beforeEach(() => {
-  vi.stubEnv("EXPO_PUBLIC_OTR_SHEET_DAY_MOVE_QA", "true");
   state.dispatch.mockReset();
   state.setFallback.mockReset();
   state.home = false;
 });
-afterEach(() => vi.unstubAllEnvs());
 
 const confirmation = {
   proposalIdentity: {},

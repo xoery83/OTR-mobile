@@ -1,7 +1,7 @@
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import type { LocalSession } from "@/domain/auth/localSession";
 
-export const hostedSignInEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_SIGN_IN_QA === "true";
+export const hostedSignInEnabled: boolean = true;
 
 type SignInResult = { generation: number; apply(): void };
 type SignInOwner = {

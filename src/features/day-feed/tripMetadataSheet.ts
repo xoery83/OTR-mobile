@@ -7,7 +7,7 @@ import type { LedgerCurrencyChoice } from "@/features/ledger/ledgerCurrencySheet
 import { tripMetadataCoverBusy } from "./tripCoverSheet";
 import type { TripBasicEditor } from "./TripBasicEditor";
 
-export const hostedTripMetadataEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_SETUP_QA === "true";
+export const hostedTripMetadataEnabled: boolean = true;
 
 export type MetadataEditorElement = ReactElement<Pick<ComponentProps<typeof TripBasicEditor>, "SheetPanel" | "openCoverLibrary" | "openCurrencySettings">>;
 

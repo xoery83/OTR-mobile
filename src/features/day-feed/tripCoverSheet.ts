@@ -1,7 +1,7 @@
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import type { TripCoverSheetValue } from "./TripCoverPicker";
 
-export const hostedTripCoverEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_SETUP_QA === "true";
+export const hostedTripCoverEnabled: boolean = true;
 
 let sequence = 0;
 let active: {

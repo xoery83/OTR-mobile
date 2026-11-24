@@ -43,6 +43,22 @@ MCP evidence: [Shared DEV handoff](ops/prebeta-user-journey-20261121/MCP_SHARED_
 - Settlement loading feedback:fa9512a8; canonical localized loading label and disabled duplicate tap, guard/lint PASS; actual flow still pending.
 - QA-only one-shot receipt consumer is temporary diagnostic code, not a release feature; retain its evidence and remove unused probe code before final Main integration.
 
+## Bottom Sheet pre-Beta retest
+
+The unified Sheet presents by default in regular builds. Retest the following
+through normal openings on the full build. Existing receipts and prior
+synthetic evidence are reusable within their original scope.
+
+| Journey | Remaining evidence |
+|---|---|
+| BETA-04 / P2 | Open and cancel the accepted NZ9003 editor on a qualified Native DEV build with isolated dispatch. Build542 read the existing item, and the prior formal Create/Edit receipts are retained. |
+| BETA-09 / I3 | Open and return from an existing DEV batch with a nonempty pending Review. |
+| BETA-09 / I4 | From an existing failed DEV batch, use Results → Add Manually and return to that same batch. Isolated synthetic navigation has passed. |
+| BETA-12 / DOC3 | Retest Plan → Add Attachment with an eligible accepted Plan and an unlinked private local document in the same Trip. Isolated synthetic local navigation and pending operation have passed. |
+
+Beta/TestFlight remains NO GO. Sample creation follows the existing DEV
+execution boundaries for the owning workflow.
+
 ## Completion contract
 
 Every journey records PASS / BUG / BLOCKED / TODO and an actual source/build/environment. Local, queue, Backend receipt, independent readback and device recovery are separate facts. Fixed IDs survive UNKNOWN and retries. No ordinary user should need internal technical concepts to finish a task. Runtime release and Main handoff do not themselves prove product PASS. Final delivery includes Main SHA, actual journey evidence, deferred items/reasons and a Beta/TestFlight recommendation, with publication still Owner-controlled.

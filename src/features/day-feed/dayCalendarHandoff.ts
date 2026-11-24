@@ -1,7 +1,7 @@
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import type { DayFeedCalendarProps } from "./DayFeedCalendarSheet";
 
-export const hostedDayCalendarEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_DAY_CALENDAR_QA === "true";
+export const hostedDayCalendarEnabled: boolean = true;
 
 type Invocation = DayFeedCalendarProps & { isCurrent(): boolean; canSelect(date: string): boolean };
 

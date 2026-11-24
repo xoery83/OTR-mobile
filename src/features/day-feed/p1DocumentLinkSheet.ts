@@ -1,6 +1,6 @@
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 
-export const hostedP1DocumentLinkEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_P1_DOCUMENT_LINK_QA === "true";
+export const hostedP1DocumentLinkEnabled: boolean = true;
 
 type Owner = {
   tripId: string;

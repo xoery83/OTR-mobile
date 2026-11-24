@@ -1,10 +1,8 @@
 import { router } from "expo-router";
 import { createContext } from "react";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
-import { hostedImportEnabled } from "@/features/capture/hostedImport";
 
-export const hostedTripCreateEnabled =
-  hostedImportEnabled && process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_SETUP_QA === "true";
+export const hostedTripCreateEnabled: boolean = true;
 
 type CreateInvocation = { id: string; originRouteKey: string; generation: number };
 let sequence = 0;

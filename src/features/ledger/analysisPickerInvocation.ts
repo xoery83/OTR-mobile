@@ -11,8 +11,7 @@ import type {
 import type { ReportingScope } from "@/domain/ledger/reporting";
 import type { AnalysisMoney } from "./SpendingAnalysisSections";
 
-export const hostedLedgerAnalysisPickerEnabled =
-  process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_ANALYSIS_QA === "true";
+export const hostedLedgerAnalysisPickerEnabled: boolean = true;
 
 export type AnalysisPicker =
   | {

@@ -3,7 +3,7 @@ import type { LedgerJourneyContext } from "@/domain/ledger/journeyContext";
 import type { JourneyPickerSection } from "./dashboardPresentation";
 export { captureActiveChildRoutes as captureLedgerJourneyOrigin } from "@/features/sheet-navigation/captureActiveChildRoutes";
 
-export const hostedLedgerJourneySheetEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_JOURNEY_QA === "true";
+export const hostedLedgerJourneySheetEnabled: boolean = true;
 
 export type LedgerJourneySheetEntry = {
   selected: string | null;

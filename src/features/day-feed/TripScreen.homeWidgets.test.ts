@@ -2266,15 +2266,36 @@ it("does not reserve a Bottom Shell for the search-owned trip home", async () =>
   });
 });
 
-it("empty Guest My Trips Create then Cancel restores only route params, without a second native page replacement", async () => {
+it("empty Guest My Trips opens the unified Create Sheet above the same route by default", async () => {
+  const { readHostedTripCreate, releaseHostedTripCreate } = await import("./hostedTripCreate");
   guestRead(true);
   state.pathname = "/trip";
   state.routeMode = "trips";
   state.view.tripId = "";
+  state.navigation.getState = () => ({ index: 0, routes: [{ key: "trip" }] });
   find(await loaded(), LocalTripWorkspace).onCreate();
-  expect(state.params).toHaveBeenCalledExactlyOnceWith({ tripId: "", date: "", zone: "", view: "create" });
+  const invocation = state.push.mock.calls[0]?.[0].params.invocation;
+  try {
+    expect(state.push).toHaveBeenCalledExactlyOnceWith({
+      pathname: "/trip-create",
+      params: { invocation: expect.any(String) },
+    });
+    expect(readHostedTripCreate(invocation)).toMatchObject({
+      originRouteKey: "trip",
+      generation: state.liveGeneration,
+    });
+    expect(state.params).not.toHaveBeenCalled();
+    expect(state.replace).not.toHaveBeenCalled();
+  } finally {
+    releaseHostedTripCreate(invocation);
+  }
+});
+
+it("legacy direct Create Cancel restores only route params without replacing My Trips", async () => {
+  guestRead(true);
+  state.pathname = "/trip";
   state.routeMode = "create";
-  state.params.mockClear();
+  state.view.tripId = "";
   const workspace = find(render(), LocalTripWorkspace);
   expect(workspace.mode).toBe("CREATE");
   workspace.onBackToTrips();

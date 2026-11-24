@@ -5,8 +5,7 @@ import {
 import type { ReportingFilters } from "@/domain/ledger/reporting";
 import type { LedgerSearchFilterProps } from "./LedgerSearchScreen";
 
-export const hostedLedgerSearchFiltersEnabled =
-  process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_SEARCH_QA === "true";
+export const hostedLedgerSearchFiltersEnabled: boolean = true;
 
 type AttentionChoice = Pick<ReportingFilters, "valuation" | "conflict">;
 

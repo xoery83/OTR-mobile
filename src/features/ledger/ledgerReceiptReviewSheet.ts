@@ -3,7 +3,7 @@ import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/ac
 import type { ReceiptReviewSheet } from "./ReceiptReviewSheet";
 import type { ReceiptScanSource } from "./ReceiptScanSourceFields";
 
-export const hostedLedgerReceiptReviewEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_RECEIPT_QA === "true";
+export const hostedLedgerReceiptReviewEnabled: boolean = true;
 
 export const LedgerReceiptReviewInvocationContext = createContext<RefObject<string | undefined> | null>(null);
 

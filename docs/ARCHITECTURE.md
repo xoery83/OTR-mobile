@@ -5,8 +5,9 @@
 Existing item details keep their read routes and open the qualified editor as the
 first screen of the same itinerary Sheet stack. The originating detail owns the
 opened draft, item revision, permissions, and save outcome. The Sheet confirms
-return to that detail before publishing a successful edit. The original editor
-presentation remains available through the existing QA flags.
+return to that detail before publishing a successful edit. The unified Sheet is the standard presentation and requires no environment switch.
+The original presentation remains available to internal callers when they need a
+local fallback.
 
 ## Hosted itinerary transport type
 

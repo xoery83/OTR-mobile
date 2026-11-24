@@ -1,7 +1,7 @@
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import type { ReactNode } from "react";
 
-export const hostedTripPhotosEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_TRIP_PHOTOS_QA === "true";
+export const hostedTripPhotosEnabled: boolean = true;
 
 type TripPhotosSheet = {
   content: ReactNode;

@@ -2,7 +2,7 @@ import { createContext, type ReactNode } from "react";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import type { ManualItineraryFamily, ManualItineraryProps } from "./ManualItineraryContent";
 
-export const hostedManualItineraryEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_MANUAL_ITINERARY_QA === "true";
+export const hostedManualItineraryEnabled: boolean = true;
 
 export const ManualItineraryExitContext = createContext<{
   registerClose(handler: () => void): () => void;

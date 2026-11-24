@@ -1,3 +1,21 @@
+## Bottom Sheet presentation defaults · 25 November 2026 NZDT
+
+The owner approved removing the environment switches for all 16 ordinary Sheet
+presentations already merged to Main. Full builds select the unified host by
+default. Existing ownership, navigation safeguards, and internal fallbacks
+remain in place. Formal P2, provider analysis, access and financial execution
+retain their separate operating boundaries. The accepted P2 editor and the
+nonempty Review and failed Results routes remain on the pre-Beta QA list if no
+eligible environment or fixtures are available. Beta/TestFlight remains NO GO.
+
+Build544, with zero Sheet environment switches, was tested in the original
+iPhone simulator and physical iPad QA apps. Create and Close retained the same
+trip list, and iPad landscape Import kept the composer controls above the real
+keyboard and returned to the original list. Independent source and visual
+reviews passed. TypeScript, UI Guard, scoped lint and diff check passed.
+Six-module regression: 2,525 tests passed, with the same 48 failing assertions
+and seven failing suites as unmodified Main. No new failures.
+
 ## Latest ordinary MCP closure — 21 November 2026 NZDT
 
 Same Google normal Consent → MCP title-only Edit → original APPLIED Receipt recovery → independent PG/fresh MCP read → iPhone process-cold Details PASS. Source fixes only: consent fragment change unmounts stale UI/reloads with late-response guards; Core execution logs recognize fixed PG connect timeout strings without raw error text. Existing Source/Auth/Import/AI candidates are not merged by this change. Actual Shared DEV ec9 remains compatible/default-closed AI, unchanged by this Main source integration. Connection timeout and Transportclosed causes remain OPEN; AI/C04/Beta whole-package not declared complete. Evidence: ops/native-mcp-closure-20261121/ACCEPTANCE.json.
