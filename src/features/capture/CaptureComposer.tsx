@@ -690,6 +690,7 @@ export function CaptureComposer({
             </UiText>
           ) : null}
         </BodyScroll>
+        {!prioritizeEditor && hosted ? editorControls : null}
         {count ? (
           <View style={[styles.footer, styles.countFooter, enlargedEditor && styles.countFooterLarge]}>
             <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
@@ -719,7 +720,7 @@ export function CaptureComposer({
             />
           </View>
         ) : null}
-        {!prioritizeEditor ? editorControls : null}
+        {!hosted ? editorControls : null}
         {voice.state.status !== "idle" ? (
           <View style={styles.voiceStatus}>
             <UiText accessibilityLiveRegion="polite" style={styles.secondary}>

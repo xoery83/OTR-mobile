@@ -731,3 +731,11 @@ it("puts every hosted attachment source in the composer scroll body", () => {
   render(empty, 0, input);
   expect(button("capture.composer.addAttachments").accessibilityState.expanded).toBe(false);
 });
+
+it("keeps the hosted portrait editor ahead of the count that appears on first input", () => {
+  render({ ...empty, editorText: "note" }, 1, { hosted: true });
+  const editor = state.nodes.findIndex(node => node.multiline);
+  const count = state.nodes.findIndex(node => node.children === t("capture.countOne", { count: 1 }));
+  expect(editor).toBeGreaterThanOrEqual(0);
+  expect(count).toBeGreaterThan(editor);
+});
