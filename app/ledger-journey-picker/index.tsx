@@ -25,6 +25,7 @@ export default function LedgerJourneyPickerRoute() {
   const [failed, setFailed] = useState(false);
   const [completed, setCompleted] = useState(false);
   const completedRef = useRef(false);
+  const autoCloseAttempted = useRef(false);
   const selecting = useRef(false);
   const alive = useRef(true);
   const { requestClose, requestCloseWithAction, isExitPending, exitPending } = useSheetMotion();
@@ -38,7 +39,9 @@ export default function LedgerJourneyPickerRoute() {
     };
   }, [invocation]);
   useEffect(() => {
-    if (completed && busy === null && focused && !exitPending) requestClose();
+    if (!completed || busy !== null || !focused || exitPending || autoCloseAttempted.current) return;
+    autoCloseAttempted.current = true;
+    requestClose();
   }, [busy, completed, exitPending, focused, requestClose]);
 
   return <SheetRoutePanel title={t("ledger.chooseJourneyTitle")} ownsScroll leadingDisabled={busy !== null}>
