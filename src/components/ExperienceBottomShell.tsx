@@ -1,4 +1,5 @@
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
+import { openHostedTripCreate } from "@/features/day-feed/hostedTripCreate";
 import { releaseStartTrip, stageStartTrip } from "@/features/sheet-navigation/startTripHandoff";
 import { releaseStaleHostedQuickAdd } from "@/features/sheet-navigation/quickAddHandoff";
 import { openTripHome } from "./openTripHome";
@@ -185,7 +186,8 @@ export function ExperienceBottomShell({
       if (pendingManualCreate.current !== pending) return;
       pendingManualCreate.current = null;
       if (pending.generation === getAccountGeneration() && rootNavigation.getCurrentRoute()?.key === pending.routeKey) {
-        router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+        if (!openHostedTripCreate(pending.routeKey, pending.generation))
+          router.setParams({ tripId: "", date: "", zone: "", view: "create" });
       }
     });
     return () => cancelAnimationFrame(frame);

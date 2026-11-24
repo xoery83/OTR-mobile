@@ -128,6 +128,10 @@ The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.
 
+The default-off Trip Create Sheet uses the existing create workspace and draft
+owner. The native Stack presents the form and its field pickers. A saved trip
+opens only after the Sheet returns to its originating My Trips route.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.

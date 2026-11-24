@@ -1,3 +1,4 @@
+import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import {
   accountTripListPresentation,
   type AccountTripRestoreObservation,
@@ -27,6 +28,7 @@ import type { LocalTripDestinationInput } from "@/domain/trip/localTripDestinati
 import { CreateTripDestinations } from "./CreateTripDestinations";
 import type { TripDestinationDraftSelection } from "@/data/places/tripDestinationSelection";
 import { CreateTripV2Fields } from "./CreateTripV2Fields";
+import { TripCreatePickerFields } from "./TripCreatePickerFields";
 import { ManualItineraryContent } from "./ManualItineraryContent";
 import * as ImagePicker from "expo-image-picker";
 import { readLocalTripPhotoRepository } from "@/data/repositories/tripPhotoRepository";
@@ -133,6 +135,10 @@ type Props = {
   tripId: string | null;
   homePerspective?: { now: string; date: string; zone: string };
   mode?: "LIST" | "CREATE" | "PAST";
+  hostedCreate?: {
+    registerClose(guard: () => boolean | Promise<boolean>): () => void;
+    isCurrent(): boolean;
+  };
   onOpen(id: string): void;
   onCreate(): void;
   onOpenToday(id: string, context: TodayEntry): void;
@@ -161,6 +167,7 @@ function LocalTripContent({
   refreshKey = 0,
   tripId,
   mode = "LIST",
+  hostedCreate,
   onOpen,
   onCreate,
   onOpenToday,
@@ -322,13 +329,15 @@ function LocalTripContent({
     query: destinationQueryDirty,
   });
   const createSaveFailed = useRef(error);
+  const hostedCreateCommitted = useRef(false);
+  const [createCommitted, setCreateCommitted] = useState(false);
   function changeCreate<Key extends keyof typeof createValue>(
     field: Key,
     value: (typeof createValue)[Key],
     set: (value: (typeof createValue)[Key]) => void,
   ) {
-    if (!alive.current || generation !== getAccountGeneration() || createHandoff.current)
-      return;
+    if (!alive.current || generation !== getAccountGeneration() || createHandoff.current ||
+        hostedCreateCommitted.current) return;
     createDraftValue.current = { ...createDraftValue.current, [field]: value };
     set(value);
   }
@@ -787,6 +796,8 @@ function LocalTripContent({
   const save = async () => {
     if (
       busy.current ||
+      hostedCreateCommitted.current ||
+      (hostedCreate && (!hostedCreate.isCurrent() || createCalendarOpen.current || createNameEditorOpen.current)) ||
       createHandoff.current ||
       destinationBusy ||
       !alive.current ||
@@ -855,6 +866,10 @@ function LocalTripContent({
       });
       if (!current()) return;
       void kickLocalTripSync().catch(() => undefined);
+      if (hostedCreate) {
+        hostedCreateCommitted.current = true;
+        setCreateCommitted(true);
+      }
       onOpen(trip.id);
     } catch {
       createSaveFailed.current = true;
@@ -867,14 +882,15 @@ function LocalTripContent({
       }
     }
   };
-  const closeCreate = () => {
+  const requestCreateClose = (finish: (allowed: boolean) => void) => {
+    if (hostedCreateCommitted.current) return finish(true);
     if (
       busy.current ||
       createHandoff.current ||
       !alive.current ||
       generation !== getAccountGeneration()
     )
-      return;
+      return finish(false);
     if (
       !name.trim() &&
       !destinations.length &&
@@ -884,26 +900,26 @@ function LocalTripContent({
       !selfNickname.trim() &&
       !travelers.some((person) => person.displayName.trim())
     ) {
-      onBackToTrips();
-      return;
+      return finish(true);
     }
     Alert.alert(t("actionIsland.unsavedTitle"), t("actionIsland.unsavedHint"), [
-      { text: t("actionIsland.stay"), style: "cancel" },
+      { text: t("actionIsland.stay"), style: "cancel", onPress: () => finish(false) },
       {
         text: t("actionIsland.discard"),
         style: "destructive",
-        onPress: () => {
-          if (
-            !busy.current &&
-            !createHandoff.current &&
-            alive.current &&
-            generation === getAccountGeneration()
-          )
-            onBackToTrips();
-        },
+        onPress: () => finish(
+          !busy.current &&
+          !createHandoff.current &&
+          alive.current &&
+          generation === getAccountGeneration()
+        ),
       },
-    ]);
+    ], { onDismiss: () => finish(false) });
   };
+  const closeCreate = () => requestCreateClose(allowed => { if (allowed) onBackToTrips(); });
+  useLayoutEffect(() => hostedCreate?.registerClose(() =>
+    new Promise<boolean>(resolve => requestCreateClose(resolve)),
+  ));
   const openToday = async (id: string) => {
     const prior = eligibleToday[id];
     if (!prior || generation !== getAccountGeneration()) return;
@@ -1439,6 +1455,98 @@ function LocalTripContent({
     </Modal>
   ) : null;
 
+  const createFieldsDisabled = saving || createFrozen || createCommitted;
+  const createDisabled = createFieldsDisabled || destinationBusy ||
+    status !== "READY" || !name.trim() || name.trim().length > 256;
+  const createFields = mode === "CREATE" ? (
+    <>
+      <CreateTripV2Fields
+        name={name}
+        onName={(value) => {
+          changeCreate("name", value, setName);
+        }}
+        range={{ start, end }}
+        onRange={(range) => {
+          changeCreate("start", range.start, setStart);
+          changeCreate("end", range.end, setEnd);
+        }}
+        selfNickname={selfNickname}
+        knownSelfName={knownSelfName}
+        onCalendarOpenChange={(open) => {
+          if (
+            !alive.current ||
+            generation !== getAccountGeneration() ||
+            createHandoff.current
+          )
+            return false;
+          createCalendarOpen.current = open;
+        }}
+        onNameEditorOpenChange={(open) => {
+          if (
+            !alive.current ||
+            generation !== getAccountGeneration() ||
+            createHandoff.current
+          )
+            return false;
+          createNameEditorOpen.current = open;
+        }}
+        onSelfNickname={(value) => {
+          changeCreate("selfNickname", value, setSelfNickname);
+        }}
+        travelers={travelers}
+        onTravelers={(value) => {
+          changeCreate("travelers", value, setTravelers);
+        }}
+        disabled={createFieldsDisabled}
+        destinationEntry={
+          <CreateTripDestinations
+            name={name}
+            draftId={createDraftId}
+            generation={generation}
+            items={destinations}
+            onChange={(items) => {
+              changeCreate("destinations", items, setDestinations);
+            }}
+            onQueryDirty={(query) => {
+              if (!alive.current || generation !== getAccountGeneration())
+                return;
+              createInteractions.current.query = query;
+              setDestinationQueryDirty(query);
+            }}
+            onBusy={(busy) => {
+              if (!alive.current || generation !== getAccountGeneration())
+                return;
+              createInteractions.current.busy = busy;
+              setDestinationBusy(busy);
+            }}
+            disabled={createFieldsDisabled}
+          />
+        }
+      />
+      {status === "UNAVAILABLE" || error ? (
+        <Text accessibilityRole="alert" style={styles.status}>
+          {t(
+            status === "UNAVAILABLE"
+              ? "tripCreate.unavailable"
+              : "tripCreate.saveFailed",
+          )}
+        </Text>
+      ) : null}
+    </>
+  ) : null;
+  if (mode === "CREATE" && hostedCreate) {
+    return (
+      <SheetRoutePanel
+        title={t("createTripV2.title")}
+        leadingDisabled={saving || createFrozen}
+        action={{ label: t("createTripV2.create"), disabled: createDisabled, onPress: () => void save() }}
+      >
+        <TripCreatePickerFields generation={generation}>
+          <View style={styles.form}>{createFields}</View>
+        </TripCreatePickerFields>
+      </SheetRoutePanel>
+    );
+  }
   if (tripId && !selected && !remoteSelected) return null;
   return (
     <View style={styles.root}>
@@ -1876,14 +1984,7 @@ function LocalTripContent({
                   onLeft={closeCreate}
                   leftDisabled={saving || createFrozen}
                   rightLabel={t("createTripV2.create")}
-                  rightDisabled={
-                    saving ||
-                    createFrozen ||
-                    destinationBusy ||
-                    status !== "READY" ||
-                    !name.trim() ||
-                    name.trim().length > 256
-                  }
+                  rightDisabled={createDisabled}
                   onRight={() => {
                     void save();
                   }}
@@ -1898,78 +1999,7 @@ function LocalTripContent({
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="interactive"
                   >
-                    <CreateTripV2Fields
-                      name={name}
-                      onName={(value) => {
-                        changeCreate("name", value, setName);
-                      }}
-                      range={{ start, end }}
-                      onRange={(range) => {
-                        changeCreate("start", range.start, setStart);
-                        changeCreate("end", range.end, setEnd);
-                      }}
-                      selfNickname={selfNickname}
-                      knownSelfName={knownSelfName}
-                      onCalendarOpenChange={(open) => {
-                        if (
-                          !alive.current ||
-                          generation !== getAccountGeneration() ||
-                          createHandoff.current
-                        )
-                          return false;
-                        createCalendarOpen.current = open;
-                      }}
-                      onNameEditorOpenChange={(open) => {
-                        if (
-                          !alive.current ||
-                          generation !== getAccountGeneration() ||
-                          createHandoff.current
-                        )
-                          return false;
-                        createNameEditorOpen.current = open;
-                      }}
-                      onSelfNickname={(value) => {
-                        changeCreate("selfNickname", value, setSelfNickname);
-                      }}
-                      travelers={travelers}
-                      onTravelers={(value) => {
-                        changeCreate("travelers", value, setTravelers);
-                      }}
-                      disabled={saving || createFrozen}
-                      destinationEntry={
-                        <CreateTripDestinations
-                          name={name}
-                          draftId={createDraftId}
-                          generation={generation}
-                          items={destinations}
-                          onChange={(items) => {
-                            changeCreate("destinations", items, setDestinations);
-                          }}
-                          onQueryDirty={(query) => {
-                            if (!alive.current || generation !== getAccountGeneration())
-                              return;
-                            createInteractions.current.query = query;
-                            setDestinationQueryDirty(query);
-                          }}
-                          onBusy={(busy) => {
-                            if (!alive.current || generation !== getAccountGeneration())
-                              return;
-                            createInteractions.current.busy = busy;
-                            setDestinationBusy(busy);
-                          }}
-                          disabled={saving || createFrozen}
-                        />
-                      }
-                    />
-                    {status === "UNAVAILABLE" || error ? (
-                      <Text accessibilityRole="alert" style={styles.status}>
-                        {t(
-                          status === "UNAVAILABLE"
-                            ? "tripCreate.unavailable"
-                            : "tripCreate.saveFailed",
-                        )}
-                      </Text>
-                    ) : null}
+                    {createFields}
                   </ScrollView>
                 </KeyboardAvoidingView>
               </SafeAreaView>

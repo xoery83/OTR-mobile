@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
@@ -12,7 +12,9 @@ import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { createUuid } from "@/domain/localId";
 import type { LocalPersonNameSlot } from "@/domain/trip/localTripPerson";
+import { OpenTripCreateNameContext, type TripCreateNameEntry } from "./hostedTripCreatePickers";
 import { TripCalendarRangeField, type TripDateRange } from "./TripCalendarRangeField";
+type NameDraft = { self: boolean; personId: string | null; value: string };
 export function CreateTripV2Fields({
   name,
   onName,
@@ -45,11 +47,7 @@ export function CreateTripV2Fields({
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
-  const [editor, setEditor] = useState<{
-    self: boolean;
-    personId: string | null;
-    value: string;
-  } | null>(null);
+  const [editor, setEditor] = useState<NameDraft | null>(null);
   const editorRef = useRef(editor);
   const changeEditor = (next: Parameters<typeof setEditor>[0]) => {
     const value = typeof next === "function" ? next(editorRef.current) : next;
@@ -58,9 +56,8 @@ export function CreateTripV2Fields({
     editorRef.current = value;
     setEditor(value);
   };
-  const done = () => {
-    const editor = editorRef.current;
-    if (!editor || disabled) return;
+  const applyName = (editor: NameDraft) => {
+    if (disabled) return;
     if (editor.self) onSelfNickname(editor.value);
     else if (editor.personId)
       onTravelers(
@@ -75,7 +72,44 @@ export function CreateTripV2Fields({
         ...travelers,
         { personId: createUuid(), operationId: createUuid(), displayName: editor.value },
       ]);
+  };
+  const done = () => {
+    if (!editorRef.current || disabled) return;
+    applyName(editorRef.current);
     changeEditor(null);
+  };
+  const openName = useContext(OpenTripCreateNameContext);
+  const latest = useRef<{
+    disabled: boolean;
+    applyName(draft: NameDraft): void;
+    onClose(): void;
+  } | null>(null);
+  useLayoutEffect(() => {
+    latest.current = { disabled, applyName, onClose: () => { onNameEditorOpenChange?.(false); } };
+    return () => { latest.current = null; };
+  });
+  const hostedOpen = useRef(false);
+  const editName = (draft: NameDraft) => {
+    if (!openName) {
+      changeEditor(draft);
+      return;
+    }
+    if (disabled || hostedOpen.current || onNameEditorOpenChange?.(true) === false) return;
+    hostedOpen.current = true;
+    const read = (): TripCreateNameEntry | null => {
+      const current = latest.current;
+      return current ? {
+        self: draft.self,
+        initial: draft.value,
+        disabled: current.disabled,
+        apply: value => current.applyName({ ...draft, value }),
+        onClose: () => {
+          hostedOpen.current = false;
+          current.onClose();
+        },
+      } : null;
+    };
+    if (!openName(read)) read()?.onClose();
   };
   return (
     <View style={styles.fields}>
@@ -105,7 +139,7 @@ export function CreateTripV2Fields({
           accessibilityLabel={t("createTripV2.editName")}
           disabled={disabled}
           onPress={() =>
-            changeEditor({
+            editName({
               self: true,
               personId: null,
               value: selfNickname || knownSelfName,
@@ -128,7 +162,7 @@ export function CreateTripV2Fields({
               disabled={disabled}
               style={styles.person}
               onPress={() =>
-                changeEditor({
+                editName({
                   self: false,
                   personId: person.personId,
                   value: person.displayName,
@@ -162,7 +196,7 @@ export function CreateTripV2Fields({
           accessibilityLabel={t("createTripV2.addTraveler")}
           disabled={disabled || travelers.length >= 100}
           style={styles.row}
-          onPress={() => changeEditor({ self: false, personId: null, value: "" })}
+          onPress={() => editName({ self: false, personId: null, value: "" })}
         >
           <AppIcon name="plus.circle" color={colors.accent} />
           <UiText style={styles.action}>{t("createTripV2.addTraveler")}</UiText>

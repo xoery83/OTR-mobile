@@ -18,6 +18,8 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useContext: () => null,
+  useLayoutEffect: () => {},
   useRef: (initial: any) => (state.refs[state.refCursor++] ??= { current: initial }),
   useState: (initial: unknown) => {
     const i = state.cursor++;

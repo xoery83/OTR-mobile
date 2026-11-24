@@ -24,6 +24,7 @@ import {
 } from "./DayFeedShell";
 import { dayFeedCalendarBounds, DayFeedCalendarSheet } from "./DayFeedCalendarSheet";
 import { hostedDayCalendarEnabled } from "./dayCalendarHandoff";
+import { hostedTripCreateEnabled, openHostedTripCreate } from "./hostedTripCreate";
 import type { DayListHandle } from "./WindowedDayList";
 import type { DaySummary } from "./dayFeedWindow";
 import {
@@ -92,7 +93,7 @@ import {
   usePathname,
   useFocusEffect,
 } from "expo-router";
-import { useHeaderHeight, usePreventRemove } from "expo-router/react-navigation";
+import { useHeaderHeight, usePreventRemove, useRoute } from "expo-router/react-navigation";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -214,6 +215,7 @@ function TripContent({
     [headerBottom],
   );
   const navigation = useNavigation();
+  const { key: workspaceRouteKey } = useRoute();
   const bottomBarHeight = useBottomShellHeight(hasBottomShell);
   const [headingHidden, setHeadingHidden] = useState(false);
   const headingBottom = useRef(0);
@@ -603,6 +605,11 @@ function TripContent({
       });
   }, [select, generation, pathname, params.view]);
   const createTrip = () => {
+    if (hostedTripCreateEnabled) {
+      const state = navigation.getState();
+      if (!navigation.isFocused() || state?.routes[state.index]?.key !== workspaceRouteKey) return;
+      if (openHostedTripCreate(workspaceRouteKey, generation)) return;
+    }
     select(null);
     router.setParams({ tripId: "", date: "", zone: "", view: "create" });
   };

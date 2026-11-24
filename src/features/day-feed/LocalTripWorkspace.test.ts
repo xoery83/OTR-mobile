@@ -17,6 +17,13 @@ import {
 } from "@/data/auth/accountGeneration";
 import { LocalTripWorkspace } from "./LocalTripWorkspace";
 import { router } from "expo-router";
+vi.mock("@/components/SheetRoutePanel", () => ({
+  SheetRoutePanel: (panel: { title: string; action: unknown; children: ReactNode }) => {
+    state.nodes.push({ hostedTripCreate: panel.action });
+    return createElement("section", null, panel.children);
+  },
+}));
+vi.mock("./TripCreatePickerFields", () => ({ TripCreatePickerFields: "trip-create-picker-fields" }));
 const restore = vi.hoisted(() => ({
   observation: null as any,
   refresh: vi.fn(),
@@ -410,6 +417,7 @@ const props = {
   serverParentPeopleEnabled: false,
   tripId: null as string | null,
   mode: "LIST" as "LIST" | "CREATE",
+  hostedCreate: undefined as Parameters<typeof LocalTripWorkspace>[0]["hostedCreate"],
   onOpen: vi.fn(),
   onCreate: vi.fn(),
   onOpenToday: vi.fn(),
@@ -497,6 +505,7 @@ beforeEach(() => {
   props.widgetsForHome.mockReturnValue([]);
   props.tripId = null;
   props.mode = "LIST";
+  props.hostedCreate = undefined;
   props.serverParentPeopleEnabled = false;
   props.onOpen.mockReset();
   props.onKnownTrip.mockClear();
@@ -1225,6 +1234,36 @@ it("Close confirms meaningful new Trip edits and never submits a create", async 
   state.alert.mock.lastCall![2][1].onPress();
   expect(props.onBackToTrips).toHaveBeenCalledOnce();
   expect(repo.createTrip).not.toHaveBeenCalled();
+});
+
+it("guards hosted Create, then locks an already saved draft if the Sheet stays open", async () => {
+  const repo = repository();
+  state.repo.mockResolvedValue(repo);
+  const registerClose = vi.fn<(guard: () => boolean | Promise<boolean>) => () => void>(() => () => {});
+  props.mode = "CREATE";
+  props.hostedCreate = { registerClose, isCurrent: () => true };
+  render();
+  await flush();
+  render();
+  input("createTripV2.name", "QA hosted trip");
+  render();
+  const decide = registerClose.mock.lastCall![0]();
+  state.alert.mock.lastCall![2][0].onPress();
+  await expect(decide).resolves.toBe(false);
+  expect(repo.createTrip).not.toHaveBeenCalled();
+
+  const create = state.nodes.find(node => node.hostedTripCreate)!.hostedTripCreate;
+  expect(create.disabled).toBe(false);
+  create.onPress();
+  await flush();
+  render();
+  expect(repo.createTrip).toHaveBeenCalledTimes(1);
+  expect(props.onOpen).toHaveBeenCalledTimes(1);
+  expect(state.nodes.find(node => node.hostedTripCreate)!.hostedTripCreate.disabled).toBe(true);
+  create.onPress();
+  await flush();
+  expect(repo.createTrip).toHaveBeenCalledTimes(1);
+  await expect(registerClose.mock.lastCall![0]()).resolves.toBe(true);
 });
 
 it("Creator Close discards staged cover without an independent write and cannot dismiss an in-flight atomic save", async () => {

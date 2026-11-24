@@ -6,16 +6,25 @@ import type { SheetHost } from "./SheetHost";
 const navigation = vi.hoisted(() => ({
   getState: vi.fn<() => { key: string; index: number; routes: { key: string }[] }>(),
   dispatch: vi.fn(),
+  requestClose: vi.fn(),
+  preventRemove: vi.fn(),
 }));
 
 vi.mock("expo-router", () => ({ Stack: "Stack", router: {}, useNavigation: () => navigation }));
-vi.mock("expo-router/react-navigation", () => ({ useRoute: () => ({ key: "sheet" }) }));
+vi.mock("expo-router/react-navigation", () => ({
+  useRoute: () => ({ key: "sheet" }),
+  usePreventRemove: navigation.preventRemove,
+}));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useCallback: (callback: unknown) => callback,
+  useRef: (current: unknown) => ({ current }),
   useState: (value: unknown) => [value, vi.fn()],
 }));
-vi.mock("./SheetHost", () => ({ SheetHost: "SheetHost" }));
+vi.mock("./SheetHost", () => ({
+  SheetHost: "SheetHost",
+  useSheetMotion: () => ({ requestClose: navigation.requestClose }),
+}));
 vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({ surface: "surface" }) }));
 
 const initial = { key: "root", index: 1, routes: [{ key: "day" }, { key: "sheet" }] };
@@ -24,6 +33,8 @@ const returned = { key: "root", index: 0, routes: [{ key: "day" }] };
 beforeEach(() => {
   navigation.getState.mockReset().mockReturnValue(initial);
   navigation.dispatch.mockReset();
+  navigation.requestClose.mockReset();
+  navigation.preventRemove.mockReset();
 });
 
 it("registers cancellation after pop and before the owner’s queued reload", async () => {
@@ -86,4 +97,27 @@ it("refuses a selection when no originating root can be restored", () => {
   expect(host.props.onClose(action)).toBe(false);
   expect(navigation.dispatch).not.toHaveBeenCalled();
   expect(action).not.toHaveBeenCalled();
+});
+
+it("sends the native root Back through the host and only replays the guarded approved pop", () => {
+  const onDismiss = vi.fn();
+  const confirmClose = vi.fn(() => false);
+  const panel = SheetRouteLayout({ guardNativeBack: true, confirmClose, onDismiss });
+  const host = panel.props.children as ReactElement<ComponentProps<typeof SheetHost>>;
+  type NativeBackElement = ReactElement<{ approvedRemoval: { current: boolean } },
+    (props: { approvedRemoval: { current: boolean } }) => null>;
+  const guard = (host.props.children as NativeBackElement[])[0];
+  guard.type(guard.props);
+  expect(navigation.preventRemove.mock.lastCall?.[0]).toBe(true);
+  const prevent = navigation.preventRemove.mock.lastCall?.[1];
+  const action = { type: "GO_BACK", source: "sheet", target: "root" };
+  prevent({ data: { action } });
+  expect(navigation.requestClose).toHaveBeenCalledTimes(1);
+  expect(navigation.dispatch).not.toHaveBeenCalled();
+  expect(host.props.confirmClose()).toBe(false);
+  expect(onDismiss).not.toHaveBeenCalled();
+  navigation.dispatch.mockImplementationOnce(action => prevent({ data: { action } }))
+    .mockImplementationOnce(() => navigation.getState.mockReturnValue(returned));
+  expect(host.props.onClose()).toBe(true);
+  expect(onDismiss).toHaveBeenCalledTimes(1);
 });
