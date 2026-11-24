@@ -68,3 +68,18 @@ it("only exposes and releases a metadata choice for its exact editor invocation"
   releaseTripMetadataCover("editor", choice);
   expect(tripMetadataCoverBusy("editor")).toBe(false);
 });
+
+it("releases an exact personal busy guard after work finishes while covered", () => {
+  const cover = { trip: { id: "trip" }, onSelect: vi.fn() };
+  let current = true;
+  const id = openTripCoverSheet(account.generation, cover, undefined, () => current);
+  setTripCoverSheetBusy(id, true);
+  expect(personalTripCoverBusy(id)).toBe(true);
+  current = false;
+  setTripCoverSheetBusy(id, false);
+  setTripCoverSheetBusy(id, true);
+  current = true;
+  expect(readPersonalTripCoverSheet(id)).toBe(cover);
+  expect(personalTripCoverBusy(id)).toBe(false);
+  releasePersonalTripCoverSheet(id);
+});

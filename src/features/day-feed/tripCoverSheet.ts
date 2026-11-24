@@ -51,7 +51,8 @@ export function updateTripCoverSheet(id: string | undefined, cover: TripCoverShe
 }
 
 export function setTripCoverSheetBusy(id: string | undefined, busy: boolean) {
-  if (!active || !readTripCoverSheet(id) || active.busy === busy) return;
+  if (!active || active.id !== id || active.busy === busy || (busy && !readTripCoverSheet(id)))
+    return;
   active.busy = busy;
   notify();
 }
