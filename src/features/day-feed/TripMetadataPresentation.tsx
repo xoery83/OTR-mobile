@@ -6,9 +6,11 @@ import {
   hostedTripMetadataEnabled, openTripMetadataSheet, readTripMetadataSheet, releaseTripMetadataSheet, updateTripMetadataSheet, type MetadataEditorElement,
 } from "./tripMetadataSheet";
 
-export function TripMetadataPresentation({ generation, tripId, requestClose, swipeEnabled, style, children }: {
+export function TripMetadataPresentation({ generation, tripId, canOpen, onOpenRefused, requestClose, swipeEnabled, style, children }: {
   generation: number;
   tripId: string;
+  canOpen(): boolean;
+  onOpenRefused(): void;
   requestClose(): void;
   swipeEnabled: boolean;
   style: StyleProp<ViewStyle>;
@@ -26,8 +28,15 @@ export function TripMetadataPresentation({ generation, tripId, requestClose, swi
     const value = { editor: children, requestClose };
     if (current) updateTripMetadataSheet(invocation.current, value);
     else if (children) {
+      if (!canOpen()) {
+        onOpenRefused();
+        return;
+      }
       const id = openTripMetadataSheet(generation, value);
-      if (!id) return;
+      if (!id) {
+        onOpenRefused();
+        return;
+      }
       invocation.current = id;
       router.push({ pathname: "/trip-metadata-sheet", params: { invocation: id } });
     }

@@ -182,6 +182,8 @@ const state = vi.hoisted(() => ({
   parentMetadataSave: vi.fn(),
   forceEffects: false,
   focused: true,
+  blur: null as null | (() => void),
+  hostedMetadata: false,
   focusReturned: false,
   foreground: null as null | ((state: string) => void),
   finance: null as TripHomeWidget | null,
@@ -201,6 +203,10 @@ vi.mock("@/data/repositories/tripMetadataRepository", async (original) => ({
   saveServerParentTripMetadata: state.parentMetadataSave,
 }));
 vi.mock("./useTripPersonalCover", () => ({ useTripPersonalCover: () => state.personal }));
+vi.mock("./tripMetadataSheet", async (original) => ({
+  ...(await original<typeof import("./tripMetadataSheet")>()),
+  get hostedTripMetadataEnabled() { return state.hostedMetadata; },
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: (_: unknown, snapshot: () => unknown) => snapshot(),
@@ -489,6 +495,8 @@ beforeEach(() => {
   state.alert.mockReset();
   state.forceEffects = false;
   state.focused = true;
+  state.blur = null;
+  state.hostedMetadata = false;
   state.focusReturned = false;
   state.repo.mockReset();
   state.saveTraveler.mockReset();
@@ -1710,6 +1718,64 @@ it("captures the confirmed ordered-list baseline on opening, never rebases revis
     undefined,
   );
 });
+
+it.each(["another route", "legacy roster", "roster before the qualified editor renders"])(
+  "retires a hosted Settings attempt covered by %s",
+  async (cover) => {
+    state.hostedMetadata = true;
+    vi.mocked(router.push).mockClear();
+    const { current, confirmed } = structuredFixture();
+    const repo = repository([current]);
+    const read = deferred<Awaited<ReturnType<typeof repo.readMetadataEditBase>>>();
+    vi.mocked(repo.readMetadataEditBase).mockReturnValue(read.promise);
+    state.repo.mockResolvedValue(repo);
+    props.tripId = current.id;
+    render();
+    await flush();
+    state.forceEffects = true;
+    render();
+    state.preparation.onSetup({
+      context: { accountId: "actor", tripId: current.id, generation: getAccountGeneration() },
+      currency: { state: "UNAVAILABLE" },
+      members: { state: "AVAILABLE", namedCount: 0, people: [] },
+      invitations: "UNKNOWN",
+      connections: "UNKNOWN",
+    });
+    render();
+    button("tripHome.edit").onPress();
+    await flush();
+    expect(repo.readMetadataEditBase).toHaveBeenCalledTimes(1);
+    if (cover === "roster before the qualified editor renders") {
+      read.resolve({ confirmed, pendingOperationIds: [] });
+      await flush();
+    }
+    if (cover === "another route") {
+      state.focused = false;
+      state.blur?.();
+      state.focused = true;
+    } else {
+      const actions = state.publish.mock.calls.filter(([action]) => action?.members).at(-1)?.[0];
+      actions.members();
+    }
+    read.resolve({ confirmed, pendingOperationIds: [] });
+    await flush();
+    render();
+    expect(router.push).not.toHaveBeenCalled();
+    if (cover !== "another route") {
+      const roster = state.nodes.find((node) => node.membersSheet?.visible);
+      expect(roster).toBeDefined();
+      roster!.membersSheet.onClose();
+    }
+    render();
+    button("tripHome.edit").onPress();
+    await flush();
+    render();
+    expect(router.push).toHaveBeenCalledExactlyOnceWith({
+      pathname: "/trip-metadata-sheet",
+      params: { invocation: expect.any(String) },
+    });
+  },
+);
 
 it.each(["missing", "pending", "different-local-list"])(
   "never falls back to scalar edit for %s structured baseline",
@@ -3104,6 +3170,13 @@ it.each(["cancel", "failure", "generation"])(
 
 vi.mock("expo-router", () => ({
   router: { push: vi.fn() },
+  useNavigation: () => ({
+    isFocused: () => state.focused,
+    addListener: (_event: "blur", callback: () => void) => {
+      state.blur = callback;
+      return () => { if (state.blur === callback) state.blur = null; };
+    },
+  }),
   useFocusEffect: (callback: () => void | (() => void)) => {
     if (state.focused && (state.mount || state.forceEffects || state.focusReturned))
       state.effects.push(callback);

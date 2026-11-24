@@ -41,7 +41,7 @@ import { ServerParentTripPeople } from "@/features/people/ServerParentTripPeople
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useNavigation } from "expo-router";
 import { SheetHeader } from "@/components/SheetHeader";
 import { useTripView } from "./TripViewContext";
 import { TripHomeFrame } from "@/features/trip/TripHomeFrame";
@@ -95,6 +95,7 @@ import { MyTripsListSkeleton } from "./MyTripsListSkeleton";
 import { calendarDate } from "./TripCalendarField";
 import { TripBasicEditor } from "./TripBasicEditor";
 import { TripMetadataPresentation } from "./TripMetadataPresentation";
+import { hostedTripMetadataEnabled } from "./tripMetadataSheet";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripMembersSummary } from "./TripSetupRows";
 import { TripMembersSheet } from "./TripMembersSheet";
@@ -185,6 +186,7 @@ function LocalTripContent({
   generation,
 }: Props & { generation: number }) {
   useUiLocale();
+  const navigation = useNavigation();
   const styles = useThemedStyles(createStyles);
   const [trips, setTrips] = useState<Trip[]>([]),
     [remoteTrips, setRemoteTrips] = useState<TripListSummary[]>([]),
@@ -234,6 +236,18 @@ function LocalTripContent({
   const [destinationQueryDirty, setDestinationQueryDirty] = useState(false);
   const [destinationBusy, setDestinationBusy] = useState(false);
   const [coverOpen, setCoverOpen] = useState(false);
+  const metadataOpenAttempt = useRef(0);
+  const qualifiedMetadataOpen = useRef<number | undefined>(undefined);
+  const retireMetadataOpen = useCallback(() => {
+    metadataOpenAttempt.current += 1;
+  }, []);
+  useLayoutEffect(() => {
+    if (hostedTripMetadataEnabled) return navigation.addListener("blur", retireMetadataOpen);
+  }, [navigation, retireMetadataOpen]);
+  const canPresentMetadata = () =>
+    qualifiedMetadataOpen.current === metadataOpenAttempt.current &&
+    navigation.isFocused() &&
+    generation === getAccountGeneration();
   const [remoteMetadataEditor, setRemoteMetadataEditor] = useState<Awaited<
     ReturnType<typeof readServerParentMetadataEditBase>
   > | null>(null);
@@ -962,12 +976,27 @@ function LocalTripContent({
   };
   const openTripEditor = useCallback(async () => {
     if (!alive.current || generation !== getAccountGeneration()) return;
+    if (
+      hostedTripMetadataEnabled &&
+      (!navigation.isFocused() || coverOpen || menuMembersTrip || personalCoverOpen || itemFormOpen)
+    )
+      return;
+    const attempt = ++metadataOpenAttempt.current;
+    const isCurrent = () =>
+      alive.current &&
+      generation === getAccountGeneration() &&
+      (!hostedTripMetadataEnabled ||
+        (metadataOpenAttempt.current === attempt && navigation.isFocused()));
+    const open = () => {
+      qualifiedMetadataOpen.current = attempt;
+      setCoverOpen(true);
+    };
     if (!selected && remoteSelected && serverParentPeopleEnabled) {
       // Reuse the qualified base; the owning save still checks the current revision and ACL.
       if (remoteMetadataQualified && remoteMetadataReady) {
         setRemoteMetadataEditor(remoteMetadataReady);
         setMetadataBaseError(false);
-        setCoverOpen(true);
+        open();
         return;
       }
       const ticket = request.current;
@@ -979,18 +1008,16 @@ function LocalTripContent({
         );
         const base = await readServerParentMetadataEditBase(scope);
         if (
-          !alive.current ||
-          generation !== getAccountGeneration() ||
+          !isCurrent() ||
           ticket !== request.current
         )
           return;
         setRemoteMetadataEditor(base);
         setMetadataBaseError(false);
-        setCoverOpen(true);
+        open();
       } catch {
         if (
-          alive.current &&
-          generation === getAccountGeneration() &&
+          isCurrent() &&
           ticket === request.current
         )
           setMetadataBaseError(true);
@@ -1006,9 +1033,9 @@ function LocalTripContent({
     if (selected.syncFormatVersion === 2) {
       try {
         const repo = await readLocalTripRepository();
-        if (!alive.current || generation !== getAccountGeneration()) return;
+        if (!isCurrent()) return;
         const base = await repo.readMetadataEditBase(selected.id);
-        if (!alive.current || generation !== getAccountGeneration()) return;
+        if (!isCurrent()) return;
         const local = {
           name: selected.name,
           destination: selected.destination,
@@ -1024,7 +1051,7 @@ function LocalTripContent({
             canonicalCoreJson(base.confirmed.metadata as Json)
         ) {
           const localBase = await repo.readDeferredMetadataEditBase(selected.id);
-          if (!alive.current || generation !== getAccountGeneration()) return;
+          if (!isCurrent()) return;
           if (
             canonicalCoreJson(local as Json) !==
             canonicalCoreJson(localBase.metadata as Json)
@@ -1036,13 +1063,17 @@ function LocalTripContent({
           deferredMetadataActionId.current = createUuid();
         } else metadataEditBase.current = base.confirmed;
       } catch {
-        if (alive.current && generation === getAccountGeneration())
+        if (isCurrent())
           setMetadataBaseError(true);
         return;
       }
     }
-    setCoverOpen(true);
-  }, [selected, remoteSelected, remoteMetadataQualified, remoteMetadataReady, serverParentPeopleEnabled, generation]);
+    open();
+  }, [
+    selected, remoteSelected, remoteMetadataQualified, remoteMetadataReady,
+    serverParentPeopleEnabled, generation, navigation, coverOpen, menuMembersTrip,
+    personalCoverOpen, itemFormOpen,
+  ]);
 
   const leaveHome = useCallback(() => {
     if (!alive.current || generation !== getAccountGeneration()) return;
@@ -1181,8 +1212,10 @@ function LocalTripContent({
           setup.members.state === "AVAILABLE"
             ? {
                 members: () => {
-                  if (alive.current && generation === getAccountGeneration())
+                  if (alive.current && generation === getAccountGeneration()) {
+                    retireMetadataOpen();
                     setMenuMembersTrip(owner);
+                  }
                 },
               }
             : {}),
@@ -1190,14 +1223,17 @@ function LocalTripContent({
           itinerary: (date) => {
             if (!alive.current || generation !== getAccountGeneration()) return;
             if (selected.id !== tripId) return;
+            retireMetadataOpen();
             setItemStart(date ?? "");
             setItemFormOpen(true);
           },
           ...(photosReady
             ? {
                 photos: () => {
-                  if (alive.current && generation === getAccountGeneration())
+                  if (alive.current && generation === getAccountGeneration()) {
+                    retireMetadataOpen();
                     photoAdd.current?.();
+                  }
                 },
               }
             : {}),
@@ -1221,6 +1257,7 @@ function LocalTripContent({
       quickActionsOwner,
       leaveHome,
       openTripEditor,
+      retireMetadataOpen,
       onChooseDay,
     ]),
   );
@@ -1233,9 +1270,12 @@ function LocalTripContent({
       : metadata;
   const openPersonalCover = personalCover.selection
     ? async () => {
+        retireMetadataOpen();
         if (await personalCover.open()) {
-          if (alive.current && generation === getAccountGeneration())
+          if (alive.current && generation === getAccountGeneration()) {
+            retireMetadataOpen();
             setPersonalCoverOpen(true);
+          }
         }
       }
     : undefined;
@@ -1285,6 +1325,7 @@ function LocalTripContent({
     onBuild: selected
       ? () => {
           if (generation === getAccountGeneration()) {
+            retireMetadataOpen();
             setItemStart("");
             setItemFormOpen(true);
           }
@@ -1385,6 +1426,8 @@ function LocalTripContent({
     <TripMetadataPresentation
       generation={generation}
       tripId={editorTrip.id}
+      canOpen={canPresentMetadata}
+      onOpenRefused={() => setCoverOpen(false)}
       swipeEnabled={!editorSaving && !editorDirty && !editorFrozen}
       style={styles.modal}
       requestClose={() => {
@@ -1686,6 +1729,8 @@ function LocalTripContent({
           <TripMetadataPresentation
             generation={generation}
             tripId={selected.id}
+            canOpen={canPresentMetadata}
+            onOpenRefused={() => setCoverOpen(false)}
             swipeEnabled={!editorSaving && !editorDirty && !editorFrozen}
             style={styles.modal}
             requestClose={() => {
