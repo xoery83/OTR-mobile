@@ -43,6 +43,7 @@ import {
 } from "@/data/operations/universalV3Activity";
 import { UniversalV3ResultPresentation } from "./UniversalV3ResultPresentation";
 import { AppIcon } from "@/components/AppIcon";
+import type { RelatedImportActivity } from "./importSheetNavigation";
 
 export function UniversalCaptureResults({
   model,
@@ -53,6 +54,7 @@ export function UniversalCaptureResults({
   originalsListedElsewhere = false,
   onLegacyPhotoReview,
   onOpenReview,
+  onOpenRelatedUpdates,
   onOpenDocument,
   onReturnToTrip,
   processingDetails = false,
@@ -67,6 +69,7 @@ export function UniversalCaptureResults({
   originalsListedElsewhere?: boolean;
   onLegacyPhotoReview?(enabled: boolean): void;
   onOpenReview?(jobId: string): void;
+  onOpenRelatedUpdates?(activity: RelatedImportActivity): void;
   onOpenDocument?(itemId: string, documentId: string): void;
   onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
   processingDetails?: boolean;
@@ -174,6 +177,7 @@ export function UniversalCaptureResults({
           onDone={onDone}
           onHistoryChange={onHistoryChange}
           onOpenReview={onOpenReview}
+          onOpenRelatedUpdates={onOpenRelatedUpdates}
           onOpenAcceptedItem={onOpenAcceptedItem}
           onOpenDocument={onOpenDocument}
           onReturnToTrip={onReturnToTrip}
@@ -215,6 +219,7 @@ export function UniversalV3Activity({
   formatUnavailable,
   isCurrent,
   onOpenReview,
+  onOpenRelatedUpdates,
   onOpenDocument,
   onReturnToTrip,
   onOpenAcceptedItem,
@@ -230,6 +235,7 @@ export function UniversalV3Activity({
   formatUnavailable: boolean;
   isCurrent(): boolean;
   onOpenReview?(jobId: string): void;
+  onOpenRelatedUpdates?(activity: RelatedImportActivity): void;
   onOpenDocument?(itemId: string, documentId: string): void;
   onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
   processingDetails?: boolean;
@@ -403,18 +409,27 @@ export function UniversalV3Activity({
         });
       }}
       onUpdates={() => {
+        if (!isCurrent()) return;
+        const activity = {
+          batchId: model.batch.batchId,
+          jobId: model.batch.jobId,
+          tripId: model.batch.context.tripPrior?.id ?? model.assignedTripId ?? "",
+        };
+        if (onOpenRelatedUpdates) {
+          onOpenRelatedUpdates(activity);
+          return;
+        }
         void Promise.all([
           import("expo-router"),
           import("@/data/auth/accountGeneration"),
         ]).then(([{ router }, { getAccountGeneration }]) => {
           if (isCurrent())
             router.push({
-              pathname: hostedComposer ? "/import-plans/updates" : "/import-updates",
+              pathname: "/import-updates",
               params: {
-                activityId: model.batch.batchId,
-                activityJobId: model.batch.jobId,
-                activityTripId:
-                  model.batch.context.tripPrior?.id ?? model.assignedTripId ?? "",
+                activityId: activity.batchId,
+                activityJobId: activity.jobId,
+                activityTripId: activity.tripId,
                 originGeneration: String(getAccountGeneration()),
               },
             });

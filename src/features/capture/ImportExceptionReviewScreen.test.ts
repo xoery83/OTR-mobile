@@ -242,7 +242,6 @@ it("uses root Close and refuses reader work for a stale direct Updates Review", 
   type ReviewProps = NonNullable<Parameters<typeof ImportExceptionReviewScreen>[0]>;
   const review = createElement<ReviewProps>(ImportExceptionReviewScreen, {
     hosted: true,
-    standalone: true,
     requiredGeneration: String(getAccountGeneration() + 1),
   });
   const html = renderToStaticMarkup(review);

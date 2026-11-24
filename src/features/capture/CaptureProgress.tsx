@@ -24,6 +24,7 @@ import { visual } from "@/ui/visual";
 import { captureActivityTime } from "./CaptureActivity";
 import type { OpenAcceptedImportItem } from "./useUniversalP1Admission";
 import { HistoricalImportBatchDetail } from "./HistoricalImportBatchDetail";
+import type { RelatedImportActivity } from "./importSheetNavigation";
 const UniversalResults = lazy(() =>
   import("./UniversalCaptureResults").then((module) => ({
     default: module.UniversalCaptureResults,
@@ -49,6 +50,7 @@ export function CaptureProgress({
   onNewImport,
   onOpenAcceptedItem,
   onOpenReview,
+  onOpenRelatedUpdates,
   onOpenDocument,
   onReturnToTrip,
   onResultsReady,
@@ -75,6 +77,7 @@ export function CaptureProgress({
   onNewImport: () => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   onOpenReview?(jobId: string): void;
+  onOpenRelatedUpdates?(activity: RelatedImportActivity): void;
   onOpenDocument?(itemId: string, documentId: string): void;
   onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
   onResultsReady?(ready: boolean): void;
@@ -278,6 +281,7 @@ export function CaptureProgress({
                 readTripTargets={readTripTargets}
                 onOpenAcceptedItem={onOpenAcceptedItem}
                 onOpenReview={onOpenReview}
+                onOpenRelatedUpdates={onOpenRelatedUpdates}
                 onOpenDocument={onOpenDocument}
                 onReturnToTrip={onReturnToTrip}
                 processingDetails={detailsOpen}

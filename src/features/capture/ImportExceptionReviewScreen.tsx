@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { NavigationContextTitle } from "@/components/navigationChrome";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText } from "@/ui/controls";
@@ -55,11 +55,11 @@ type Owner = Awaited<ReturnType<typeof openUniversalV3Review>>;
 type Candidate = V3AdmissionRow["candidate"];
 export function ImportExceptionReviewScreen({
   hosted = false,
-  standalone = false,
+  onHostedBack,
   requiredGeneration,
 }: {
   hosted?: boolean;
-  standalone?: boolean;
+  onHostedBack?(): void;
   requiredGeneration?: string;
 } = {}) {
   useUiLocale();
@@ -210,7 +210,7 @@ export function ImportExceptionReviewScreen({
   );
   if (hosted) {
     return (
-      <SheetRoutePanel title={t("common.review")} onBack={standalone ? undefined : () => router.back()} ownsScroll>
+      <SheetRoutePanel title={t("common.review")} onBack={onHostedBack} ownsScroll>
         {content}
       </SheetRoutePanel>
     );

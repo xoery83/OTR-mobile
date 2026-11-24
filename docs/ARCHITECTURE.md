@@ -124,6 +124,12 @@ available to the legacy callers and with the flag off. Existing capture draft,
 Operation and permissions continue to belong to Capture. An external Quick Add
 handoff applies only after the originating Sheet's own successful close.
 
+Related Updates retains the exact originating Results entry while it opens in
+the Import stack. The same authorized Job returns to that Results entry.
+Review and other Jobs open as children of the Updates entry. A Review opened
+directly from standalone Updates has its own Sheet close and retains the
+existing Review reader, permission checks and operations.
+
 The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.
