@@ -1,4 +1,5 @@
 import { UiTextInput as TextInput } from "@/ui/forms";
+import { UiText } from "@/ui/controls";
 import { t, getFormatLocale } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -29,6 +30,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
   const { width, height, fontScale } = useWindowDimensions();
   const compactLandscape = hosted && width > height && height < 480;
   const largeText = hosted && fontScale > 1.5;
+  const PickerText = hosted ? UiText : Text;
   useUiLocale();
   const locale = getFormatLocale();
   const rows = useMemo(() => searchCurrencies(query), [query]);
@@ -58,7 +60,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
         ListHeaderComponent={
           searching ? null : (
             <View style={styles.top}>
-              <Text style={styles.heading}>{t("currency.suggested")}</Text>
+              <PickerText style={styles.heading}>{t("currency.suggested")}</PickerText>
               <View style={largeText ? styles.largeChips : styles.chips}>
                 {suggested.map((code) => (
                   <Pressable
@@ -67,28 +69,33 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
                     accessibilityRole="button"
                     accessibilityState={{ selected: selected === code }}
                     onPress={() => onSelect(code)}
-                    style={[styles.chip, largeText && styles.largeChip, selected === code && styles.selectedChip]}
+                    style={[
+                      styles.chip,
+                      hosted && styles.hostedChip,
+                      largeText && styles.largeChip,
+                      selected === code && styles.selectedChip,
+                    ]}
                   >
                     {selected === code ? (
                       <AppIcon color={colors.accent} name="checkmark" size={14} />
                     ) : null}
-                    <Text style={[styles.code, selected === code && styles.selectedText]}>
+                    <PickerText style={[styles.code, selected === code && styles.selectedText]}>
                       {code}
-                    </Text>
-                    <Text
-                      numberOfLines={largeText ? undefined : 1}
+                    </PickerText>
+                    <PickerText
+                      numberOfLines={hosted ? undefined : 1}
                       style={[styles.chipName, largeText && styles.largeChipName, selected === code && styles.selectedText]}
                     >
                       {currencyName(code, locale)}
-                    </Text>
+                    </PickerText>
                   </Pressable>
                 ))}
               </View>
-              <Text style={[styles.heading, styles.allHeading]}>{t("currency.all")}</Text>
+              <PickerText style={[styles.heading, styles.allHeading]}>{t("currency.all")}</PickerText>
             </View>
           )
         }
-        ListEmptyComponent={<Text style={styles.empty}>{t("currency.noMatches")}</Text>}
+        ListEmptyComponent={<PickerText style={styles.empty}>{t("currency.noMatches")}</PickerText>}
         renderItem={({ item }) => (
           <Pressable
             accessibilityLabel={label(item)}
@@ -97,10 +104,10 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
             onPress={() => onSelect(item)}
             style={styles.row}
           >
-            <Text style={styles.code}>{item}</Text>
-            <Text numberOfLines={largeText ? undefined : 1} style={styles.rowName}>
+            <PickerText style={styles.code}>{item}</PickerText>
+            <PickerText numberOfLines={largeText ? undefined : 1} style={styles.rowName}>
               {currencyName(item, locale)}
-            </Text>
+            </PickerText>
             {selected === item ? (
               <AppIcon color={colors.accent} name="checkmark" size={16} />
             ) : null}
@@ -149,7 +156,8 @@ const createStyles = (colors: UiColors) =>
       maxWidth: 148,
       paddingHorizontal: 10,
     },
-    largeChip: { maxWidth: "100%", paddingVertical: 6 },
+    hostedChip: { maxWidth: "100%" },
+    largeChip: { paddingVertical: 6 },
     selectedChip: { backgroundColor: colors.selected, borderColor: colors.accent },
     code: { color: colors.textPrimary, fontSize: 15, fontWeight: "700" },
     selectedText: { color: colors.accent },
