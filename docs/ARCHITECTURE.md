@@ -158,6 +158,11 @@ save callback. Directed Invite opens after the owning roster dismisses and
 rechecks the exact local member. See the Sheet acceptance matrix for device
 and role coverage.
 
+Documents File Info opens a hosted QA Sheet from the document list and from
+Document Detail. The route repeats the existing scoped metadata read using
+only the document identity and invoking account generation. Original sharing
+retains the existing confirmation and repository authorization.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.

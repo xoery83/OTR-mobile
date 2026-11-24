@@ -188,6 +188,16 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="document-file-info"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+              <Stack.Screen
                 name="documents-search-filters"
                 options={{
                   presentation: "transparentModal",

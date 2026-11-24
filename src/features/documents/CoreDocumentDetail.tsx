@@ -59,6 +59,10 @@ export function CoreDocumentDetail({
   batchJobId,
   batchId,
   informationInitially = false,
+  informationOnly = false,
+  informationMenu = false,
+  onInformationVerified,
+  openInformation,
 }: {
   entry: DocumentListEntry;
   tripId: string;
@@ -67,6 +71,10 @@ export function CoreDocumentDetail({
   batchJobId?: string;
   batchId?: string;
   informationInitially?: boolean;
+  informationOnly?: boolean;
+  informationMenu?: boolean;
+  onInformationVerified?(): (() => void) | undefined;
+  openInformation?(menu: boolean): boolean;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles),
@@ -88,6 +96,9 @@ export function CoreDocumentDetail({
   const [originalError, setOriginalError] = useState(false),
     [restoreError, setRestoreError] = useState(false);
   const [text, setText] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    if (!loading && !error) return onInformationVerified?.();
+  }, [onInformationVerified, loading, error]);
   useFocusEffect(
     useCallback(() => {
       let alive = true;
@@ -100,6 +111,10 @@ export function CoreDocumentDetail({
         const reader = await localItemImportOriginals(tripId, undefined, generation);
         const doc = (await reader.metadata()).find((row) => row.id === entry.id);
         if (!doc) throw Error("DOCUMENT_ACCESS_CHANGED");
+        if (informationOnly) {
+          if (valid()) setAvailable(doc.localAvailable);
+          return;
+        }
         if (!batchJobId) {
           const directItems = await reader.relationships(entry.id);
           if (!valid()) return;
@@ -143,7 +158,7 @@ export function CoreDocumentDetail({
       return () => {
         alive = false;
       };
-    }, [entry.id, tripId, generation, batchJobId, batchId]),
+    }, [entry.id, tripId, generation, batchJobId, batchId, informationOnly]),
   );
   const openDocument = (document: { id: string }, origin = "CORE") => {
     if (current.current())
@@ -303,16 +318,25 @@ export function CoreDocumentDetail({
       )}
     </View>
   ) : null;
+  const actions = (
+    <DocumentActions
+      available={available && entry.canOpenOriginal !== false}
+      informationInitially={informationInitially}
+      informationOnly={informationOnly}
+      informationMenu={informationMenu}
+      openInformation={openInformation}
+      onExport={() => void openOriginal(false, true)}
+      isCurrent={() => current.current()}
+    >
+      {summary}
+    </DocumentActions>
+  );
+  if (informationOnly) return error ? (
+    <UiText accessibilityRole="alert" style={styles.title}>{t("documents.denied")}</UiText>
+  ) : actions;
   return (
     <View style={styles.body}>
-      <DocumentActions
-        available={available && entry.canOpenOriginal !== false}
-        informationInitially={informationInitially}
-        onExport={() => void openOriginal(false, true)}
-        isCurrent={() => current.current()}
-      >
-        {summary}
-      </DocumentActions>
+      {actions}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
@@ -472,12 +496,18 @@ export function CoreDocumentDetail({
 export function DocumentActions({
   available,
   informationInitially = false,
+  informationOnly = false,
+  informationMenu = false,
+  openInformation,
   onExport,
   isCurrent,
   children,
 }: {
   available: boolean;
   informationInitially?: boolean;
+  informationOnly?: boolean;
+  informationMenu?: boolean;
+  openInformation?(menu: boolean): boolean;
   onExport(): void;
   isCurrent(): boolean;
   children: import("react").ReactNode;
@@ -500,7 +530,7 @@ export function DocumentActions({
   const showMenu = () => {
     if (!isCurrent()) return;
     if (Platform.OS !== "ios") {
-      setMenu(true);
+      if (!openInformation?.(true)) setMenu(true);
       return;
     }
     ActionSheetIOS.showActionSheetWithOptions(
@@ -519,11 +549,20 @@ export function DocumentActions({
       },
       (index) => {
         if (!isCurrent()) return;
-        if (index === 0) setInformation(true);
+        if (index === 0 && !openInformation?.(false)) setInformation(true);
         if (index === 1) confirmCopy();
       },
     );
   };
+  if (informationOnly) return (
+    <View style={styles.content}>
+      {children}
+      {informationMenu ? (
+        <UiButton label={t("documents.export")} disabled={!available} onPress={confirmCopy} />
+      ) : null}
+      <UiText style={styles.meta}>{t("documents.owningUnavailable")}</UiText>
+    </View>
+  );
   return (
     <>
       <Stack.Toolbar placement="right">

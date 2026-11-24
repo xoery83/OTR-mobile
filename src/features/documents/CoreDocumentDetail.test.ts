@@ -70,3 +70,31 @@ it("reads a document's direct items before waiting on import history", async () 
     finishHistory([]);
   }
 });
+
+
+it("limits hosted File Info to document metadata", async () => {
+  const entry: DocumentListEntry = {
+    id: "file-info",
+    origin: "CORE",
+    title: "Ticket",
+    byteCount: 900,
+    recordedAt: "2026-11-21T00:00:00Z",
+    mediaType: "application/pdf",
+    localAvailable: true,
+    visibility: "PRIVATE",
+  };
+  harness.metadata.mockClear().mockResolvedValue([entry]);
+  harness.relationships.mockClear();
+  harness.batches.mockClear();
+  CoreDocumentDetail({
+    entry, tripId: "trip", generation: 1, informationOnly: true, isCurrent: () => true,
+  });
+  const blur = harness.focus!();
+  try {
+    await vi.waitFor(() => expect(harness.metadata).toHaveBeenCalledOnce());
+    expect(harness.relationships).not.toHaveBeenCalled();
+    expect(harness.batches).not.toHaveBeenCalled();
+  } finally {
+    blur();
+  }
+});

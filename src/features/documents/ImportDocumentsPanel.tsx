@@ -23,6 +23,11 @@ type Props = {
   showHistoricalLinks?: boolean;
   detailActions?: boolean;
   informationInitially?: boolean;
+  informationOnly?: boolean;
+  informationMenu?: boolean;
+  onInformationVerified?(): (() => void) | undefined;
+  openInformation?(menu: boolean): boolean;
+  showBackdrop?: boolean;
   isCurrent(): boolean;
   onOpenDocument(captureId: string): void;
   onOpenActivity(jobId: string): void;
@@ -62,6 +67,10 @@ function ScopedDocuments(props: Props) {
     [opening, setOpening] = useState(false);
   const [error, setError] = useState(false),
     [hasMore, setHasMore] = useState(false);
+  const { onInformationVerified } = props;
+  useLayoutEffect(() => {
+    if (document && !loading && !error) return onInformationVerified?.();
+  }, [onInformationVerified, document, loading, error]);
   const generation = useRef(getAccountGeneration()),
     alive = useRef(true),
     sequence = useRef(0);
@@ -325,6 +334,11 @@ function ScopedDocuments(props: Props) {
       </ScrollView>
     );
   }
+  if (props.informationOnly && !document) return (
+    <UiText accessibilityRole={error ? "alert" : undefined}>
+      {t(error ? "documents.denied" : "common.loading")}
+    </UiText>
+  );
   if (props.captureId && document) {
     const detail = (
       <ImportDocumentDetail
@@ -342,6 +356,7 @@ function ScopedDocuments(props: Props) {
         opening={opening}
         error={error}
         isCurrent={current}
+        showBackdrop={props.showBackdrop}
         onOpenOriginal={(id) => {
           void openOriginal(id);
         }}
@@ -354,6 +369,9 @@ function ScopedDocuments(props: Props) {
         <DocumentActions
           available={document.localAvailable === true}
           informationInitially={props.informationInitially}
+          informationOnly={props.informationOnly}
+          informationMenu={props.informationMenu}
+          openInformation={props.openInformation}
           isCurrent={current}
           onExport={() => {
             if (!current() || opening) return;
@@ -411,7 +429,7 @@ function ScopedDocuments(props: Props) {
           </UiText>
           <UiText>{t("importDocuments.private")}</UiText>
         </DocumentActions>
-        {detail}
+        {props.informationOnly ? null : detail}
       </>
     );
   }

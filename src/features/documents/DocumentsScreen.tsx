@@ -1,3 +1,4 @@
+import { openHostedDocumentInformation } from "./openHostedDocumentInformation";
 import {
   useCallback,
   useEffect,
@@ -819,15 +820,16 @@ function DocumentDirectory({
   );
   const openDetail = (entry: DocumentListEntry, information = false) => {
     if (!active()) return;
+    const params = {
+      documentId: entry.id,
+      origin: entry.origin,
+      tripId: entry.tripId === undefined ? (tripId ?? "") : (entry.tripId ?? ""),
+      ...(entry.captureId ? { captureId: entry.captureId } : {}),
+    };
+    if (information && openHostedDocumentInformation(params)) return;
     router.push({
       pathname: "/document-detail",
-      params: {
-        documentId: entry.id,
-        origin: entry.origin,
-        tripId: entry.tripId === undefined ? (tripId ?? "") : (entry.tripId ?? ""),
-        ...(entry.captureId ? { captureId: entry.captureId } : {}),
-        ...(information ? { information: "true" } : {}),
-      },
+      params: { ...params, ...(information ? { information: "true" } : {}) },
     });
   };
   const more = () => {

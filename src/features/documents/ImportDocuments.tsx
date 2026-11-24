@@ -153,6 +153,7 @@ export function ImportDocumentDetail({
   opening,
   error,
   isCurrent,
+  showBackdrop = false,
   onOpenOriginal,
   onOpenActivity,
 }: {
@@ -168,12 +169,13 @@ export function ImportDocumentDetail({
   opening: boolean;
   error: boolean;
   isCurrent(): boolean;
+  showBackdrop?: boolean;
   onOpenOriginal(captureId: string): void;
   onOpenActivity?(jobId: string): void;
 }) {
   useUiLocale();
   const s = useThemedStyles(styles);
-  if (!isCurrent() || !matches(document, accountId, tripId))
+  if ((!isCurrent() && !showBackdrop) || !matches(document, accountId, tripId))
     return (
       <View style={s.body}>
         <UiText accessibilityRole="alert">{t("importDocuments.unavailable")}</UiText>

@@ -281,3 +281,29 @@ it.each([
     expect(document.kind).toBe("FILE");
   },
 );
+
+it("shows the authorized File Info backdrop without enabling original or batch actions", () => {
+  const { doc } = fixture();
+  const onOpenOriginal = vi.fn();
+  const onOpenActivity = vi.fn();
+  const props = {
+    document: doc,
+    accountId: doc.accountId,
+    tripId: null,
+    opening: false,
+    error: false,
+    isCurrent: () => false,
+    showBackdrop: true,
+    onOpenOriginal,
+    onOpenActivity,
+  };
+  expect(renderToStaticMarkup(createElement(ImportDocumentDetail, props)))
+    .toContain(doc.originalFilename);
+  for (const button of ui.buttons) button.onPress();
+  expect(onOpenOriginal).not.toHaveBeenCalled();
+  expect(onOpenActivity).not.toHaveBeenCalled();
+  expect(renderToStaticMarkup(createElement(ImportDocumentDetail, {
+    ...props,
+    accountId: randomUUID(),
+  }))).not.toContain(doc.originalFilename);
+});
