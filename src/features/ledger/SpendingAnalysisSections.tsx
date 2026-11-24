@@ -383,12 +383,14 @@ export function AnalysisTimeline({
   money,
   drilldown,
   onOpenPeriod,
+  periodDisabled = false,
   currencyScale = 2,
 }: {
   dashboard: AnalysisDashboard;
   money: AnalysisMoney;
   drilldown: AnalysisDrilldown;
   onOpenPeriod?: (period: AnalysisPeriod, title: string) => void;
+  periodDisabled?: boolean;
   currencyScale?: number;
 }) {
   useUiLocale();
@@ -607,7 +609,8 @@ export function AnalysisTimeline({
                   <Pressable
                     key={item.key}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: item.key === selected }}
+                    accessibilityState={{ selected: item.key === selected, disabled: periodDisabled }}
+                    disabled={periodDisabled}
                     accessibilityHint={t("ui.opensSpendingBrief")}
                     accessibilityLabel={t("analysis.periodDescription", {
                       period: periodLabel(item),
@@ -622,7 +625,7 @@ export function AnalysisTimeline({
                       count: formatExpenseCount(item.expenseCount),
                     })}
                     onPress={() => {
-                      if (pinching) return;
+                      if (pinching || periodDisabled) return;
                       if (onOpenPeriod) onOpenPeriod(item, periodLabel(item));
                       else setSelected(item.key);
                     }}

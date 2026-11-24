@@ -454,6 +454,38 @@ describe("Analysis UI transitions and request guardrails", () => {
       },
     });
   });
+  it("blocks the previous chart while an applied range is loading and resumes that range after blur", async () => {
+    ui.hosted = true;
+    const dataset = data(31);
+    const screen = await ready(dataset);
+    const timeline = (element: unknown) =>
+      nodes(element).find(node => node.type === AnalysisTimeline)!.props as ComponentProps<typeof AnalysisTimeline>;
+    const previous = timeline(screen);
+    const pressPrevious = () => previous.onOpenPeriod!(previous.dashboard.periods[0]!, "Old period");
+    press(nodes(screen).find(node => node.props.accessibilityLabel === "Choose date range")!);
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "range") throw new Error("Expected the hosted range selector");
+    const range = { from: "2026-09-02T00:00:00.000Z" };
+    ui.projection.mockImplementationOnce(() => new Promise(() => {}));
+    completeAnalysisPicker(params.invocation, picker, () => picker.choose(range));
+    pressPrevious();
+    await new Promise<void>(resolve => setImmediate(resolve));
+    expect(timeline(render()).periodDisabled).toBe(true);
+    pressPrevious();
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    ui.cleanup?.();
+    ui.cleanup = ui.focus?.() ?? null;
+    await new Promise<void>(resolve => setImmediate(resolve));
+    expect(ui.projection).toHaveBeenCalledTimes(3);
+    expect(ui.projection).toHaveBeenLastCalledWith("j", "a", range);
+    const current = timeline(render());
+    expect(current.periodDisabled).toBe(false);
+    pressPrevious();
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    current.onOpenPeriod!(current.dashboard.periods[0]!, "Current period");
+    expect(ui.push).toHaveBeenCalledTimes(2);
+  });
   it("uses a structured skeleton, then preserves previous data on local failure", async () => {
     ui.projection.mockResolvedValue(data());
     expect(nodes(render()).some((node) => node.type === AnalysisSkeleton)).toBe(true);

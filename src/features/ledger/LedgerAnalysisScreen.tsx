@@ -139,7 +139,10 @@ export function LedgerAnalysisScreen() {
           setError(t("ui.spendingAnalysisCouldNotBeRefreshedYourPreviousViewIs"));
         }
       } finally {
-        if (isCurrent()) setUpdating(false);
+        if (isCurrent()) {
+          if (pendingRange.current === range) pendingRange.current = null;
+          setUpdating(false);
+        }
       }
     },
     [generation, params.journeyId, params.memberId, request],
@@ -156,7 +159,6 @@ export function LedgerAnalysisScreen() {
           scheduled = false;
           if (!active) return;
           const range = pendingRange.current ?? rangeRef.current;
-          pendingRange.current = null;
           void load(range);
         });
       };
@@ -252,6 +254,8 @@ export function LedgerAnalysisScreen() {
       !owner ||
       !owningNavigation.isFocused() ||
       generation !== getAccountGeneration() ||
+      (picker.kind === "period" &&
+        (pendingRange.current !== null || rangeRef.current !== view?.range)) ||
       readAnalysisPicker(pickerId.current)
     )
       return;
@@ -546,6 +550,7 @@ export function LedgerAnalysisScreen() {
                     currencyScale={view.dataset.journey.settlementScale}
                     money={money}
                     drilldown={drilldown}
+                    periodDisabled={hostedLedgerAnalysisPickerEnabled && pendingRange.current !== null}
                     onOpenPeriod={hostedLedgerAnalysisPickerEnabled
                       ? (period, title) =>
                           openHostedPicker({
