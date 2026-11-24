@@ -679,4 +679,17 @@ it("Files image uses its local preview while retaining the opaque source lease",
   expect(state.nodes.some((n) => n.children === item.name)).toBe(false);
 });
 
-vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: () => null }));
+vi.mock("@/components/SheetRoutePanel", () => ({
+  SheetRoutePanel: (props: any) => {
+    state.nodes.push(props);
+    return createElement("div", {}, props.children);
+  },
+}));
+
+it("lets the hosted composer follow the keyboard and fit one line at a large text size", () => {
+  render(empty, 0, { hosted: true });
+  expect(state.nodes.some((node) => node.keyboardInsets === true)).toBe(true);
+  expect(state.nodes.find((node) => node.multiline).style[1].height).toBeGreaterThan(44);
+  render(empty, 0);
+  expect(state.nodes.find((node) => node.multiline).style[1].height).toBe(44);
+});

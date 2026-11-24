@@ -173,6 +173,7 @@ export function CaptureComposer({
   // Keep the material names visible while the multiline editor owns the keyboard.
   const inputLines = keyboardVisible && snapshot.items.length ? 3 : 6;
   const maxInputHeight = inputLines * 22 * Math.max(1, fontScale) + 20;
+  const minInputHeight = hosted ? Math.max(44, Math.ceil(fontScale * 22) + 20) : 44;
   const overLimit = maxAttachments !== undefined && count > maxAttachments;
   const sendDisabled =
     locked ||
@@ -246,8 +247,8 @@ export function CaptureComposer({
         styles.input,
         {
           height: snapshot.editorText
-            ? Math.min(maxInputHeight, Math.max(44, inputHeight))
-            : 44,
+            ? Math.min(maxInputHeight, Math.max(minInputHeight, inputHeight))
+            : minInputHeight,
           maxHeight: maxInputHeight,
         },
       ]}
@@ -743,7 +744,13 @@ export function CaptureComposer({
     if (!visible) return null;
     const nested = page !== "composer" || Boolean(onBack ?? onParentBack);
     return (
-      <SheetRoutePanel title={header} onBack={nested ? close : undefined} ownsScroll={content != null} overlay={attachmentMenu}>
+      <SheetRoutePanel
+        title={header}
+        onBack={nested ? close : undefined}
+        ownsScroll={content != null}
+        keyboardInsets={content == null && page === "composer"}
+        overlay={attachmentMenu}
+      >
         {body}
       </SheetRoutePanel>
     );
