@@ -1,10 +1,11 @@
+import { createElement, type ContextType, type ReactNode } from "react";
+import { createRequire } from "node:module";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { OpenHostedPlaceSearchContext } from "./hostedPlaceSearch";
+import { PlaceSearchSheet } from "./PlaceSearchSheet";
 vi.mock("expo-network", () => ({
   useNetworkState: () => ({ isConnected: state.connected }),
 }));
-import { createElement, type ReactNode } from "react";
-import { createRequire } from "node:module";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { PlaceSearchSheet } from "./PlaceSearchSheet";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
 };
@@ -33,6 +34,7 @@ vi.mock("react", async (original) => ({
     return state.memo.value;
   },
   useSyncExternalStore: (_: unknown, get: () => unknown) => get(),
+  useLayoutEffect: (effect: () => void) => { effect(); },
   useEffect: (effect: () => unknown) => {
     if (state.mount) state.effects.push(effect);
   },
@@ -411,4 +413,22 @@ it("Cancel/unmount closes both provider leases even while the initial Trip-regio
   await vi.advanceTimersByTimeAsync(450);
   expect(quick.complete).not.toHaveBeenCalled();
   expect(props.onConfirm).not.toHaveBeenCalled();
+});
+
+it("moves the original binding into a hosted place child before opening a provider", async () => {
+  const release = vi.fn();
+  const open = vi.fn<NonNullable<ContextType<typeof OpenHostedPlaceSearchContext>>>(() => release);
+  state.cursor = 0;
+  state.refCursor = 0;
+  renderToStaticMarkup(createElement(OpenHostedPlaceSearchContext.Provider, { value: open },
+    createElement(PlaceSearchSheet, props)));
+  const cleanup = state.effects[0]() as () => void;
+  await flush();
+  expect(open).toHaveBeenCalledOnce();
+  const entry = open.mock.calls[0][0]()!;
+  expect(entry.binding).toBe(binding);
+  expect(entry.onConfirm).toBe(props.onConfirm);
+  expect(state.factory).not.toHaveBeenCalled();
+  cleanup();
+  expect(release).toHaveBeenCalledOnce();
 });

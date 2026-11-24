@@ -11,3 +11,6 @@ type CalendarRangeEntry = TripCalendarRangePickerProps & {
 export const OpenCalendarRangePickerContext = createContext<((read: () => CalendarRangeEntry | null) => boolean) | null>(null);
 
 export const createCalendarRangePickerHandoff = () => createItineraryPickerHandoff<CalendarRangeEntry>();
+
+export const CalendarRangePickerHandoffContext =
+  createContext<ReturnType<typeof createCalendarRangePickerHandoff> | null>(null);

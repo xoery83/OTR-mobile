@@ -1,16 +1,30 @@
-import { createContext } from "react";
+import { createContext, type ReactNode } from "react";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
-import type { ManualItineraryProps } from "./ManualItineraryContent";
+import type { ManualItineraryFamily, ManualItineraryProps } from "./ManualItineraryContent";
 
 export const hostedManualItineraryEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_MANUAL_ITINERARY_QA === "true";
 
 export const ManualItineraryExitContext = createContext<{
   registerClose(handler: () => void): () => void;
   allowClose(): void;
+  hasOrigin?(routeKey: string): boolean;
 } | null>(null);
 
+export type DetailEditorPresentation = Pick<ManualItineraryProps, "registerDismissHandler" | "onClose" | "onSaved"> & {
+  embedded?: boolean;
+};
+
+export type HostedManualItinerary = ManualItineraryProps & {
+  detailEdit?: {
+    itemId: string;
+    family: ManualItineraryFamily;
+    originKey: string;
+    originFocused(): boolean;
+    render(presentation: DetailEditorPresentation): ReactNode;
+  };
+};
 let sequence = 0;
-let pending: { id: string; read(): ManualItineraryProps | undefined } | undefined;
+let pending: { id: string; read(): HostedManualItinerary | undefined } | undefined;
 const listeners = new Set<() => void>();
 const publish = () => listeners.forEach(listener => listener());
 subscribeAccountGeneration(() => {
@@ -23,7 +37,7 @@ export function subscribeManualItinerary(listener: () => void) {
   return () => { listeners.delete(listener); };
 }
 
-export function stageManualItinerary(read: () => ManualItineraryProps | undefined) {
+export function stageManualItinerary(read: () => HostedManualItinerary | undefined) {
   const id = String(++sequence);
   pending = { id, read };
   publish();

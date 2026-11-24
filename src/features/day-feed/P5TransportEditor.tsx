@@ -1,3 +1,4 @@
+import { OpenTransportTypeContext, transportPickerTypes } from "./transportTypePickerHandoff";
 import { SheetScrollView } from "@/components/SheetScrollView";
 import { HostedManualEditorIntent, ManualEditorHeader } from "./ManualEditorHeader";
 import { FormScanEntry } from "./SyntheticFormScan";
@@ -42,6 +43,8 @@ import type { PlaceSearchBinding } from "@/data/places/applePlaceProvider";
 import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 
+import { formatLocalClock, useHostedItineraryClock } from "./itineraryClockPicker";
+
 type Opened = { repository: ManualTransportRepository; draft: ManualTransportDraft };
 
 function TimeField({
@@ -55,6 +58,11 @@ function TimeField({
   disabled: boolean;
   onChange(value: string | null): void;
 }) {
+  const openHostedClock = useHostedItineraryClock({
+    label, disabled,
+    apply: selected => onChange(formatLocalClock(selected)),
+    clear: () => onChange(null),
+  });
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Date());
@@ -69,6 +77,10 @@ function TimeField({
           Keyboard.dismiss();
           const date = new Date();
           if (value) date.setHours(+value.slice(0, 2), +value.slice(3, 5), 0, 0);
+          if (openHostedClock) {
+            openHostedClock(date);
+            return;
+          }
           setSelected(date);
           setOpen(true);
         }}
@@ -97,7 +109,7 @@ function TimeField({
                 onRight={() => {
                   if (!disabled)
                     onChange(
-                      `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                      formatLocalClock(selected),
                     );
                   setOpen(false);
                 }}
@@ -335,10 +347,19 @@ export function P5TransportEditor({
         : { arrivalLocation: text || null },
     );
   };
+  const openHostedType = useContext(OpenTransportTypeContext);
   const chooseType = () => {
     if (!current() || busyRef.current || frozenRef.current) return;
     Keyboard.dismiss();
-    const types = ["TRAIN", "BUS", "FERRY", "WATER_TAXI", "SHUTTLE", "TRANSFER"] as const;
+    if (openHostedType) {
+      openHostedType({
+        selected: fieldsRef.current?.transportType ?? undefined,
+        isCurrent: () => current() && !busyRef.current && !frozenRef.current,
+        choose: transportType => change({ transportType }),
+      });
+      return;
+    }
+    const types = transportPickerTypes;
     const labels = types.map((type) => t(`tripCreate.transportType.${type}`));
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(

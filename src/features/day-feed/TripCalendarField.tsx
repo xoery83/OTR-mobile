@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { Keyboard, View } from "react-native";
 import { UiButton } from "@/ui/controls";
 import { UiDatePicker, UiFormRow } from "@/ui/forms";
 import { formatUiDate, t } from "@/ui/locale";
 import { validateCalendarDate } from "@/domain/trip/dayReadModel";
+import { useHostedItineraryClock } from "./itineraryClockPicker";
 export const calendarDate = (value: Date) =>
   [
     String(value.getFullYear()).padStart(4, "0"),
@@ -53,6 +54,14 @@ export function CalendarField({
 }) {
   const [open, setOpen] = useState(false),
     [selected, setSelected] = useState(pickerDate(value, initialNavigationDate));
+  const openHostedDate = useHostedItineraryClock({
+    label,
+    disabled,
+    mode: "date",
+    apply: next => onChange(calendarDate(next)),
+    clear: () => onChange(""),
+    onClose: () => onEditingChange?.(false),
+  });
   return (
     <View>
       <UiFormRow
@@ -62,8 +71,14 @@ export function CalendarField({
         variant={variant}
         disabled={disabled}
         onPress={() => {
-          setSelected(pickerDate(value, initialNavigationDate));
+          const initial = pickerDate(value, initialNavigationDate);
           onEditingChange?.(true);
+          if (openHostedDate) {
+            Keyboard.dismiss();
+            openHostedDate(initial);
+            return;
+          }
+          setSelected(initial);
           setOpen(true);
         }}
       />

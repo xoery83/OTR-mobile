@@ -27,6 +27,9 @@ import { useP1DocumentLinks } from "./P1DocumentLinkPicker";
 import { P1PlanEditor } from "./P1PlanEditor";
 import { useTripView } from "./TripViewContext";
 
+import type { DetailEditorPresentation } from "./hostedManualItinerary";
+import { useHostedDetailItineraryEdit } from "./useHostedDetailItineraryEdit";
+
 export function P1Detail() {
   useUiLocale();
   const params = useLocalSearchParams<{
@@ -42,6 +45,7 @@ export function P1Detail() {
     getAccountGeneration,
   );
   const { reportManualOutcome } = useTripView();
+  const openHostedEdit = useHostedDetailItineraryEdit("P1", tripId, itemId, generation);
   const [state, setState] = useState<P1DetailState | null>(null);
   const [editing, setEditing] = useState(false);
   const [localOnly, setLocalOnly] = useState(false);
@@ -106,6 +110,20 @@ export function P1Detail() {
     state?.generation === generation && state.tripId === tripId && state.itemId === itemId
       ? state
       : null;
+  const refreshSavedItem = (id: string) => {
+    if (generation !== getAccountGeneration()) return;
+    setEditing(false);
+    reportManualOutcome(tripId, generation, id);
+    setRevision((value) => value + 1);
+  };
+  const renderEditor = (presentation: DetailEditorPresentation) => visible?.editor ? (
+    <P1PlanEditor
+      tripId={tripId}
+      itemId={itemId}
+      opened={visible.editor}
+      {...presentation}
+    />
+  ) : null;
   return (
     <>
       <Stack.Screen
@@ -135,7 +153,9 @@ export function P1Detail() {
           icon="square.and.pencil"
           accessibilityLabel={t("tripCreate.editPlan")}
           disabled={!visible?.editor}
-          onPress={() => setEditing(true)}
+          onPress={() => {
+            if (visible?.editor && !openHostedEdit(renderEditor, refreshSavedItem)) setEditing(true);
+          }}
         />
       </Stack.Toolbar>
       <NavigationContentFrame>
@@ -190,20 +210,7 @@ export function P1Detail() {
         </ScrollView>
       </NavigationContentFrame>
       {visible ? documentLinks.dialog : null}
-      {editing && visible?.editor ? (
-        <P1PlanEditor
-          tripId={tripId}
-          itemId={itemId}
-          opened={visible.editor}
-          onClose={() => setEditing(false)}
-          onSaved={(id) => {
-            if (generation !== getAccountGeneration()) return;
-            setEditing(false);
-            reportManualOutcome(tripId, generation, id);
-            setRevision((value) => value + 1);
-          }}
-        />
-      ) : null}
+      {editing ? renderEditor({ embedded: false, onClose: () => setEditing(false), onSaved: refreshSavedItem }) : null}
     </>
   );
 }

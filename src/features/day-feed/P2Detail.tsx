@@ -26,6 +26,9 @@ import type { ReadParticipation } from "./bookingReadPresentation";
 import { flightSegmentFromRead } from "./manualFlightFormFields";
 import { ManualFlightEditor } from "./ManualFlightForm";
 import { useTripView } from "./TripViewContext";
+import type { DetailEditorPresentation } from "./hostedManualItinerary";
+import { useHostedDetailItineraryEdit } from "./useHostedDetailItineraryEdit";
+
 export function P2Detail() {
   useUiLocale();
   const params = useLocalSearchParams<{
@@ -50,6 +53,7 @@ export function P2Detail() {
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
   const { reportManualOutcome } = useTripView();
+  const openHostedEdit = useHostedDetailItineraryEdit("P2", tripId, itemId, generation);
   useDetailCloudRefresh(tripId, generation, editing, setRevision);
   useFocusEffect(
     useCallback(() => {
@@ -103,6 +107,21 @@ export function P2Detail() {
           ),
         }
       : undefined;
+  const refreshSavedItem = (id: string) => {
+    if (generation !== getAccountGeneration()) return;
+    setEditing(false);
+    reportManualOutcome(tripId, generation, id);
+    setRevision((value) => value + 1);
+  };
+  const renderEditor = (presentation: DetailEditorPresentation) => visible?.editable ? (
+    <ManualFlightEditor
+      tripId={tripId}
+      itemId={itemId}
+      expectedRevision={Number(visible.item.itemRevision)}
+      initialDate={null}
+      {...presentation}
+    />
+  ) : null;
   return (
     <>
       <Stack.Screen
@@ -132,7 +151,9 @@ export function P2Detail() {
           icon="square.and.pencil"
           accessibilityLabel={t("manualFlight.editFlight")}
           disabled={!visible?.editable}
-          onPress={() => setEditing(true)}
+          onPress={() => {
+            if (visible?.editable && !openHostedEdit(renderEditor, refreshSavedItem)) setEditing(true);
+          }}
         />
       </Stack.Toolbar>
       <NavigationContentFrame>
@@ -198,22 +219,7 @@ export function P2Detail() {
           ) : null}
         </ScrollView>
       </NavigationContentFrame>
-      {editing && visible?.editable ? (
-        <ManualFlightEditor
-          embedded={false}
-          tripId={tripId}
-          itemId={itemId}
-          expectedRevision={Number(visible.item.itemRevision)}
-          initialDate={null}
-          onClose={() => setEditing(false)}
-          onSaved={(id) => {
-            if (generation !== getAccountGeneration()) return;
-            setEditing(false);
-            reportManualOutcome(tripId, generation, id);
-            setRevision((value) => value + 1);
-          }}
-        />
-      ) : null}
+      {editing ? renderEditor({ embedded: false, onClose: () => setEditing(false), onSaved: refreshSavedItem }) : null}
     </>
   );
 }

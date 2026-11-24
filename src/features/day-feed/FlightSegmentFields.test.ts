@@ -1,11 +1,13 @@
-import { createElement, type ReactNode } from "react";
+import { createElement, type ContextType, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { FlightSegmentFields } from "./FlightSegmentFields";
+import { OpenItineraryClockContext } from "./itineraryClockPicker";
 import { emptyFlightSegment } from "./manualFlightFormFields";
 const state = vi.hoisted(() => ({ cursor: 0, values: [] as any[], nodes: [] as any[] }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useLayoutEffect: (effect: () => void) => { effect(); },
   useState: (initial: any) => {
     const i = state.cursor++;
     if (!(i in state.values)) state.values[i] = initial;
@@ -67,7 +69,7 @@ beforeEach(() => {
   state.values = [];
   state.nodes = [];
 });
-function setup() {
+function setup(openClock?: ContextType<typeof OpenItineraryClockContext>) {
   let value = {
     ...emptyFlightSegment("leg", "2026-12-31"),
     departureTime: "23:00",
@@ -86,14 +88,15 @@ function setup() {
     state.cursor = 0;
     state.nodes = [];
     return renderToStaticMarkup(
-      createElement(FlightSegmentFields, {
+      createElement(OpenItineraryClockContext.Provider, { value: openClock ?? null },
+        createElement(FlightSegmentFields, {
         value,
         full: true,
         disabled: false,
         participantOptions: [],
         onChange,
         onPickerChange,
-      }),
+      })),
     );
   };
   return { render, onChange, onPickerChange, value: () => value };
@@ -195,4 +198,26 @@ it("keeps optional terminal fields visible, editable and independent without inv
   expect(form.value().destinationTerminal).toBe("");
   expect(form.value().originCode).toBe("AKL");
   expect(form.value().departureZone).toBe("Pacific/Auckland");
+});
+
+it("stages the existing flight UTC clock in the hosted stack and leaves Back draft-only", () => {
+  const open = vi.fn<NonNullable<ContextType<typeof OpenItineraryClockContext>>>(() => true);
+  const f = setup(open);
+  f.render();
+  state.nodes.find(n => n.label === "manualFlight.departureLocal").onPress();
+  expect(open).toHaveBeenCalledTimes(1);
+  const cancelled = open.mock.calls[0][0]()!;
+  expect(cancelled.mode).toBe("datetime");
+  expect(cancelled.initial.toISOString()).toBe("2026-12-31T23:00:00.000Z");
+  cancelled.onClose();
+  expect(f.onChange).not.toHaveBeenCalled();
+  state.nodes.find(n => n.label === "manualFlight.departureLocal").onPress();
+  const accepted = open.mock.calls[1][0]()!;
+  accepted.apply(new Date("2027-01-01T03:45:00Z"));
+  accepted.onClose();
+  expect(f.value()).toMatchObject({ departureDate: "2027-01-01", departureTime: "03:45" });
+  expect(f.onPickerChange.mock.calls).toEqual([
+    ["departureTime", true], ["departureTime", false],
+    ["departureTime", true], ["departureTime", false],
+  ]);
 });

@@ -40,6 +40,8 @@ import type { PlaceSearchBinding } from "@/data/places/applePlaceProvider";
 import { captureAccountScope } from "@/data/auth/accountRequestContext";
 import { requireActiveUserId } from "@/data/auth/authRepository";
 
+import { formatLocalClock, useHostedItineraryClock } from "./itineraryClockPicker";
+
 type Opened = { repository: ManualActivityRepository; draft: ManualActivityDraft };
 
 function TimeField({
@@ -53,6 +55,11 @@ function TimeField({
   disabled: boolean;
   onChange(value: string | null): void;
 }) {
+  const openHostedClock = useHostedItineraryClock({
+    label, disabled,
+    apply: selected => onChange(formatLocalClock(selected)),
+    clear: () => onChange(null),
+  });
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Date());
@@ -67,6 +74,10 @@ function TimeField({
           Keyboard.dismiss();
           const date = new Date();
           if (value) date.setHours(+value.slice(0, 2), +value.slice(3, 5), 0, 0);
+          if (openHostedClock) {
+            openHostedClock(date);
+            return;
+          }
           setSelected(date);
           setOpen(true);
         }}
@@ -95,7 +106,7 @@ function TimeField({
                 onRight={() => {
                   if (!disabled)
                     onChange(
-                      `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                      formatLocalClock(selected),
                     );
                   setOpen(false);
                 }}

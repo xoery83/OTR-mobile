@@ -25,6 +25,8 @@ import {
   suggestedFlightArrivalDate,
   type FlightSegmentDraft,
 } from "./manualFlightFormFields";
+import { useHostedItineraryClock } from "./itineraryClockPicker";
+
 function FlightTimeField({
   label,
   value,
@@ -40,6 +42,13 @@ function FlightTimeField({
   onChange(date: string, time: string): void;
   onEditingChange(open: boolean): void;
 }) {
+  const openHostedClock = useHostedItineraryClock({
+    label, disabled,
+    mode: "datetime",
+    apply: selected => onChange(selected.toISOString().slice(0, 10), selected.toISOString().slice(11, 16)),
+    clear: () => onChange(date, ""),
+    onClose: () => onEditingChange(false),
+  });
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false),
     [selected, setSelected] = useState(new Date());
@@ -59,8 +68,12 @@ function FlightTimeField({
           const initial = new Date(
             `${date || new Date().toISOString().slice(0, 10)}T${value || "12:00"}:00Z`,
           );
-          setSelected(initial);
           onEditingChange(true);
+          if (openHostedClock) {
+            openHostedClock(initial);
+            return;
+          }
+          setSelected(initial);
           setOpen(true);
         }}
       />

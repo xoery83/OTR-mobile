@@ -53,6 +53,8 @@ import {
 import { P3SyntheticScan } from "./P3SyntheticScan";
 import type { StaySuggestionBinding, SyntheticStayResult } from "./p3FormSuggestions";
 
+import { formatLocalClock, useHostedItineraryClock } from "./itineraryClockPicker";
+
 type Opened = { repository: ManualStayRepository; draft: ManualStayDraft };
 
 function TimeField({
@@ -68,6 +70,11 @@ function TimeField({
   disabled: boolean;
   onChange(value: string | null): void;
 }) {
+  const openHostedClock = useHostedItineraryClock({
+    label, disabled,
+    apply: selected => onChange(formatLocalClock(selected)),
+    clear: () => onChange(null),
+  });
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Date());
@@ -84,6 +91,10 @@ function TimeField({
           const date = new Date();
           const clock = value ?? defaultTime;
           date.setHours(+clock.slice(0, 2), +clock.slice(3, 5), 0, 0);
+          if (openHostedClock) {
+            openHostedClock(date);
+            return;
+          }
           setSelected(date);
           setOpen(true);
         }}
@@ -112,7 +123,7 @@ function TimeField({
                 onRight={() => {
                   if (!disabled)
                     onChange(
-                      `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                      formatLocalClock(selected),
                     );
                   setOpen(false);
                 }}

@@ -26,6 +26,9 @@ import { calendarDate } from "./TripCalendarField";
 import { P6ActivityEditor } from "./P6ActivityEditor";
 import { useTripView } from "./TripViewContext";
 
+import type { DetailEditorPresentation } from "./hostedManualItinerary";
+import { useHostedDetailItineraryEdit } from "./useHostedDetailItineraryEdit";
+
 export function P6Detail() {
   useUiLocale();
   const params = useLocalSearchParams<{
@@ -42,6 +45,7 @@ export function P6Detail() {
     getAccountGeneration,
   );
   const { reportManualOutcome } = useTripView();
+  const openHostedEdit = useHostedDetailItineraryEdit("P6", tripId, itemId, generation);
   const [state, setState] = useState<P6DetailState | null>(null);
   const [editing, setEditing] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -122,6 +126,20 @@ export function P6Detail() {
           }),
       }
     : null;
+  const refreshSavedItem = (id: string) => {
+    if (generation !== getAccountGeneration()) return;
+    setEditing(false);
+    reportManualOutcome(tripId, generation, id);
+    setRevision((value) => value + 1);
+  };
+  const renderEditor = (presentation: DetailEditorPresentation) => visible?.editor ? (
+    <P6ActivityEditor
+      tripId={tripId}
+      itemId={itemId}
+      opened={visible.editor}
+      {...presentation}
+    />
+  ) : null;
   return (
     <>
       <Stack.Screen
@@ -151,7 +169,9 @@ export function P6Detail() {
           icon="square.and.pencil"
           accessibilityLabel={t("p6.edit")}
           disabled={!visible?.editor}
-          onPress={() => setEditing(true)}
+          onPress={() => {
+            if (visible?.editor && !openHostedEdit(renderEditor, refreshSavedItem)) setEditing(true);
+          }}
         />
       </Stack.Toolbar>
       <NavigationContentFrame>
@@ -184,20 +204,7 @@ export function P6Detail() {
           ) : null}
         </ScrollView>
       </NavigationContentFrame>
-      {editing && visible?.editor ? (
-        <P6ActivityEditor
-          tripId={tripId}
-          itemId={itemId}
-          opened={visible.editor}
-          onClose={() => setEditing(false)}
-          onSaved={(id) => {
-            if (generation !== getAccountGeneration()) return;
-            setEditing(false);
-            reportManualOutcome(tripId, generation, id);
-            setRevision((value) => value + 1);
-          }}
-        />
-      ) : null}
+      {editing ? renderEditor({ embedded: false, onClose: () => setEditing(false), onSaved: refreshSavedItem }) : null}
     </>
   );
 }

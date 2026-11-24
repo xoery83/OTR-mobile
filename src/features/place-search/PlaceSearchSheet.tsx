@@ -1,6 +1,11 @@
 import { useNetworkState } from "expo-network";
 import {
+  type ComponentType,
+  type ContextType,
+  type ReactNode,
   useCallback,
+  useContext,
+  useLayoutEffect,
   useEffect,
   useMemo,
   useRef,
@@ -27,7 +32,6 @@ import {
 import {
   readApplePlaceProvider,
   type ApplePlaceCandidate,
-  type PlaceSearchBinding,
 } from "@/data/places/applePlaceProvider";
 import { UiButton, UiText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
@@ -41,23 +45,65 @@ import {
   uniqueTripSearchRegion,
 } from "./placeSearchTripRegions";
 import { PlaceSearchSession, type PlaceSearchState } from "./placeSearchSession";
+import {
+  OpenHostedPlaceSearchContext,
+  type PlaceSearchSheetProps,
+} from "./hostedPlaceSearch";
 export type PlaceSearchResult =
   | { kind: "SELECTED"; place: ApplePlaceCandidate; usePlaceName: boolean }
   | { kind: "MANUAL"; text: string };
-export function PlaceSearchSheet({
+export function PlaceSearchSheet(props: PlaceSearchSheetProps) {
+  const openHosted = useContext(OpenHostedPlaceSearchContext);
+  return openHosted ? (
+    <HostedPlaceLauncher {...props} open={openHosted} />
+  ) : (
+    <PlaceSearchContent {...props} />
+  );
+}
+
+function HostedPlaceLauncher({
+  open,
+  ...props
+}: PlaceSearchSheetProps & {
+  open: NonNullable<ContextType<typeof OpenHostedPlaceSearchContext>>;
+}) {
+  const latest = useRef<PlaceSearchSheetProps | null>(null);
+  useLayoutEffect(() => {
+    latest.current = props;
+    return () => {
+      latest.current = null;
+    };
+  }, [props]);
+  const binding = props.binding;
+  useEffect(() => {
+    const read = () => latest.current?.binding === binding ? latest.current : null;
+    let mounted = true;
+    let release: (() => void) | undefined;
+    queueMicrotask(() => {
+      if (!mounted) return;
+      release = open(read);
+      if (!release) read()?.onCancel();
+    });
+    return () => {
+      mounted = false;
+      release?.();
+    };
+  }, [binding, open]);
+  return null;
+}
+
+export type PlaceSearchSurfaceProps = { title: string; back(): void; search: ReactNode; results: ReactNode };
+
+export function PlaceSearchContent({
   binding,
   initialQuery,
   nameChoice,
   selectionMode = "confirm",
   onCancel,
   onConfirm,
-}: {
-  binding: PlaceSearchBinding;
-  initialQuery: string;
-  nameChoice: boolean;
-  selectionMode?: "confirm" | "immediate";
-  onCancel(): void;
-  onConfirm(result: PlaceSearchResult): void;
+  HostedSurface,
+}: PlaceSearchSheetProps & {
+  HostedSurface?: ComponentType<PlaceSearchSurfaceProps>;
 }) {
   useUiLocale();
   const network = useNetworkState();
@@ -352,6 +398,189 @@ export function PlaceSearchSheet({
     (!selection.address?.trim() ||
       selection.address.length > 500 ||
       (usePlaceName && selection.title.length > 200));
+  const title = t(regionSearch ? "placeSearch.chooseRegion" : "placeSearch.title");
+  const search = (
+    <View style={styles.search}>
+      <UiTextInput
+        ref={input}
+        autoFocus
+        accessibilityLabel={t(
+          regionSearch ? "placeSearch.regionQuery" : "placeSearch.query",
+        )}
+        placeholder={t(regionSearch ? "placeSearch.regionQuery" : "placeSearch.query")}
+        value={query}
+        maxLength={2048}
+        onChangeText={update}
+        style={styles.input}
+        returnKeyType="search"
+      />
+      {query ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("placeSearch.clear")}
+          style={styles.clear}
+          onPress={() => {
+            update("");
+            input.current?.focus();
+          }}
+        >
+          <AppIcon name="xmark.circle.fill" color={colors.textSecondary} size={22} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+  const results = (
+    <View style={styles.content}>
+      <UiText style={styles.meta}>{t("placeSearch.apple")}</UiText>
+      {!regionSearch ? (
+        <View style={styles.actions}>
+          <UiChoiceChip
+            compact
+            label={regionName ?? t("placeSearch.region")}
+            selected={!!regionName}
+            onPress={() => {
+              cancelRegion();
+              regionTouched.current = true;
+              targetQuery.current = text.current;
+              setAuthoredQuery(text.current);
+              setRegionSearch(true);
+              update("", true);
+              input.current?.focus();
+            }}
+          />
+          <UiChoiceChip
+            compact
+            label={t("placeSearch.worldwide")}
+            selected={!regionName}
+            onPress={worldwide}
+          />
+        </View>
+      ) : null}
+      {regionSearch ? (
+        <View style={styles.regionContext}>
+          <UiText style={styles.meta}>
+            {t("placeSearch.originalQuery", { query: authoredQuery })}
+          </UiText>
+          <UiText style={styles.meta}>{t("placeSearch.regionHint")}</UiText>
+          <View style={styles.actions}>
+            {tripRegions.map((label) => (
+              <UiButton
+                key={label}
+                variant="secondary"
+                label={label}
+                disabled={!providerReady || !online || regionBusy}
+                onPress={() => {
+                  void selectTripRegion(label);
+                }}
+              />
+            ))}
+            <UiChoiceChip
+              compact
+              label={t("placeSearch.worldwide")}
+              selected={!regionName}
+              onPress={worldwide}
+            />
+          </View>
+        </View>
+      ) : regionName ? (
+        <UiText style={styles.meta}>
+          {t("placeSearch.activeRegion", { region: regionName })}
+        </UiText>
+      ) : null}
+      {state.partialQuery ? (
+        <UiText style={styles.meta}>
+          {t("placeSearch.partialMatch", { query: state.partialQuery })}
+        </UiText>
+      ) : null}
+      {state.status === "LOADING" || regionBusy ? (
+        <UiText accessibilityLiveRegion="polite" style={styles.meta}>
+          {t("placeSearch.loading")}
+        </UiText>
+      ) : null}
+      {state.status === "EMPTY" ? (
+        <UiText style={styles.meta}>{t("placeSearch.empty")}</UiText>
+      ) : null}
+      {state.status === "ERROR" ? (
+        <UiText accessibilityRole="alert" style={styles.meta}>
+          {t(
+            state.error === "OFFLINE"
+              ? "placeSearch.offline"
+              : state.error === "NATIVE_UNAVAILABLE"
+                ? "placeSearch.nativeUnavailable"
+                : ["NETWORK_ERROR", "TIMED_OUT"].includes(state.error ?? "")
+                  ? "placeSearch.networkError"
+                  : "placeSearch.error",
+          )}
+        </UiText>
+      ) : null}
+      {inputError ? (
+        <UiText accessibilityRole="alert" style={styles.meta}>
+          {t("placeSearch.regionUnavailable")}
+        </UiText>
+      ) : null}
+      {selectedInvalid || tooLong ? (
+        <UiText accessibilityRole="alert" style={styles.meta}>
+          {t("placeSearch.shorten")}
+        </UiText>
+      ) : null}
+      <View style={styles.results}>
+        {state.rows.map((candidate) => (
+          <Pressable
+            key={`${candidate.sessionId}:${candidate.generation}:${candidate.handle}`}
+            accessibilityRole="button"
+            accessibilityLabel={`${candidate.title}, ${candidate.secondary}`}
+            disabled={state.status === "LOADING"}
+            onPress={() => {
+              void choose(candidate);
+            }}
+            style={styles.row}
+          >
+            <UiText numberOfLines={1} style={styles.title}>
+              {candidate.title}
+            </UiText>
+            <UiText numberOfLines={1} style={styles.meta}>
+              {candidate.secondary}
+            </UiText>
+          </Pressable>
+        ))}
+        {!regionSearch ? (
+          <UiButton
+            label={t(
+              nameChoice ? "placeSearch.useQueryAsName" : "placeSearch.useQueryAsAddress",
+              { query },
+            )}
+            variant="secondary"
+            disabled={!query.trim() || tooLong}
+            onPress={() => {
+              if (current()) onConfirm({ kind: "MANUAL", text: query.trim() });
+            }}
+          />
+        ) : null}
+      </View>
+      {selection ? (
+        <View style={styles.selected}>
+          <UiText style={styles.title}>{selection.title}</UiText>
+          <UiText style={styles.meta}>{selection.address ?? ""}</UiText>
+          {nameChoice ? (
+            <UiChoiceChip
+              label={t("placeSearch.usePlaceName")}
+              selected={usePlaceName}
+              onPress={() => setUsePlaceName(!usePlaceName)}
+            />
+          ) : null}
+          <UiButton
+            label={t("placeSearch.usePlace")}
+            disabled={selectedInvalid || state.status === "LOADING"}
+            onPress={() => {
+              if (current())
+                onConfirm({ kind: "SELECTED", place: selection, usePlaceName });
+            }}
+          />
+        </View>
+      ) : null}
+    </View>
+  );
+  if (HostedSurface) return <HostedSurface title={title} back={back} search={search} results={results} />;
   return (
     <Modal
       visible
@@ -365,198 +594,13 @@ export function PlaceSearchSheet({
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <SheetHeader
-            title={t(regionSearch ? "placeSearch.chooseRegion" : "placeSearch.title")}
+            title={title}
             leftLabel={t(state.more || regionSearch ? "common.back" : "common.cancel")}
             onLeft={back}
           />
-          <View style={styles.search}>
-            <UiTextInput
-              ref={input}
-              autoFocus
-              accessibilityLabel={t(
-                regionSearch ? "placeSearch.regionQuery" : "placeSearch.query",
-              )}
-              placeholder={t(
-                regionSearch ? "placeSearch.regionQuery" : "placeSearch.query",
-              )}
-              value={query}
-              maxLength={2048}
-              onChangeText={update}
-              style={styles.input}
-              returnKeyType="search"
-            />
-            {query ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("placeSearch.clear")}
-                style={styles.clear}
-                onPress={() => {
-                  update("");
-                  input.current?.focus();
-                }}
-              >
-                <AppIcon
-                  name="xmark.circle.fill"
-                  color={colors.textSecondary}
-                  size={22}
-                />
-              </Pressable>
-            ) : null}
-          </View>
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-          >
-            <UiText style={styles.meta}>{t("placeSearch.apple")}</UiText>
-            {!regionSearch ? (
-              <View style={styles.actions}>
-                <UiChoiceChip
-                  compact
-                  label={regionName ?? t("placeSearch.region")}
-                  selected={!!regionName}
-                  onPress={() => {
-                    cancelRegion();
-                    regionTouched.current = true;
-                    targetQuery.current = text.current;
-                    setAuthoredQuery(text.current);
-                    setRegionSearch(true);
-                    update("", true);
-                    input.current?.focus();
-                  }}
-                />
-                <UiChoiceChip
-                  compact
-                  label={t("placeSearch.worldwide")}
-                  selected={!regionName}
-                  onPress={worldwide}
-                />
-              </View>
-            ) : null}
-            {regionSearch ? (
-              <View style={styles.regionContext}>
-                <UiText style={styles.meta}>
-                  {t("placeSearch.originalQuery", { query: authoredQuery })}
-                </UiText>
-                <UiText style={styles.meta}>{t("placeSearch.regionHint")}</UiText>
-                <View style={styles.actions}>
-                  {tripRegions.map((label) => (
-                    <UiButton
-                      key={label}
-                      variant="secondary"
-                      label={label}
-                      disabled={!providerReady || !online || regionBusy}
-                      onPress={() => {
-                        void selectTripRegion(label);
-                      }}
-                    />
-                  ))}
-                  <UiChoiceChip
-                    compact
-                    label={t("placeSearch.worldwide")}
-                    selected={!regionName}
-                    onPress={worldwide}
-                  />
-                </View>
-              </View>
-            ) : regionName ? (
-              <UiText style={styles.meta}>
-                {t("placeSearch.activeRegion", { region: regionName })}
-              </UiText>
-            ) : null}
-            {state.partialQuery ? (
-              <UiText style={styles.meta}>
-                {t("placeSearch.partialMatch", { query: state.partialQuery })}
-              </UiText>
-            ) : null}
-            {state.status === "LOADING" || regionBusy ? (
-              <UiText accessibilityLiveRegion="polite" style={styles.meta}>
-                {t("placeSearch.loading")}
-              </UiText>
-            ) : null}
-            {state.status === "EMPTY" ? (
-              <UiText style={styles.meta}>{t("placeSearch.empty")}</UiText>
-            ) : null}
-            {state.status === "ERROR" ? (
-              <UiText accessibilityRole="alert" style={styles.meta}>
-                {t(
-                  state.error === "OFFLINE"
-                    ? "placeSearch.offline"
-                    : state.error === "NATIVE_UNAVAILABLE"
-                      ? "placeSearch.nativeUnavailable"
-                      : ["NETWORK_ERROR", "TIMED_OUT"].includes(state.error ?? "")
-                        ? "placeSearch.networkError"
-                        : "placeSearch.error",
-                )}
-              </UiText>
-            ) : null}
-            {inputError ? (
-              <UiText accessibilityRole="alert" style={styles.meta}>
-                {t("placeSearch.regionUnavailable")}
-              </UiText>
-            ) : null}
-            {selectedInvalid || tooLong ? (
-              <UiText accessibilityRole="alert" style={styles.meta}>
-                {t("placeSearch.shorten")}
-              </UiText>
-            ) : null}
-            <View style={styles.results}>
-              {state.rows.map((candidate) => (
-                <Pressable
-                  key={`${candidate.sessionId}:${candidate.generation}:${candidate.handle}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${candidate.title}, ${candidate.secondary}`}
-                  disabled={state.status === "LOADING"}
-                  onPress={() => {
-                    void choose(candidate);
-                  }}
-                  style={styles.row}
-                >
-                  <UiText numberOfLines={1} style={styles.title}>
-                    {candidate.title}
-                  </UiText>
-                  <UiText numberOfLines={1} style={styles.meta}>
-                    {candidate.secondary}
-                  </UiText>
-                </Pressable>
-              ))}
-              {!regionSearch ? (
-                <UiButton
-                  label={t(
-                    nameChoice
-                      ? "placeSearch.useQueryAsName"
-                      : "placeSearch.useQueryAsAddress",
-                    { query },
-                  )}
-                  variant="secondary"
-                  disabled={!query.trim() || tooLong}
-                  onPress={() => {
-                    if (current()) onConfirm({ kind: "MANUAL", text: query.trim() });
-                  }}
-                />
-              ) : null}
-            </View>
-            {selection ? (
-              <View style={styles.selected}>
-                <UiText style={styles.title}>{selection.title}</UiText>
-                <UiText style={styles.meta}>{selection.address ?? ""}</UiText>
-                {nameChoice ? (
-                  <UiChoiceChip
-                    label={t("placeSearch.usePlaceName")}
-                    selected={usePlaceName}
-                    onPress={() => setUsePlaceName(!usePlaceName)}
-                  />
-                ) : null}
-                <UiButton
-                  label={t("placeSearch.usePlace")}
-                  disabled={selectedInvalid || state.status === "LOADING"}
-                  onPress={() => {
-                    if (current())
-                      onConfirm({ kind: "SELECTED", place: selection, usePlaceName });
-                  }}
-                />
-              </View>
-            ) : null}
+          {search}
+          <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+            {results}
           </ScrollView>
           <SafeAreaView edges={["bottom"]} />
         </KeyboardAvoidingView>

@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { P2Detail } from "./P2Detail";
 import { lightPalette } from "@/ui/palette";
+vi.mock("./useHostedDetailItineraryEdit", () => ({ useHostedDetailItineraryEdit: () => () => false }));
 vi.mock("./LocalItemImportOriginals", () => ({ LocalItemImportOriginals: () => null }));
 vi.mock("./useDetailCloudRefresh", () => ({ useDetailCloudRefresh: vi.fn() }));
 const state = vi.hoisted(() => ({
@@ -138,6 +139,7 @@ it("loads the same Item, gates native Edit through the Repository, then rereads 
   render();
   const editor = state.nodes.find((n) => n.editor);
   expect(editor.expectedRevision).toBe(2);
+  expect(editor.embedded).toBe(false);
   editor.onSaved("flight");
   render();
   state.effects.at(-1)();

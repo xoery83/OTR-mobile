@@ -1,15 +1,14 @@
-import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
-import { useRoute } from "expo-router/react-navigation";
+import { Redirect } from "expo-router";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { useContext, useEffect, useRef, useSyncExternalStore } from "react";
 import { Keyboard, StyleSheet, View } from "react-native";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { SheetScrollView } from "@/components/SheetScrollView";
-import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { hostedManualItineraryEnabled, readManualItinerary, subscribeManualItinerary } from "@/features/day-feed/hostedManualItinerary";
 import { FlightAirportPicker } from "@/features/day-feed/FlightAirportField";
 import { FlightAirportHandoffContext, type FlightAirportChoice } from "@/features/day-feed/hostedFlightAirport";
+import { useHostedItineraryPickerNavigation } from "@/features/day-feed/useHostedItineraryPickerNavigation";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 
@@ -21,30 +20,34 @@ export default function QuickAddAirportRoute() {
 function HostedQuickAddAirport() {
   useUiLocale();
   useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
-  const { invocation, selection } = useLocalSearchParams<{ invocation?: string; selection?: string }>();
+  const { invocation, selection, hasEditor, pop, back } = useHostedItineraryPickerNavigation();
   const airport = useContext(FlightAirportHandoffContext);
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { isExitPending } = useSheetMotion();
   const completed = useRef(false);
   const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
-  const current = entry ? airport?.read(selection) : null;
+  const current = entry && hasEditor() ? airport?.read(selection) : null;
   useEffect(() => () => {
-    airport?.read(selection)?.onClose();
-    airport?.release(selection);
+    queueMicrotask(() => {
+      const pending = airport?.read(selection);
+      airport?.release(selection);
+      pending?.onClose();
+    });
   }, [airport, selection]);
 
-  const complete = (choice?: FlightAirportChoice) => {
-    const state = navigation.getState();
-    if (completed.current || !navigation.isFocused() || isExitPending() || state?.routes[state.index]?.key !== route.key) return;
-    const latest = readManualItinerary(invocation) ? airport?.read(selection) : null;
-    if (choice && (!latest || latest.disabled)) return;
+  const complete = (choice: FlightAirportChoice) => {
+    if (completed.current || !entry || readManualItinerary(invocation) !== entry) return;
+    const latest = airport?.read(selection);
+    if (!latest || latest.disabled || !pop()) return;
     completed.current = true;
+    const returned = readManualItinerary(invocation) === entry ? airport?.read(selection) : null;
+    if (!airport || !returned) return;
+    airport.release(selection);
     Keyboard.dismiss();
-    navigation.dispatch({ type: "GO_BACK", target: state.key, source: route.key });
-    if (choice && readManualItinerary(invocation) && airport?.read(selection)) latest?.onChange(choice);
+    try {
+      if (!returned.disabled) returned.onChange(choice);
+    } finally {
+      returned.onClose();
+    }
   };
-  const back = () => complete();
   if (!current || current.disabled) {
     return <SheetRoutePanel title={current?.label ?? t("formEntry.title")} onBack={back}>{null}</SheetRoutePanel>;
   }

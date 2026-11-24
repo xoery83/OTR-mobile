@@ -2,6 +2,8 @@ import { createElement, type ReactNode } from "react";
 import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import * as component from "./SyntheticFormScan";
+import type { StaySuggestionBinding } from "./p3FormSuggestions";
+import { OpenFormScanSourceContext, type FormScanSourceEntry } from "./formScanSourceHandoff";
 const state = vi.hoisted(() => ({
   values: [] as unknown[],
   cursor: 0,
@@ -10,6 +12,12 @@ const state = vi.hoisted(() => ({
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useEffect: () => {},
+  useLayoutEffect: (effect: () => void) => effect(),
+  useRef: (initial: unknown) => {
+    const index = state.cursor++;
+    if (!(index in state.values)) state.values[index] = { current: initial };
+    return state.values[index];
+  },
   useState: (initial: unknown) => {
     const index = state.cursor++;
     if (!(index in state.values)) state.values[index] = initial;
@@ -53,6 +61,7 @@ vi.mock("@/ui/controls", () => ({
     return null;
   },
 }));
+vi.mock("@/native/capturePicker", () => ({ pickCaptureMaterial: vi.fn() }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: (fn: any) => fn({}) }));
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
@@ -144,4 +153,69 @@ it("busy forms cannot open or acquire through a stale chooser action", () => {
   expect(node("formAutofill.files")).toBeUndefined();
   node("formAutofill.scan").onPress();
   expect(onPick).not.toHaveBeenCalled();
+});
+
+it("hands supported choices to the host without opening the legacy chooser", () => {
+  const onPick = vi.fn();
+  const open = vi.fn<(read: () => FormScanSourceEntry | null) => void>();
+  renderToStaticMarkup(createElement(OpenFormScanSourceContext.Provider, { value: open },
+    createElement(component.FormScanEntry, { onPick, sourceMode: false })));
+  node("formAutofill.scan").onPress();
+  const entry = open.mock.calls[0]?.[0]();
+  expect(entry?.enabled("files")).toBe(true);
+  expect(node("formAutofill.files")).toBeUndefined();
+  expect(onPick).not.toHaveBeenCalled();
+  entry?.choose("files");
+  expect(onPick).toHaveBeenCalledExactlyOnceWith("files", undefined);
+});
+
+it("keeps existing material and its provider when a replacement picker is cancelled", async () => {
+  const { pickCaptureMaterial } = await import("@/native/capturePicker");
+  const release = vi.fn();
+  const staleRelease = vi.fn();
+  vi.mocked(pickCaptureMaterial)
+    .mockResolvedValueOnce([{ source: "files", temporaryUri: null, name: "Existing scan", typeHint: null, release }])
+    .mockResolvedValueOnce([])
+    .mockImplementationOnce(async (_source, isCurrent) => {
+      expect(isCurrent?.()).toBe(true);
+      focused = false;
+      expect(isCurrent?.()).toBe(false);
+      return [{ source: "files", temporaryUri: null, name: "Late scan", typeHint: null, release: staleRelease }];
+    });
+  const open = vi.fn<(read: () => FormScanSourceEntry | null) => void>();
+  let focused = true;
+  const binding: StaySuggestionBinding = {
+    formId: "editor", tripId: "trip", itemId: "draft", generation: 0, revision: 0, mode: "CREATE",
+  };
+  function renderScan() {
+    state.cursor = 0;
+    state.nodes = [];
+    return renderToStaticMarkup(createElement(OpenFormScanSourceContext.Provider, { value: open },
+      createElement(component.SyntheticFormScan, {
+        scan: vi.fn(),
+        context: () => binding,
+        fields: () => ({}),
+        disabled: false,
+        onApply: vi.fn(),
+        apply: () => null,
+        labels: {},
+      })));
+  }
+  async function chooseFiles() {
+    node("formAutofill.scan").onPress();
+    await open.mock.lastCall?.[0]()?.choose("files", () => focused);
+    await vi.waitFor(() => expect(vi.mocked(pickCaptureMaterial)).toHaveBeenCalledTimes(open.mock.calls.length));
+  }
+  renderScan();
+  await chooseFiles();
+  expect(renderScan()).toContain("Existing scan");
+  await chooseFiles();
+  expect(renderScan()).toContain("Existing scan");
+  expect(release).not.toHaveBeenCalled();
+  await chooseFiles();
+  const afterBlur = renderScan();
+  expect(afterBlur).toContain("Existing scan");
+  expect(afterBlur).not.toContain("Late scan");
+  expect(staleRelease).toHaveBeenCalledOnce();
+  expect(release).not.toHaveBeenCalled();
 });

@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   read: vi.fn(),
   repository: vi.fn(),
 }));
+vi.mock("./useHostedDetailItineraryEdit", () => ({ useHostedDetailItineraryEdit: () => () => false }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {

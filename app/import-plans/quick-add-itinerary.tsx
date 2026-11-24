@@ -1,4 +1,5 @@
 import { Redirect, router, useLocalSearchParams, useNavigation } from "expo-router";
+import { useRoute } from "expo-router/react-navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
@@ -33,6 +34,7 @@ function HostedQuickAddItinerary() {
   const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
   const { isExitPending } = useSheetMotion();
   const navigation = useNavigation();
+  const route = useRoute();
   useEffect(
     () => () => {
       queueMicrotask(() => releaseManualItinerary(invocation));
@@ -54,13 +56,13 @@ function HostedQuickAddItinerary() {
             const latest = readManualItinerary(invocation);
             if (
               !current() ||
-              !latest ||
+              !latest || latest !== entry ||
               !isManualItineraryFamily(family, latest.localOnly)
             )
               return;
             router.navigate({
               pathname: "/import-plans/quick-add-edit",
-              params: { invocation, family },
+              params: { invocation, family, chooserKey: route.key },
             });
           }}
         />

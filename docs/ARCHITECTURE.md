@@ -1,5 +1,27 @@
 # OTR Mobile 2.0 Architecture Proposal
 
+## Existing itinerary item editors in Sheets
+
+Existing item details keep their read routes and open the qualified editor as the
+first screen of the same itinerary Sheet stack. The originating detail owns the
+opened draft, item revision, permissions, and save outcome. The Sheet confirms
+return to that detail before publishing a successful edit. The original editor
+presentation remains available through the existing QA flags.
+
+## Hosted itinerary transport type
+
+Hosted P5 uses the existing transport types in a Sheet child. A choice updates
+the same unsaved P5 draft only after returning to its editor. The standalone
+fallback retains its existing native choice actions.
+
+## Itinerary scan source presentation
+
+The hosted manual itinerary editor opens the existing form-scan source choices as a
+child of its Sheet stack. A system picker opens only after the child has popped to
+its owning editor. Legacy editors keep their existing chooser. Material eligibility,
+review, and application stay with the original form. Cancelling a system picker
+preserves any prior staged material and review.
+
 ## Summary
 
 Use React Native with Expo, TypeScript, Expo Router, Expo Development Builds, SQLite, a repository layer, and a dedicated sync engine. The local database is the primary data source for the mobile app. App launch is offline-tolerant: a valid local session opens the app immediately, while cloud session refresh runs silently in the background. The OTR Backend API is the synchronization and authorization boundary. Supabase remains behind the backend and must not appear in feature or UI code.
@@ -166,6 +188,11 @@ retains the existing confirmation and repository authorization.
 The default-off Trip Photos QA entry presents the compact Trip Home gallery
 inside the shared Sheet. The originating Trip and Account generation still own
 gallery reads and local photo writes. System Photos remains a native handoff.
+
+The hosted Quick Add itinerary editor retains its draft while date ranges,
+calendar dates, time wheels and place search appear as child routes. A child applies its value
+only after returning to the original editor. Standalone itinerary editors keep
+their existing picker paths.
 
 ## State Strategy
 

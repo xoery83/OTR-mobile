@@ -48,6 +48,8 @@ import { PlanParticipantsField } from "./PlanParticipantsField";
 import { AppIcon } from "@/components/AppIcon";
 import { nextCalendarDate } from "@/domain/trip/dayReadModel";
 
+import { formatLocalClock, useHostedItineraryClock } from "./itineraryClockPicker";
+
 type Opened = { repository: ManualPlanRepository; draft: ManualPlanDraft };
 
 function TimeField({
@@ -67,6 +69,13 @@ function TimeField({
   onChange(value: string | null): void;
   onOpenChange?(open: boolean): boolean | void;
 }) {
+  const openHostedClock = useHostedItineraryClock({
+    label, disabled,
+    zoneHint,
+    onClose: () => onOpenChange?.(false),
+    apply: selected => onChange(formatLocalClock(selected)),
+    clear: () => onChange(null),
+  });
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
   const changeOpen = (next: boolean) => {
@@ -91,6 +100,10 @@ function TimeField({
             0,
             0,
           );
+          if (openHostedClock) {
+            openHostedClock(date);
+            return;
+          }
           setSelected(date);
           setOpen(true);
         }}
@@ -119,7 +132,7 @@ function TimeField({
                 onRight={() => {
                   if (!disabled)
                     onChange(
-                      `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
+                      formatLocalClock(selected),
                     );
                   changeOpen(false);
                 }}

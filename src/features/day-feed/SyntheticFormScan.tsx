@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Keyboard, Modal, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
@@ -12,6 +12,7 @@ import type { CaptureSelection } from "@/features/capture/captureStaging";
 import type { StaySuggestionBinding } from "./p3FormSuggestions";
 import type { FormScanConsumer } from "./formScanResponse";
 import { formScanResponseSchema } from "./formScanResponse";
+import { formScanSourceOptions, OpenFormScanSourceContext, type FormScanSource, type FormScanSourceEntry } from "./formScanSourceHandoff";
 
 export type SyntheticFormResult = {
   kind: string;
@@ -45,7 +46,6 @@ const release = (items: readonly CaptureSelection[]) =>
     }
   });
 
-type ScanSource = CaptureSelection["source"];
 type ScanAvailability = typeof import("@/native/p3FormScan").getP3SourceScanAvailability;
 
 // Source eligibility stays narrower than the generic native material picker.
@@ -56,12 +56,25 @@ export function FormScanEntry({
   availability,
 }: {
   disabled?: boolean;
-  onPick?(source: ScanSource): void;
+  onPick?(source: FormScanSource, isCurrent?: () => boolean): void | Promise<void>;
   sourceMode?: boolean;
   availability?: ScanAvailability;
 }) {
   const styles = useThemedStyles(createStyles);
   const [open, setOpen] = useState(false);
+  const openHosted = useContext(OpenFormScanSourceContext);
+  const latest = useRef<FormScanSourceEntry | null>(null);
+  const enabled = (source: FormScanSource) =>
+    !disabled && Boolean(onPick) && (!sourceMode || availability?.(source).available === true);
+  useLayoutEffect(() => {
+    const entry: FormScanSourceEntry | null = disabled ? null : {
+      enabled,
+      canPick: Boolean(onPick),
+      choose(source, isCurrent) { if (enabled(source)) return onPick?.(source, isCurrent); },
+    };
+    latest.current = entry;
+    return () => { latest.current = null; };
+  });
   if (disabled && open) setOpen(false);
   return (
     <>
@@ -80,12 +93,13 @@ export function FormScanEntry({
         onPress={() => {
           if (!disabled) {
             Keyboard.dismiss();
-            setOpen(true);
+            if (openHosted) openHosted(() => latest.current);
+            else setOpen(true);
           }
         }}
       />
       <Modal
-        visible={open && !disabled}
+        visible={!openHosted && open && !disabled}
         transparent
         animationType="fade"
         presentationStyle="overFullScreen"
@@ -103,34 +117,19 @@ export function FormScanEntry({
               {!onPick ? (
                 <UiText style={styles.text}>{t("formAutofill.unavailable")}</UiText>
               ) : null}
-              {(
-                [
-                  ["camera", "ui.camera"],
-                  ["photos", "formAutofill.photos"],
-                  ["files", "formAutofill.files"],
-                ] as const
-              ).map(([source, key]) => {
-                const available =
-                  !!onPick && (!sourceMode || availability?.(source).available === true);
-                return (
-                  <UiButton
-                    key={source}
-                    label={t(key)}
-                    variant="text"
-                    disabled={disabled || !available}
-                    onPress={() => {
-                      if (
-                        disabled ||
-                        !available ||
-                        (sourceMode && availability?.(source).available !== true)
-                      )
-                        return;
-                      setOpen(false);
-                      return onPick?.(source);
-                    }}
-                  />
-                );
-              })}
+              {formScanSourceOptions.map(([source, key]) => (
+                <UiButton
+                  key={source}
+                  label={t(key)}
+                  variant="text"
+                  disabled={!enabled(source)}
+                  onPress={() => {
+                    if (!enabled(source)) return;
+                    setOpen(false);
+                    return onPick?.(source);
+                  }}
+                />
+              ))}
             </SafeAreaView>
           </View>
         </SafeAreaProvider>
@@ -188,6 +187,7 @@ export function SyntheticFormScan<
   const [material, setMaterial] = useState<readonly CaptureSelection[]>([]);
   const materialRef = useRef<readonly CaptureSelection[]>([]);
   const request = useRef(0);
+  const pendingPick = useRef<number | null>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(
     () => () => {
@@ -202,8 +202,10 @@ export function SyntheticFormScan<
   const clear = () => {
     request.current++;
     controller.current?.abort();
+    controller.current = null;
     setLoading(false);
     setSelecting(false);
+    pendingPick.current = null;
     active.current = null;
     setReview(null);
     setChosen(null);
@@ -213,16 +215,14 @@ export function SyntheticFormScan<
     materialRef.current = [];
     setMaterial([]);
   };
-  const pick = async (source: ScanSource) => {
+  const pick = async (source: FormScanSource, isCurrent = () => true) => {
     if (sourceMode && availability?.(source).available !== true) return;
     const binding = context();
-    if (!scan || disabled || loading || selecting || !binding) return;
-    clear();
-    setError(null);
-    discardMaterial();
+    if (!scan || disabled || controller.current || pendingPick.current !== null || !binding || !isCurrent()) return;
+    const owner = ++request.current;
+    pendingPick.current = owner;
     setSelecting(true);
-    const owner = request.current;
-    const current = () => owner === request.current && sameBinding(binding, context());
+    const current = () => owner === request.current && isCurrent() && sameBinding(binding, context());
     try {
       const { pickCaptureMaterial } = await import("@/native/capturePicker");
       if (!current()) return;
@@ -237,12 +237,18 @@ export function SyntheticFormScan<
         setError(scanErrors.needsInput);
         return;
       }
+      clear();
+      setError(null);
+      release(materialRef.current);
       materialRef.current = picked;
       setMaterial(picked);
     } catch {
       if (current()) setError(scanErrors.failed);
     } finally {
-      if (owner === request.current) setSelecting(false);
+      if (pendingPick.current === owner) {
+        pendingPick.current = null;
+        if (owner === request.current) setSelecting(false);
+      }
     }
   };
   const start = async () => {
@@ -251,8 +257,8 @@ export function SyntheticFormScan<
       !scan ||
       !binding ||
       disabled ||
-      loading ||
-      selecting ||
+      controller.current ||
+      pendingPick.current !== null ||
       !materialRef.current.length
     )
       return;
@@ -300,7 +306,10 @@ export function SyntheticFormScan<
         setError(scanErrors.failed);
       }
     } finally {
-      if (request.current === owner) setLoading(false);
+      if (request.current === owner) {
+        controller.current = null;
+        setLoading(false);
+      }
     }
   };
   const cancel = () => {
