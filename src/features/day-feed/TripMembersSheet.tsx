@@ -1,5 +1,5 @@
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
-import { useState, useLayoutEffect, useRef } from "react";
+import { useEffect, useState, useLayoutEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText } from "@/ui/controls";
@@ -8,22 +8,58 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
+import { router, useNavigation } from "expo-router";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
-  AddTravelerSheet,
-  type AddTravelerInput,
-} from "@/features/people/AddTravelerSheet";
+  hostedTripMembersEnabled,
+  tripMembersInvocations,
+  type TripMembersProps,
+} from "./hostedTripMembers";
+import { AddTravelerSheet } from "@/features/people/AddTravelerSheet";
 
-type Props = {
-  visible: boolean;
-  members: TripPreparationSetup["members"] | null;
-  onClose(): void;
-  onAddTraveler?(input: AddTravelerInput): Promise<void>;
-  onInvitePerson?(personId: string): void;
-};
+export function TripMembersSheet(props: TripMembersProps) {
+  if (!props.visible) return null;
+  return hostedTripMembersEnabled && props.tripId ? (
+    <HostedPeopleLauncher {...props} />
+  ) : (
+    <VisiblePeopleSheet {...props} />
+  );
+}
 
-export function TripMembersSheet(props: Props) {
-  return props.visible ? <VisiblePeopleSheet {...props} /> : null;
+function HostedPeopleLauncher(props: TripMembersProps) {
+  const navigation = useNavigation();
+  const current = useRef(props);
+  const invocation = useRef<string | undefined>(undefined);
+  const generation = getAccountGeneration();
+  useLayoutEffect(() => {
+    current.current = {
+      ...props,
+      onInvitePerson: props.onInvitePerson ? personId => {
+        if (navigation.isFocused() && generation === getAccountGeneration())
+          props.onInvitePerson?.(personId);
+      } : undefined,
+    };
+    tripMembersInvocations.update(invocation.current, current.current);
+  }, [generation, navigation, props]);
+  useEffect(() => {
+    let alive = true;
+    queueMicrotask(() => {
+      if (!alive || !navigation.isFocused() || current.current.tripId !== props.tripId ||
+          generation !== getAccountGeneration()) return;
+      invocation.current = tripMembersInvocations.stage(current.current);
+      if (invocation.current)
+        router.push({
+          pathname: "/trip-members-sheet",
+          params: { invocation: invocation.current },
+        });
+    });
+    return () => {
+      alive = false;
+      tripMembersInvocations.release(invocation.current);
+      invocation.current = undefined;
+    };
+  }, [props.tripId, generation, navigation]);
+  return null;
 }
 
 function VisiblePeopleSheet({
@@ -32,18 +68,10 @@ function VisiblePeopleSheet({
   onClose,
   onAddTraveler,
   onInvitePerson,
-}: Props) {
+}: TripMembersProps) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const [adding, setAdding] = useState(false);
-  const frame = { members, onInvitePerson };
-  const latest = useRef<typeof frame | null>(frame);
-  useLayoutEffect(() => {
-    latest.current = frame;
-    return () => {
-      latest.current = null;
-    };
-  });
   const roster = visible && members?.state === "AVAILABLE" ? members : null;
   return (
     <Modal
@@ -65,59 +93,18 @@ function VisiblePeopleSheet({
             if (roster && onAddTraveler) setAdding(true);
           }}
         />
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          style={styles.sheet}
-          contentContainerStyle={styles.content}
-        >
-          {roster ? (
-            <>
-              <UiText style={styles.meta}>
-                {t("tripForm.namedPeople", { count: formatUiNumber(roster.namedCount) })}
-              </UiText>
-              {[true, false].map((actor) => {
-                const people = roster.people.filter(
-                  (person) => person.isCurrentActor === actor,
-                );
-                return people.length ? (
-                  <View key={String(actor)} style={styles.group}>
-                    <UiText accessibilityRole="header" style={styles.heading}>
-                      {t(actor ? "tripMembers.currentActor" : "tripMembers.otherPeople")}
-                    </UiText>
-                    {people.map((person) => (
-                      <View key={person.personId} style={styles.person}>
-                        <UiText style={styles.name}>
-                          {person.displayName.trim() ||
-                            (person.isCurrentActor ? t("ui.you") : "")}
-                        </UiText>
-                        {!person.isCurrentActor &&
-                        person.localState !== "LOCAL_PENDING" &&
-                        onInvitePerson ? (
-                          <UiButton
-                            variant="text"
-                            label={t("people.directedInvite.send")}
-                            onPress={() => {
-                              if (latest.current !== frame) return;
-                              onClose();
-                              onInvitePerson(person.personId);
-                            }}
-                          />
-                        ) : null}
-                        {person.localState === "LOCAL_PENDING" ? (
-                          <UiText style={styles.meta}>
-                            {t("tripMembers.localPending")}
-                          </UiText>
-                        ) : null}
-                      </View>
-                    ))}
-                  </View>
-                ) : null;
-              })}
-              <UiText style={styles.meta}>{t("tripForm.namedPeopleHint")}</UiText>
-            </>
-          ) : (
-            <UiText style={styles.meta}>{t("tripForm.membersUnknown")}</UiText>
-          )}
+        <ScrollView keyboardShouldPersistTaps="handled" style={styles.sheet}>
+          <TripMembersRoster
+            members={roster}
+            onInvitePerson={
+              onInvitePerson
+                ? (personId) => {
+                    onClose();
+                    onInvitePerson(personId);
+                  }
+                : undefined
+            }
+          />
         </ScrollView>
         {onAddTraveler ? (
           <AddTravelerSheet
@@ -128,6 +115,71 @@ function VisiblePeopleSheet({
         ) : null}
       </SafeAreaView>
     </Modal>
+  );
+}
+export function TripMembersRoster({
+  members,
+  onInvitePerson,
+}: Pick<TripMembersProps, "members" | "onInvitePerson">) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const roster = members?.state === "AVAILABLE" ? members : null;
+  const frame = { roster, onInvitePerson };
+  const latest = useRef<typeof frame | null>(frame);
+  useLayoutEffect(() => {
+    latest.current = frame;
+    return () => {
+      latest.current = null;
+    };
+  });
+  return (
+    <View style={styles.content}>
+      {roster ? (
+        <>
+          <UiText style={styles.meta}>
+            {t("tripForm.namedPeople", { count: formatUiNumber(roster.namedCount) })}
+          </UiText>
+          {[true, false].map((actor) => {
+            const people = roster.people.filter(
+              (person) => person.isCurrentActor === actor,
+            );
+            return people.length ? (
+              <View key={String(actor)} style={styles.group}>
+                <UiText accessibilityRole="header" style={styles.heading}>
+                  {t(actor ? "tripMembers.currentActor" : "tripMembers.otherPeople")}
+                </UiText>
+                {people.map((person) => (
+                  <View key={person.personId} style={styles.person}>
+                    <UiText style={styles.name}>
+                      {person.displayName.trim() ||
+                        (person.isCurrentActor ? t("ui.you") : "")}
+                    </UiText>
+                    {!person.isCurrentActor &&
+                    person.localState !== "LOCAL_PENDING" &&
+                    onInvitePerson ? (
+                      <UiButton
+                        variant="text"
+                        label={t("people.directedInvite.send")}
+                        onPress={() => {
+                          if (latest.current !== frame) return;
+                          onInvitePerson(person.personId);
+                        }}
+                      />
+                    ) : null}
+                    {person.localState === "LOCAL_PENDING" ? (
+                      <UiText style={styles.meta}>{t("tripMembers.localPending")}</UiText>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            ) : null;
+          })}
+          <UiText style={styles.meta}>{t("tripForm.namedPeopleHint")}</UiText>
+        </>
+      ) : (
+        <UiText style={styles.meta}>{t("tripForm.membersUnknown")}</UiText>
+      )}
+    </View>
   );
 }
 const createStyles = (c: UiColors) =>

@@ -1650,6 +1650,7 @@ function LocalTripContent({
             </Text>
           ) : null}
           <TripMembersSheet
+            tripId={selected.id}
             visible={
               menuMembersTrip === selected.id &&
               setup?.context.tripId === selected.id &&

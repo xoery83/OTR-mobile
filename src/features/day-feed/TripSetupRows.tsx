@@ -173,6 +173,7 @@ function ScopedMembersSummary({
         onPress={() => setOpen(true)}
       />
       <TripMembersSheet
+        tripId={setup?.context.tripId}
         visible={open}
         members={open ? (setup?.members ?? null) : null}
         onClose={() => setOpen(false)}

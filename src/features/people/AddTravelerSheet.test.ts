@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, expect, it, vi } from "vitest";
-import { AddTravelerSheet } from "./AddTravelerSheet";
+import { AddTravelerForm, AddTravelerSheet, type AddTravelerSurfaceProps } from "./AddTravelerSheet";
 import {
   bindTripPersonEditorDraft,
   createTripPersonEditorDraft,
@@ -49,6 +49,7 @@ vi.mock("react", async (original) => ({
 vi.mock("react-native", () => ({
   Keyboard: { dismiss: vi.fn() },
   Modal: "Modal",
+  View: "View",
   ScrollView: "ScrollView",
   StyleSheet: { create: (value: unknown) => value },
 }));
@@ -450,4 +451,44 @@ it("disables a no-port editor and retained input callback when draft-only mode i
   expect(input().editable).toBe(false);
   old("Unpersisted new name");
   expect(input().value).toBe("Original");
+});
+
+it("keeps a hosted add open during Save and retries with the original operation", async () => {
+  let fail!: (error: Error) => void;
+  vi.mocked(props.onSave).mockImplementationOnce(
+    () => new Promise<void>((_resolve, reject) => { fail = reject; }),
+  );
+  const Surface = (_surface: AddTravelerSurfaceProps) => null;
+  let dismiss: ((afterClose: () => void) => void) | undefined;
+  const renderHosted = () => {
+    state.cursor = state.refCursor = 0;
+    return nodes(AddTravelerForm({
+      ...props,
+      HostedSurface: Surface,
+      registerDismissHandler: handler => {
+        dismiss = handler;
+        return () => { if (dismiss === handler) dismiss = undefined; };
+      },
+    }));
+  };
+  const child = renderHosted();
+  expect(child.some(node => node.type === "Modal")).toBe(false);
+  child.find(node => node.type === "Input")!.props.onChangeText("QA Traveler");
+  renderHosted().find(node => node.type === Surface)!.props.action.onPress();
+  const closeHost = vi.fn();
+  dismiss?.(closeHost);
+  expect(closeHost).not.toHaveBeenCalled();
+  fail(Error("SAVE_UNCONFIRMED"));
+  await vi.waitFor(() => {
+    expect(renderHosted().find(node => node.type === Surface)!.props.action.label).toBe("people.retrySave");
+  });
+  renderHosted().find(node => node.type === Surface)!.props.action.onPress();
+  await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
+  expect(vi.mocked(props.onSave).mock.calls[1][0]).toEqual(vi.mocked(props.onSave).mock.calls[0][0]);
+  const committed = renderHosted().find(node => node.type === Surface)!.props;
+  expect(committed.action.disabled).toBe(true);
+  committed.action.onPress();
+  expect(props.onSave).toHaveBeenCalledTimes(2);
+  dismiss?.(closeHost);
+  expect(closeHost).toHaveBeenCalledOnce();
 });

@@ -3,6 +3,7 @@ import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearch
 import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedTripCreateEnabled } from "@/features/day-feed/hostedTripCreate";
+import { hostedTripMembersEnabled } from "@/features/day-feed/hostedTripMembers";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
@@ -152,6 +153,18 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedTripMetadataEnabled}>
               <Stack.Screen
                 name="trip-metadata-sheet"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedTripMembersEnabled}>
+              <Stack.Screen
+                name="trip-members-sheet"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",

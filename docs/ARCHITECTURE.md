@@ -140,6 +140,13 @@ opens only after the Sheet returns to its originating My Trips route.
 The default-off Trip Settings Sheet retains the existing editor and save
 owner. Its date selector returns a draft choice only to that editor.
 
+For the default-off Trip Members QA entry, the roster and Add Traveler share
+one native Sheet Stack. The launching Trip and Account generation own the
+roster invocation. The child uses the existing editor, dismissal guard and
+save callback. Directed Invite opens after the owning roster dismisses and
+rechecks the exact local member. See the Sheet acceptance matrix for device
+and role coverage.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.
