@@ -703,3 +703,24 @@ it("lets iPhone scroll to the focused hosted editor without adding a second adju
   render(empty, 0, { hosted: true });
   expect(state.nodes.some(node => node.keyboardInsets === true)).toBe(false);
 });
+
+it("puts every hosted attachment source in the composer scroll body", () => {
+  const input = { hosted: true, tripName: "QA Trip", onDocuments: vi.fn() };
+  const before = render(empty, 0, input);
+  expect(before.html).not.toContain(t("capture.activity"));
+  button("capture.composer.addAttachments").onPress();
+  const { html, props } = render(empty, 0, input);
+  expect(button("capture.composer.addAttachments").accessibilityState.expanded).toBe(true);
+  for (const key of [
+    "capture.composer.camera", "capture.composer.photos", "capture.composer.files",
+    "capture.activity", "importDocuments.inbox", "importDocuments.trip",
+  ] as const) {
+    expect(html).toContain(t(key));
+  }
+  expect(state.nodes.find(node => node.title === t("capture.composer.title")).overlay).toBeUndefined();
+  state.buttons.find(row => row.children?.[1]?.props?.children === t("capture.composer.photos")).onPress();
+  expect(props.onPhotos).toHaveBeenCalledOnce();
+  expect(props.onSubmit).not.toHaveBeenCalled();
+  render(empty, 0, input);
+  expect(button("capture.composer.addAttachments").accessibilityState.expanded).toBe(false);
+});

@@ -257,6 +257,69 @@ export function CaptureComposer({
       ]}
     />
   );
+  const attachmentMenu = (menu && page === "composer" && content == null ? (
+          <UiGlassSurface style={[
+            styles.attachmentMenu,
+            hosted ? styles.inlineAttachmentMenu : [styles.legacyAttachmentMenu, { bottom: insets.bottom + 60 }],
+          ]}>
+            {[
+              {
+                icon: "camera" as const,
+                label: t("capture.composer.camera"),
+                press: onCamera,
+              },
+              {
+                icon: "photo" as const,
+                label: t("capture.composer.photos"),
+                press: onPhotos,
+              },
+              {
+                icon: "paperclip" as const,
+                label: t("capture.composer.files"),
+                press: onFiles,
+              },
+              {
+                icon: "clock.arrow.circlepath" as const,
+                label: t("capture.activity"),
+                press: onActivity,
+              },
+              ...(onDocuments
+                ? [
+                    {
+                      icon: "paperclip" as const,
+                      label: t("importDocuments.inbox"),
+                      press: () => onDocuments("PERSONAL_INBOX"),
+                    },
+                    ...(tripName
+                      ? [
+                          {
+                            icon: "paperclip" as const,
+                            label: t("importDocuments.trip"),
+                            press: () => onDocuments("TRIP"),
+                          },
+                        ]
+                      : []),
+                  ]
+                : []),
+            ].map((item) => (
+              <Pressable
+                key={item.label}
+                accessibilityRole="button"
+                disabled={!item.press || locked}
+                onPress={() => {
+                  setMenu(false);
+                  item.press?.();
+                }}
+                style={styles.menuRow}
+              >
+                <View style={styles.menuIcon}>
+                  <AppIcon name={item.icon} size={23} color={colors.textPrimary} />
+                </View>
+                <UiText style={[styles.bodyText, hosted && styles.inlineAttachmentLabel]}>{item.label}</UiText>
+              </Pressable>
+            ))}
+          </UiGlassSurface>
+        ) : null);
   const editorControls = (
     <View key="editor" style={[styles.composerShadow, keyboardVisible && styles.keyboardEditor]}>
       <UiGlassSurface style={styles.composer}>
@@ -273,7 +336,7 @@ export function CaptureComposer({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t("capture.composer.addAttachments")}
-            accessibilityState={{ disabled: locked }}
+            accessibilityState={{ disabled: locked, expanded: menu }}
             disabled={locked}
             style={styles.target}
             onPress={attachments}
@@ -333,6 +396,7 @@ export function CaptureComposer({
           </Pressable>
         </View>
       </UiGlassSurface>
+      {hosted ? attachmentMenu : null}
     </View>
   );
   const BodyScroll = hosted ? InlineComposerBody : ScrollView;
@@ -687,66 +751,6 @@ export function CaptureComposer({
     )}
     </>
   );
-  const attachmentMenu = (menu && page === "composer" && content == null ? (
-          <UiGlassSurface style={[styles.attachmentMenu, { bottom: insets.bottom + 60 }]}>
-            {[
-              {
-                icon: "camera" as const,
-                label: t("capture.composer.camera"),
-                press: onCamera,
-              },
-              {
-                icon: "photo" as const,
-                label: t("capture.composer.photos"),
-                press: onPhotos,
-              },
-              {
-                icon: "paperclip" as const,
-                label: t("capture.composer.files"),
-                press: onFiles,
-              },
-              {
-                icon: "clock.arrow.circlepath" as const,
-                label: t("capture.activity"),
-                press: onActivity,
-              },
-              ...(onDocuments
-                ? [
-                    {
-                      icon: "paperclip" as const,
-                      label: t("importDocuments.inbox"),
-                      press: () => onDocuments("PERSONAL_INBOX"),
-                    },
-                    ...(tripName
-                      ? [
-                          {
-                            icon: "paperclip" as const,
-                            label: t("importDocuments.trip"),
-                            press: () => onDocuments("TRIP"),
-                          },
-                        ]
-                      : []),
-                  ]
-                : []),
-            ].map((item) => (
-              <Pressable
-                key={item.label}
-                accessibilityRole="button"
-                disabled={!item.press || locked}
-                onPress={() => {
-                  setMenu(false);
-                  item.press?.();
-                }}
-                style={styles.menuRow}
-              >
-                <View style={styles.menuIcon}>
-                  <AppIcon name={item.icon} size={23} color={colors.textPrimary} />
-                </View>
-                <UiText style={styles.bodyText}>{item.label}</UiText>
-              </Pressable>
-            ))}
-          </UiGlassSurface>
-        ) : null);
   if (hosted) {
     if (!visible) return null;
     const nested = page !== "composer" || Boolean(onBack ?? onParentBack);
@@ -758,7 +762,6 @@ export function CaptureComposer({
         onBack={nested ? close : undefined}
         ownsScroll={content != null}
         keyboardInsets={keyboardInsets}
-        overlay={attachmentMenu}
       >
         {body}
       </SheetRoutePanel>
@@ -948,10 +951,6 @@ const createStyles = (c: UiColors) =>
       shadowOffset: { width: 0, height: 4 },
     },
     attachmentMenu: {
-      position: "absolute",
-      left: visual.space.page,
-      width: 240,
-      maxWidth: "90%",
       borderRadius: 28,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: c.separator,
@@ -960,6 +959,14 @@ const createStyles = (c: UiColors) =>
       shadowOpacity: 0.14,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 6 },
+    },
+    inlineAttachmentMenu: { marginTop: visual.space.row },
+    inlineAttachmentLabel: { flexShrink: 1 },
+    legacyAttachmentMenu: {
+      position: "absolute",
+      left: visual.space.page,
+      width: 240,
+      maxWidth: "90%",
     },
     menuRow: {
       minHeight: 54,
