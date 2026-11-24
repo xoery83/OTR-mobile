@@ -3,8 +3,11 @@ import { expect, it, vi } from "vitest";
 import {
   interceptTripMetadataClose,
   openTripMetadataSheet,
+  readTripMetadataCurrency,
   readTripMetadataSheet,
+  releaseTripMetadataCurrency,
   releaseTripMetadataSheet,
+  stageTripMetadataCurrency,
   updateTripMetadataSheet,
 } from "./tripMetadataSheet";
 
@@ -43,4 +46,27 @@ it("clears the editor and exit callback when the account changes", () => {
   expect(readTripMetadataSheet(id)).toBeUndefined();
   expect(interceptTripMetadataClose(id)).toBe(false);
   expect(requestClose).not.toHaveBeenCalled();
+});
+
+it("keeps currency work and close readback bound to the exact metadata owner", () => {
+  const requestClose = vi.fn();
+  const onClose = vi.fn();
+  const id = openTripMetadataSheet(account.generation, { editor: createElement(() => null), requestClose })!;
+  const selection = stageTripMetadataCurrency(id, "trip", "editor", onClose)!;
+  expect(stageTripMetadataCurrency(id, "other-trip", "editor", onClose)).toBeUndefined();
+  expect(readTripMetadataCurrency("other-editor", selection)).toBeUndefined();
+  const entry = readTripMetadataCurrency(id, selection)!;
+  expect(entry).toMatchObject({ tripId: "trip", editorKey: "editor" });
+  entry.working = true;
+  expect(interceptTripMetadataClose(id)).toBe(true);
+  expect(requestClose).not.toHaveBeenCalled();
+  releaseTripMetadataCurrency("other-editor", selection);
+  expect(onClose).not.toHaveBeenCalled();
+  entry.working = false;
+  releaseTripMetadataCurrency(id, selection);
+  releaseTripMetadataCurrency(id, selection);
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(interceptTripMetadataClose(id)).toBe(true);
+  expect(requestClose).toHaveBeenCalledTimes(1);
+  releaseTripMetadataSheet(id);
 });

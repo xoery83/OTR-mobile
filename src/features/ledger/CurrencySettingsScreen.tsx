@@ -1,3 +1,6 @@
+import type { ComponentType } from "react";
+import type { ScrollViewProps } from "react-native";
+import type { LedgerCurrencyChoice } from "./ledgerCurrencySheet";
 import { UiButton } from "@/ui/controls";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
@@ -89,7 +92,15 @@ async function tripCurrencyCloudReady(tripId: string) {
   return trip === null || trip.serverId === tripId;
 }
 
-export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }: { journeyId?: string; hostLookupPickers?: boolean }) {
+export function CurrencySettingsScreen({
+  journeyId, hostLookupPickers = false, openInParent, reportWorking, ScrollContainer = ScrollView,
+}: {
+  journeyId?: string;
+  hostLookupPickers?: boolean;
+  openInParent?(choice: LedgerCurrencyChoice): boolean;
+  reportWorking?(working: boolean): void;
+  ScrollContainer?: ComponentType<ScrollViewProps>;
+}) {
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
   const { left, right } = useSafeAreaInsets();
@@ -108,6 +119,10 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
   const [previewRead, setPreview] = useState<JourneyCurrencyPreview | null>(null);
   const [operationId, setOperationId] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  function setOperationWorking(value: boolean) {
+    reportWorking?.(value);
+    setWorking(value);
+  }
   const committing = useRef(false);
   const locale = useUiLocale();
   const [guestLocal, setGuestLocal] = useState(false);
@@ -180,6 +195,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
       setMessage(null);
       setPickerOpen(false);
       setHelpOpen(false);
+      reportWorking?.(false);
       setWorking(false);
       committing.current = false;
       const principal = await readCommittedLocalPrincipal();
@@ -260,7 +276,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
       stopSync();
       if (lane.current === current) guestRead.current = null;
     };
-  }, [journeyId, generation]);
+  }, [journeyId, generation, reportWorking]);
 
   const selectCurrency = async (currency: string) => {
     const current = lane.current;
@@ -282,7 +298,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
     if (guestLocal) {
       const before = guestRead.current;
       if (!before || locked || working) return;
-      setWorking(true);
+      setOperationWorking(true);
       setMessage(null);
       try {
         const value = await (
@@ -309,12 +325,12 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
           current.valid() &&
           guestRead.current?.context.generation === getAccountGeneration()
         )
-          setWorking(false);
+          setOperationWorking(false);
       }
       return;
     }
     if (!online || !current.scope) return;
-    setWorking(true);
+    setOperationWorking(true);
     setMessage(null);
     setPendingCurrency(currency);
     let readinessRead = false;
@@ -344,7 +360,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
         );
       }
     } finally {
-      if (current.valid()) setWorking(false);
+      if (current.valid()) setOperationWorking(false);
     }
   };
 
@@ -385,7 +401,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
             void (async () => {
               if (!current.valid()) return;
               committing.current = true;
-              setWorking(true);
+              setOperationWorking(true);
               try {
                 await ledgerCurrencyRepository.commit(
                   journey.journeyId,
@@ -404,7 +420,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
               } finally {
                 if (current.valid()) {
                   committing.current = false;
-                  setWorking(false);
+                  setOperationWorking(false);
                 }
               }
             })(),
@@ -422,17 +438,19 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
 
   return (
     <View style={styles.screen}>
-      <ScrollView
+      <ScrollContainer
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, lookupInsets]}
       >
-        <View style={styles.headingRow}>
-          <Text
-            accessibilityRole="header"
-            style={[styles.sectionTitle, styles.inlineTitle]}
-          >
-            {t("currencySettings.heading")}
-          </Text>
+        <View style={[styles.headingRow, openInParent && styles.hostedHeadingRow]}>
+          {openInParent ? null : (
+            <Text
+              accessibilityRole="header"
+              style={[styles.sectionTitle, styles.inlineTitle]}
+            >
+              {t("currencySettings.heading")}
+            </Text>
+          )}
           <Pressable
             accessibilityLabel={t("currencySettings.about")}
             accessibilityRole="button"
@@ -451,7 +469,21 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
                 disabled: locked || !canChange || (!guestLocal && !online) || working,
               }}
               disabled={locked || !canChange || (!guestLocal && !online) || working}
-              onPress={() => setPickerOpen(true)}
+              onPress={() => {
+                if (!openInParent) {
+                  setPickerOpen(true);
+                  return;
+                }
+                const opening = lane.current;
+                openInParent({
+                  kind: "currency",
+                  titleKey: "currencySettings.copy31",
+                  selected: journey.settlementCurrency,
+                  suggestions: [journey.settlementCurrency, "EUR", "USD"],
+                  isCurrent: () => opening?.valid() === true && !committing.current,
+                  choose: code => { void selectCurrency(code); },
+                });
+              }}
               style={styles.row}
             >
               <View style={styles.grow}>
@@ -577,6 +609,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
         {journey && !guestLocal ? (
           <ExchangeRateLookup
             hostPickers={hostLookupPickers}
+            openInParent={openInParent}
             journeyId={journey.journeyId}
             key={`${journey.journeyId}:${journey.settlementCurrency}`}
             online={online}
@@ -584,7 +617,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
           />
         ) : null}
         {message ? <Text style={styles.error}>{systemMessage(message)}</Text> : null}
-      </ScrollView>
+      </ScrollContainer>
       {helpOpen ? (
         <View style={styles.helpOverlay}>
           <Pressable
@@ -598,7 +631,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
           </View>
         </View>
       ) : null}
-      <Modal
+      {openInParent ? null : <Modal
         allowSwipeDismissal
         animationType="slide"
         onRequestClose={() => setPickerOpen(false)}
@@ -615,7 +648,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
           suggestions={[journey?.settlementCurrency ?? "NZD", "EUR", "USD"]}
           onSelect={(code) => void selectCurrency(code)}
         />
-      </Modal>
+      </Modal>}
     </View>
   );
 }
@@ -651,6 +684,7 @@ const createStyles = (colors: UiColors) =>
       marginBottom: 7,
       marginTop: 18,
     },
+    hostedHeadingRow: { justifyContent: "flex-end" },
     inlineTitle: { marginBottom: 0, marginTop: 0 },
     infoButton: {
       alignItems: "center",

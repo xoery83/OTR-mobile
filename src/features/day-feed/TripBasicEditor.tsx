@@ -60,6 +60,7 @@ export function TripBasicEditor({
   onHandoffFrozenChange,
   SheetPanel,
   openCoverLibrary,
+  openCurrencySettings,
 }: {
   trip: Pick<
     Trip,
@@ -75,6 +76,7 @@ export function TripBasicEditor({
   metadataEditable: boolean;
   SheetPanel?: ComponentType<ComponentProps<typeof SheetRoutePanel>>;
   openCoverLibrary?: ComponentProps<typeof TripCoverPicker>["openLibrary"];
+  openCurrencySettings?(tripId: string, onClose: () => void): boolean;
   onSelectCover(id: BuiltInTripCoverId | null): Promise<void>;
   onSaveMetadata(
     before: TripMetadata,
@@ -569,7 +571,10 @@ export function TripBasicEditor({
     ) : null}
     <TripCurrencyRow
       setup={currencySetup ?? setup}
-      onOpen={saving || !currencyAvailable ? undefined : () => setCurrencyOpen(true)}
+      onOpen={saving || !currencyAvailable ? undefined : () => {
+        if (!current() || busy.current || currencyOpen) return;
+        if (!openCurrencySettings || openCurrencySettings(trip.id, closeCurrency)) setCurrencyOpen(true);
+      }}
     />
     {saved || error ? (
       <UiSection>
@@ -585,7 +590,7 @@ export function TripBasicEditor({
     ) : null}
     </>
   );
-  const currencyEditor = (
+  const currencyEditor = openCurrencySettings ? null : (
     <Modal
       visible={currencyOpen}
       presentationStyle="pageSheet"

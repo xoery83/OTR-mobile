@@ -7,7 +7,7 @@ import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { openTripCoverSheet, releaseTripMetadataCoverOwner } from "@/features/day-feed/tripCoverSheet";
 import { OpenCalendarRangePickerContext } from "@/features/day-feed/calendarRangePickerHandoff";
 import {
-  metadataCalendar, readTripMetadataSheet, releaseTripMetadataSheet, subscribeTripMetadataSheet,
+  metadataCalendar, readTripMetadataSheet, releaseTripMetadataSheet, stageTripMetadataCurrency, subscribeTripMetadataSheet,
 } from "@/features/day-feed/tripMetadataSheet";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -44,6 +44,15 @@ export default function TripMetadataSheetRoute() {
     }}>
       {cloneElement(sheet.editor, {
         SheetPanel: SheetRoutePanel,
+        openCurrencySettings: (tripId, onClose) => {
+          if (!invocation || !navigation.isFocused() || isExitPending()) return false;
+          const currency = stageTripMetadataCurrency(invocation, tripId, route.key, onClose);
+          if (!currency) return false;
+          router.push({ pathname: "/trip-metadata-sheet/currency", params: {
+            invocation, currency, editorKey: route.key,
+          } });
+          return true;
+        },
         openCoverLibrary: cover => {
           if (!invocation || !navigation.isFocused() || isExitPending() ||
               !readTripMetadataSheet(invocation)?.open) return;
