@@ -709,21 +709,24 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   const journeyOwner = useRef<object | null>(null);
   useLayoutEffect(() => {
     journeyOwner.current = {};
+    setSelectingJourneyId(null);
     return () => {
       journeyOwner.current = null;
       journeySelection.current = null;
       releaseLedgerJourneySheet(journeyInvocation.current);
     };
-  }, [accountGeneration, scopedJourneyId]);
+  }, [accountGeneration, explicitTrip, scopedJourneyId]);
 
   const chooseJourney = async (selected: LedgerJourneyContext, isCurrent = () => true) => {
     const owner = journeyOwner.current;
     if (!owner || journeySelection.current || !isCurrent()) return false;
     const generation = getAccountGeneration();
+    const tripAtStart = explicitTripRef.current;
     const selection = {};
     journeySelection.current = selection;
     const ownsSelection = () => journeyOwner.current === owner &&
-      journeySelection.current === selection && generation === getAccountGeneration();
+      journeySelection.current === selection && generation === getAccountGeneration() &&
+      explicitTripRef.current === tripAtStart;
     const canCommit = () => ownsSelection() && isCurrent();
     contextRequest.cancel();
     setSelectingJourneyId(selected.journeyId);
