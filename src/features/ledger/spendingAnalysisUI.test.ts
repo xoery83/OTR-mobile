@@ -1,11 +1,10 @@
 import { AnalysisExcludedExpenses } from "./AnalysisExcludedExpenses";
 import { AnalysisPickerFields } from "./AnalysisPickerFields";
 import type { AnalysisPicker } from "./analysisPickerInvocation";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement } from "react";
 import { MoneyText } from "./MoneyText";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import type { ReactElement } from "react";
 import {
   analysisPresetBounds,
   buildSpendingAnalysis,
