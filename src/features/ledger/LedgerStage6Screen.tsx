@@ -1,3 +1,4 @@
+import { captureLedgerJourneyOrigin, hostedLedgerJourneySheetEnabled, stageLedgerJourneySheet, releaseLedgerJourneySheet } from "./ledgerJourneySheet";
 import {
   captureAccountScope,
   assertAccountRequestGeneration,
@@ -20,7 +21,7 @@ import { ExpenseConflictList } from "./ExpenseConflictList";
 import { readLastApiFailure } from "@/data/operations/localOperations";
 import { useNetworkState } from "expo-network";
 import { getDefaultLedgerFxSnapshotRepository } from "@/data/repositories/defaultLedgerFxSnapshotRepository";
-import { refreshLedgerFxSnapshotCache } from "@/data/operations/kickLedgerSync";
+import { ensureJourneyLedgerActor, refreshLedgerFxSnapshotCache } from "@/data/operations/kickLedgerSync";
 import {
   useCallback,
   useEffect,
@@ -42,7 +43,9 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { router, Stack, useFocusEffect } from "expo-router";
+import { router, Stack, useFocusEffect, useNavigation } from "expo-router";
+import { useSheetScrollDismissal } from "@/components/SheetHost";
+import type { NavigationProp } from "expo-router/react-navigation";
 import PagerView from "react-native-pager-view";
 
 import { useTripView } from "@/features/day-feed/TripViewContext";
@@ -54,7 +57,6 @@ import {
   NavigationContentFrame,
   navigationContentFrameOptions,
 } from "@/components/navigationChrome";
-import { ensureJourneyLedgerActor } from "@/data/operations/kickLedgerSync";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
 import { getDefaultLedgerReviewRepository } from "@/data/repositories/defaultLedgerReviewRepository";
@@ -206,6 +208,8 @@ export function LedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
 
 function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: string }) {
   useUiLocale();
+  const owningNavigation = useNavigation<NavigationProp<Record<string, { journeyId?: string } | undefined>>>();
+  const rootNavigation = useNavigation("/");
   const { workingTrip, switchTrip } = useTripView();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
@@ -218,6 +222,7 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   const [modeTransitionSeq, setModeTransitionSeq] = useState(0);
   const journeySearch = useRef<NativeTextInput>(null);
   const manualJourneyId = useRef<string | undefined>(undefined);
+  const journeySelection = useRef<object | null>(null);
   const explicitTrip = scopedJourneyId ?? workingTrip?.tripId;
   const explicitTripRef = useRef(explicitTrip);
   useLayoutEffect(() => {
@@ -264,7 +269,9 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   const [journeyPickerOpen, setJourneyPickerOpen] = useState(false);
   const [journeyQuery, setJourneyQuery] = useState("");
   const [journeySearchVisible, setJourneySearchVisible] = useState(false);
-  const [selectingJourneyId, setSelectingJourneyId] = useState<string | null>(null);
+  const [selectingJourney, setSelectingJourney] = useState<{ id: string; generation: number; tripId?: string } | null>(null);
+  const selectingJourneyId = selectingJourney?.generation === accountGeneration &&
+    selectingJourney.tripId === explicitTrip ? selectingJourney.id : null;
   const [debugMode, setDebugMode] = useState(false);
   const [ledgerChangeSeq, setLedgerChangeSeq] = useState(0);
   const journey =
@@ -315,16 +322,26 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
     [debugMode, journey?.journeyId, journeyQuery, journeys],
   );
 
-  const loadProjection = useCallback(
-    async (nextJourney: LedgerJourneyContext, nextScope: ReportingScope) => {
+  const publishProjection = useCallback((next: SpendingProjection) => {
+    memberRequest.cancel();
+    scopeRef.current = next.scope;
+    selectedJourneyIdRef.current = next.journey.journeyId;
+    selectedMemberIdRef.current = next.selectedMember?.id ?? null;
+    setProjection(next);
+  }, [memberRequest]);
+
+  const prepareProjection = useCallback(
+    async (nextJourney: LedgerJourneyContext, nextScope: ReportingScope, ownsSelection: () => boolean = () => true) => {
       const id = request.begin();
       const generation = getAccountGeneration();
+      const current = () => request.isCurrent(id) && generation === getAccountGeneration() && ownsSelection();
+      if (!current()) return undefined;
       setMessage(null);
       try {
         return await retrySQLiteRollbackOnce(async () => {
           const repository = await getDefaultLedgerReportingRepository();
           const context = await captureAccountScope(requireActiveUserId);
-          if (context.generation !== generation) return false;
+          if (context.generation !== generation || !current()) return undefined;
           const actor = await ensureJourneyLedgerActor(
             nextJourney.journeyId,
             Object.freeze({ ...context, tripId: nextJourney.journeyId }),
@@ -423,17 +440,13 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
             loadEstimatedSettlement(nextJourney.journeyId).catch(() => null),
             settlementRepository.hasPendingFinancialOperations(nextJourney.journeyId),
           ]);
-          if (!request.isCurrent(id) || generation !== getAccountGeneration())
-            return false;
-          memberRequest.cancel();
-          scopeRef.current = nextScope;
-          selectedJourneyIdRef.current = nextJourney.journeyId;
-          selectedMemberIdRef.current =
+          if (!current()) return undefined;
+          const validSelectedMember =
             selectedMember &&
             options.members.some((member) => member.id === selectedMember.id)
-              ? selectedMember.id
+              ? selectedMember
               : null;
-          setProjection({
+          const projection: SpendingProjection = {
             journey: nextJourney,
             memberId: nextMemberId,
             scope: nextScope,
@@ -442,7 +455,7 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
             members: options.members,
             memberSpending,
             reviewCount: reviewCounts.pending,
-            selectedMember: selectedMemberIdRef.current ? selectedMember : null,
+            selectedMember: validSelectedMember,
             expenses: nextExpenses,
             estimatedMinor: display.estimatedMinor,
             estimatedCount: display.estimatedCount,
@@ -454,17 +467,23 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
               settlementPreview,
               pendingFinancialOperations,
             ),
-          });
-          return true;
+          };
+          return { projection, isCurrent: current };
         });
       } catch {
-        if (request.isCurrent(id) && generation === getAccountGeneration())
-          setMessage(t("ledger.refreshFailed"));
-        return false;
+        if (current()) setMessage(t("ledger.refreshFailed"));
+        return undefined;
       }
     },
-    [memberRequest, request],
+    [request],
   );
+
+  const loadProjection = useCallback(async (nextJourney: LedgerJourneyContext, nextScope: ReportingScope) => {
+    const next = await prepareProjection(nextJourney, nextScope, () => journeySelection.current === null);
+    if (!next?.isCurrent()) return false;
+    publishProjection(next.projection);
+    return true;
+  }, [prepareProjection, publishProjection]);
 
   const selectCategoryMember = async (selectedId: string | null) => {
     if (!journey || scope !== "GROUP" || !projection) return;
@@ -512,10 +531,12 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
   };
 
   const loadContext = useCallback(async () => {
+    if (journeySelection.current) return;
     const id = contextRequest.begin();
     const generation = getAccountGeneration();
     const isCurrent = () =>
       contextRequest.isCurrent(id) &&
+      journeySelection.current === null &&
       generation === getAccountGeneration() &&
       explicitTripRef.current === explicitTrip;
     const clear = () => {
@@ -684,38 +705,88 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
     [contextRequest, memberRequest, request],
   );
 
-  const chooseJourney = async (selected: LedgerJourneyContext) => {
-    const context = await captureAccountScope(requireActiveUserId);
-    setSettlementSection("Summary");
-    setModeNavHidden(false);
-    const previous = projection;
-    const previousManualJourneyId = manualJourneyId.current;
-    manualJourneyId.current = selected.journeyId;
-    setSelectingJourneyId(selected.journeyId);
-    const loaded = await loadProjection(selected, scopeRef.current);
-    if (context.generation !== getAccountGeneration()) return;
-    if (!loaded) {
-      manualJourneyId.current = previousManualJourneyId;
-      setSelectingJourneyId(null);
-      return;
-    }
+  const journeyInvocation = useRef<string | undefined>(undefined);
+  const journeyOwner = useRef<object | null>(null);
+  useLayoutEffect(() => {
+    journeyOwner.current = {};
+    return () => {
+      journeyOwner.current = null;
+      journeySelection.current = null;
+      releaseLedgerJourneySheet(journeyInvocation.current);
+    };
+  }, [accountGeneration, explicitTrip, scopedJourneyId]);
+
+  const chooseJourney = async (selected: LedgerJourneyContext, isCurrent = () => true) => {
+    const owner = journeyOwner.current;
+    if (!owner || journeySelection.current || !isCurrent()) return false;
+    const generation = getAccountGeneration();
+    const tripAtStart = explicitTripRef.current;
+    const selection = { id: selected.journeyId, generation, tripId: tripAtStart };
+    journeySelection.current = selection;
+    const ownsSelection = () => journeyOwner.current === owner &&
+      journeySelection.current === selection && generation === getAccountGeneration() &&
+      explicitTripRef.current === tripAtStart;
+    const canCommit = () => ownsSelection() && isCurrent();
+    contextRequest.cancel();
+    setSelectingJourney(selection);
     try {
+      const context = await captureAccountScope(requireActiveUserId);
+      if (!canCommit() || context.generation !== generation) return false;
+      const next = await prepareProjection(selected, scopeRef.current, canCommit);
+      if (!next?.isCurrent()) return false;
       const repository = await getDefaultLedgerReportingRepository();
+      if (!next.isCurrent()) return false;
       await repository.selectJourney(selected.journeyId, context);
       assertAccountRequestGeneration(context);
+      // The preference committed. Finish on its original screen even if the picker lost focus.
+      if (!ownsSelection()) return true;
+      manualJourneyId.current = selected.journeyId;
+      publishProjection(next.projection);
+      setSettlementSection("Summary");
+      setModeNavHidden(false);
       switchTrip(selected.journeyId, context.generation);
-      if (scopedJourneyId) router.setParams({ journeyId: selected.journeyId });
+      if (scopedJourneyId) owningNavigation.setParams({ journeyId: selected.journeyId });
       setJourneyPickerOpen(false);
       setJourneyQuery("");
+      return true;
     } catch {
-      if (context.generation !== getAccountGeneration()) return;
-      manualJourneyId.current = previousManualJourneyId;
-      request.cancel();
-      setProjection(previous);
-      setMessage(t("ledger.selectionFailed"));
+      if (ownsSelection()) setMessage(t("ledger.selectionFailed"));
+      return false;
     } finally {
-      if (context.generation === getAccountGeneration()) setSelectingJourneyId(null);
+      if (journeySelection.current === selection) {
+        journeySelection.current = null;
+      }
+      setSelectingJourney(current => current === selection ? null : current);
     }
+  };
+
+  const openJourneyPicker = () => {
+    if (!hostedLedgerJourneySheetEnabled) {
+      setJourneyPickerOpen(true);
+      return;
+    }
+    const owner = journeyOwner.current;
+    if (!owner || !owningNavigation.isFocused() || !journey) return;
+    const root = rootNavigation.getState();
+    const originKey = root?.routes[root.index]?.key;
+    if (!root || !originKey) return;
+    const originRemainsSelected = captureLedgerJourneyOrigin(owningNavigation, root.key);
+    if (!originRemainsSelected) return;
+    const tripAtOpen = explicitTrip;
+    const isCurrent = () => journeyOwner.current === owner && getAccountGeneration() === accountGeneration &&
+      explicitTripRef.current === tripAtOpen && originRemainsSelected();
+    const invocation = stageLedgerJourneySheet({
+      selected: journey.journeyId,
+      initialQuery: journeyQuery,
+      sections: query => journeyPickerSections(journeys, localToday(), journey.journeyId, query, debugMode),
+      isCurrent,
+      originKey,
+      originFocused: () => owningNavigation.isFocused(),
+      choose: (item, isPresent) => chooseJourney(item, () => isCurrent() && isPresent()),
+    });
+    if (!invocation) return;
+    journeyInvocation.current = invocation;
+    router.push({ pathname: "/ledger-journey-picker", params: { invocation } });
   };
 
   const openSearch = (extra: Record<string, string> = {}) => {
@@ -1509,7 +1580,7 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
                       accessibilityHint={t("ledger.chooseJourney")}
                       accessibilityLabel={`${journey.title}, ${formatLedgerDateRange(journey.startDate, journey.endDate)}`}
                       accessibilityRole="button"
-                      onPress={() => setJourneyPickerOpen(true)}
+                      onPress={openJourneyPicker}
                       style={styles.context}
                     >
                       <View style={styles.tripBadge}>
@@ -1592,7 +1663,7 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
                       <Pressable
                         accessibilityLabel={`${journey.title}, ${formatLedgerDateRange(journey.startDate, journey.endDate)}`}
                         accessibilityRole="button"
-                        onPress={() => setJourneyPickerOpen(true)}
+                        onPress={openJourneyPicker}
                         style={styles.context}
                       >
                         <View style={styles.tripBadge}>
@@ -1656,54 +1727,86 @@ function AccountLedgerStage6Screen({ scopedJourneyId }: { scopedJourneyId?: stri
             title={t("ledger.chooseJourneyTitle")}
             wrapActions
           />
-          <TextInput
-            accessibilityLabel={t("ledger.searchJourneys")}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onChangeText={setJourneyQuery}
-            placeholder={t("ledger.searchJourneys")}
-            returnKeyType="search"
-            style={styles.search}
-            value={journeyQuery}
-          />
-          <SectionList
-            contentContainerStyle={styles.pickerList}
+          <LedgerJourneyPickerFields
+            query={journeyQuery}
+            onQuery={setJourneyQuery}
             sections={journeySections}
-            keyExtractor={(item) => item.journeyId}
-            keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={
-              <Text style={styles.empty}>{t("ledger.noMatchingJourneys")}</Text>
-            }
-            renderSectionHeader={({ section }) => (
-              <Text style={styles.journeySectionTitle}>
-                {t(
-                  section.title === "Active"
-                    ? "ledger.active"
-                    : section.title === "Upcoming"
-                      ? "ledger.upcoming"
-                      : "ledger.past",
-                )}
-              </Text>
-            )}
-            renderItem={({ item }) => {
-              const selected = item.journeyId === journey?.journeyId;
-              const selecting = item.journeyId === selectingJourneyId;
-              return (
-                <JourneyRow
-                  busy={selecting}
-                  disabled={selectingJourneyId !== null}
-                  item={item}
-                  largeText={largeText}
-                  onPress={() => void chooseJourney(item)}
-                  selected={selected}
-                />
-              );
-            }}
-            stickySectionHeadersEnabled={false}
+            selectedJourney={journey?.journeyId ?? null}
+            selectingJourneyId={selectingJourneyId}
+            onChoose={item => { void chooseJourney(item); }}
           />
         </View>
       </Modal>
     </>
+  );
+}
+
+export function LedgerJourneyPickerFields({
+  query, onQuery, sections, selectedJourney, selectingJourneyId, onChoose, hosted = false, disabled = false,
+}: {
+  query: string;
+  onQuery(query: string): void;
+  sections: ReturnType<typeof journeyPickerSections>;
+  selectedJourney: string | null;
+  selectingJourneyId: string | null;
+  onChoose(item: LedgerJourneyContext): void;
+  hosted?: boolean;
+  disabled?: boolean;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  const largeText = useWindowDimensions().fontScale > 1.5;
+  const dismissal = useSheetScrollDismissal(hosted);
+  return (
+    <View style={styles.picker}>
+      <TextInput
+        accessibilityLabel={t("ledger.searchJourneys")}
+        autoCapitalize="none"
+        autoCorrect={false}
+        onChangeText={onQuery}
+        placeholder={t("ledger.searchJourneys")}
+        returnKeyType="search"
+        style={styles.search}
+        value={query}
+      />
+      <SectionList
+        {...dismissal}
+        automaticallyAdjustKeyboardInsets={hosted}
+        contentContainerStyle={styles.pickerList}
+        sections={sections}
+        keyExtractor={(item) => item.journeyId}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <Text style={styles.empty}>{t("ledger.noMatchingJourneys")}</Text>
+        }
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.journeySectionTitle}>
+            {t(
+              section.title === "Active"
+                ? "ledger.active"
+                : section.title === "Upcoming"
+                  ? "ledger.upcoming"
+                  : "ledger.past",
+            )}
+          </Text>
+        )}
+        renderItem={({ item }) => {
+          const selected = item.journeyId === selectedJourney;
+          const selecting = item.journeyId === selectingJourneyId;
+          return (
+            <JourneyRow
+              busy={selecting}
+              disabled={disabled || selectingJourneyId !== null}
+              item={item}
+              largeText={largeText}
+              onPress={() => onChoose(item)}
+              selected={selected}
+            />
+          );
+        }}
+        stickySectionHeadersEnabled={false}
+      />
+    </View>
   );
 }
 

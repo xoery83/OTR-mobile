@@ -5,6 +5,7 @@ import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedTripCreateEnabled } from "@/features/day-feed/hostedTripCreate";
 import { hostedTripMembersEnabled } from "@/features/day-feed/hostedTripMembers";
 import { hostedLedgerAnalysisPickerEnabled } from "@/features/ledger/analysisPickerInvocation";
+import { hostedLedgerJourneySheetEnabled } from "@/features/ledger/ledgerJourneySheet";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
@@ -236,6 +237,18 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedLedgerAnalysisPickerEnabled}>
               <Stack.Screen
                 name="ledger-analysis-picker"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedLedgerJourneySheetEnabled}>
+              <Stack.Screen
+                name="ledger-journey-picker"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",

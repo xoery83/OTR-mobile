@@ -31,6 +31,11 @@ Ledger Analysis date, category, excluded expenses and chart period summaries
 share the QA Sheet. Selection returns to the original Analysis scope. Expense
 detail and period search open after the Sheet returns to the original report.
 
+Ledger and Settlement share the same Journey selector. In QA the chooser uses
+the common Sheet and the existing eligible Journey sections. A successful read
+returns to the owning Ledger route. Failed or stale selections preserve the
+current Ledger context.
+
 ## Canonical Trip Person foundation
 
 A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from
