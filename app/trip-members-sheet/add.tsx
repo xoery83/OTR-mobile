@@ -53,8 +53,10 @@ export default function TripMembersAddRoute() {
     dispatched.current = true;
     if (approved === "back") {
       if (!popAdd()) {
-        dispatched.current = false;
-        setApproved(undefined);
+        queueMicrotask(() => {
+          dispatched.current = false;
+          setApproved(undefined);
+        });
       }
     }
     else {

@@ -49,10 +49,11 @@ beforeEach(() => {
   qa.dispatch.mockReset();
 });
 
-it("retries a refused Add return on the exact owning stack once it regains focus", () => {
+it("retries a refused Add return on the exact owning stack once it regains focus", async () => {
   TripMembersAddRoute().props.onClose();
   qa.focused = false;
   TripMembersAddRoute();
+  await Promise.resolve();
   expect(qa.dispatch).not.toHaveBeenCalled();
   expect(qa.approved).toBeUndefined();
 
@@ -68,9 +69,10 @@ it("retries a refused Add return on the exact owning stack once it regains focus
   });
 });
 
-it("keeps Add mounted and permits Back to retry when the stack refuses to pop", () => {
+it("keeps Add mounted and permits Back to retry when the stack refuses to pop", async () => {
   TripMembersAddRoute().props.onClose();
   TripMembersAddRoute();
+  await Promise.resolve();
   expect(qa.approved).toBeUndefined();
   expect(TripMembersAddRoute().type).toBe("AddTravelerForm");
 });
@@ -81,6 +83,7 @@ it("does not submit to or pop onto a replacement roster", async () => {
   await expect(onSave({})).rejects.toThrow("TRIP_MEMBERS_SCOPE_UNAVAILABLE");
   onClose();
   TripMembersAddRoute();
+  await Promise.resolve();
   expect(qa.dispatch).not.toHaveBeenCalled();
   expect(qa.entry.onAddTraveler).not.toHaveBeenCalled();
 });
