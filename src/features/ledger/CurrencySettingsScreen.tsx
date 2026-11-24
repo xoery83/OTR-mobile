@@ -128,7 +128,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
       ? journeyRead
       : null;
   const preview = journey ? previewRead : null;
-  const openHostedCurrency = useLedgerCurrencySheet(journey?.journeyId, journeyId);
+  const openHostedCurrency = useLedgerCurrencySheet(journey?.journeyId, journeyId, hostLookupPickers);
 
   useLayoutEffect(
     () => () => {

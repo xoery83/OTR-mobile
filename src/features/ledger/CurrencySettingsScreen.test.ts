@@ -90,7 +90,8 @@ vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("./CurrencyPicker", () => ({ CurrencyPicker: "CurrencyPicker" }));
 vi.mock("./ledgerCurrencySheet", () => ({
   get hostedLedgerCurrencySheetEnabled() { return state.hosted; },
-  useLedgerCurrencySheet: () => state.openHostedCurrency,
+  useLedgerCurrencySheet: (_journey?: string, _source?: string, enabled?: boolean) =>
+    enabled ? state.openHostedCurrency : () => false,
 }));
 vi.mock("./ExchangeRateLookup", () => ({ ExchangeRateLookup: "ExchangeRateLookup" }));
 vi.mock("@/data/repositories/tripRepository", () => ({
@@ -213,6 +214,19 @@ it("opens the hosted setting with the original journey and drops a result after 
   await flush();
   expect(state.preview).not.toHaveBeenCalled();
   expect(state.commit).not.toHaveBeenCalled();
+});
+
+it("keeps an embedded Settings picker on its existing native modal owner", async () => {
+  state.openHostedCurrency.mockReturnValue(true);
+  render("b");
+  await flush();
+  const row = render("b").find(node =>
+    node.type === "Pressable" && nodes(node).some(child => child.props.children === "NZD"),
+  );
+  expect(row).toBeDefined();
+  row?.props.onPress();
+  expect(state.openHostedCurrency).not.toHaveBeenCalled();
+  expect(render("b").some(node => node.type === "Modal" && node.props.visible)).toBe(true);
 });
 it("keeps explicit same-Trip lookup and existing owner authority", async () => {
   render("b");
