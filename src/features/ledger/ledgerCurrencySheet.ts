@@ -3,6 +3,7 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 
 import type { MessageKey } from "@/ui/locale";
+import type { ExpenseSharingInputs } from "./ExpenseSharingSheet";
 
 export const hostedLedgerCurrencySheetEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_CURRENCY_QA === "true";
 export const hostedExpenseFieldsEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_EXPENSE_FIELDS_QA === "true";
@@ -13,6 +14,7 @@ export type LedgerCurrencyChoice = {
 } & (
   | { kind: "currency"; selected: string; suggestions: string[]; choose(code: string): void }
   | { kind: "date"; initial: Date; maximumDate?: Date; choose(date: Date): void }
+  | ({ kind: "sharing" } & ExpenseSharingInputs)
   | { kind: "category"; selected: string; choose(category: string): void }
 );
 

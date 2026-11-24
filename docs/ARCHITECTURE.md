@@ -25,8 +25,8 @@ src/
 
 Feature modules may compose UI, hooks, and repositories. Domain modules must not import UI, SQLite, Expo APIs, or API clients. Repositories coordinate local reads/writes and enqueue sync operations.
 
-The expense editor can present currency, date and category fields in the
-shared QA Sheet. Results apply after the Sheet returns to the same editor
+The expense editor can present currency, date, category and sharing fields
+in the shared QA Sheet. Results apply after the Sheet returns to the same editor
 and update its current draft. The existing Expense Save and allocation
 contracts still own persistence.
 

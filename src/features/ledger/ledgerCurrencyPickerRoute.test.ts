@@ -29,6 +29,7 @@ vi.mock("@/components/SheetHost", () => ({
 }));
 vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "panel" }));
 vi.mock("@/features/ledger/CurrencyPicker", () => ({ CurrencyPicker: "currency-picker" }));
+vi.mock("@/features/ledger/ExpenseSharingSheet", () => ({ ExpenseSharingSheet: "expense-sharing" }));
 vi.mock("@/features/ledger/ExpenseCategoryPicker", () => ({ ExpenseCategoryPicker: "expense-category-picker" }));
 vi.mock("@/features/ledger/ledgerCurrencySheet", () => ({
   readLedgerCurrencySheet: (id: string) => id === "selection" ? state.choice : undefined,
@@ -98,4 +99,21 @@ it("applies an expense category only when its own dismissal completes", () => {
   state.exit?.();
   state.exit?.();
   expect(choose).toHaveBeenCalledExactlyOnceWith("food");
+});
+
+
+it("applies staged expense sharing only after the same Sheet closes", () => {
+  const onApply = vi.fn();
+  const initial = {
+    payerId: "me", participantIds: ["me"], splitMode: "EQUAL_PERSON" as const,
+    exact: {}, percentages: {}, settlementParticipation: "INCLUDED" as const,
+  };
+  const staged = { ...initial, payerId: "partner" };
+  state.choice = { kind: "sharing", titleKey: "ui.sharing", initial, onApply, members: [], actorId: "me", minor: 100, currency: "NZD" };
+  const route = LedgerCurrencyPickerRoute();
+  route.props.onApply(staged);
+  expect(onApply).not.toHaveBeenCalled();
+  state.exit?.();
+  state.exit?.();
+  expect(onApply).toHaveBeenCalledExactlyOnceWith(staged);
 });

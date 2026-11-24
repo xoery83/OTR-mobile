@@ -5,6 +5,7 @@ import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
+import { ExpenseSharingSheet } from "@/features/ledger/ExpenseSharingSheet";
 import { ExpenseCategoryPicker } from "@/features/ledger/ExpenseCategoryPicker";
 import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
 import { UiDatePicker } from "@/ui/forms";
@@ -34,6 +35,15 @@ export default function LedgerCurrencyPickerRoute() {
     return <SheetRoutePanel title={title} ownsScroll>
       <CurrencyPicker hosted selected={picker.selected} suggestions={picker.suggestions} onSelect={code => select(() => picker.choose(code))} />
     </SheetRoutePanel>;
+  }
+  if (picker?.kind === "sharing") {
+    return <ExpenseSharingSheet
+      key={invocation}
+      {...picker}
+      hosted
+      exitPending={exitPending}
+      onApply={staged => select(() => picker.onApply(staged))}
+    />;
   }
   if (picker?.kind === "category") {
     return <SheetRoutePanel title={title}>
