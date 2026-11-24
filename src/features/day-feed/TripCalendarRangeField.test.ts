@@ -1,4 +1,4 @@
-import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
+import { Children, Fragment, isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { UiButton } from "@/ui/controls";
 import { UiFormRow } from "@/ui/forms";
@@ -7,17 +7,23 @@ import { SheetHeader } from "@/components/SheetHeader";
 import { lightPalette } from "@/ui/palette";
 import {
   TripCalendarRangeField,
+  TripCalendarRangePicker,
   adjacentTripMonth,
   selectTripRange,
 } from "./TripCalendarRangeField";
+import { OpenCalendarRangePickerContext } from "./calendarRangePickerHandoff";
 const state = vi.hoisted(() => ({
   values: [] as any[],
   cursor: 0,
   width: 390,
   fontScale: 1,
+  hosted: null as null | ReturnType<typeof vi.fn>,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useContext: (context: unknown) => context === OpenCalendarRangePickerContext ? state.hosted : null,
+  useRef: (initial: unknown) => ({ current: initial }),
+  useLayoutEffect: (effect: () => void) => { effect(); },
   useState: (initial: any) => {
     const i = state.cursor++;
     if (!(i in state.values)) state.values[i] = initial;
@@ -39,6 +45,12 @@ vi.mock("react-native", () => ({
   StyleSheet: { create: (s: any) => s },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "SafeAreaView" }));
+vi.mock("expo-router", () => ({ router: { push: vi.fn() } }));
+vi.mock("@/components/SheetHost", () => ({ useSheetScrollDismissal: () => ({}) }));
+vi.mock("@/data/auth/accountGeneration", () => ({
+  getAccountGeneration: () => 1,
+  subscribeAccountGeneration: () => () => {},
+}));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("@/ui/controls", () => ({ UiText: "UiText", UiButton: "UiButton" }));
 vi.mock("@/ui/forms", () => ({ UiFormRow: "UiFormRow", UiTextInput: "UiTextInput" }));
@@ -51,6 +63,10 @@ vi.mock("@/ui/locale", () => ({
 }));
 type Element = ReactElement<any>;
 function nodes(node: ReactNode): Element[] {
+  if (isValidElement(node) && node.type === TripCalendarRangePicker)
+    return nodes(TripCalendarRangePicker((node as Element).props));
+  if (isValidElement(node) && node.type === Fragment)
+    return Children.toArray((node as Element).props.children).flatMap(nodes);
   return isValidElement(node)
     ? [
         node as Element,
@@ -66,6 +82,7 @@ function nodes(node: ReactNode): Element[] {
 beforeEach(() => {
   state.values = [];
   state.cursor = 0;
+  state.hosted = null;
   state.width = 390;
   state.fontScale = 1;
 });
@@ -74,7 +91,9 @@ it("selects an interval across year boundaries with one explicit Done; Cancel an
   const value = { start: "2026-12-14", end: "2026-12-21" };
   const render = () => {
     state.cursor = 0;
-    return nodes(TripCalendarRangeField({ value, onChange }));
+    const tree = nodes(TripCalendarRangeField({ value, onChange }));
+    state.values.length = state.cursor;
+    return tree;
   };
   let view = render();
   view.find((n) => n.type === UiFormRow)!.props.onPress();
@@ -281,11 +300,11 @@ it.each(["0001-01-01", "9999-12-31"])(
   "does not mutate exhausted edge bounds at %s",
   (day) => {
     const renderList = openedCalendar({ start: day, end: day });
-    const before = state.values[2];
     const list = renderList();
     if (day.startsWith("0001")) list.props.onStartReached();
     else list.props.onEndReached();
-    expect(state.values[2]).toBe(before);
+    const unchanged = renderList();
+    expect(unchanged.props.data).toEqual(list.props.data);
   },
 );
 
@@ -443,4 +462,23 @@ it("treats only an unset range as a placeholder and uses the canonical field for
   expect(filled.find((node) => node.type === UiFormRow)!.props.placeholder).toBe(false);
   const metadata = nodes(TripMetadataFields({ name: "Trip", destination: "", range: { start: "", end: "" }, disabled: false, onName() {}, onDestination() {}, onRange() {} }));
   expect(metadata.find((node) => node.type === TripCalendarRangeField)!.props.presentation).toBe("field");
+});
+
+it("hands the calendar to the hosted stack and releases the existing open guard on close", () => {
+  state.hosted = vi.fn(() => true);
+  const onChange = vi.fn();
+  const onOpenChange = vi.fn();
+  const value = { start: "2026-12-14", end: "2026-12-21" };
+  const tree = nodes(TripCalendarRangeField({ value, onChange, onOpenChange }));
+  const open = tree.find(node => node.type === UiFormRow)!.props.onPress;
+  open();
+  open();
+  expect(tree.find(node => node.type === "Modal")!.props.visible).toBe(false);
+  expect(onOpenChange.mock.calls).toEqual([[true]]);
+  expect(state.hosted).toHaveBeenCalledTimes(1);
+  const staged = state.hosted.mock.calls[0][0]();
+  expect(staged.value).toEqual(value);
+  staged.onClose();
+  expect(onOpenChange.mock.calls).toEqual([[true], [false]]);
+  expect(onChange).not.toHaveBeenCalled();
 });

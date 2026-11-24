@@ -1,6 +1,7 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { CurrencySettingsScreen } from "./CurrencySettingsScreen";
+import type { LedgerCurrencyChoice } from "./ledgerCurrencySheet";
 const state = vi.hoisted(() => ({
   values: [] as any[],
   cursor: 0,
@@ -141,10 +142,10 @@ const b = {
   settlementScale: 2,
 };
 const actor = vi.fn().mockResolvedValue({ role: "owner" });
-const render = (id?: string, hostLookupPickers = false) => {
+const render = (id?: string, hostLookupPickers = false, openInParent?: (choice: LedgerCurrencyChoice) => boolean) => {
   state.cursor = 0;
   state.refCursor = 0;
-  const v = nodes(CurrencySettingsScreen({ journeyId: id, hostLookupPickers }));
+  const v = nodes(CurrencySettingsScreen({ journeyId: id, hostLookupPickers, openInParent }));
   state.mount = false;
   return v;
 };
@@ -227,6 +228,21 @@ it("keeps an embedded Settings picker on its existing native modal owner", async
   row?.props.onPress();
   expect(state.openHostedCurrency).not.toHaveBeenCalled();
   expect(render("b").some(node => node.type === "Modal" && node.props.visible)).toBe(true);
+});
+
+it("keeps a nested setting inside its Trip Settings Sheet, even if its parent refuses the push", async () => {
+  const openInParent = vi.fn(() => false);
+  state.openHostedCurrency.mockReturnValue(true);
+  render("b", true, openInParent);
+  await flush();
+  const row = render("b", true, openInParent).find(node =>
+    node.type === "Pressable" && nodes(node).some(child => child.props.children === "NZD"),
+  );
+  expect(row).toBeDefined();
+  row?.props.onPress();
+  expect(openInParent).toHaveBeenCalledOnce();
+  expect(state.openHostedCurrency).not.toHaveBeenCalled();
+  expect(render("b", true, openInParent).some(node => node.type === "Modal" && node.props.visible)).toBe(false);
 });
 it("keeps explicit same-Trip lookup and existing owner authority", async () => {
   render("b");

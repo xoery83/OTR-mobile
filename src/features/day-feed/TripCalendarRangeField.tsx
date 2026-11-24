@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   Modal,
   FlatList,
@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSheetScrollDismissal } from "@/components/SheetHost";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText } from "@/ui/controls";
 import { UiFormRow } from "@/ui/forms";
@@ -18,6 +19,8 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 import { dayFeedCalendarCells } from "./DayFeedCalendarSheet";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { OpenCalendarRangePickerContext } from "./calendarRangePickerHandoff";
 import { calendarDate } from "./TripCalendarField";
 
 export type TripDateRange = { start: string; end: string };
@@ -47,40 +50,143 @@ export function tripRangeLabel({ start, end }: TripDateRange) {
         : t("myTrips.datesToBeDecided");
 }
 
-export function TripCalendarRangeField({
-  value,
-  disabled = false,
-  presentation = "row",
-  label = t("tripForm.dates"),
-  referenceRange,
-  markToday = true,
-  startWithCheckin = false,
-  initialNavigationDate,
-  onChange,
-  onOpenChange,
-}: {
+export type TripCalendarRangePickerProps = {
   value: TripDateRange;
-  disabled?: boolean;
-  presentation?: "row" | "field";
-  label?: string;
+  label: string;
   referenceRange?: TripDateRange;
   markToday?: boolean;
   startWithCheckin?: boolean;
   initialNavigationDate?: string | null;
+};
+
+type TripCalendarRangeFieldProps = Omit<TripCalendarRangePickerProps, "label"> & {
+  disabled?: boolean;
+  presentation?: "row" | "field";
+  label?: string;
   onChange(range: TripDateRange): void;
   onOpenChange?(open: boolean): boolean | void;
-}) {
+};
+
+export function TripCalendarRangeField({
+  presentation = "row",
+  label = t("tripForm.dates"),
+  ...props
+}: TripCalendarRangeFieldProps) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const openHosted = useContext(OpenCalendarRangePickerContext);
+  const latest = useRef<TripCalendarRangeFieldProps | null>(null);
+  const hostedOpen = useRef(false);
+  const generation = getAccountGeneration();
+  useLayoutEffect(() => {
+    latest.current = { ...props, label };
+    return () => {
+      latest.current = null;
+    };
+  });
+  const [open, setOpen] = useState(false);
+  const { value, referenceRange, disabled, onOpenChange, onChange } = props;
+  const title = label === t("tripForm.dates") ? t("tripForm.dateTitle") : label;
+  const close = () => {
+    if (onOpenChange?.(false) !== false) setOpen(false);
+  };
+
+  return (
+    <View>
+      <UiFormRow
+        variant={presentation}
+        placeholder={!value.start && !value.end}
+        label={label}
+        value={
+          referenceRange && value.start && !value.end
+            ? displayDate(value.start)
+            : tripRangeLabel(value)
+        }
+        stacked
+        horizontalInset={0}
+        disabled={disabled}
+        onPress={() => {
+          if (disabled || hostedOpen.current || onOpenChange?.(true) === false) return;
+          if (openHosted) {
+            hostedOpen.current = true;
+            const started = openHosted(() => {
+              if (generation !== getAccountGeneration() || !latest.current) return null;
+              return {
+                ...latest.current,
+                label: latest.current.label ?? label,
+                onClose: () => {
+                  hostedOpen.current = false;
+                  latest.current?.onOpenChange?.(false);
+                },
+              };
+            });
+            if (!started) {
+              hostedOpen.current = false;
+              onOpenChange?.(false);
+            }
+          } else setOpen(true);
+        }}
+      />
+      <Modal
+        visible={open}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        allowSwipeDismissal
+        onRequestClose={close}
+      >
+        {open ? (
+          <SafeAreaView edges={["bottom"]} style={styles.sheet}>
+            <TripCalendarRangePicker
+              {...props}
+              label={label}
+              onDone={(range) => {
+                onChange(range);
+                close();
+              }}
+            >
+              {(confirm, content) => (
+                <>
+                  <SheetHeader
+                    category="picker"
+                    title={title}
+                    safeTop={false}
+                    leftLabel={t("common.cancel")}
+                    onLeft={close}
+                    onRight={confirm}
+                  />
+                  {content}
+                </>
+              )}
+            </TripCalendarRangePicker>
+          </SafeAreaView>
+        ) : null}
+      </Modal>
+    </View>
+  );
+}
+
+export function TripCalendarRangePicker({
+  value,
+  referenceRange,
+  markToday = true,
+  startWithCheckin = false,
+  initialNavigationDate,
+  onDone,
+  hosted = false,
+  children,
+}: TripCalendarRangePickerProps & {
+  hosted?: boolean;
+  onDone(range: TripDateRange): void;
+  children(confirm: () => void, content: ReactNode): ReactNode;
+}) {
+  const styles = useThemedStyles(createStyles);
+  useUiLocale();
+  const dismissal = useSheetScrollDismissal(hosted);
   const { fontScale, width } = useWindowDimensions();
   const [listWidth, setListWidth] = useState<number | null>(null);
   const cellSize = Math.max(44, Math.ceil(24 * fontScale));
   const availableWidth = (listWidth ?? width) - 2 * visual.space.page;
   const gridWidth = Math.max(availableWidth, cellSize * 7);
-  const [open, setOpen] = useState(false);
-  const changeOpen = (next: boolean) => {
-    if (onOpenChange?.(next) !== false) setOpen(next);
-  };
   const [draft, setDraft] = useState(value);
   const [choosingEnd, setChoosingEnd] = useState(false);
   const today = markToday ? calendarDate(new Date()) : null;
@@ -99,257 +205,202 @@ export function TripCalendarRangeField({
     months.push(at);
     if (at === bounds.last) break;
   }
-  const [initialMonthIndex, setInitialMonthIndex] = useState(
-    monthNumber(seed) - monthNumber(adjacentTripMonth(seed, -12)),
-  );
+  const initialMonthIndex = monthNumber(seed) - monthNumber(adjacentTripMonth(seed, -12));
   const gridHeight = cellSize * 7;
   const monthHeight = cellSize + visual.space.card + gridHeight;
-  return (
-    <View>
-      <UiFormRow
-        variant={presentation}
-        placeholder={!value.start && !value.end}
-        label={label}
-        value={
-          referenceRange && value.start && !value.end
-            ? displayDate(value.start)
-            : tripRangeLabel(value)
-        }
-        stacked
-        horizontalInset={0}
-        disabled={disabled}
-        onPress={() => {
-          setDraft(value);
-          setChoosingEnd(false);
-          setInitialMonthIndex(
-            monthNumber(seed) - monthNumber(adjacentTripMonth(seed, -12)),
-          );
-          setBounds({
-            first: adjacentTripMonth(seed, -12),
-            last: adjacentTripMonth(
-              (value.end || value.start || `${seed}-01`).slice(0, 7),
-              12,
-            ),
-          });
-          changeOpen(true);
+  return children(
+    () => onDone(draft),
+    <>
+      <View style={styles.content}>
+        <UiText style={styles.meta}>
+          {t(draft.start && !draft.end ? "tripForm.chooseEnd" : "tripForm.chooseStart")}
+        </UiText>
+        <UiText style={styles.label}>{tripRangeLabel(draft)}</UiText>
+      </View>
+      <FlatList
+        {...dismissal}
+        keyboardShouldPersistTaps="handled"
+        style={styles.sheet}
+        onLayout={({ nativeEvent }) => {
+          if (nativeEvent.layout.width > 0) setListWidth(nativeEvent.layout.width);
         }}
-      />
-      <Modal
-        visible={open}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        allowSwipeDismissal
-        onRequestClose={() => changeOpen(false)}
-      >
-        <SafeAreaView edges={["bottom"]} style={styles.sheet}>
-          <SheetHeader
-            category="picker"
-            title={label === t("tripForm.dates") ? t("tripForm.dateTitle") : label}
-            safeTop={false}
-            leftLabel={t("common.cancel")}
-            onLeft={() => changeOpen(false)}
-            onRight={() => {
-              onChange(draft);
-              changeOpen(false);
-            }}
-          />
-          <View style={styles.content}>
-            <UiText style={styles.meta}>
-              {t(
-                draft.start && !draft.end ? "tripForm.chooseEnd" : "tripForm.chooseStart",
-              )}
-            </UiText>
-            <UiText style={styles.label}>{tripRangeLabel(draft)}</UiText>
-          </View>
-          {open ? (
-            <FlatList
-              keyboardShouldPersistTaps="handled"
-              style={styles.sheet}
-              onLayout={({ nativeEvent }) => {
-                if (nativeEvent.layout.width > 0) setListWidth(nativeEvent.layout.width);
-              }}
-              data={months}
-              keyExtractor={(month) => month}
-              initialScrollIndex={initialMonthIndex}
-              getItemLayout={(_, index) => ({
-                length: monthHeight,
-                offset: monthHeight * index,
-                index,
-              })}
-              initialNumToRender={3}
-              maxToRenderPerBatch={3}
-              windowSize={5}
-              maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
-              onStartReached={() =>
-                setBounds((previous) => {
-                  const first = adjacentTripMonth(previous.first, -12);
-                  return first === previous.first ? previous : { ...previous, first };
-                })
-              }
-              onEndReached={() =>
-                setBounds((previous) => {
-                  const last = adjacentTripMonth(previous.last, 12);
-                  return last === previous.last ? previous : { ...previous, last };
-                })
-              }
-              renderItem={({ item: month }) => {
-                const dates = dayFeedCalendarCells(month);
-                return (
-                  <View style={[styles.month, { height: monthHeight }]}>
-                    <UiText
-                      accessibilityRole="header"
-                      numberOfLines={1}
-                      style={[styles.label, { height: cellSize }]}
-                    >
-                      {formatUiDate(new Date(`${month}-01T12:00:00Z`), {
-                        year: "numeric",
-                        month: "long",
-                        timeZone: "UTC",
-                      })}
-                    </UiText>
-                    <ScrollView
-                      keyboardShouldPersistTaps="handled"
-                      horizontal
-                      scrollEnabled={gridWidth > availableWidth}
-                      showsHorizontalScrollIndicator={false}
-                      style={{ height: gridHeight, flexGrow: 0, flexShrink: 0 }}
-                      contentContainerStyle={{ height: gridHeight }}
-                    >
-                      <View style={{ width: gridWidth, height: gridHeight }}>
-                        <View style={[styles.week, { height: cellSize }]}>
-                          {Array.from({ length: 7 }, (_, index) => (
+        data={months}
+        keyExtractor={(month) => month}
+        initialScrollIndex={initialMonthIndex}
+        getItemLayout={(_, index) => ({
+          length: monthHeight,
+          offset: monthHeight * index,
+          index,
+        })}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+        onStartReached={() =>
+          setBounds((previous) => {
+            const first = adjacentTripMonth(previous.first, -12);
+            return first === previous.first ? previous : { ...previous, first };
+          })
+        }
+        onEndReached={() =>
+          setBounds((previous) => {
+            const last = adjacentTripMonth(previous.last, 12);
+            return last === previous.last ? previous : { ...previous, last };
+          })
+        }
+        renderItem={({ item: month }) => {
+          const dates = dayFeedCalendarCells(month);
+          return (
+            <View style={[styles.month, { height: monthHeight }]}>
+              <UiText
+                accessibilityRole="header"
+                numberOfLines={1}
+                style={[styles.label, { height: cellSize }]}
+              >
+                {formatUiDate(new Date(`${month}-01T12:00:00Z`), {
+                  year: "numeric",
+                  month: "long",
+                  timeZone: "UTC",
+                })}
+              </UiText>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                horizontal
+                scrollEnabled={gridWidth > availableWidth}
+                showsHorizontalScrollIndicator={false}
+                style={{ height: gridHeight, flexGrow: 0, flexShrink: 0 }}
+                contentContainerStyle={{ height: gridHeight }}
+              >
+                <View style={{ width: gridWidth, height: gridHeight }}>
+                  <View style={[styles.week, { height: cellSize }]}>
+                    {Array.from({ length: 7 }, (_, index) => (
+                      <UiText
+                        key={index}
+                        style={[
+                          styles.weekday,
+                          { width: gridWidth / 7, height: cellSize },
+                        ]}
+                      >
+                        {formatUiDate(new Date(`2021-11-0${index + 1}T12:00:00Z`), {
+                          weekday: "narrow",
+                          timeZone: "UTC",
+                        })}
+                      </UiText>
+                    ))}
+                  </View>
+                  {Array.from({ length: 6 }, (_, week) => (
+                    <View key={week} style={[styles.week, { height: cellSize }]}>
+                      {Array.from({ length: 7 }, (_, day) => {
+                        const index = week * 7 + day;
+                        const date = dates[index] ?? null;
+                        const reference =
+                          !!date &&
+                          !!referenceRange?.start &&
+                          date >= referenceRange.start &&
+                          date <= (referenceRange.end || referenceRange.start);
+                        const chosen =
+                          !!date &&
+                          !!draft.start &&
+                          date >= draft.start &&
+                          date <= (draft.end || draft.start);
+                        return date ? (
+                          <Pressable
+                            key={date}
+                            accessibilityRole="button"
+                            accessibilityLabel={accessibleDate(date)}
+                            accessibilityHint={
+                              date === today
+                                ? t("search.today")
+                                : reference
+                                  ? t("tripCreate.tripDateReference")
+                                  : undefined
+                            }
+                            accessibilityState={{
+                              selected: date === draft.start || date === draft.end,
+                            }}
+                            style={[
+                              styles.day,
+                              { width: gridWidth / 7, height: cellSize },
+                              reference && styles.inRange,
+                              chosen &&
+                                (referenceRange ? styles.activityRange : styles.inRange),
+                              (date === draft.start || date === draft.end) &&
+                                styles.endpoint,
+                              date === today && !chosen && styles.todayDay,
+                            ]}
+                            onPress={() => {
+                              const next =
+                                startWithCheckin && !choosingEnd
+                                  ? { start: date, end: "" }
+                                  : selectTripRange(draft, date);
+                              setDraft(next);
+                              setChoosingEnd(
+                                startWithCheckin && !!next.start && !next.end,
+                              );
+                            }}
+                          >
+                            {date === today && chosen ? (
+                              <View
+                                pointerEvents="none"
+                                testID="calendar-today-selected"
+                                style={[
+                                  styles.todayTint,
+                                  referenceRange && styles.todayActivityTint,
+                                ]}
+                              />
+                            ) : null}
                             <UiText
-                              key={index}
                               style={[
-                                styles.weekday,
-                                { width: gridWidth / 7, height: cellSize },
+                                styles.label,
+                                referenceRange && chosen && styles.activityText,
                               ]}
                             >
-                              {formatUiDate(new Date(`2021-11-0${index + 1}T12:00:00Z`), {
-                                weekday: "narrow",
-                                timeZone: "UTC",
-                              })}
+                              {formatUiNumber(+date.slice(8))}
                             </UiText>
-                          ))}
-                        </View>
-                        {Array.from({ length: 6 }, (_, week) => (
-                          <View key={week} style={[styles.week, { height: cellSize }]}>
-                            {Array.from({ length: 7 }, (_, day) => {
-                              const index = week * 7 + day;
-                              const date = dates[index] ?? null;
-                              const reference =
-                                !!date &&
-                                !!referenceRange?.start &&
-                                date >= referenceRange.start &&
-                                date <= (referenceRange.end || referenceRange.start);
-                              const chosen =
-                                !!date &&
-                                !!draft.start &&
-                                date >= draft.start &&
-                                date <= (draft.end || draft.start);
-                              return date ? (
-                                <Pressable
-                                  key={date}
-                                  accessibilityRole="button"
-                                  accessibilityLabel={accessibleDate(date)}
-                                  accessibilityHint={
-                                    date === today
-                                      ? t("search.today")
-                                      : reference
-                                        ? t("tripCreate.tripDateReference")
-                                        : undefined
-                                  }
-                                  accessibilityState={{
-                                    selected: date === draft.start || date === draft.end,
-                                  }}
-                                  style={[
-                                    styles.day,
-                                    { width: gridWidth / 7, height: cellSize },
-                                    reference && styles.inRange,
-                                    chosen &&
-                                      (referenceRange
-                                        ? styles.activityRange
-                                        : styles.inRange),
-                                    (date === draft.start || date === draft.end) &&
-                                      styles.endpoint,
-                                    date === today && !chosen && styles.todayDay,
-                                  ]}
-                                  onPress={() => {
-                                    const next =
-                                      startWithCheckin && !choosingEnd
-                                        ? { start: date, end: "" }
-                                        : selectTripRange(draft, date);
-                                    setDraft(next);
-                                    setChoosingEnd(
-                                      startWithCheckin && !!next.start && !next.end,
-                                    );
-                                  }}
-                                >
-                                  {date === today && chosen ? (
-                                    <View
-                                      pointerEvents="none"
-                                      testID="calendar-today-selected"
-                                      style={[
-                                        styles.todayTint,
-                                        referenceRange && styles.todayActivityTint,
-                                      ]}
-                                    />
-                                  ) : null}
-                                  <UiText
-                                    style={[
-                                      styles.label,
-                                      referenceRange && chosen && styles.activityText,
-                                    ]}
-                                  >
-                                    {formatUiNumber(+date.slice(8))}
-                                  </UiText>
-                                </Pressable>
-                              ) : (
-                                <View
-                                  key={`blank-${index}`}
-                                  style={[
-                                    styles.day,
-                                    { width: gridWidth / 7, height: cellSize },
-                                  ]}
-                                />
-                              );
-                            })}
-                          </View>
-                        ))}
-                      </View>
-                    </ScrollView>
-                  </View>
-                );
-              }}
-            />
-          ) : null}
-          <View style={styles.content}>
-            {referenceRange?.start ? (
-              <>
-                <UiText style={styles.meta}>
-                  {t("tripCreate.tripDateReference")} · {tripRangeLabel(referenceRange)}
-                </UiText>
-                <UiText style={styles.meta}>
-                  {t(
-                    startWithCheckin
-                      ? "tripCreate.stayDateReferenceHint"
-                      : "tripCreate.activityDateReferenceHint",
-                  )}
-                </UiText>
-              </>
-            ) : null}
-            <UiButton
-              variant="text"
-              label={t("tripForm.clearDates")}
-              onPress={() => {
-                setDraft({ start: "", end: "" });
-                setChoosingEnd(false);
-              }}
-            />
-          </View>
-        </SafeAreaView>
-      </Modal>
-    </View>
+                          </Pressable>
+                        ) : (
+                          <View
+                            key={`blank-${index}`}
+                            style={[
+                              styles.day,
+                              { width: gridWidth / 7, height: cellSize },
+                            ]}
+                          />
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          );
+        }}
+      />
+      <View style={styles.content}>
+        {referenceRange?.start ? (
+          <>
+            <UiText style={styles.meta}>
+              {t("tripCreate.tripDateReference")} · {tripRangeLabel(referenceRange)}
+            </UiText>
+            <UiText style={styles.meta}>
+              {t(
+                startWithCheckin
+                  ? "tripCreate.stayDateReferenceHint"
+                  : "tripCreate.activityDateReferenceHint",
+              )}
+            </UiText>
+          </>
+        ) : null}
+        <UiButton
+          variant="text"
+          label={t("tripForm.clearDates")}
+          onPress={() => {
+            setDraft({ start: "", end: "" });
+            setChoosingEnd(false);
+          }}
+        />
+      </View>
+    </>,
   );
 }
 const createStyles = (c: UiColors) =>

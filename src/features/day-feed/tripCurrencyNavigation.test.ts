@@ -33,6 +33,8 @@ vi.mock("expo-router", async () => {
     createElement(Fragment, null, children);
   return {
     Stack: Object.assign(content, {
+      Protected: ({ guard, children }: { guard: boolean; children: ReactNode }) =>
+        guard ? content({ children }) : null,
       Screen: (props: (typeof screens)[number]) => {
         screens.push(props);
         return null;
@@ -51,10 +53,14 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("./TripViewContext", () => ({
   TripViewProvider: ({ children }: { children: ReactNode }) => children,
 }));
+vi.mock("./tripMetadataSheet", () => ({ hostedTripMetadataEnabled: true }));
+vi.mock("@/features/ledger/ledgerCurrencySheet", () => ({ hostedLedgerCurrencySheetEnabled: true }));
 vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}) }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/native/uiLocalePreference", () => ({ hydrateUiLocale: vi.fn() }));
+vi.mock("@/native/uiAppearancePreference", () => ({ hydrateUiAppearance: vi.fn() }));
+vi.mock("@/data/auth/authRepository", () => ({ readCommittedLocalPrincipal: vi.fn() }));
 vi.mock("@/data/bootstrap/bootstrapApplication", () => ({
   bootstrapApplication: vi.fn(),
 }));
@@ -94,7 +100,12 @@ it("keeps native parent-Stack history and exact Trip context when Currency goes 
   );
   const original = state.routes[state.index];
   dispatch(StackActions.push("trip-currency", { journeyId: "qa-trip" }));
-  expect(state.routes[state.index].params).toEqual({ journeyId: "qa-trip" });
+  const settings = state.routes[state.index];
+  expect(settings.params).toEqual({ journeyId: "qa-trip" });
+  dispatch(StackActions.push("ledger-currency-picker", { invocation: "qa-selection" }));
+  const picker = state.routes[state.index];
+  dispatch({ type: "GO_BACK", target: state.key, source: picker.key });
+  expect(state.routes[state.index]).toEqual(settings);
   dispatch({ type: "GO_BACK" });
   expect(state.routes[state.index]).toEqual(original);
   expect(state.routes).toHaveLength(2);
