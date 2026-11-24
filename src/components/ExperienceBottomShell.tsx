@@ -82,7 +82,7 @@ export function ExperienceBottomShell({
   const styles = useThemedStyles(createStyles);
   const largeText = useWindowDimensions().fontScale > 1.5;
   const activePath = usePathname();
-  const rootNavigation = useNavigationContainerRef();
+  const rootNavigation = useNavigationContainerRef() as { getCurrentRoute(): { key: string } | undefined };
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [reducedTransparency, setReducedTransparency] = useState(false);
   const [startTripTarget, setStartTripTarget] = useState<symbol | null>(null);
