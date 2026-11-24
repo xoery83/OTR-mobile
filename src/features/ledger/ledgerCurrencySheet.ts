@@ -3,8 +3,10 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 
 import type { MessageKey } from "@/ui/locale";
+import type { ExpenseSharingInputs } from "./ExpenseSharingSheet";
 
 export const hostedLedgerCurrencySheetEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_CURRENCY_QA === "true";
+export const hostedExpenseFieldsEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_EXPENSE_FIELDS_QA === "true";
 
 export type LedgerCurrencyChoice = {
   titleKey: MessageKey;
@@ -12,6 +14,8 @@ export type LedgerCurrencyChoice = {
 } & (
   | { kind: "currency"; selected: string; suggestions: string[]; choose(code: string): void }
   | { kind: "date"; initial: Date; maximumDate?: Date; choose(date: Date): void }
+  | ({ kind: "sharing" } & ExpenseSharingInputs)
+  | { kind: "category"; selected: string; choose(category: string): void }
 );
 
 let sequence = 0;
@@ -39,7 +43,12 @@ export function completeLedgerCurrencySheet(
   if (returnedToOrigin) apply();
 }
 
-export function useLedgerCurrencySheet(journeyId: string | undefined, sourceKey?: string, enabled = true) {
+export function useLedgerCurrencySheet(
+  journeyId: string | undefined,
+  sourceKey?: string,
+  enabled = true,
+  featureEnabled = hostedLedgerCurrencySheetEnabled,
+) {
   const navigation = useNavigation();
   const owner = useRef<{ journeyId?: string; sourceKey?: string; generation: number } | null>(null);
   const invocation = useRef<string | undefined>(undefined);
@@ -54,7 +63,8 @@ export function useLedgerCurrencySheet(journeyId: string | undefined, sourceKey?
   }, [enabled, generation, journeyId, sourceKey]);
 
   return useCallback((choice: LedgerCurrencyChoice) => {
-    if (!enabled || !hostedLedgerCurrencySheetEnabled) return false;
+    if (!enabled || !featureEnabled) return false;
+    if (choice.isCurrent?.() === false) return true;
     const token = owner.current;
     if (!journeyId) return false;
     if (token?.journeyId !== journeyId || token.sourceKey !== sourceKey ||
@@ -68,5 +78,5 @@ export function useLedgerCurrencySheet(journeyId: string | undefined, sourceKey?
     invocation.current = id;
     router.push({ pathname: "/ledger-currency-picker", params: { invocation: id } });
     return true;
-  }, [enabled, generation, journeyId, navigation, sourceKey]);
+  }, [enabled, featureEnabled, generation, journeyId, navigation, sourceKey]);
 }

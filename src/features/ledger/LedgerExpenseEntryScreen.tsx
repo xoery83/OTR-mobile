@@ -1,19 +1,19 @@
+import { ExpenseSharingSheet, type ExpenseSharingInputs } from "./ExpenseSharingSheet";
+import { ExpenseCategoryPicker } from "./ExpenseCategoryPicker";
+import { hostedExpenseFieldsEnabled, useLedgerCurrencySheet, type LedgerCurrencyChoice } from "./ledgerCurrencySheet";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { useTripView } from "@/features/day-feed/TripViewContext";
 import { systemMessage, categoryLabel, domainLabel } from "@/ui/domainLabels";
-import { t, type MessageKey } from "@/ui/locale";
+import { t } from "@/ui/locale";
 import {
   UiFormRow as FormRow,
-  UiChoiceChip as ChoiceChip,
   UiTextInput as TextInput,
   UiDatePicker as DateTimePicker,
 } from "@/ui/forms";
 import { useUiTheme, useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { MoneyText, type MoneyTextProps } from "./MoneyText";
 import {
-  type ComponentProps,
   useCallback,
   useEffect,
   useMemo,
@@ -97,7 +97,6 @@ import {
   preservesExpenseValuation,
   proposedExpenseDate,
   suggestExpenseCategory,
-  shouldShowGroupSettlement,
 } from "./expenseDraft";
 import { formatLedgerMoney } from "./format";
 import { CurrencyPicker } from "./CurrencyPicker";
@@ -131,7 +130,6 @@ import { openLedgerReceiptSource, readLedgerReceiptSource, releaseLedgerReceiptS
 import {
   applyExpenseSharing,
   compactExpenseDate,
-  exactSharingAllocation,
   expenseSettlementLabel,
   expenseSharingSummary,
   remainingExpenseAttachmentCapacity,
@@ -165,55 +163,6 @@ type Draft = {
   category: string;
   notes: string;
 };
-
-const splitLabels: Record<ExpenseSplitMethod, MessageKey> = {
-  EQUAL_PERSON: "expense.splitEqual",
-  EQUAL_HOUSEHOLD: "expense.splitHousehold",
-  HOUSEHOLD_SHARES: "expense.householdShares",
-  EXACT: "ui.exactAmounts",
-  PERCENTAGE: "ui.percentages",
-};
-
-const categoryGroups: {
-  titleKey: MessageKey;
-  items: {
-    id: (typeof EXPENSE_CATEGORIES)[number];
-    icon: ComponentProps<typeof AppIcon>["name"];
-  }[];
-}[] = [
-  {
-    titleKey: "ui.foodShopping",
-    items: [
-      { id: "food", icon: "fork.knife" },
-      { id: "shopping", icon: "bag" },
-      { id: "groceries", icon: "basket" },
-    ],
-  },
-  {
-    titleKey: "ui.gettingAround",
-    items: [
-      { id: "flight", icon: "airplane" },
-      { id: "car", icon: "car" },
-      { id: "fuel", icon: "fuelpump" },
-      { id: "transport", icon: "tram" },
-    ],
-  },
-  {
-    titleKey: "ui.stayExperiences",
-    items: [
-      { id: "hotel", icon: "bed.double" },
-      { id: "ticket", icon: "ticket" },
-      { id: "activity", icon: "figure.walk" },
-    ],
-  },
-  {
-    titleKey: "ui.insuranceOther",
-    items: [
-      { id: "insurance", icon: "shield" },
-      { id: "other", icon: "square.grid.2x2" },
-    ],
-  },
-];
 
 export function LedgerExpenseEntryScreen() {
   useUiLocale();
@@ -269,16 +218,59 @@ export function LedgerExpenseEntryScreen() {
   const [dateSheetOffset] = useState(() => new Animated.Value(windowHeight));
   const dateDismissing = useRef(false);
   const [amountFocused, setAmountFocused] = useState(false);
-  const [sharingSheet, setSharingSheet] = useState(false);
-  const [sharingDraft, setSharingDraft] = useState<Draft | null>(null);
+  const [sharingInputs, setSharingInputs] = useState<ExpenseSharingInputs | null>(null);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [categoryManual, setCategoryManual] = useState(false);
   const allowClose = useRef(false);
   const mountedRef = useRef(true);
   const savingRef = useRef(false);
   const addingReceiptRef = useRef(false);
+  const receiptSourcePending = useRef(false);
   const [selectingReceipt, setSelectingReceipt] = useState(false);
   const expenseDraftId = useRef(createLocalId("ledger-expense"));
+  const expenseSourceKey = JSON.stringify([
+    params.expenseId, params.correctionRootId, params.journeyId, params.receiptId,
+    params.mode, params.suggestedTitle, params.suggestedDate, params.focusDate,
+  ]);
+  const loadedExpense = useRef<{ sourceKey: string } | null>(null);
+  const openExpenseField = useLedgerCurrencySheet(
+    context?.journeyId,
+    expenseSourceKey,
+    true,
+    hostedExpenseFieldsEnabled,
+  );
+  const presentExpenseField = (choice: LedgerCurrencyChoice) => {
+    if (!hostedExpenseFieldsEnabled) return false;
+    const loaded = loadedExpense.current;
+    const isCurrent = () => loaded !== null && loaded.sourceKey === expenseSourceKey &&
+      loadedExpense.current === loaded && mountedRef.current && !savingRef.current &&
+      !allowClose.current && !receiptSourcePending.current && !addingReceiptRef.current;
+    return openExpenseField({ ...choice, isCurrent });
+  };
+  const chooseCategory = (category: string) => {
+    setCategoryManual(true);
+    setDraft(current => current && { ...current, category });
+    setCategorySheet(false);
+  };
+  const chooseExpenseCurrency = (code: string) => {
+    currencyChosen.current = true;
+    setDraft(current => {
+      if (!current) return current;
+      return {
+        ...correctedCurrencyDraft(current, code),
+        exact: Object.fromEntries(
+          Object.entries(current.exact).map(([id, amount]) => [
+            id,
+            correctedCurrencyDraft({ amount, currency: current.currency }, code).amount,
+          ]),
+        ),
+      };
+    });
+    setCurrencySheet(false);
+  };
+  const chooseExpenseDate = (value: Date) => {
+    setDraft(current => current && { ...current, date: dateKey(value) });
+  };
   const scanOcrQueue = useRef<string[]>([]);
   const [scanSourceVisible, setScanSourceVisible] = useState(false);
   const scanSourceAddPart = useRef(false);
@@ -307,8 +299,7 @@ export function LedgerExpenseEntryScreen() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      if (commit)
-        setDraft((current) => current && { ...current, date: dateKey(pendingDate) });
+      if (commit) chooseExpenseDate(pendingDate);
       setDatePicker(false);
       dateDismissing.current = false;
     });
@@ -346,6 +337,7 @@ export function LedgerExpenseEntryScreen() {
     )
       .then(async (value) => {
         if (!active) return;
+        loadedExpense.current = { sourceKey: expenseSourceKey };
         setContext(value.context);
         setExisting(value.existing);
         setExistingReceipts(value.receipts);
@@ -444,10 +436,12 @@ export function LedgerExpenseEntryScreen() {
       });
     return () => {
       active = false;
+      loadedExpense.current = null;
       ocrSession.clear();
     };
   }, [
     ocrSession,
+    expenseSourceKey,
     params.expenseId,
     params.journeyId,
     params.receiptId,
@@ -888,6 +882,7 @@ export function LedgerExpenseEntryScreen() {
   };
 
   const chooseReceipt = (scan = false, addPart = false) => {
+    if (receiptSourcePending.current) return;
     Keyboard.dismiss();
     if (scan) {
       if (hostedLedgerReceiptReviewEnabled && !addPart) {
@@ -903,16 +898,22 @@ export function LedgerExpenseEntryScreen() {
           slots: remainingExpenseAttachmentCapacity(selectedReceiptCount, pendingCount),
           isCurrent: () => ownsEditor() && !addingReceiptRef.current &&
             scanSessionRef.current?.sessionId === originalScan,
-          choose: kind => requestAnimationFrame(() => {
-            if (canLaunch() && scanSessionRef.current?.sessionId === originalScan)
-              void attach(kind, true, false, canLaunch);
-          }),
+          choose: kind => {
+            receiptSourcePending.current = true;
+            requestAnimationFrame(() => {
+              receiptSourcePending.current = false;
+              if (canLaunch() && scanSessionRef.current?.sessionId === originalScan)
+                void attach(kind, true, false, canLaunch);
+            });
+          },
           onClose: id => {
+            receiptSourcePending.current = false;
             if (mountedRef.current)
               setReceiptSourceInvocation(current => current === id ? undefined : current);
           },
         }, generation);
         if (invocation) {
+          receiptSourcePending.current = true;
           setReceiptSourceInvocation(invocation);
           requestAnimationFrame(() => {
             if (!canLaunch() || !readLedgerReceiptSource(invocation)) {
@@ -1183,16 +1184,6 @@ export function LedgerExpenseEntryScreen() {
     );
 
   const sharing = expenseSharingSummary(draft, context.members, context.actorId);
-  const sharingEdit = sharingDraft ?? draft;
-  const sharingMembers = context.members.filter((member) =>
-    sharingEdit.participantIds.includes(member.id),
-  );
-  const exactAllocation = exactSharingAllocation(
-    minor,
-    scale ?? 2,
-    sharingMembers.map((member) => member.id),
-    sharingEdit.exact,
-  );
   const date = draft.date ? dateFromKey(draft.date) : new Date();
   const remainingAttachmentSlots = remainingExpenseAttachmentCapacity(
     selectedReceiptCount,
@@ -1382,7 +1373,15 @@ export function LedgerExpenseEntryScreen() {
           <View style={styles.currencyHalf}>
             <FormRow
               label={t("ui.currency")}
-              onPress={() => setCurrencySheet(true)}
+              onPress={() => {
+                if (!presentExpenseField({
+                  kind: "currency",
+                  titleKey: "ui.currency",
+                  selected: draft.currency,
+                  suggestions: [...context.recentCurrencies, draft.currency, context.settlementCurrency, context.defaultCurrency],
+                  choose: chooseExpenseCurrency,
+                })) setCurrencySheet(true);
+              }}
               value={draft.currency}
             />
           </View>
@@ -1489,7 +1488,14 @@ export function LedgerExpenseEntryScreen() {
           <View style={styles.compactHalf}>
             <FormRow
               label={t("ui.category")}
-              onPress={() => setCategorySheet(true)}
+              onPress={() => {
+                if (!presentExpenseField({
+                  kind: "category",
+                  titleKey: "ui.category",
+                  selected: draft.category,
+                  choose: chooseCategory,
+                })) setCategorySheet(true);
+              }}
               value={categoryLabel(draft.category)}
               stacked
             />
@@ -1499,6 +1505,12 @@ export function LedgerExpenseEntryScreen() {
               label={t("ui.date")}
               onPress={() => {
                 Keyboard.dismiss();
+                if (presentExpenseField({
+                  kind: "date",
+                  titleKey: "ui.expenseDate",
+                  initial: date,
+                  choose: chooseExpenseDate,
+                })) return;
                 setPendingDate(date);
                 setDatePicker(true);
               }}
@@ -1532,13 +1544,25 @@ export function LedgerExpenseEntryScreen() {
             accessibilityRole="button"
             onPress={() => {
               Keyboard.dismiss();
-              setSharingDraft({
-                ...draft,
-                participantIds: [...draft.participantIds],
-                exact: { ...draft.exact },
-                percentages: { ...draft.percentages },
-              });
-              setSharingSheet(true);
+              const generation = getAccountGeneration();
+              const inputs: ExpenseSharingInputs = {
+                initial: draft,
+                members: context.members,
+                actorId: context.actorId,
+                minor,
+                currency: draft.currency,
+                scale: scale ?? undefined,
+                onApply: staged => {
+                  if (!mountedRef.current || savingRef.current || generation !== getAccountGeneration()) return;
+                  setDraft(current => current === draft ? applyExpenseSharing(current, { ...current, ...staged }) : current);
+                  setSharingInputs(null);
+                },
+              };
+              if (!presentExpenseField({
+                kind: "sharing",
+                titleKey: "ui.sharing",
+                ...inputs,
+              })) setSharingInputs(inputs);
             }}
             style={styles.sharingSummaryAction}
           >
@@ -1792,197 +1816,7 @@ export function LedgerExpenseEntryScreen() {
       ) : null}
 
       {!reviewVisible ? scanSourceSheet : null}
-      <Modal
-        allowSwipeDismissal
-        animationType="slide"
-        onRequestClose={() => setSharingSheet(false)}
-        presentationStyle="pageSheet"
-        visible={sharingSheet}
-      >
-        <SheetHeader
-          leftLabel={t("ui.cancel")}
-          onLeft={() => setSharingSheet(false)}
-          onRight={() => {
-            setDraft(applyExpenseSharing(draft, sharingEdit));
-            setSharingSheet(false);
-          }}
-          rightLabel={t("ui.apply")}
-          rightDisabled={
-            sharingMembers.length > 1 &&
-            sharingEdit.splitMode === "EXACT" &&
-            !exactAllocation.valid
-          }
-          title={t("ui.sharing")}
-        />
-        <ScrollView
-          automaticallyAdjustKeyboardInsets
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          contentContainerStyle={styles.sheetContent}
-          style={styles.flex}
-        >
-          <Text style={styles.sharingHeading}>{t("ui.paidBy")}</Text>
-          <View style={styles.chipList}>
-            {context.members.map((member) => (
-              <ChoiceChip
-                key={`payer-${member.id}`}
-                label={member.id === context.actorId ? t("ui.you") : member.displayName}
-                selected={sharingEdit.payerId === member.id}
-                onPress={() => setSharingDraft({ ...sharingEdit, payerId: member.id })}
-              />
-            ))}
-          </View>
-          <Text style={styles.sharingHeading}>{t("ui.participants")}</Text>
-          <View style={styles.chipList}>
-            {context.members.map((member) => {
-              const selected = sharingEdit.participantIds.includes(member.id);
-              return (
-                <ChoiceChip
-                  key={`participant-${member.id}`}
-                  label={member.id === context.actorId ? t("ui.you") : member.displayName}
-                  selected={selected}
-                  onPress={() => {
-                    const ids = selected
-                      ? sharingEdit.participantIds.filter((id) => id !== member.id)
-                      : [...sharingEdit.participantIds, member.id];
-                    if (ids.length)
-                      setSharingDraft({ ...sharingEdit, participantIds: ids });
-                  }}
-                />
-              );
-            })}
-          </View>
-          {sharingMembers.length > 1 ? (
-            <>
-              <Text style={styles.sharingHeading}>{t("ui.split")}</Text>
-              <View style={styles.chipList}>
-                {(
-                  [
-                    ...new Set<ExpenseSplitMethod>([
-                      "EQUAL_PERSON",
-                      "EXACT",
-                      sharingEdit.splitMode,
-                    ]),
-                  ] as ExpenseSplitMethod[]
-                ).map((mode) => (
-                  <ChoiceChip
-                    key={mode}
-                    label={t(splitLabels[mode])}
-                    selected={sharingEdit.splitMode === mode}
-                    onPress={() => setSharingDraft({ ...sharingEdit, splitMode: mode })}
-                  />
-                ))}
-              </View>
-              {sharingEdit.splitMode === "EXACT" ? (
-                <>
-                  <View style={styles.allocationSummary}>
-                    <AllocationLine
-                      label={t("ui.expenseTotal")}
-                      minor={minor}
-                      currency={draft.currency}
-                      scale={scale ?? 2}
-                      placeholder={t("ui.addAnAmount")}
-                    />
-                    <AllocationLine
-                      label={t("ui.assigned")}
-                      minor={exactAllocation.assignedMinor}
-                      currency={draft.currency}
-                      scale={scale ?? 2}
-                    />
-                    <AllocationLine
-                      label={t("ui.remaining")}
-                      minor={exactAllocation.remainingMinor}
-                      currency={draft.currency}
-                      scale={scale ?? 2}
-                      warning={
-                        exactAllocation.remainingMinor !== null &&
-                        exactAllocation.remainingMinor !== 0
-                      }
-                    />
-                    {!exactAllocation.valid ? (
-                      <Text style={styles.allocationHint}>
-                        {minor === null
-                          ? t("ui.enterAnExpenseAmountBeforeCompletingExactAmounts")
-                          : exactAllocation.remainingMinor !== null &&
-                              exactAllocation.remainingMinor < 0
-                            ? t("ui.assignedAmountsExceedTheExpenseTotal")
-                            : t("ui.assignTheFullExpenseTotalAcrossSelectedParticipants")}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {minor !== null
-                    ? sharingMembers.map((member) => (
-                        <View
-                          key={member.id}
-                          style={[
-                            styles.customRow,
-                            largeText && styles.customRowLargeText,
-                          ]}
-                        >
-                          <Text style={styles.rowLabel}>
-                            {member.id === context.actorId
-                              ? t("ui.you")
-                              : member.displayName}
-                          </Text>
-                          <TextInput
-                            accessibilityLabel={t("entry.memberAmount", {
-                              name:
-                                member.id === context.actorId
-                                  ? t("common.you")
-                                  : member.displayName,
-                            })}
-                            keyboardType={scale === 0 ? "number-pad" : "decimal-pad"}
-                            onChangeText={(value) =>
-                              setSharingDraft({
-                                ...sharingEdit,
-                                exact: {
-                                  ...sharingEdit.exact,
-                                  [member.id]: currencyAmountInput(
-                                    sharingEdit.exact[member.id] ?? "",
-                                    value,
-                                    scale ?? 2,
-                                  ),
-                                },
-                              })
-                            }
-                            placeholder={draft.currency}
-                            style={[
-                              styles.customInput,
-                              largeText && styles.customInputLargeText,
-                            ]}
-                            value={sharingEdit.exact[member.id] ?? ""}
-                          />
-                        </View>
-                      ))
-                    : null}
-                </>
-              ) : null}
-            </>
-          ) : null}
-          {shouldShowGroupSettlement(sharingEdit.participantIds, sharingEdit.payerId) ? (
-            <>
-              <Text style={styles.sharingHeading}>{t("ui.groupSettlement")}</Text>
-              <View style={styles.chipList}>
-                {(["INCLUDED", "EXCLUDED"] as const).map((value) => (
-                  <ChoiceChip
-                    key={value}
-                    label={value === "INCLUDED" ? t("ui.include") : t("ui.exclude")}
-                    selected={sharingEdit.settlementParticipation === value}
-                    onPress={() =>
-                      setSharingDraft({ ...sharingEdit, settlementParticipation: value })
-                    }
-                  />
-                ))}
-              </View>
-              <Text style={styles.hint}>
-                {sharingEdit.settlementParticipation === "INCLUDED"
-                  ? t("ui.includedInThisTripsCalculationOfWhoOwesWhom")
-                  : t("ui.savedInExpensesButExcludedFromThisTripsCalculationOf")}
-              </Text>
-            </>
-          ) : null}
-        </ScrollView>
-      </Modal>
+      {sharingInputs ? <ExpenseSharingSheet {...sharingInputs} onCancel={() => setSharingInputs(null)} /> : null}
 
       <Modal
         allowSwipeDismissal
@@ -2001,21 +1835,7 @@ export function LedgerExpenseEntryScreen() {
               context.settlementCurrency,
               context.defaultCurrency,
             ]}
-            onSelect={(code) => {
-              currencyChosen.current = true;
-              const corrected = correctedCurrencyDraft(draft, code);
-              setDraft({
-                ...corrected,
-                exact: Object.fromEntries(
-                  Object.entries(draft.exact).map(([id, amount]) => [
-                    id,
-                    correctedCurrencyDraft({ amount, currency: draft.currency }, code)
-                      .amount,
-                  ]),
-                ),
-              });
-              setCurrencySheet(false);
-            }}
+            onSelect={chooseExpenseCurrency}
           />
         ) : null}
       </Modal>
@@ -2028,44 +1848,8 @@ export function LedgerExpenseEntryScreen() {
         visible={categorySheet}
       >
         <SheetHeader onLeft={() => setCategorySheet(false)} title={t("ui.category")} />
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.categoryContent}
-          style={styles.flex}
-        >
-          {categoryGroups.map((group) => (
-            <View key={t(group.titleKey)}>
-              <Text style={styles.categoryHeading}>{t(group.titleKey)}</Text>
-              <View style={styles.categoryGrid}>
-                {group.items.map(({ id, icon }) => {
-                  const selected = draft.category === id;
-                  return (
-                    <Pressable
-                      accessibilityLabel={categoryLabel(id)}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      key={id}
-                      onPress={() => {
-                        setCategoryManual(true);
-                        setDraft({ ...draft, category: id });
-                        setCategorySheet(false);
-                      }}
-                      style={[
-                        styles.categoryTile,
-                        selected && styles.categoryTileSelected,
-                      ]}
-                    >
-                      <AppIcon color={colors.accent} name={icon} size={22} />
-                      <Text style={styles.categoryTileText}>{categoryLabel(id)}</Text>
-                      {selected ? (
-                        <AppIcon color={colors.accent} name="checkmark" size={16} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ))}
+        <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex}>
+          <ExpenseCategoryPicker category={draft.category} onSelect={chooseCategory} />
         </ScrollView>
       </Modal>
 
@@ -2276,26 +2060,6 @@ function sameIds(left: string[], right: string[]) {
   return left.length === right.length && left.every((id) => right.includes(id));
 }
 
-function AllocationLine({
-  label,
-  warning = false,
-  ...money
-}: MoneyTextProps & { label: string; warning?: boolean }) {
-  useUiLocale();
-
-  const styles = useThemedStyles(createStyles);
-
-  return (
-    <View style={styles.allocationLine}>
-      <Text style={styles.allocationLabel}>{label}</Text>
-      <MoneyText
-        style={[styles.allocationValue, warning && styles.allocationWarning]}
-        {...money}
-      />
-    </View>
-  );
-}
-
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.background },
@@ -2431,79 +2195,4 @@ const createStyles = (colors: UiColors) =>
       minHeight: 280,
     },
     dateWheel: { height: 216, width: "100%" },
-    sheetContent: { gap: 10, padding: 16, paddingBottom: 48 },
-    sharingHeading: {
-      color: colors.textTertiary,
-      fontSize: 15,
-      fontWeight: "700",
-      marginTop: 12,
-    },
-    chipList: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-    choiceChip: {
-      borderColor: colors.separator,
-      borderRadius: 12,
-      borderWidth: 1,
-      justifyContent: "center",
-      minHeight: 44,
-      paddingHorizontal: 12,
-    },
-    choiceChipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
-    choiceChipText: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
-    choiceChipTextSelected: { color: colors.onAccent },
-    allocationSummary: {
-      backgroundColor: colors.groupedBackground,
-      borderRadius: 8,
-      gap: 6,
-      padding: 12,
-    },
-    allocationLine: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-    allocationLabel: { color: colors.textTertiary, fontSize: 14 },
-    allocationValue: { color: colors.textPrimary, fontSize: 14, fontWeight: "700" },
-    allocationWarning: { color: colors.destructive },
-    allocationHint: { color: colors.destructive, fontSize: 13 },
-    categoryContent: { gap: 24, padding: 16, paddingBottom: 48 },
-    categoryHeading: {
-      color: colors.textSecondary,
-      fontSize: 14,
-      fontWeight: "700",
-      marginBottom: 10,
-    },
-    categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-    categoryTile: {
-      alignItems: "center",
-      backgroundColor: colors.surface,
-      borderColor: colors.separator,
-      borderRadius: 12,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: 8,
-      minHeight: 60,
-      paddingHorizontal: 12,
-      width: "48%",
-    },
-    categoryTileSelected: {
-      backgroundColor: colors.selected,
-      borderColor: colors.accent,
-    },
-    categoryTileText: {
-      color: colors.textPrimary,
-      flex: 1,
-      fontSize: 16,
-      fontWeight: "600",
-    },
-    customRow: { alignItems: "center", flexDirection: "row", gap: 12 },
-    customRowLargeText: { alignItems: "stretch", flexDirection: "column" },
-    customInput: {
-      backgroundColor: colors.surface,
-      borderColor: colors.separator,
-      borderRadius: 8,
-      borderWidth: StyleSheet.hairlineWidth,
-      color: colors.textPrimary,
-      fontSize: 17,
-      minHeight: 48,
-      paddingHorizontal: 10,
-      textAlign: "right",
-      width: 120,
-    },
-    customInputLargeText: { width: "100%" },
   });

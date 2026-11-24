@@ -29,6 +29,8 @@ vi.mock("@/components/SheetHost", () => ({
 }));
 vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "panel" }));
 vi.mock("@/features/ledger/CurrencyPicker", () => ({ CurrencyPicker: "currency-picker" }));
+vi.mock("@/features/ledger/ExpenseSharingSheet", () => ({ ExpenseSharingSheet: "expense-sharing" }));
+vi.mock("@/features/ledger/ExpenseCategoryPicker", () => ({ ExpenseCategoryPicker: "expense-category-picker" }));
 vi.mock("@/features/ledger/ledgerCurrencySheet", () => ({
   readLedgerCurrencySheet: (id: string) => id === "selection" ? state.choice : undefined,
   completeLedgerCurrencySheet: (id: string, choice: LedgerCurrencyChoice, apply: () => void) => {
@@ -70,4 +72,48 @@ it("does not use a currency selection after cancellation or when the owner has c
   state.choice = undefined;
   interrupted?.();
   expect(choose).not.toHaveBeenCalled();
+});
+
+it("ignores a currency row tap while a Close is already pending", () => {
+  const choose = vi.fn();
+  state.choice = {
+    kind: "currency",
+    titleKey: "ui.fromCurrency",
+    selected: "NZD",
+    suggestions: [],
+    choose,
+  };
+  const route = LedgerCurrencyPickerRoute();
+  state.exitPending = true;
+  route.props.children.props.onSelect("AFN");
+  expect(state.exit).toBeUndefined();
+  expect(choose).not.toHaveBeenCalled();
+});
+
+it("applies an expense category only when its own dismissal completes", () => {
+  const choose = vi.fn();
+  state.choice = { kind: "category", titleKey: "ui.category", selected: "other", choose };
+  const route = LedgerCurrencyPickerRoute();
+  route.props.children.props.onSelect("food");
+  expect(choose).not.toHaveBeenCalled();
+  state.exit?.();
+  state.exit?.();
+  expect(choose).toHaveBeenCalledExactlyOnceWith("food");
+});
+
+
+it("applies staged expense sharing only after the same Sheet closes", () => {
+  const onApply = vi.fn();
+  const initial = {
+    payerId: "me", participantIds: ["me"], splitMode: "EQUAL_PERSON" as const,
+    exact: {}, percentages: {}, settlementParticipation: "INCLUDED" as const,
+  };
+  const staged = { ...initial, payerId: "partner" };
+  state.choice = { kind: "sharing", titleKey: "ui.sharing", initial, onApply, members: [], actorId: "me", minor: 100, currency: "NZD" };
+  const route = LedgerCurrencyPickerRoute();
+  route.props.onApply(staged);
+  expect(onApply).not.toHaveBeenCalled();
+  state.exit?.();
+  state.exit?.();
+  expect(onApply).toHaveBeenCalledExactlyOnceWith(staged);
 });

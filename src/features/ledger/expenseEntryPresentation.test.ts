@@ -210,18 +210,22 @@ describe("New Expense compact presentation", () => {
       "utf8",
     );
     expect(source).not.toContain("More Details");
+    expect(source).toMatch(/!receiptSourcePending.current && !addingReceiptRef.current;\s*return openExpenseField\(\{ \.\.\.choice, isCurrent \}\)/);
+    expect(source).toMatch(/const chooseReceipt = \(scan = false, addPart = false\) => \{\s*if \(receiptSourcePending.current\) return;/);
     expect(source).toMatch(
       /label=\{t\("ui.category"\)\}[\s\S]*?setCategorySheet\(true\)/,
     );
     expect(source).toMatch(/label=\{t\("ui.date"\)\}[\s\S]*?setDatePicker\(true\)/);
-    expect(source).toContain("setSharingSheet(true)");
-    expect(source).toContain("setSharingDraft({ ...sharingEdit, payerId: member.id })");
-    expect(source).toContain("setSharingDraft({ ...sharingEdit, participantIds: ids })");
-    expect(source).toContain("setSharingDraft({ ...sharingEdit, splitMode: mode })");
-    expect(source).toContain(
-      "setSharingDraft({ ...sharingEdit, settlementParticipation: value })",
-    );
-    expect(source).toContain("setDraft(applyExpenseSharing(draft, sharingEdit))");
+    const sharing = readFileSync(new URL("./ExpenseSharingSheet.tsx", import.meta.url), "utf8");
+    expect(source).toContain('kind: "sharing"');
+    expect(source).toContain("setSharingInputs(inputs)");
+    expect(source).toContain("applyExpenseSharing(current, { ...current, ...staged })");
+    expect(sharing).toContain("setSharingDraft({ ...sharingEdit, payerId: member.id })");
+    expect(sharing).toContain("setSharingDraft({ ...sharingEdit, participantIds: ids })");
+    expect(sharing).toContain("setSharingDraft({ ...sharingEdit, splitMode: mode })");
+    expect(sharing).toContain("settlementParticipation: value");
+    expect(sharing).toContain("disabled: invalid");
+    expect(sharing).toContain("if (!invalid && !exitPending) onApply(sharingEdit)");
     expect(source).toContain("onPress={() => chooseReceipt(false)}");
     expect(source).toContain('accessibilityLabel={t("ui.addAttachment")}');
     expect(source).toContain("!receiptCapacityFull && !params.correctionRootId ? (");
@@ -273,8 +277,8 @@ describe("New Expense compact presentation", () => {
     expect(source).not.toContain("scrollToEnd");
     expect(source).not.toContain("KeyboardAvoidingView");
     expect(source).toContain("setPreviewDraft(next)");
-    expect(source).toContain("rightDisabled={");
-    expect(source).toContain("styles.chipList");
+    expect(sharing).toContain("rightDisabled={invalid}");
+    expect(sharing).toContain("styles.chipList");
     const attachmentSection = source.slice(
       source.indexOf("Attachments{selectedReceiptCount"),
       source.indexOf("<Text style={styles.rowLabel}>Notes</Text>"),
