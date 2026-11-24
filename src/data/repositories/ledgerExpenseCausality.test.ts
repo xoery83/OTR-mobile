@@ -355,6 +355,47 @@ describe("Ledger Expense causal queue", () => {
   });
 });
 
+it("binds a normal FX replacement to the displayed revision and Journey amount", async () => {
+  const { sqlite, api } = database();
+  try {
+    sqlite.prepare(
+      "INSERT INTO ledger_journeys (journey_id, settlement_currency, settlement_scale, valuation_policy, updated_at) VALUES (?, 'NZD', 2, 'REFERENCE_RATE', '2026-09-28')",
+    ).run(journeyId);
+    const repository = createLedgerExpenseRepository(api, async () => userId);
+    const draft = command("Already valued EUR");
+    draft.original = { minor: 100, currency: "EUR", scale: 2 };
+    draft.valuation = { ...draft.valuation!, original: draft.original, policy: "MANUAL_AGREED",
+      decimalRate: "1", reason: "Original agreed rate" };
+    const expense = await repository.createExpense(draft);
+    await repository.markExpenseSynced(expense.id, "50000000-0000-4000-8000-000000000001", 1);
+    const proposed = {
+      policy: "MANUAL_AGREED" as const, manualRate: "2", reason: "Corrected agreed rate",
+      expectedDisplayedRevision: expense.revision,
+      expectedSettlement: { minor: 200, currency: "NZD", scale: 2 },
+    };
+    await expect(repository.applyValuation(expense.id, {
+      ...proposed, expectedDisplayedRevision: expense.revision - 1,
+    })).rejects.toThrow("Expense changed");
+    await expect(repository.applyValuation(expense.id, {
+      ...proposed, expectedSettlement: { ...proposed.expectedSettlement, minor: 201 },
+    })).rejects.toThrow("Journey value changed");
+    expect((await repository.getExpense(expense.id))?.revision).toBe(expense.revision);
+    const runTransaction = api.withTransactionAsync;
+    vi.spyOn(api, "withTransactionAsync").mockImplementationOnce((work) =>
+      runTransaction(async () => {
+        sqlite.prepare("UPDATE ledger_journeys SET settlement_currency = 'USD' WHERE journey_id = ?").run(journeyId);
+        await work();
+      }),
+    );
+    await expect(repository.applyValuation(expense.id, proposed)).rejects.toThrow("Journey value changed");
+    const accepted = await repository.applyValuation(expense.id, proposed);
+    expect(accepted.valuation?.settlement).toEqual(proposed.expectedSettlement);
+    expect(accepted.revision).toBe(expense.revision + 1);
+  } finally {
+    sqlite.close();
+  }
+});
+
 it("locks an explicitly accepted cached rate once and rejects stale or differently rounded acceptance", async () => {
   const { sqlite, api } = database();
   sqlite

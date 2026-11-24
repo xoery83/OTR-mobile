@@ -245,6 +245,8 @@ describe("New Expense compact presentation", () => {
     expect(detail).toContain('<Stack.Toolbar placement="right">');
     expect(detail).toContain("hidden={!canEdit}");
     expect(detail).toContain("canEditLedgerExpense(actor?.role, settlement)");
+    expect(detail).toContain("<LedgerExpenseDetailBody key={JSON.stringify([id, generation])}");
+    expect(detail).toMatch(/<ExpenseFxDetails\s+key=\{expense.id\}\s+expense=\{expense\}\s+generation=\{generation\}/);
     expect(detail).toContain("setSharingExpanded");
     expect(detail).not.toContain("deleteExpenseAttachment(");
     expect(detail).not.toContain("PAYER EVIDENCE");

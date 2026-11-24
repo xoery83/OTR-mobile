@@ -218,6 +218,7 @@ export type LedgerExpenseRepository = {
       manualRate?: string;
       reason?: string;
       expectedRevision?: number;
+      expectedDisplayedRevision?: number;
       expectedSettlement?: Money;
       rateAcceptance?: DisplayedRateBinding;
     },
@@ -1532,6 +1533,12 @@ export function createLedgerExpenseRepository(
       assertAccount();
       const current = await requireExpense(database, expenseId, userId);
       assertReplayFixtureWritable(current.journeyId);
+      const assertDisplayedRevision = (expense: LedgerExpense) => {
+        if (input.expectedDisplayedRevision !== undefined &&
+          (expense.revision !== input.expectedDisplayedRevision || expense.syncStatus !== "SYNCED"))
+          throw new Error("Expense changed. Review the latest value before accepting.");
+      };
+      assertDisplayedRevision(current);
       if (current.status === "DELETED")
         throw new Error("Deleted expenses cannot be valued.");
       const journey = await database.getFirstAsync<{
@@ -1667,6 +1674,7 @@ export function createLedgerExpenseRepository(
       await database.withTransactionAsync(async () => {
         assertAccount();
         const latest = await requireExpense(database, expenseId, userId);
+        assertDisplayedRevision(latest);
         if (
           input.expectedRevision !== undefined &&
           (latest.syncStatus !== "SYNCED" ||
@@ -1679,7 +1687,7 @@ export function createLedgerExpenseRepository(
           throw new Error("Expense changed. Review the latest rate before accepting.");
         if (latest.revision !== current.revision)
           throw new Error("Expense changed. Review the latest value before accepting.");
-        if (input.rateAcceptance) {
+        if (input.rateAcceptance || input.expectedDisplayedRevision !== undefined) {
           const settings = await database.getFirstAsync<{
             currency: string;
             scale: number;
@@ -1689,12 +1697,14 @@ export function createLedgerExpenseRepository(
           );
           if (
             !settings ||
-            !rateBindingMatches(
+            settings.currency !== preview.settlement.currency ||
+            settings.scale !== preview.settlement.scale ||
+            (input.rateAcceptance && !rateBindingMatches(
               input.rateAcceptance,
               latest,
               settings.currency,
               settings.scale,
-            )
+            ))
           )
             throw new Error(
               "Expense or Journey value changed. Review the latest rate before accepting.",

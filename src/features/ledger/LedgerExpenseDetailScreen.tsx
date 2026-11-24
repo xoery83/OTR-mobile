@@ -8,7 +8,7 @@ import {
   refreshLedgerFxSnapshotCache,
   kickLedgerOperationalSync,
 } from "@/data/operations/kickLedgerSync";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,7 @@ import {
 } from "react-native";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 
+import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { getDefaultLedgerReadRepository } from "@/data/repositories/defaultLedgerReadRepository";
 import { getDefaultLedgerReceiptRepository } from "@/data/repositories/defaultLedgerReceiptRepository";
@@ -51,11 +52,16 @@ import { formatLedgerDate } from "./format";
 import { loadDisplayEstimates } from "./loadDisplayEstimates";
 
 export function LedgerExpenseDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const generation = useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
+  return <LedgerExpenseDetailBody key={JSON.stringify([id, generation])} id={id} generation={generation} />;
+}
+
+function LedgerExpenseDetailBody({ id, generation }: { id: string; generation: number }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
   const colors = useUiTheme();
   const largeText = useWindowDimensions().fontScale > 2;
-  const { id } = useLocalSearchParams<{ id: string }>();
   const [expense, setExpense] = useState<LedgerExpense | null>(null);
   const openExpenseDate = useOpenExpenseDateConfirmation(expense?.journeyId, id);
   const [syncResult, setSyncResult] = useState<ExpenseOperationResult | null>(null);
@@ -88,6 +94,7 @@ export function LedgerExpenseDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      const current = () => active && generation === getAccountGeneration();
       if (id) {
         void getDefaultLedgerExpenseRepository()
           .then((repository) => repository.getExpense(id))
@@ -189,7 +196,7 @@ export function LedgerExpenseDetailScreen() {
               nextReviewFlagCount,
               access,
             ]) => {
-              if (!active) return;
+              if (!current()) return;
               setExpense(nextExpense);
               setHasOpenConflict(nextHasOpenConflict);
               setPayerName(nextPayerName);
@@ -203,16 +210,16 @@ export function LedgerExpenseDetailScreen() {
             },
           )
           .catch(() => {
-            if (active) setLoadError(true);
+            if (current()) setLoadError(true);
           })
           .finally(() => {
-            if (active) setLoading(false);
+            if (current()) setLoading(false);
           });
       }
       return () => {
         active = false;
       };
-    }, [id]),
+    }, [generation, id]),
   );
   useEffect(() => {
     if (
@@ -537,6 +544,7 @@ export function LedgerExpenseDetailScreen() {
               <ExpenseFxDetails
                 key={expense.id}
                 expense={expense}
+                generation={generation}
                 currency={fxAccess.currency}
                 scale={fxAccess.scale}
                 canChange={canEdit && !needsConflictDecision}

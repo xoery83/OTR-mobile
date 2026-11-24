@@ -142,3 +142,35 @@ it("blocks host dismissal only for the exact transaction-date operation in fligh
   choice.setBusy(false);
   expect(interceptLedgerCurrencySheetClose(invocation)).toBe(false);
 });
+
+it("registers FX ownership before presenting and releases only its owning invocation", async () => {
+  const { useLedgerCurrencySheet, interceptLedgerCurrencySheetClose, readLedgerCurrencySheet, releaseLedgerCurrencySheet } =
+    await import("./ledgerCurrencySheet");
+  let opened = false;
+  let writing = false;
+  const open = useLedgerCurrencySheet("trip", "expense");
+  const choice = {
+    kind: "fx-details" as const, titleKey: "ui.rateDetails" as const,
+    read: () => null, subscribe: () => () => {},
+    isCurrent: () => opened,
+    isBusy: () => writing,
+    onOpen: vi.fn(() => { opened = true; }),
+    bindExitPending: vi.fn(),
+    onClose: vi.fn(() => { opened = false; }),
+  };
+  expect(opened).toBe(false);
+  open(choice);
+  const { invocation } = state.push.mock.calls[0][0].params;
+  expect(choice.onOpen).toHaveBeenCalledOnce();
+  expect(readLedgerCurrencySheet(invocation)).toBe(choice);
+  writing = true;
+  expect(interceptLedgerCurrencySheetClose(invocation)).toBe(true);
+  expect(interceptLedgerCurrencySheetClose("stale")).toBe(false);
+  releaseLedgerCurrencySheet("stale", true);
+  expect(choice.onClose).not.toHaveBeenCalled();
+  writing = false;
+  expect(interceptLedgerCurrencySheetClose(invocation)).toBe(false);
+  releaseLedgerCurrencySheet(invocation, true);
+  expect(choice.onClose).toHaveBeenCalledOnce();
+  expect(readLedgerCurrencySheet(invocation)).toBeUndefined();
+});

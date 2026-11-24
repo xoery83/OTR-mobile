@@ -5,16 +5,19 @@ import type { LedgerCurrencyChoice } from "./ledgerCurrencySheet";
 const state = vi.hoisted(() => ({
   choice: undefined as LedgerCurrencyChoice | undefined,
   exit: undefined as (() => void) | undefined,
+  layoutCleanup: undefined as (() => void) | undefined,
   exitPending: false,
 }));
 
 vi.mock("react", async original => ({
   ...(await original<typeof import("react")>()),
   useEffect: () => {},
+  useLayoutEffect: (effect: () => () => void) => { state.layoutCleanup = effect(); },
   useState: (initial: () => Date) => [initial(), () => {}],
   useSyncExternalStore: (_subscribe: unknown, read: () => unknown) => read(),
 }));
 vi.mock("expo-router", () => ({ useLocalSearchParams: () => ({ invocation: "selection" }) }));
+vi.mock("expo-router/react-navigation", () => ({ usePreventRemove: () => {} }));
 vi.mock("react-native", () => ({
   Keyboard: { dismiss: () => {} },
   StyleSheet: { create: (value: unknown) => value },
@@ -47,6 +50,7 @@ vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 beforeEach(() => {
   state.choice = undefined;
   state.exit = undefined;
+  state.layoutCleanup = undefined;
   state.exitPending = false;
 });
 
@@ -160,4 +164,23 @@ it("hands date confirmation the exact expense and retires it during an exit or o
   state.choice = { ...choice, expenseId: "different-expense" };
   expect(route.props.isCurrent()).toBe(false);
   expect(state.exit).toBeUndefined();
+});
+
+it("keeps the FX write fence synchronized through a refused exit, then detaches at unmount", () => {
+  let readExitPending: (() => boolean) | undefined;
+  state.choice = {
+    kind: "fx-details", titleKey: "ui.rateDetails",
+    read: () => null, subscribe: () => () => {},
+    isBusy: () => false, onOpen: vi.fn(), onClose: vi.fn(),
+    bindExitPending: read => { readExitPending = read; },
+  };
+  const route = LedgerCurrencyPickerRoute();
+  route.type(route.props);
+  expect(readExitPending?.()).toBe(false);
+  state.exitPending = true;
+  expect(readExitPending?.()).toBe(true);
+  state.exitPending = false;
+  expect(readExitPending?.()).toBe(false);
+  state.layoutCleanup?.();
+  expect(readExitPending).toBeUndefined();
 });

@@ -1,5 +1,5 @@
 import { router, useNavigation } from "expo-router";
-import { useCallback, useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect, useRef, type ReactNode } from "react";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 
 import type { MessageKey } from "@/ui/locale";
@@ -21,6 +21,15 @@ export type LedgerCurrencyChoice = {
     choose(code: string): void;
   }
   | { kind: "confirm-date"; expenseId: string; journeyId: string; isBusy(): boolean; setBusy(busy: boolean): void }
+  | {
+    kind: "fx-details";
+    read(): ReactNode;
+    subscribe(listener: () => void): () => void;
+    isBusy(): boolean;
+    bindExitPending(read: (() => boolean) | undefined): void;
+    onOpen(): void;
+    onClose(): void;
+  }
   | { kind: "date"; initial: Date; maximumDate?: Date; choose(date: Date): void }
   | ({ kind: "sharing" } & ExpenseSharingInputs)
   | { kind: "category"; selected: string; choose(category: string): void }
@@ -38,12 +47,14 @@ export function readLedgerCurrencySheet(id: string | undefined) {
 
 export function interceptLedgerCurrencySheetClose(id: string | undefined) {
   const choice = readLedgerCurrencySheet(id);
-  return choice?.kind === "confirm-date" && choice.isBusy();
+  return (choice?.kind === "fx-details" || choice?.kind === "confirm-date") && choice.isBusy();
 }
 
-export function releaseLedgerCurrencySheet(id: string | undefined) {
+export function releaseLedgerCurrencySheet(id: string | undefined, notifyOwner = false) {
   if (!active || active.id !== id) return;
+  const entry = active;
   active = undefined;
+  if (notifyOwner && entry.current() && entry.choice.kind === "fx-details") entry.choice.onClose();
 }
 
 export function completeLedgerCurrencySheet(
@@ -77,7 +88,7 @@ export function useLedgerCurrencySheet(
 
   return useCallback((choice: LedgerCurrencyChoice) => {
     if (!enabled || !featureEnabled) return false;
-    if (choice.isCurrent?.() === false) return true;
+    if (choice.kind !== "fx-details" && choice.isCurrent?.() === false) return true;
     const token = owner.current;
     if (!journeyId) return false;
     if (token?.journeyId !== journeyId || token.sourceKey !== sourceKey ||
@@ -89,6 +100,13 @@ export function useLedgerCurrencySheet(
       current: () => owner.current === token && generation === getAccountGeneration(),
     };
     invocation.current = id;
+    if (choice.kind === "fx-details") {
+      choice.onOpen();
+      if (readLedgerCurrencySheet(id) !== choice) {
+        releaseLedgerCurrencySheet(id, true);
+        return true;
+      }
+    }
     router.push({ pathname: "/ledger-currency-picker", params: { invocation: id } });
     return true;
   }, [enabled, featureEnabled, generation, journeyId, navigation, sourceKey]);

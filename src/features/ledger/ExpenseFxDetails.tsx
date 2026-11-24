@@ -1,11 +1,12 @@
 import { systemMessage } from "@/ui/domainLabels";
 import { t, getFormatLocale } from "@/ui/locale";
 import { UiTextInput as TextInput } from "@/ui/forms";
+import { UiText as Text } from "@/ui/controls";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,18 +14,20 @@ import {
   ScrollView,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/components/AppIcon";
 import { SheetHeader } from "@/components/SheetHeader";
+import { SheetScrollView } from "@/components/SheetScrollView";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
+import { hostedLedgerCurrencySheetEnabled, useLedgerCurrencySheet } from "./ledgerCurrencySheet";
 
 import { getDefaultLedgerExpenseRepository } from "@/data/repositories/defaultLedgerExpenseRepository";
 import { kickLedgerOperationalSync } from "@/data/operations/kickLedgerSync";
 import type { LedgerExpense } from "@/data/repositories/ledgerExpenseRepository";
-import type { RateQuote, SettlementValuationSnapshot } from "@/domain/ledger/types";
+import type { Money, RateQuote, SettlementValuationSnapshot } from "@/domain/ledger/types";
 import { previewValuation } from "@/domain/ledger/valuation";
 
 import { formatLedgerMoney, formatLedgerRate } from "./format";
@@ -50,6 +53,7 @@ function fullDate(day: string, chinese: boolean) {
 
 export function ExpenseFxDetails({
   expense,
+  generation,
   currency,
   scale,
   canChange,
@@ -59,6 +63,7 @@ export function ExpenseFxDetails({
   onChanged,
 }: {
   expense: LedgerExpense;
+  generation: number;
   currency: string;
   scale: number;
   canChange: boolean;
@@ -79,6 +84,27 @@ export function ExpenseFxDetails({
   const [quotes, setQuotes] = useState<RateQuote[]>([]);
   const [previous, setPrevious] = useState<SettlementValuationSnapshot[]>([]);
   const [busy, setBusy] = useState(false);
+  const writing = useRef(false);
+  const openedSheet = useRef<{ generation: number; isExitPending?: () => boolean } | null>(null);
+  const [renderedSheet, setRenderedSheet] = useState<typeof openedSheet.current>(null);
+  const [sheetBody] = useState(() => {
+    let content: ReactNode = null;
+    const listeners = new Set<() => void>();
+    return {
+      read: () => content,
+      subscribe(listener: () => void) {
+        listeners.add(listener);
+        return () => { listeners.delete(listener); };
+      },
+      update(next: ReactNode) {
+        if (content === next) return;
+        content = next;
+        listeners.forEach(listener => listener());
+      },
+    };
+  });
+  const openSheet = useLedgerCurrencySheet(expense.journeyId, expense.id);
+  const currentFx = useRef<{ generation: number; expense: LedgerExpense; currency: string; scale: number; editable: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const valuation = expense.valuation;
   const policy = expenseValuationMethod(expense);
@@ -91,6 +117,10 @@ export function ExpenseFxDetails({
     !blocked &&
     !pending &&
     expense.status !== "DELETED";
+  useLayoutEffect(() => {
+    currentFx.current = { generation, expense, currency, scale, editable };
+    return () => { currentFx.current = null; };
+  }, [generation, expense, currency, scale, editable]);
   const quote = eligibleExpenseQuote(expense, quotes, currency);
   const estimatedRate =
     estimate && "decimalRate" in estimate && typeof estimate.decimalRate === "string"
@@ -108,6 +138,7 @@ export function ExpenseFxDetails({
   );
   useEffect(() => {
     let active = true;
+    const isCurrent = () => active && generation === getAccountGeneration();
     if (expanded && crossCurrency) {
       void getDefaultLedgerExpenseRepository()
         .then(async (repo) =>
@@ -117,13 +148,13 @@ export function ExpenseFxDetails({
           ]),
         )
         .then(([items, history]) => {
-          if (active) {
+          if (isCurrent()) {
             setQuotes(items);
             setPrevious(history);
           }
         })
         .catch(() => {
-          if (active)
+          if (isCurrent())
             setError(
               chinese ? t("ui.cachedRatesUnavailable") : t("ui.cachedRatesUnavailable"),
             );
@@ -134,6 +165,7 @@ export function ExpenseFxDetails({
     };
   }, [
     expanded,
+    generation,
     crossCurrency,
     expense.id,
     expense.journeyId,
@@ -147,38 +179,56 @@ export function ExpenseFxDetails({
     input: Parameters<
       Awaited<ReturnType<typeof getDefaultLedgerExpenseRepository>>["applyValuation"]
     >[1],
-    amount: string,
+    amount: Money,
     explanation: string,
   ) => {
-    if (busy || !editable) return;
+    const origin = renderedSheet;
+    const canSubmit = () => {
+      const current = currentFx.current;
+      return current?.editable && current.expense === expense &&
+        current.currency === currency && current.scale === scale &&
+        current.generation === generation && generation === getAccountGeneration() &&
+        (!hostedLedgerCurrencySheetEnabled || (origin !== null &&
+          openedSheet.current === origin && origin.isExitPending?.() === false));
+    };
+    if (writing.current || !canSubmit()) return;
     Alert.alert(
       t("ui.confirmJourneyValue"),
-      `${t("ui.original")}: ${formatLedgerMoney(expense.original.minor, expense.original.currency, expense.original.scale)}\n${explanation}\n${label(t("ui.journeyValue"), t("ui.journeyValue2"))}: ${amount}${input.reason ? `\n${t("ui.reason")}: ${input.reason}` : ""}`,
+      `${t("ui.original")}: ${formatLedgerMoney(expense.original.minor, expense.original.currency, expense.original.scale)}\n${explanation}\n${label(t("ui.journeyValue"), t("ui.journeyValue2"))}: ${formatLedgerMoney(amount.minor, amount.currency, amount.scale)}${input.reason ? `\n${t("ui.reason")}: ${input.reason}` : ""}`,
       [
         { text: t("ui.cancel"), style: "cancel" },
         {
           text: t("ui.confirm"),
           onPress: () => {
+            if (writing.current || !canSubmit()) return;
+            writing.current = true;
             setBusy(true);
             setError(null);
             void getDefaultLedgerExpenseRepository()
-              .then((repo) => repo.applyValuation(expense.id, input))
+              .then((repo) => canSubmit() ? repo.applyValuation(expense.id, {
+                ...input, expectedDisplayedRevision: expense.revision, expectedSettlement: amount,
+              }) : undefined)
               .then((updated) => {
+                if (!updated || generation !== getAccountGeneration()) return;
+                kickLedgerOperationalSync();
+                if (!canSubmit()) return;
                 onChanged(updated);
                 setManual(false);
                 setRate("");
                 setReason("");
-                kickLedgerOperationalSync();
               })
-              .catch(() =>
-                setError(
+              .catch(() => {
+                if (canSubmit()) setError(
                   label(
                     t("ui.couldNotSaveValuationCheckTheCurrentEvidenceAndTry"),
                     t("ui.couldNotSaveValuationCheckTheCurrentEvidenceAndTry"),
                   ),
-                ),
-              )
-              .finally(() => setBusy(false));
+                );
+              })
+              .finally(() => {
+                writing.current = false;
+                if (generation === getAccountGeneration() && currentFx.current) setBusy(false);
+              });
           },
         },
       ],
@@ -196,12 +246,357 @@ export function ExpenseFxDetails({
       });
       submit(
         { policy: "MANUAL_AGREED", manualRate: rate.trim(), reason: reason.trim() },
-        formatLedgerMoney(result.settlement.minor, currency, scale),
+        result.settlement,
         `${t("fx.copy0")}: 1 ${expense.original.currency} = ${rate.trim()} ${currency}`,
       );
     } catch {
       setError(t("ui.enterAPositiveRateAndAReason"));
     }
+  };
+
+  const ContentScroll = hostedLedgerCurrencySheetEnabled ? SheetScrollView : ScrollView;
+  const body = expanded && crossCurrency ? (
+    <ContentScroll
+      style={hostedLedgerCurrencySheetEnabled ? styles.hostedScroll : styles.scroll}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets={!hostedLedgerCurrencySheetEnabled}
+      contentContainerStyle={[styles.details, hostedLedgerCurrencySheetEnabled && styles.sheetReadingColumn]}
+    >
+      <View style={styles.summaryCard}>
+        <Text style={styles.eyebrow}>
+          {valuation ? t("ui.journeyValue2") : t("ui.estimatedValue")}
+        </Text>
+        <MoneyText
+          variant="headline"
+          style={styles.summaryValue}
+          minor={
+            valuation
+              ? valuation.settlement.minor
+              : (estimate?.money.minor ?? null)
+          }
+          currency={valuation?.settlement.currency ?? currency}
+          scale={valuation?.settlement.scale ?? scale}
+          prefix={!valuation && estimate ? "≈ " : ""}
+          placeholder={`${currency}—`}
+        />
+        <Text style={styles.meta}>
+          {policy === "REFERENCE_RATE"
+            ? t("ui.referenceRate2")
+            : policy === "MANUAL_AGREED"
+              ? t("ui.agreedRate")
+              : policy === "ACTUAL_PAYER_COST"
+                ? t("ui.actualPayerCost")
+                : t("ui.needsReview")}
+        </Text>
+        {!valuation && estimate ? (
+          <Text style={styles.caption}>
+            {label(
+              t("ui.displayEstimateNotARecordedJourneyValue"),
+              t("ui.displayEstimateNotARecordedJourneyValue"),
+            )}
+          </Text>
+        ) : null}
+        {!valuation &&
+        expense.status === "RATE_REQUIRED" &&
+        proposedExpenseDate(expense) ? (
+          <Text style={styles.caption}>
+            {fxStatus(expense, chinese, policy, blocked, Boolean(estimate))}
+          </Text>
+        ) : null}
+        {!valuation &&
+        estimate &&
+        expense.syncStatus === "SYNCED" &&
+        expense.economicDate === new Date().toISOString().slice(0, 10) ? (
+          <Text style={styles.caption}>
+            {t("ui.referenceRateNotPublishedYet")}
+          </Text>
+        ) : null}
+      </View>
+      {valuation?.decimalRate || estimatedRate ? (
+        <View style={styles.infoCard}>
+          <Text style={styles.cardTitle}>{t("ui.exchangeRate")}</Text>
+          <Text style={styles.rateText}>
+            {t("ui.1")}
+            {expense.original.currency} ={" "}
+            {formatLedgerRate(valuation?.decimalRate ?? estimatedRate!)}{" "}
+            {currency}
+          </Text>
+        </View>
+      ) : null}
+      {referenceDate ? (
+        <View style={styles.infoCard}>
+          <Text style={styles.cardTitle}>{t("ui.rateSource")}</Text>
+          {valuation?.referenceEvidence ? (
+            <DetailRow
+              label={t("ui.expenseDate")}
+              value={fullDate(
+                valuation.referenceEvidence.economicDate,
+                chinese,
+              )}
+            />
+          ) : null}
+          <DetailRow
+            label={t("ui.rateDate")}
+            value={fullDate(referenceDate, chinese)}
+          />
+          <DetailRow label={t("ui.source")} value={t("fx.copy1")} />
+          {estimate?.referenceDate &&
+          estimate.referenceDate !== expense.economicDate ? (
+            <Text style={styles.caption}>
+              {label(
+                t("ui.usingTheLatestCachedRateAvailableForThisDate"),
+                t("ui.usingTheLatestCachedRateAvailableForThisDate"),
+              )}
+            </Text>
+          ) : null}
+          <Text style={styles.caption}>
+            {label(
+              t("ui.referenceRatesEstimateValueTheyDoNotProveCardOr"),
+              t("ui.referenceRatesEstimateValueTheyDoNotProveCardOr"),
+            )}
+          </Text>
+        </View>
+      ) : null}
+      {valuation?.reason &&
+      !(
+        valuation.referenceEvidence &&
+        valuation.reason.startsWith("Accepted cached ECB reference rate dated ")
+      ) ? (
+        <View style={styles.infoCard}>
+          <Text style={styles.cardTitle}>{t("ui.note")}</Text>
+          <Text style={styles.meta}>{valuation.reason}</Text>
+        </View>
+      ) : null}
+      {valuation?.policy === "ACTUAL_PAYER_COST" ? (
+        <Text style={styles.caption}>
+          {label(
+            t("ui.basedOnPostedPayerEvidenceNotAMarketExchangeRate"),
+            t("ui.basedOnPostedPayerEvidenceNotAMarketExchangeRate"),
+          )}
+        </Text>
+      ) : null}
+      {locked ? (
+        <Text style={styles.meta}>
+          {label(
+            expense.economicDate === null
+              ? t(
+                  "ui.theEarlierSettlementValueIsFrozenConfirmTheCurrentTransaction",
+                )
+              : t("ui.theEarlierSettlementValueRemainsFrozen"),
+            expense.economicDate === null
+              ? t(
+                  "ui.theEarlierSettlementValueIsFrozenConfirmTheCurrentTransaction",
+                )
+              : t("ui.theEarlierSettlementValueRemainsFrozen"),
+          )}
+        </Text>
+      ) : null}
+      {editable ? (
+        <View style={styles.actions}>
+          <Text style={styles.cardTitle}>{t("ui.changeJourneyValue")}</Text>
+          {!manual ? (
+            <Pressable
+              accessibilityRole="button"
+              style={styles.primaryAction}
+              onPress={() => {
+                setManual(true);
+                setError(null);
+              }}
+            >
+              <Text style={styles.primaryActionText}>
+                {valuation?.policy === "MANUAL_AGREED"
+                  ? t("ui.editAgreedRate")
+                  : t("ui.useAgreedRate")}
+              </Text>
+            </Pressable>
+          ) : (
+            <>
+              <Text style={styles.meta}>
+                {t("entry.conversionPreview", {
+                  original: expense.original.currency,
+                  currency,
+                })}
+              </Text>
+              <TextInput
+                accessibilityLabel={t("ui.agreedRate")}
+                keyboardType="decimal-pad"
+                placeholder={t("ui.rate")}
+                value={rate}
+                onChangeText={setRate}
+                style={styles.input}
+              />
+              <TextInput
+                accessibilityLabel={t("ui.reasonRequired")}
+                placeholder={t("ui.reasonRequired2")}
+                value={reason}
+                onChangeText={setReason}
+                style={styles.input}
+              />
+              <Pressable
+                accessibilityRole="button"
+                style={styles.primaryAction}
+                onPress={manualPreview}
+              >
+                <Text style={styles.primaryActionText}>
+                  {t("ui.previewAgreedRate")}
+                </Text>
+              </Pressable>
+            </>
+          )}
+          {payments.map((payment) => (
+            <Pressable
+              key={payment.id}
+              accessibilityRole="button"
+              style={styles.secondaryAction}
+              onPress={() =>
+                submit(
+                  { policy: "ACTUAL_PAYER_COST", paymentRecordId: payment.id },
+                  payment.posted!,
+                  `${t("fx.copy2")}: ${formatLedgerMoney(payment.posted!.minor, currency, scale)}\n${t("fx.copy3")}`,
+                )
+              }
+            >
+              <Text style={styles.secondaryActionText}>
+                {t("ui.useActualPayerCost")} ·{" "}
+                {formatLedgerMoney(payment.posted!.minor, currency, scale)}
+              </Text>
+            </Pressable>
+          ))}
+          {quote && valuation && valuation.policy !== "REFERENCE_RATE" ? (
+            <Pressable
+              accessibilityRole="button"
+              style={styles.secondaryAction}
+              onPress={() => {
+                const result = previewValuation({
+                  policy: "REFERENCE_RATE",
+                  original: expense.original,
+                  settlementCurrency: currency,
+                  settlementScale: scale,
+                  rateQuote: quote,
+                });
+                submit(
+                  {
+                    policy: "REFERENCE_RATE",
+                    rateQuoteId: quote.id,
+                    reason: "Selected reference rate.",
+                  },
+                  result.settlement,
+                  `1 ${expense.original.currency} = ${formatLedgerRate(quote.decimalRate)} ${currency}\n${t("fx.copy4")}: ${fullDate(quote.referenceDate!, chinese)}`,
+                );
+              }}
+            >
+              <Text style={styles.secondaryActionText}>
+                {t("ui.useReferenceRate")}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+      {busy ? (
+        <ActivityIndicator accessibilityLabel={t("ui.savingValuation")} />
+      ) : null}
+      {error ? (
+        <Text accessibilityLiveRegion="polite" style={styles.error}>
+          {systemMessage(error)}
+        </Text>
+      ) : null}
+      {previous.length ? (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: historyExpanded }}
+            style={styles.detailsToggle}
+            onPress={() => setHistoryExpanded(!historyExpanded)}
+          >
+            <Text style={styles.detailsToggleText}>
+              {historyExpanded
+                ? t("ui.hideValuationHistory")
+                : t("ui.viewValuationHistory")}
+            </Text>
+          </Pressable>
+          {historyExpanded
+            ? previous.map((item) => {
+                const row = valuationHistoryPresentation(
+                  item,
+                  expense.original,
+                  currency,
+                  chinese,
+                );
+                return (
+                  <View key={item.id}>
+                    <Text style={styles.meta}>{row.title}</Text>
+                    {row.pair ? (
+                      <Text style={styles.meta}>{row.pair}</Text>
+                    ) : null}
+                    <Text style={styles.meta} accessibilityLabel={row.value}>
+                      <MoneyText
+                        variant="compact"
+                        accessible={false}
+                        style={styles.meta}
+                        minor={item.original.minor}
+                        currency={item.original.currency}
+                        scale={item.original.scale}
+                      />
+                      {" → "}
+                      <MoneyText
+                        variant="compact"
+                        accessible={false}
+                        style={styles.meta}
+                        minor={item.settlement.minor}
+                        currency={item.settlement.currency}
+                        scale={item.settlement.scale}
+                      />
+                    </Text>
+                    {row.context.map((line) => (
+                      <Text key={line} style={styles.meta}>
+                        {line}
+                      </Text>
+                    ))}
+                    {item.effectiveAt ? (
+                      <Text style={styles.meta}>
+                        {new Intl.DateTimeFormat(getFormatLocale(), {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(new Date(item.effectiveAt))}
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })
+            : null}
+        </>
+      ) : null}
+    </ContentScroll>
+  ) : null;
+  useLayoutEffect(() => {
+    if (hostedLedgerCurrencySheetEnabled) sheetBody.update(body);
+  });
+
+  const open = () => {
+    if (currentFx.current?.generation !== generation || generation !== getAccountGeneration() ||
+      openedSheet.current?.generation === generation) return;
+    const invocation: NonNullable<typeof openedSheet.current> = { generation };
+    if (!openSheet({
+      kind: "fx-details",
+      titleKey: "ui.rateDetails",
+      read: sheetBody.read,
+      subscribe: sheetBody.subscribe,
+      isCurrent: () => openedSheet.current === invocation &&
+        currentFx.current?.generation === generation && generation === getAccountGeneration(),
+      isBusy: () => writing.current,
+      onOpen: () => {
+        openedSheet.current = invocation;
+        setRenderedSheet(invocation);
+        setExpanded(true);
+      },
+      bindExitPending: read => { invocation.isExitPending = read; },
+      onClose: () => {
+        if (openedSheet.current !== invocation) return;
+        openedSheet.current = null;
+        setRenderedSheet(null);
+        setExpanded(false);
+      },
+    })) setExpanded(true);
   };
 
   return (
@@ -222,14 +617,14 @@ export function ExpenseFxDetails({
             accessibilityLabel={t("ui.rateDetails")}
             accessibilityState={{ expanded }}
             style={styles.detailsToggle}
-            onPress={() => setExpanded(true)}
+            onPress={open}
           >
             <AppIcon color={colors.accent} name="info.circle" size={18} />
           </Pressable>
         ) : null}
       </View>
       <Text style={styles.meta}>{t("common.journey")}</Text>
-      {expanded && crossCurrency ? (
+      {expanded && crossCurrency && !hostedLedgerCurrencySheetEnabled ? (
         <Modal
           animationType="slide"
           transparent
@@ -250,317 +645,7 @@ export function ExpenseFxDetails({
                 onLeft={() => setExpanded(false)}
                 safeTop={false}
               />
-              <ScrollView
-                style={styles.scroll}
-                keyboardShouldPersistTaps="handled"
-                automaticallyAdjustKeyboardInsets
-                contentContainerStyle={styles.details}
-              >
-                <View style={styles.summaryCard}>
-                  <Text style={styles.eyebrow}>
-                    {valuation ? t("ui.journeyValue2") : t("ui.estimatedValue")}
-                  </Text>
-                  <MoneyText
-                    variant="headline"
-                    style={styles.summaryValue}
-                    minor={
-                      valuation
-                        ? valuation.settlement.minor
-                        : (estimate?.money.minor ?? null)
-                    }
-                    currency={valuation?.settlement.currency ?? currency}
-                    scale={valuation?.settlement.scale ?? scale}
-                    prefix={!valuation && estimate ? "≈ " : ""}
-                    placeholder={`${currency}—`}
-                  />
-                  <Text style={styles.meta}>
-                    {policy === "REFERENCE_RATE"
-                      ? t("ui.referenceRate2")
-                      : policy === "MANUAL_AGREED"
-                        ? t("ui.agreedRate")
-                        : policy === "ACTUAL_PAYER_COST"
-                          ? t("ui.actualPayerCost")
-                          : t("ui.needsReview")}
-                  </Text>
-                  {!valuation && estimate ? (
-                    <Text style={styles.caption}>
-                      {label(
-                        t("ui.displayEstimateNotARecordedJourneyValue"),
-                        t("ui.displayEstimateNotARecordedJourneyValue"),
-                      )}
-                    </Text>
-                  ) : null}
-                  {!valuation &&
-                  expense.status === "RATE_REQUIRED" &&
-                  proposedExpenseDate(expense) ? (
-                    <Text style={styles.caption}>
-                      {fxStatus(expense, chinese, policy, blocked, Boolean(estimate))}
-                    </Text>
-                  ) : null}
-                  {!valuation &&
-                  estimate &&
-                  expense.syncStatus === "SYNCED" &&
-                  expense.economicDate === new Date().toISOString().slice(0, 10) ? (
-                    <Text style={styles.caption}>
-                      {t("ui.referenceRateNotPublishedYet")}
-                    </Text>
-                  ) : null}
-                </View>
-                {valuation?.decimalRate || estimatedRate ? (
-                  <View style={styles.infoCard}>
-                    <Text style={styles.cardTitle}>{t("ui.exchangeRate")}</Text>
-                    <Text style={styles.rateText}>
-                      {t("ui.1")}
-                      {expense.original.currency} ={" "}
-                      {formatLedgerRate(valuation?.decimalRate ?? estimatedRate!)}{" "}
-                      {currency}
-                    </Text>
-                  </View>
-                ) : null}
-                {referenceDate ? (
-                  <View style={styles.infoCard}>
-                    <Text style={styles.cardTitle}>{t("ui.rateSource")}</Text>
-                    {valuation?.referenceEvidence ? (
-                      <DetailRow
-                        label={t("ui.expenseDate")}
-                        value={fullDate(
-                          valuation.referenceEvidence.economicDate,
-                          chinese,
-                        )}
-                      />
-                    ) : null}
-                    <DetailRow
-                      label={t("ui.rateDate")}
-                      value={fullDate(referenceDate, chinese)}
-                    />
-                    <DetailRow label={t("ui.source")} value={t("fx.copy1")} />
-                    {estimate?.referenceDate &&
-                    estimate.referenceDate !== expense.economicDate ? (
-                      <Text style={styles.caption}>
-                        {label(
-                          t("ui.usingTheLatestCachedRateAvailableForThisDate"),
-                          t("ui.usingTheLatestCachedRateAvailableForThisDate"),
-                        )}
-                      </Text>
-                    ) : null}
-                    <Text style={styles.caption}>
-                      {label(
-                        t("ui.referenceRatesEstimateValueTheyDoNotProveCardOr"),
-                        t("ui.referenceRatesEstimateValueTheyDoNotProveCardOr"),
-                      )}
-                    </Text>
-                  </View>
-                ) : null}
-                {valuation?.reason &&
-                !(
-                  valuation.referenceEvidence &&
-                  valuation.reason.startsWith("Accepted cached ECB reference rate dated ")
-                ) ? (
-                  <View style={styles.infoCard}>
-                    <Text style={styles.cardTitle}>{t("ui.note")}</Text>
-                    <Text style={styles.meta}>{valuation.reason}</Text>
-                  </View>
-                ) : null}
-                {valuation?.policy === "ACTUAL_PAYER_COST" ? (
-                  <Text style={styles.caption}>
-                    {label(
-                      t("ui.basedOnPostedPayerEvidenceNotAMarketExchangeRate"),
-                      t("ui.basedOnPostedPayerEvidenceNotAMarketExchangeRate"),
-                    )}
-                  </Text>
-                ) : null}
-                {locked ? (
-                  <Text style={styles.meta}>
-                    {label(
-                      expense.economicDate === null
-                        ? t(
-                            "ui.theEarlierSettlementValueIsFrozenConfirmTheCurrentTransaction",
-                          )
-                        : t("ui.theEarlierSettlementValueRemainsFrozen"),
-                      expense.economicDate === null
-                        ? t(
-                            "ui.theEarlierSettlementValueIsFrozenConfirmTheCurrentTransaction",
-                          )
-                        : t("ui.theEarlierSettlementValueRemainsFrozen"),
-                    )}
-                  </Text>
-                ) : null}
-                {editable ? (
-                  <View style={styles.actions}>
-                    <Text style={styles.cardTitle}>{t("ui.changeJourneyValue")}</Text>
-                    {!manual ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        style={styles.primaryAction}
-                        onPress={() => {
-                          setManual(true);
-                          setError(null);
-                        }}
-                      >
-                        <Text style={styles.primaryActionText}>
-                          {valuation?.policy === "MANUAL_AGREED"
-                            ? t("ui.editAgreedRate")
-                            : t("ui.useAgreedRate")}
-                        </Text>
-                      </Pressable>
-                    ) : (
-                      <>
-                        <Text style={styles.meta}>
-                          {t("entry.conversionPreview", {
-                            original: expense.original.currency,
-                            currency,
-                          })}
-                        </Text>
-                        <TextInput
-                          accessibilityLabel={t("ui.agreedRate")}
-                          keyboardType="decimal-pad"
-                          placeholder={t("ui.rate")}
-                          value={rate}
-                          onChangeText={setRate}
-                          style={styles.input}
-                        />
-                        <TextInput
-                          accessibilityLabel={t("ui.reasonRequired")}
-                          placeholder={t("ui.reasonRequired2")}
-                          value={reason}
-                          onChangeText={setReason}
-                          style={styles.input}
-                        />
-                        <Pressable
-                          accessibilityRole="button"
-                          style={styles.primaryAction}
-                          onPress={manualPreview}
-                        >
-                          <Text style={styles.primaryActionText}>
-                            {t("ui.previewAgreedRate")}
-                          </Text>
-                        </Pressable>
-                      </>
-                    )}
-                    {payments.map((payment) => (
-                      <Pressable
-                        key={payment.id}
-                        accessibilityRole="button"
-                        style={styles.secondaryAction}
-                        onPress={() =>
-                          submit(
-                            { policy: "ACTUAL_PAYER_COST", paymentRecordId: payment.id },
-                            formatLedgerMoney(payment.posted!.minor, currency, scale),
-                            `${t("fx.copy2")}: ${formatLedgerMoney(payment.posted!.minor, currency, scale)}\n${t("fx.copy3")}`,
-                          )
-                        }
-                      >
-                        <Text style={styles.secondaryActionText}>
-                          {t("ui.useActualPayerCost")} ·{" "}
-                          {formatLedgerMoney(payment.posted!.minor, currency, scale)}
-                        </Text>
-                      </Pressable>
-                    ))}
-                    {quote && valuation && valuation.policy !== "REFERENCE_RATE" ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        style={styles.secondaryAction}
-                        onPress={() => {
-                          const result = previewValuation({
-                            policy: "REFERENCE_RATE",
-                            original: expense.original,
-                            settlementCurrency: currency,
-                            settlementScale: scale,
-                            rateQuote: quote,
-                          });
-                          submit(
-                            {
-                              policy: "REFERENCE_RATE",
-                              rateQuoteId: quote.id,
-                              reason: "Selected reference rate.",
-                            },
-                            formatLedgerMoney(result.settlement.minor, currency, scale),
-                            `1 ${expense.original.currency} = ${formatLedgerRate(quote.decimalRate)} ${currency}\n${t("fx.copy4")}: ${fullDate(quote.referenceDate!, chinese)}`,
-                          );
-                        }}
-                      >
-                        <Text style={styles.secondaryActionText}>
-                          {t("ui.useReferenceRate")}
-                        </Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                ) : null}
-                {busy ? (
-                  <ActivityIndicator accessibilityLabel={t("ui.savingValuation")} />
-                ) : null}
-                {error ? (
-                  <Text accessibilityLiveRegion="polite" style={styles.error}>
-                    {systemMessage(error)}
-                  </Text>
-                ) : null}
-                {previous.length ? (
-                  <>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityState={{ expanded: historyExpanded }}
-                      style={styles.detailsToggle}
-                      onPress={() => setHistoryExpanded(!historyExpanded)}
-                    >
-                      <Text style={styles.detailsToggleText}>
-                        {historyExpanded
-                          ? t("ui.hideValuationHistory")
-                          : t("ui.viewValuationHistory")}
-                      </Text>
-                    </Pressable>
-                    {historyExpanded
-                      ? previous.map((item) => {
-                          const row = valuationHistoryPresentation(
-                            item,
-                            expense.original,
-                            currency,
-                            chinese,
-                          );
-                          return (
-                            <View key={item.id}>
-                              <Text style={styles.meta}>{row.title}</Text>
-                              {row.pair ? (
-                                <Text style={styles.meta}>{row.pair}</Text>
-                              ) : null}
-                              <Text style={styles.meta} accessibilityLabel={row.value}>
-                                <MoneyText
-                                  variant="compact"
-                                  accessible={false}
-                                  style={styles.meta}
-                                  minor={item.original.minor}
-                                  currency={item.original.currency}
-                                  scale={item.original.scale}
-                                />
-                                {" → "}
-                                <MoneyText
-                                  variant="compact"
-                                  accessible={false}
-                                  style={styles.meta}
-                                  minor={item.settlement.minor}
-                                  currency={item.settlement.currency}
-                                  scale={item.settlement.scale}
-                                />
-                              </Text>
-                              {row.context.map((line) => (
-                                <Text key={line} style={styles.meta}>
-                                  {line}
-                                </Text>
-                              ))}
-                              {item.effectiveAt ? (
-                                <Text style={styles.meta}>
-                                  {new Intl.DateTimeFormat(getFormatLocale(), {
-                                    dateStyle: "medium",
-                                    timeStyle: "short",
-                                  }).format(new Date(item.effectiveAt))}
-                                </Text>
-                              ) : null}
-                            </View>
-                          );
-                        })
-                      : null}
-                  </>
-                ) : null}
-              </ScrollView>
+              {body}
             </SafeAreaView>
           </View>
         </Modal>
@@ -595,6 +680,8 @@ const createStyles = (colors: UiColors) =>
       overflow: "hidden",
     },
     scroll: { flexGrow: 0 },
+    hostedScroll: { backgroundColor: colors.background },
+    sheetReadingColumn: { width: "100%", maxWidth: 680, alignSelf: "center" },
     valueRow: { flexDirection: "row", alignItems: "center", gap: 4 },
     label: { color: colors.textSecondary, fontSize: 12, fontWeight: "700" },
     value: {

@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { usePreventRemove } from "expo-router/react-navigation";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { Keyboard, StyleSheet, View } from "react-native";
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
@@ -22,7 +23,7 @@ export default function LedgerCurrencyPickerRoute() {
   const [date, setDate] = useState(() => picker?.kind === "date" ? picker.initial : new Date());
   const { requestCloseWithAction, isExitPending, exitPending } = useSheetMotion();
   useEffect(() => () => {
-    queueMicrotask(() => releaseLedgerCurrencySheet(invocation));
+    queueMicrotask(() => releaseLedgerCurrencySheet(invocation, true));
   }, [invocation]);
 
   function select(apply: () => void) {
@@ -39,6 +40,7 @@ export default function LedgerCurrencyPickerRoute() {
       isCurrent={() => !isExitPending() && readLedgerCurrencySheet(invocation) === picker}
     />;
   }
+  if (picker?.kind === "fx-details") return <ExpenseFxSheet key={invocation} choice={picker} />;
   if (picker?.kind === "currency") {
     return <SheetRoutePanel title={title} ownsScroll>
       <CurrencyPicker hosted selected={picker.selected} suggestions={picker.suggestions} onSelect={code => select(() => picker.choose(code))} />
@@ -84,6 +86,20 @@ function DisplayCurrencyOptions({ choice, onSelect }: {
         <UiChoiceChip key={code} label={code} selected={code === choice.selected} onPress={() => onSelect(code)} />
       ))}
     </View>
+  </SheetRoutePanel>;
+}
+
+function ExpenseFxSheet({ choice }: { choice: Extract<LedgerCurrencyChoice, { kind: "fx-details" }> }) {
+  const content = useSyncExternalStore(choice.subscribe, choice.read);
+  const { isExitPending } = useSheetMotion();
+  const busy = choice.isBusy();
+  usePreventRemove(busy, () => {});
+  useLayoutEffect(() => {
+    choice.bindExitPending(isExitPending);
+    return () => choice.bindExitPending(undefined);
+  }, [choice, isExitPending]);
+  return <SheetRoutePanel title={t(choice.titleKey)} leadingDisabled={busy} ownsScroll>
+    {content}
   </SheetRoutePanel>;
 }
 
