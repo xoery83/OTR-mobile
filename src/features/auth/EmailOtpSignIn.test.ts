@@ -15,6 +15,8 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useEffect: vi.fn(),
+  useEffectEvent: (fn: unknown) => fn,
   useMemo: (make: () => unknown) => make(),
   useCallback: (fn: unknown) => fn,
   useRef: (value: unknown) => (state.refs[state.refCursor++] ??= { current: value }),
@@ -31,6 +33,11 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("react-native", () => ({
   Keyboard: { dismiss: vi.fn() },
+  Modal: "Modal",
+  Pressable: "Pressable",
+  KeyboardAvoidingView: "KeyboardAvoidingView",
+  ScrollView: "ScrollView",
+  Platform: { OS: "ios" },
   StyleSheet: { create: (v: unknown) => v },
   View: "View",
 }));
@@ -51,8 +58,12 @@ vi.mock("@/ui/controls", () => ({
 vi.mock("@/ui/forms", () => ({ UiTextInput: "Input" }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
-vi.mock("./GoogleSignInButton", () => ({ GoogleSignInButton: "GoogleButton" }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
+vi.mock("./GoogleSignInButton", () => ({ GoogleSignInButton: "GoogleButton", GoogleSignInPill: "GooglePill" }));
+vi.mock("@/components/AppIcon", () => ({ AppIcon: "Icon" }));
+vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "SheetPanel" }));
+vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "SafeAreaProvider", SafeAreaView: "SafeAreaView" }));
 vi.mock("./AppleSignInButton", () => ({ AppleSignInButton: "AppleButton" }));
 
 const props = { onAuthenticated: vi.fn(), onBusyChange: vi.fn(), onCancel: vi.fn() };
@@ -62,9 +73,9 @@ function children(value: any): Node[] {
   if (!value?.props) return [];
   return [value, ...children(value.props.children)];
 }
-function render() {
+function render(options: Parameters<typeof EmailOtpSignIn>[0] = props) {
   state.cursor = state.refCursor = 0;
-  return children(EmailOtpSignIn(props));
+  return children(EmailOtpSignIn(options));
 }
 function input(label: string, value: string) {
   render()
@@ -144,4 +155,54 @@ it("enables verification only for the approved eight-digit OTP", async () => {
   );
   expect(state.verify).not.toHaveBeenCalled();
   expect(props.onAuthenticated).not.toHaveBeenCalled();
+});
+
+it("hosts the email submit with the unified Sheet and creates a full-screen challenge only after sending", async () => {
+  const hosted = { ...props, hosted: true };
+  const before = render(hosted);
+  expect(before.some(node => node.type === "SheetPanel")).toBe(true);
+  expect(before.some(node => node.props.accessibilityLabel === "auth.sendCode")).toBe(false);
+  const email = before.find(node => node.props.accessibilityLabel === "account.email")!;
+  email.props.onFocus();
+  expect(render(hosted).find(node => node.props.accessibilityLabel === "auth.sendCode")?.props.disabled).toBe(true);
+  email.props.onChangeText("qa@example.invalid");
+  const field = render(hosted).find(node => node.props.accessibilityLabel === "account.email")!;
+  field.props.onSubmitEditing();
+  field.props.onSubmitEditing();
+  await new Promise<void>(resolve => setImmediate(resolve));
+  expect(requestSupabaseDevEmailOtp).toHaveBeenCalledOnce();
+  const sheet = render(hosted).find(node => node.type === "SheetPanel")!;
+  const fullScreen = children(sheet.props.overlay);
+  expect(fullScreen[0].props.presentationStyle).toBe("fullScreen");
+  expect(fullScreen.some(node => node.props.accessibilityLabel === "auth.code")).toBe(true);
+  fullScreen.find(node => node.props.label === "auth.changeEmail")!.props.onPress();
+  expect(render(hosted).find(node => node.props.accessibilityLabel === "account.email")?.props.value).toBe("qa@example.invalid");
+});
+
+it("refuses the late sent challenge after the hosted Sheet starts closing", async () => {
+  let closing = false;
+  let finish!: () => void;
+  vi.mocked(requestSupabaseDevEmailOtp).mockReturnValueOnce(new Promise<void>(resolve => { finish = resolve; }));
+  const hosted = { ...props, hosted: true, isExitPending: () => closing };
+  render(hosted).find(node => node.props.accessibilityLabel === "account.email")!.props.onChangeText("qa@example.invalid");
+  render(hosted).find(node => node.props.accessibilityLabel === "account.email")!.props.onSubmitEditing();
+  closing = true;
+  finish();
+  await new Promise<void>(resolve => setImmediate(resolve));
+  expect(render(hosted).find(node => node.type === "SheetPanel")?.props.overlay).toBeUndefined();
+});
+
+it("waits for the native OTP modal to dismiss before cancelling the hosted Sheet", async () => {
+  const hosted = { ...props, hosted: true };
+  render(hosted).find(node => node.props.accessibilityLabel === "account.email")!.props.onChangeText("qa@example.invalid");
+  render(hosted).find(node => node.props.accessibilityLabel === "account.email")!.props.onSubmitEditing();
+  await new Promise<void>(resolve => setImmediate(resolve));
+  const otp = () => render(hosted).find(node => node.type === "SheetPanel")?.props.overlay;
+  expect(otp().props.visible).toBe(true);
+  otp().props.onRequestClose();
+  expect(otp().props.visible).toBe(false);
+  expect(props.onCancel).not.toHaveBeenCalled();
+  otp().props.onDismiss();
+  expect(props.onCancel).toHaveBeenCalledOnce();
+  expect(otp()).toBeUndefined();
 });

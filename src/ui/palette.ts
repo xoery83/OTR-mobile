@@ -91,3 +91,12 @@ export const darkPalette: UiColors = {
 export const uiPalette = (
   scheme: "light" | "dark" | "unspecified" | null | undefined,
 ): UiColors => (scheme === "dark" ? darkPalette : lightPalette);
+
+
+// Google Identity dark button roles used with the Google multicolor mark.
+export const googleSignInPalette = {
+  background: "#131314",
+  border: "#8E918F",
+  text: "#E3E3E3",
+  markBackground: "#FFFFFF",
+} as const;

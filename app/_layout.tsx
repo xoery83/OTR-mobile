@@ -4,6 +4,7 @@ import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearch
 import { hostedLedgerReceiptReviewEnabled } from "@/features/ledger/ledgerReceiptReviewSheet";
 import { finishLedgerReceiptNativeTransition } from "@/features/ledger/ledgerReceiptSourceSheet";
 import { hostedExpenseFieldsEnabled, hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
+import { hostedSignInEnabled } from "@/features/auth/hostedSignIn";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedTripCreateEnabled } from "@/features/day-feed/hostedTripCreate";
 import { hostedTripMembersEnabled } from "@/features/day-feed/hostedTripMembers";
@@ -383,6 +384,18 @@ export default function RootLayout() {
               name="trip-validation"
               options={{ headerShown: true, headerTitle: t("dayFeed.validation") }}
             />
+            <Stack.Protected guard={hostedSignInEnabled}>
+              <Stack.Screen
+                name="account-sign-in"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
             <Stack.Screen
               name="foundation"
               options={{ headerShown: true, headerTitle: t("navigation.signIn") }}

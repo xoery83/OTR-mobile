@@ -7,9 +7,13 @@ import { visual } from "@/ui/visual";
 
 export function AppleSignInButton({
   disabled,
+  height = 48,
+  pill = false,
   onPress,
 }: {
   disabled: boolean;
+  height?: number;
+  pill?: boolean;
   onPress(): void;
 }) {
   const appearance = useUiAppearance();
@@ -34,12 +38,12 @@ export function AppleSignInButton({
       <sdk.AppleAuthenticationButton
         buttonType={sdk.AppleAuthenticationButtonType.CONTINUE}
         buttonStyle={
-          appearance === "dark"
+          appearance === "dark" && !pill
             ? sdk.AppleAuthenticationButtonStyle.WHITE
             : sdk.AppleAuthenticationButtonStyle.BLACK
         }
-        cornerRadius={visual.radius.control}
-        style={styles.button}
+        cornerRadius={pill ? height / 2 : visual.radius.control}
+        style={[styles.button, { height }]}
         onPress={() => {
           if (!disabled) onPress();
         }}
@@ -47,4 +51,4 @@ export function AppleSignInButton({
     </View>
   );
 }
-const styles = StyleSheet.create({ button: { height: 48, width: "100%" } });
+const styles = StyleSheet.create({ button: { width: "100%" } });
