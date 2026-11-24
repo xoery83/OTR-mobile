@@ -16,7 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -25,6 +25,7 @@ import {
   type AccountIdentity,
 } from "@/data/auth/authRepository";
 import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { authenticateDevAccount } from "@/data/auth/devAccountAuthentication";
 import { hostedSignInEnabled, readSignIn, releaseSignIn, stageSignIn } from "@/features/auth/hostedSignIn";
 import { EmailOtpSignIn } from "@/features/auth/EmailOtpSignIn";
@@ -46,15 +47,12 @@ export function AccountManagementScreen({ authBoundary = false }) {
   const scrollRef = useRef<ScrollView>(null);
   const screenScope = useRef(new AbortController());
   const hostedInvocation = useRef<string>(undefined);
-  const pendingSignInResult = useRef<((signal: AbortSignal) => void) | null>(null);
+  const navigation = useNavigation();
   useEffect(() => () => releaseSignIn(hostedInvocation.current), []);
   useFocusEffect(
     useCallback(() => {
       const scope = new AbortController();
       screenScope.current = scope;
-      const finish = pendingSignInResult.current;
-      pendingSignInResult.current = null;
-      finish?.(scope.signal);
       return () => scope.abort();
     }, []),
   );
@@ -232,23 +230,39 @@ export function AccountManagementScreen({ authBoundary = false }) {
         error instanceof Error &&
         error.message === "GUEST_ADOPTION_PREFLIGHT_REQUIRED"
       ) {
-        return (ownerSignal: AbortSignal) => setAdoption({ session, generation, signal: ownerSignal });
+        return {
+          generation,
+          finish: (ownerSignal: AbortSignal) => setAdoption({ session, generation, signal: ownerSignal }),
+        };
       }
       throw error;
     }
-    return () => {
-      if (router.canGoBack()) router.back();
-      else router.replace(returnTo);
+    return {
+      // activateSession holds one account transition lease.
+      generation: generation + 1,
+      finish: () => {
+        if (router.canGoBack()) router.back();
+        else router.replace(returnTo);
+      },
     };
   }
 
   function openHostedSignIn() {
-    if (readSignIn(hostedInvocation.current)) return;
+    if (!navigation.isFocused() || readSignIn(hostedInvocation.current)) return;
     const invocation = stageSignIn({
       onBusyChange: setBusy,
       async authenticate(session, generation, signal) {
-        const finish = await authenticateOtp(session, generation, signal);
-        if (!signal.aborted) pendingSignInResult.current = finish;
+        const result = await authenticateOtp(session, generation, signal);
+        return {
+          generation: result.generation,
+          apply: () => {
+            queueMicrotask(() => {
+              const ownerSignal = screenScope.current.signal;
+              if (hostedInvocation.current === invocation && navigation.isFocused() &&
+                  !ownerSignal.aborted && result.generation === getAccountGeneration()) result.finish(ownerSignal);
+            });
+          },
+        };
       },
     });
     hostedInvocation.current = invocation;
@@ -370,8 +384,8 @@ export function AccountManagementScreen({ authBoundary = false }) {
             onCancel={() => setShowLogin(false)}
             onAuthenticated={async (session, generation) => {
               const signal = screenScope.current.signal;
-              const finish = await authenticateOtp(session, generation, signal);
-              if (!signal.aborted) finish(signal);
+              const result = await authenticateOtp(session, generation, signal);
+              if (!signal.aborted) result.finish(signal);
             }}
           />
         ) : null}

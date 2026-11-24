@@ -14,8 +14,8 @@ export default function AccountSignInRoute() {
   const { invocation } = useLocalSearchParams<{ invocation?: string }>();
   const [entry] = useState(() => readSignIn(invocation));
   const motion = useSheetMotion();
-  useEffect(() => () => releaseSignIn(invocation), [invocation]);
-  if (!entry || (!entry.installing && !entry.completed && readSignIn(invocation) !== entry))
+  useEffect(() => () => { queueMicrotask(() => releaseSignIn(invocation)); }, [invocation]);
+  if (!entry || (!entry.installing && !entry.result && readSignIn(invocation) !== entry))
     return <SheetRoutePanel title={t("auth.emailTitle")}>{null}</SheetRoutePanel>;
 
   return (
@@ -24,6 +24,7 @@ export default function AccountSignInRoute() {
       onBusyChange={entry.owner.onBusyChange}
       onCancel={motion.requestClose}
       isExitPending={motion.isExitPending}
+      exitPending={motion.exitPending}
       isCurrent={() => readSignIn(invocation) === entry}
       onAuthenticated={(session, generation) => completeSignIn(invocation, session, generation)}
     />

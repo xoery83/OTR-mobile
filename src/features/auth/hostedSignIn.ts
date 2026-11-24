@@ -3,10 +3,22 @@ import type { LocalSession } from "@/domain/auth/localSession";
 
 export const hostedSignInEnabled = process.env.EXPO_PUBLIC_OTR_SHEET_SIGN_IN_QA === "true";
 
+type SignInResult = { generation: number; apply(): void };
 type SignInOwner = {
-  authenticate(session: LocalSession, generation: number, signal: AbortSignal): Promise<void>;
+  authenticate(session: LocalSession, generation: number, signal: AbortSignal): Promise<SignInResult>;
   onBusyChange(busy: boolean): void;
 };
+
+const listeners = new Set<() => void>();
+
+export function subscribeSignIn(listener: () => void) {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+
+function notifySignInChange() {
+  listeners.forEach(listener => listener());
+}
 
 let nextId = 0;
 let active: {
@@ -15,13 +27,14 @@ let active: {
   owner: SignInOwner;
   controller: AbortController;
   installing: boolean;
-  completed: boolean;
+  result?: SignInResult;
 } | undefined;
 
 export function stageSignIn(owner: SignInOwner) {
   releaseSignIn(active?.id);
   const id = String(++nextId);
-  active = { id, generation: getAccountGeneration(), owner, controller: new AbortController(), installing: false, completed: false };
+  active = { id, generation: getAccountGeneration(), owner, controller: new AbortController(), installing: false };
+  notifySignInChange();
   return id;
 }
 
@@ -32,14 +45,18 @@ export function readSignIn(id: string | undefined) {
 
 export async function completeSignIn(id: string | undefined, session: LocalSession, generation: number) {
   const entry = readSignIn(id);
-  if (!entry || entry.generation !== generation || entry.installing || entry.completed)
+  if (!entry || entry.generation !== generation || entry.installing || entry.result)
     throw new Error("AUTH_CONTEXT_CHANGED");
   entry.installing = true;
+  notifySignInChange();
   try {
-    await entry.owner.authenticate(session, generation, entry.controller.signal);
-    entry.completed = true;
+    const result = await entry.owner.authenticate(session, generation, entry.controller.signal);
+    if (active !== entry || entry.controller.signal.aborted || result.generation !== getAccountGeneration())
+      throw new Error("AUTH_CONTEXT_CHANGED");
+    entry.result = result;
   } finally {
     entry.installing = false;
+    notifySignInChange();
   }
 }
 
@@ -47,9 +64,17 @@ export function interceptSignInClose(id: string | undefined) {
   return !!active && active.id === id && active.installing;
 }
 
+export function finishSignIn(id: string | undefined) {
+  if (!active || active.id !== id) return;
+  const result = active.result;
+  releaseSignIn(id);
+  if (result?.generation === getAccountGeneration()) result.apply();
+}
+
 export function releaseSignIn(id: string | undefined) {
   if (!active || active.id !== id) return;
   const retired = active;
   active = undefined;
   retired.controller.abort();
+  notifySignInChange();
 }

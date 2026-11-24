@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import type { LocalSession } from "@/domain/auth/localSession";
@@ -32,6 +32,7 @@ export function EmailOtpSignIn({
   onCancel,
   hosted = false,
   isExitPending,
+  exitPending = false,
   isCurrent,
 }: {
   onAuthenticated(session: LocalSession, generation: number): Promise<void>;
@@ -39,6 +40,7 @@ export function EmailOtpSignIn({
   onCancel(): void;
   hosted?: boolean;
   isExitPending?(): boolean;
+  exitPending?: boolean;
   isCurrent?(): boolean;
 }) {
   useUiLocale();
@@ -52,6 +54,9 @@ export function EmailOtpSignIn({
   const [email, setEmail] = useState("");
   const [emailFocused, setEmailFocused] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [closingOtp, setClosingOtp] = useState(false);
+  const [otpDismissed, setOtpDismissed] = useState(false);
+  const closeAttempts = useRef(0);
   const [challenge, setChallenge] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -160,13 +165,33 @@ export function EmailOtpSignIn({
     if (installing) return;
     request.current?.abort();
     flow.cancel();
-    if (hosted) Keyboard.dismiss();
+    if (hosted) {
+      Keyboard.dismiss();
+      if (challenge && Platform.OS === "ios") {
+        setClosingOtp(true);
+        return;
+      }
+    }
     onCancel();
   }
 
+  function otpDidDismiss() {
+    if (completed) setOtpDismissed(true);
+    else if (closingOtp) {
+      setClosingOtp(false);
+      setChallenge(null);
+      setCode("");
+      onCancel();
+    }
+  }
+
+  const closeInstalled = useEffectEvent(onCancel);
+  const readyToClose = completed && (!challenge || Platform.OS !== "ios" || otpDismissed);
   useEffect(() => {
-    if (completed) onCancel();
-  }, [completed, onCancel]);
+    if (!readyToClose || exitPending || closeAttempts.current >= 2) return;
+    closeAttempts.current += 1;
+    closeInstalled();
+  }, [readyToClose, exitPending]);
 
   const errorMessage = errorKey ? (
     <UiText accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.error}>
@@ -206,14 +231,21 @@ export function EmailOtpSignIn({
   ) : null;
 
   if (hosted) {
-    const showSubmit = emailFocused || !!email.length;
-    const canSend = !busy && !!email.trim();
+    const showSubmit = !completed && (emailFocused || !!email.length);
+    const unavailable = busy || completed || closingOtp;
+    const canSend = !unavailable && !!email.trim();
     return (
       <SheetRoutePanel
         title={t("auth.emailTitle")}
         leadingDisabled={installing}
-        overlay={challenge && !completed ? (
-          <Modal animationType="slide" presentationStyle="fullScreen" onRequestClose={cancel}>
+        overlay={challenge ? (
+          <Modal
+            animationType="slide"
+            presentationStyle="fullScreen"
+            visible={!closingOtp && !completed}
+            onDismiss={otpDidDismiss}
+            onRequestClose={cancel}
+          >
             <SafeAreaProvider style={styles.fullscreen}>
               <SafeAreaView style={styles.fullscreen}>
                 <SheetHeader
@@ -239,8 +271,8 @@ export function EmailOtpSignIn({
         <View style={styles.content}>
           <View style={styles.form}>
             {!challenge ? errorMessage : null}
-            <GoogleSignInPill minHeight={loginRowHeight} disabled={busy} onPress={() => void submit(true, "google")} />
-            <AppleSignInButton pill height={loginRowHeight} disabled={busy} onPress={() => void submit(true, "apple")} />
+            <GoogleSignInPill minHeight={loginRowHeight} disabled={unavailable} onPress={() => void submit(true, "google")} />
+            <AppleSignInButton pill height={loginRowHeight} disabled={unavailable} onPress={() => void submit(true, "apple")} />
             <View style={styles.emailField}>
               <UiTextInput
                 accessibilityLabel={t("account.email")}
@@ -252,7 +284,7 @@ export function EmailOtpSignIn({
                 returnKeyType="send"
                 submitBehavior="submit"
                 variant="bare"
-                editable={!busy}
+                editable={!unavailable}
                 value={email}
                 style={styles.emailInput}
                 onChangeText={setEmail}

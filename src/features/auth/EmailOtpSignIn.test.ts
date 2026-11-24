@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useEffect: vi.fn(),
+  useEffectEvent: (fn: unknown) => fn,
   useMemo: (make: () => unknown) => make(),
   useCallback: (fn: unknown) => fn,
   useRef: (value: unknown) => (state.refs[state.refCursor++] ??= { current: value }),
@@ -189,4 +190,19 @@ it("refuses the late sent challenge after the hosted Sheet starts closing", asyn
   finish();
   await new Promise<void>(resolve => setImmediate(resolve));
   expect(render(hosted).find(node => node.type === "SheetPanel")?.props.overlay).toBeUndefined();
+});
+
+it("waits for the native OTP modal to dismiss before cancelling the hosted Sheet", async () => {
+  const hosted = { ...props, hosted: true };
+  render(hosted).find(node => node.props.accessibilityLabel === "account.email")!.props.onChangeText("qa@example.invalid");
+  render(hosted).find(node => node.props.accessibilityLabel === "account.email")!.props.onSubmitEditing();
+  await new Promise<void>(resolve => setImmediate(resolve));
+  const otp = () => render(hosted).find(node => node.type === "SheetPanel")?.props.overlay;
+  expect(otp().props.visible).toBe(true);
+  otp().props.onRequestClose();
+  expect(otp().props.visible).toBe(false);
+  expect(props.onCancel).not.toHaveBeenCalled();
+  otp().props.onDismiss();
+  expect(props.onCancel).toHaveBeenCalledOnce();
+  expect(otp()).toBeUndefined();
 });
