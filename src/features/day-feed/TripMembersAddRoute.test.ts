@@ -84,6 +84,7 @@ it("does not submit to or pop onto a replacement roster", async () => {
   onClose();
   TripMembersAddRoute();
   await Promise.resolve();
+  expect(qa.prevent.mock.lastCall?.[0]).toBe(false);
   expect(qa.dispatch).not.toHaveBeenCalled();
   expect(qa.entry.onAddTraveler).not.toHaveBeenCalled();
 });

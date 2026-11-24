@@ -31,6 +31,7 @@ export default function TripMembersAddRoute() {
   const entry = useSyncExternalStore(tripMembersInvocations.subscribe, read);
   const { exitPending, isExitPending, requestClose } = useSheetMotion();
   const exit = useContext(TripMembersExitContext);
+  const boundToRoster = Boolean(owningStack());
   const guard = useRef<((close: () => void) => void) | null>(null);
   const dispatched = useRef(false);
   const [approved, setApproved] = useState<"back" | "close">();
@@ -42,7 +43,7 @@ export default function TripMembersAddRoute() {
       unregister?.();
     };
   }, [exit]);
-  usePreventRemove(Boolean(entry && !approved), ({ data: { action } }) => {
+  usePreventRemove(Boolean(entry && boundToRoster && !approved), ({ data: { action } }) => {
     const state = navigation.getState();
     if (action.type !== "GO_BACK" && action.type !== "POP") return;
     if (!navigation.isFocused() || !owningStack() || (action.target && action.target !== state?.key)) return;
@@ -70,7 +71,7 @@ export default function TripMembersAddRoute() {
     setApproved(undefined);
   }, [approved, exitPending, isExitPending]);
 
-  if (!entry || !owningStack()) return <SheetRoutePanel title={t("people.addTraveler")}>{null}</SheetRoutePanel>;
+  if (!entry || !boundToRoster) return <SheetRoutePanel title={t("people.addTraveler")}>{null}</SheetRoutePanel>;
   return <AddTravelerForm
     HostedSurface={HostedAddTravelerSurface}
     submissionEnabled={!!entry.onAddTraveler && entry.members?.state === "AVAILABLE"}
