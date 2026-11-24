@@ -42,6 +42,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useTripHomeFinanceWidget } from "@/features/ledger/TripHomeFinanceWidget";
 import type { TripHomeWidget } from "@/features/trip/TripHomeWidgetHost";
 import { router, useFocusEffect, useNavigation } from "expo-router";
+import { useRoute } from "expo-router/react-navigation";
 import { SheetHeader } from "@/components/SheetHeader";
 import { useTripView } from "./TripViewContext";
 import { TripHomeFrame } from "@/features/trip/TripHomeFrame";
@@ -187,6 +188,7 @@ function LocalTripContent({
 }: Props & { generation: number }) {
   useUiLocale();
   const navigation = useNavigation();
+  const route = useRoute();
   const styles = useThemedStyles(createStyles);
   const [trips, setTrips] = useState<Trip[]>([]),
     [remoteTrips, setRemoteTrips] = useState<TripListSummary[]>([]),
@@ -244,9 +246,20 @@ function LocalTripContent({
   useLayoutEffect(() => {
     if (hostedTripMetadataEnabled) return navigation.addListener("blur", retireMetadataOpen);
   }, [navigation, retireMetadataOpen]);
+  const isMetadataHome = useCallback(() => {
+    const state = navigation.getState();
+    const top = state?.routes[state.index];
+    const params = top?.params as { tripId?: string; view?: string } | undefined;
+    return navigation.isFocused() && top?.key === route.key && !!tripId &&
+      params?.tripId === tripId &&
+      params.view !== "day" && params.view !== "trips" && params.view !== "create";
+  }, [navigation, route.key, tripId]);
+  useLayoutEffect(() => {
+    if (hostedTripMetadataEnabled && tripId && !isMetadataHome()) retireMetadataOpen();
+  }, [isMetadataHome, retireMetadataOpen, route.params, tripId]);
   const canPresentMetadata = () =>
     qualifiedMetadataOpen.current === metadataOpenAttempt.current &&
-    navigation.isFocused() &&
+    isMetadataHome() &&
     generation === getAccountGeneration();
   const [remoteMetadataEditor, setRemoteMetadataEditor] = useState<Awaited<
     ReturnType<typeof readServerParentMetadataEditBase>
@@ -978,7 +991,7 @@ function LocalTripContent({
     if (!alive.current || generation !== getAccountGeneration()) return;
     if (
       hostedTripMetadataEnabled &&
-      (!navigation.isFocused() || coverOpen || menuMembersTrip || personalCoverOpen || itemFormOpen)
+      (!isMetadataHome() || coverOpen || menuMembersTrip || personalCoverOpen || itemFormOpen)
     )
       return;
     const attempt = ++metadataOpenAttempt.current;
@@ -986,7 +999,7 @@ function LocalTripContent({
       alive.current &&
       generation === getAccountGeneration() &&
       (!hostedTripMetadataEnabled ||
-        (metadataOpenAttempt.current === attempt && navigation.isFocused()));
+        (metadataOpenAttempt.current === attempt && isMetadataHome()));
     const open = () => {
       qualifiedMetadataOpen.current = attempt;
       setCoverOpen(true);
@@ -1071,7 +1084,7 @@ function LocalTripContent({
     open();
   }, [
     selected, remoteSelected, remoteMetadataQualified, remoteMetadataReady,
-    serverParentPeopleEnabled, generation, navigation, coverOpen, menuMembersTrip,
+    serverParentPeopleEnabled, generation, isMetadataHome, coverOpen, menuMembersTrip,
     personalCoverOpen, itemFormOpen,
   ]);
 

@@ -184,6 +184,7 @@ const state = vi.hoisted(() => ({
   focused: true,
   blur: null as null | (() => void),
   hostedMetadata: false,
+  routeView: "home",
   focusReturned: false,
   foreground: null as null | ((state: string) => void),
   finance: null as TripHomeWidget | null,
@@ -497,6 +498,7 @@ beforeEach(() => {
   state.focused = true;
   state.blur = null;
   state.hostedMetadata = false;
+  state.routeView = "home";
   state.focusReturned = false;
   state.repo.mockReset();
   state.saveTraveler.mockReset();
@@ -1719,7 +1721,7 @@ it("captures the confirmed ordered-list baseline on opening, never rebases revis
   );
 });
 
-it.each(["another route", "legacy roster", "roster before the qualified editor renders"])(
+it.each(["another route", "Day on the same route", "legacy roster", "roster before the qualified editor renders"])(
   "retires a hosted Settings attempt covered by %s",
   async (cover) => {
     state.hostedMetadata = true;
@@ -1753,6 +1755,8 @@ it.each(["another route", "legacy roster", "roster before the qualified editor r
       state.focused = false;
       state.blur?.();
       state.focused = true;
+    } else if (cover === "Day on the same route") {
+      state.routeView = "day";
     } else {
       const actions = state.publish.mock.calls.filter(([action]) => action?.members).at(-1)?.[0];
       actions.members();
@@ -1761,7 +1765,8 @@ it.each(["another route", "legacy roster", "roster before the qualified editor r
     await flush();
     render();
     expect(router.push).not.toHaveBeenCalled();
-    if (cover !== "another route") {
+    if (cover === "Day on the same route") state.routeView = "home";
+    if (cover.includes("roster")) {
       const roster = state.nodes.find((node) => node.membersSheet?.visible);
       expect(roster).toBeDefined();
       roster!.membersSheet.onClose();
@@ -3172,6 +3177,10 @@ vi.mock("expo-router", () => ({
   router: { push: vi.fn() },
   useNavigation: () => ({
     isFocused: () => state.focused,
+    getState: () => ({
+      index: 0,
+      routes: [{ key: "workspace", params: { tripId: props.tripId, view: state.routeView } }],
+    }),
     addListener: (_event: "blur", callback: () => void) => {
       state.blur = callback;
       return () => { if (state.blur === callback) state.blur = null; };
@@ -3181,6 +3190,10 @@ vi.mock("expo-router", () => ({
     if (state.focused && (state.mount || state.forceEffects || state.focusReturned))
       state.effects.push(callback);
   },
+}));
+
+vi.mock("expo-router/react-navigation", () => ({
+  useRoute: () => ({ key: "workspace", params: { tripId: props.tripId, view: state.routeView } }),
 }));
 
 vi.mock("./TripViewContext", () => ({
