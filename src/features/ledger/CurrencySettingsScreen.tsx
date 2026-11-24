@@ -22,6 +22,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNetworkState } from "expo-network";
 
 import { AppIcon } from "@/components/AppIcon";
@@ -40,6 +41,7 @@ import { chooseJourneyEntry } from "@/domain/ledger/journeyContext";
 import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
+import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
 import { SheetHeader } from "@/components/SheetHeader";
 import {
@@ -90,6 +92,10 @@ async function tripCurrencyCloudReady(tripId: string) {
 export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }: { journeyId?: string; hostLookupPickers?: boolean }) {
   const colors = useUiTheme();
   const styles = useThemedStyles(createStyles);
+  const { left, right } = useSafeAreaInsets();
+  const lookupInsets = hostLookupPickers && hostedLedgerCurrencySheetEnabled
+    ? { paddingLeft: 16 + left, paddingRight: 16 + right }
+    : undefined;
   const network = useNetworkState();
   const online = network.isConnected !== false && network.isInternetReachable !== false;
   const [loading, setLoading] = useState(true);
@@ -418,7 +424,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
     <View style={styles.screen}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, lookupInsets]}
       >
         <View style={styles.headingRow}>
           <Text

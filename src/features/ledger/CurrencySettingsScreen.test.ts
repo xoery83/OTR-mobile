@@ -20,9 +20,11 @@ const state = vi.hoisted(() => ({
   refs: [] as any[],
   refCursor: 0,
   online: true,
+  hosted: false,
   generation: 1,
   accountId: "account-a",
 }));
+vi.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ left: 20, right: 24 }) }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
@@ -85,6 +87,7 @@ vi.mock("@/data/operations/ledgerActivity", () => ({
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("./CurrencyPicker", () => ({ CurrencyPicker: "CurrencyPicker" }));
+vi.mock("./ledgerCurrencySheet", () => ({ get hostedLedgerCurrencySheetEnabled() { return state.hosted; } }));
 vi.mock("./ExchangeRateLookup", () => ({ ExchangeRateLookup: "ExchangeRateLookup" }));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: async () => ({
@@ -133,10 +136,10 @@ const b = {
   settlementScale: 2,
 };
 const actor = vi.fn().mockResolvedValue({ role: "owner" });
-const render = (id?: string) => {
+const render = (id?: string, hostLookupPickers = false) => {
   state.cursor = 0;
   state.refCursor = 0;
-  const v = nodes(CurrencySettingsScreen({ journeyId: id }));
+  const v = nodes(CurrencySettingsScreen({ journeyId: id, hostLookupPickers }));
   state.mount = false;
   return v;
 };
@@ -144,6 +147,7 @@ const flush = async () => {
   for (let i = 0; i < 30; i++) await Promise.resolve();
 };
 beforeEach(() => {
+  state.hosted = false;
   state.cleanups = [];
   state.refs = [];
   state.refCursor = 0;
@@ -601,4 +605,13 @@ it("drops a waiting selection and its sync callback when the Account changes", a
   await flush();
   expect(state.tripRead).not.toHaveBeenCalled();
   expect(state.preview).not.toHaveBeenCalled();
+});
+
+it("keeps a hosted lookup inside the landscape safe area without changing its fallback", async () => {
+  render("b", true);
+  await flush();
+  const scroll = () => render("b", true).find(node => node.type === "ScrollView");
+  expect(scroll()?.props.contentContainerStyle[1]).toBeUndefined();
+  state.hosted = true;
+  expect(scroll()?.props.contentContainerStyle[1]).toEqual({ paddingLeft: 36, paddingRight: 40 });
 });

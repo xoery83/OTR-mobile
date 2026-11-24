@@ -4,7 +4,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import { useSheetScrollDismissal } from "@/components/SheetHost";
 import { AppIcon } from "@/components/AppIcon";
@@ -26,6 +26,8 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
   const colors = useUiTheme();
   const dismissal = useSheetScrollDismissal(hosted);
   const [query, setQuery] = useState("");
+  const { width, height } = useWindowDimensions();
+  const compactLandscape = hosted && width > height && height < 480;
   useUiLocale();
   const locale = getFormatLocale();
   const rows = useMemo(() => searchCurrencies(query), [query]);
@@ -34,18 +36,20 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
   const label = (code: string) => `${code}, ${currencyName(code, locale)}`;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, compactLandscape && styles.compactLandscape]}>
       <TextInput
         accessibilityLabel={t("currency.search")}
         autoCapitalize="none"
         autoCorrect={false}
         onChangeText={setQuery}
         placeholder={t("currency.placeholder")}
-        style={styles.search}
+        style={[styles.search, compactLandscape && styles.compactSearch]}
         value={query}
       />
       <FlatList
         {...dismissal}
+        automaticallyAdjustKeyboardInsets={hosted}
+        style={compactLandscape ? styles.compactResults : undefined}
         contentContainerStyle={styles.listContent}
         data={rows}
         keyExtractor={(item) => item}
@@ -109,6 +113,9 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     container: { backgroundColor: colors.background, flex: 1 },
+    compactLandscape: { flexDirection: "row" },
+    compactSearch: { width: "40%", alignSelf: "flex-start" },
+    compactResults: { flex: 1 },
     search: {
       backgroundColor: colors.separator,
       borderRadius: 10,
