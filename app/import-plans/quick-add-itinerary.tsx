@@ -30,8 +30,12 @@ export default function QuickAddItineraryRoute() {
 function HostedQuickAddItinerary() {
   useUiLocale();
   useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
-  const { invocation } = useLocalSearchParams<{ invocation?: string }>();
-  const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
+  const { invocation, entryPoint } = useLocalSearchParams<{ invocation?: string; entryPoint?: string }>();
+  const root = entryPoint === "day-insertion";
+  const entry = useSyncExternalStore(subscribeManualItinerary, () => {
+    const candidate = readManualItinerary(invocation);
+    return candidate && (candidate.entryPoint === "day-insertion") === root ? candidate : undefined;
+  });
   const { isExitPending } = useSheetMotion();
   const navigation = useNavigation();
   const route = useRoute();
@@ -45,7 +49,7 @@ function HostedQuickAddItinerary() {
   return (
     <SheetRoutePanel
       title={t("formEntry.title")}
-      onBack={() => {
+      onBack={root ? undefined : () => {
         if (current()) router.back();
       }}
     >

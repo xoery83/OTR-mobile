@@ -13,6 +13,7 @@ import {
 import { tripDestinationDisplay } from "./tripDestinationDisplay";
 import type { Trip } from "@/domain/trip/types";
 import { ManualItineraryContent } from "./ManualItineraryContent";
+import { useHostedDayInsertion } from "./useHostedDayInsertion";
 import { TripDayHeading } from "./TripDayHeading";
 import { dayHeaderDestinationRead } from "./dayHeaderDestinationRead";
 import { subscribeLedgerOperationalSyncCompletion } from "@/data/operations/ledgerActivity";
@@ -852,6 +853,19 @@ function TripContent({
     },
     [requested, generation, load],
   );
+  const showHostedInsertion = useHostedDayInsertion({
+    active: dayActive,
+    today,
+    tripId: requested,
+    generation,
+    localOnly: guest,
+    tripStartDate: dayFacts?.startDate,
+    tripEndDate: dayFacts?.endDate,
+    onSaved: manualItemSaved,
+  });
+  const openInsertion = (candidate: NonNullable<typeof insertion>) => {
+    if (!showHostedInsertion(candidate)) setInsertion(candidate);
+  };
   const tripMetadataSaved = useCallback(
     (tripId: string, captured: number) => {
       if (
@@ -1847,7 +1861,7 @@ function TripContent({
                   date,
                   side,
                 );
-                setInsertion({
+                openInsertion({
                   date: suggestion.startDate,
                   startTime: suggestion.startTime,
                 });
@@ -1900,7 +1914,7 @@ function TripContent({
                     previousColor={
                       dayFeedPreviousColor(date, calendarDates ?? [], appearanceToday, colors)
                     }
-                    onAdd={() => setInsertion({ date, startTime: null })}
+                    onAdd={() => openInsertion({ date, startTime: null })}
                   />
                 </P1MeasuredMoveRegion>
               ),
@@ -2053,7 +2067,7 @@ function TripContent({
                         date,
                         side,
                       );
-                      setInsertion({
+                      openInsertion({
                         date: suggestion.startDate,
                         startTime: suggestion.startTime,
                       });
@@ -2076,7 +2090,7 @@ function TripContent({
                         date,
                         side,
                       );
-                      setInsertion({
+                      openInsertion({
                         date: suggestion.startDate,
                         startTime: suggestion.startTime,
                       });
@@ -2099,7 +2113,7 @@ function TripContent({
                         date,
                         side,
                       );
-                      setInsertion({
+                      openInsertion({
                         date: suggestion.startDate,
                         startTime: suggestion.startTime,
                       });
@@ -2122,7 +2136,7 @@ function TripContent({
                         date,
                         side,
                       );
-                      setInsertion({
+                      openInsertion({
                         date: suggestion.startDate,
                         startTime: suggestion.startTime,
                       });
@@ -2140,7 +2154,7 @@ function TripContent({
                         date,
                         side,
                       );
-                      setInsertion({
+                      openInsertion({
                         date: suggestion.startDate,
                         startTime: suggestion.startTime,
                       });

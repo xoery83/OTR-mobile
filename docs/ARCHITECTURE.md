@@ -58,6 +58,10 @@ the common Sheet and the existing eligible Journey sections. A successful read
 returns to the owning Ledger route. Failed or stale selections preserve the
 current Ledger context.
 
+Day insertion can open the shared manual itinerary chooser directly. The
+displayed date and suggested time come from the existing Day insertion
+calculation, and the owning editor still controls local Save and recovery.
+
 ## Canonical Trip Person foundation
 
 A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from

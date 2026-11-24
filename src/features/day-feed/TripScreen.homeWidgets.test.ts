@@ -202,6 +202,7 @@ vi.mock("react-native", () => ({
 vi.mock("expo-router/react-navigation", () => ({
   useRoute: () => ({ key: "trip" }),
   useHeaderHeight: () => state.headerHeight,
+  useRoute: () => ({ key: "trip" }),
   usePreventRemove: (enabled: boolean, callback: (event: any) => void) => {
     state.preventRemove = enabled ? callback : null;
   },

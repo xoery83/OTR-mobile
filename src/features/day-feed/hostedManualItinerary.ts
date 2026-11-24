@@ -15,6 +15,7 @@ export type DetailEditorPresentation = Pick<ManualItineraryProps, "registerDismi
 };
 
 export type HostedManualItinerary = ManualItineraryProps & {
+  entryPoint?: "day-insertion";
   detailEdit?: {
     itemId: string;
     family: ManualItineraryFamily;
