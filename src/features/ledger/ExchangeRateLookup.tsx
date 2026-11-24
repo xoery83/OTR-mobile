@@ -1,4 +1,4 @@
-import { useLedgerCurrencySheet } from "./ledgerCurrencySheet";
+import { useLedgerCurrencySheet, type LedgerCurrencyChoice } from "./ledgerCurrencySheet";
 import { systemMessage } from "@/ui/domainLabels";
 import { t, getFormatLocale } from "@/ui/locale";
 import { useThemedStyles } from "@/ui/theme";
@@ -27,11 +27,13 @@ import { SheetHeader } from "@/components/SheetHeader";
 export function ExchangeRateLookup({
   journeyId,
   hostPickers = false,
+  openInParent,
   online,
   settlementCurrency,
 }: {
   journeyId: string;
   hostPickers?: boolean;
+  openInParent?(choice: LedgerCurrencyChoice): boolean;
   online: boolean;
   settlementCurrency: string;
 }) {
@@ -55,7 +57,8 @@ export function ExchangeRateLookup({
     setMessage(null);
   };
 
-  const openHostedPicker = useLedgerCurrencySheet(journeyId, "exchange-rate-lookup", hostPickers);
+  const openStandalonePicker = useLedgerCurrencySheet(journeyId, "exchange-rate-lookup", hostPickers);
+  const openHostedPicker = openInParent ?? openStandalonePicker;
   const chooseCurrency = (target: "FROM" | "TO", code: string) => {
     reset();
     if (target === "FROM") setFrom(code);
@@ -69,7 +72,7 @@ export function ExchangeRateLookup({
       selected: target === "FROM" ? from : to,
       suggestions: [settlementCurrency, from, to, "EUR", "USD"],
       choose: code => chooseCurrency(target, code),
-    })) setPicker(target);
+    }) && !openInParent) setPicker(target);
   };
 
   useEffect(() => {
@@ -130,7 +133,7 @@ export function ExchangeRateLookup({
               initial,
               maximumDate: new Date(),
               choose: next => { reset(); setDate(localDateKey(next)); },
-            })) {
+            }) && !openInParent) {
               setPendingDate(initial);
               setDateOpen(true);
             }

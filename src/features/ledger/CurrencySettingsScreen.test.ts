@@ -1,6 +1,7 @@
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { CurrencySettingsScreen } from "./CurrencySettingsScreen";
+import type { LedgerCurrencyChoice } from "./ledgerCurrencySheet";
 const state = vi.hoisted(() => ({
   values: [] as any[],
   cursor: 0,
@@ -21,6 +22,7 @@ const state = vi.hoisted(() => ({
   refCursor: 0,
   online: true,
   hosted: false,
+  openHostedCurrency: vi.fn(),
   generation: 1,
   accountId: "account-a",
 }));
@@ -42,8 +44,8 @@ vi.mock("react", async (original) => ({
     const i = state.refCursor++;
     return state.refs[i] ?? (state.refs[i] = { current: v });
   },
-  useLayoutEffect: (fn: any) => {
-    if (state.mount) {
+  useLayoutEffect: (fn: any, dependencies?: unknown[]) => {
+    if (state.mount || dependencies === undefined) {
       const cleanup = fn();
       if (typeof cleanup === "function") state.cleanups.push(cleanup);
     }
@@ -87,7 +89,11 @@ vi.mock("@/data/operations/ledgerActivity", () => ({
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("./CurrencyPicker", () => ({ CurrencyPicker: "CurrencyPicker" }));
-vi.mock("./ledgerCurrencySheet", () => ({ get hostedLedgerCurrencySheetEnabled() { return state.hosted; } }));
+vi.mock("./ledgerCurrencySheet", () => ({
+  get hostedLedgerCurrencySheetEnabled() { return state.hosted; },
+  useLedgerCurrencySheet: (_journey?: string, _source?: string, enabled?: boolean) =>
+    enabled ? state.openHostedCurrency : () => false,
+}));
 vi.mock("./ExchangeRateLookup", () => ({ ExchangeRateLookup: "ExchangeRateLookup" }));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: async () => ({
@@ -136,10 +142,10 @@ const b = {
   settlementScale: 2,
 };
 const actor = vi.fn().mockResolvedValue({ role: "owner" });
-const render = (id?: string, hostLookupPickers = false) => {
+const render = (id?: string, hostLookupPickers = false, openInParent?: (choice: LedgerCurrencyChoice) => boolean) => {
   state.cursor = 0;
   state.refCursor = 0;
-  const v = nodes(CurrencySettingsScreen({ journeyId: id, hostLookupPickers }));
+  const v = nodes(CurrencySettingsScreen({ journeyId: id, hostLookupPickers, openInParent }));
   state.mount = false;
   return v;
 };
@@ -148,6 +154,7 @@ const flush = async () => {
 };
 beforeEach(() => {
   state.hosted = false;
+  state.openHostedCurrency.mockReset().mockReturnValue(false);
   state.cleanups = [];
   state.refs = [];
   state.refCursor = 0;
@@ -187,6 +194,55 @@ it("never falls back to another Trip or previews/commits its currency when expli
   expect(state.preview).not.toHaveBeenCalled();
   expect(state.commit).not.toHaveBeenCalled();
   expect(v.some((n) => n.props.children === "Other Trip")).toBe(false);
+});
+
+it("opens the hosted setting with the original journey and drops a result after account change", async () => {
+  state.openHostedCurrency.mockReturnValue(true);
+  render("b", true);
+  await flush();
+  const row = render("b", true).find(node =>
+    node.type === "Pressable" && nodes(node).some(child => child.props.children === "NZD"),
+  );
+  expect(row).toBeDefined();
+  row?.props.onPress();
+  const [choice] = state.openHostedCurrency.mock.lastCall ?? [];
+  expect(choice?.selected).toBe("NZD");
+  expect(choice.isCurrent()).toBe(true);
+  expect(state.preview).not.toHaveBeenCalled();
+  state.generation += 1;
+  expect(choice.isCurrent()).toBe(false);
+  choice.choose("USD");
+  await flush();
+  expect(state.preview).not.toHaveBeenCalled();
+  expect(state.commit).not.toHaveBeenCalled();
+});
+
+it("keeps an embedded Settings picker on its existing native modal owner", async () => {
+  state.openHostedCurrency.mockReturnValue(true);
+  render("b");
+  await flush();
+  const row = render("b").find(node =>
+    node.type === "Pressable" && nodes(node).some(child => child.props.children === "NZD"),
+  );
+  expect(row).toBeDefined();
+  row?.props.onPress();
+  expect(state.openHostedCurrency).not.toHaveBeenCalled();
+  expect(render("b").some(node => node.type === "Modal" && node.props.visible)).toBe(true);
+});
+
+it("keeps a nested setting inside its Trip Settings Sheet, even if its parent refuses the push", async () => {
+  const openInParent = vi.fn(() => false);
+  state.openHostedCurrency.mockReturnValue(true);
+  render("b", true, openInParent);
+  await flush();
+  const row = render("b", true, openInParent).find(node =>
+    node.type === "Pressable" && nodes(node).some(child => child.props.children === "NZD"),
+  );
+  expect(row).toBeDefined();
+  row?.props.onPress();
+  expect(openInParent).toHaveBeenCalledOnce();
+  expect(state.openHostedCurrency).not.toHaveBeenCalled();
+  expect(render("b", true, openInParent).some(node => node.type === "Modal" && node.props.visible)).toBe(false);
 });
 it("keeps explicit same-Trip lookup and existing owner authority", async () => {
   render("b");

@@ -38,7 +38,7 @@ vi.mock("@/features/ledger/ledgerCurrencySheet", () => ({
   },
   releaseLedgerCurrencySheet: (id: string) => { if (id === "selection") state.choice = undefined; },
 }));
-vi.mock("@/ui/forms", () => ({ UiDatePicker: "date-picker" }));
+vi.mock("@/ui/forms", () => ({ UiChoiceChip: "currency-option", UiDatePicker: "date-picker" }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
 
 beforeEach(() => {
@@ -70,4 +70,28 @@ it("does not use a currency selection after cancellation or when the owner has c
   state.choice = undefined;
   interrupted?.();
   expect(choose).not.toHaveBeenCalled();
+});
+
+it("offers the report's exact options and changes display currency after its own close", () => {
+  const choose = vi.fn();
+  let currentOptions = ["NZD", "USD"];
+  state.choice = {
+    kind: "display", titleKey: "ui.displayCurrency", selected: "NZD", choose,
+    readOptions: () => currentOptions, subscribeOptions: () => () => {},
+  };
+  const route = LedgerCurrencyPickerRoute();
+  const options = route.type(route.props).props.children.props.children;
+  expect(options.map((option: { props: object }) => option.props)).toEqual([
+    expect.objectContaining({ label: "NZD", selected: true }),
+    expect.objectContaining({ label: "USD", selected: false }),
+  ]);
+  currentOptions = ["NZD"];
+  options[1].props.onPress();
+  expect(state.exit).toBeUndefined();
+  expect(route.type(route.props).props.children.props.children).toHaveLength(1);
+  currentOptions = ["NZD", "USD"];
+  options[1].props.onPress();
+  expect(choose).not.toHaveBeenCalled();
+  state.exit?.();
+  expect(choose).toHaveBeenCalledExactlyOnceWith("USD");
 });

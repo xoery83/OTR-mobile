@@ -5,8 +5,8 @@ import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
-import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
-import { UiDatePicker } from "@/ui/forms";
+import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet, type LedgerCurrencyChoice } from "@/features/ledger/ledgerCurrencySheet";
+import { UiChoiceChip, UiDatePicker } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { visual } from "@/ui/visual";
@@ -34,6 +34,11 @@ export default function LedgerCurrencyPickerRoute() {
       <CurrencyPicker hosted selected={picker.selected} suggestions={picker.suggestions} onSelect={code => select(() => picker.choose(code))} />
     </SheetRoutePanel>;
   }
+  if (picker?.kind === "display") {
+    return <DisplayCurrencyOptions choice={picker} onSelect={code => {
+      if (picker.readOptions().includes(code)) select(() => picker.choose(code));
+    }} />;
+  }
   return <SheetRoutePanel title={title} action={picker?.kind === "date" ? {
     label: t("common.done"), disabled: exitPending, onPress: () => select(() => picker.choose(date)),
   } : undefined}>
@@ -44,6 +49,21 @@ export default function LedgerCurrencyPickerRoute() {
   </SheetRoutePanel>;
 }
 
+function DisplayCurrencyOptions({ choice, onSelect }: {
+  choice: Extract<LedgerCurrencyChoice, { kind: "display" }>;
+  onSelect(code: string): void;
+}) {
+  const options = useSyncExternalStore(choice.subscribeOptions, choice.readOptions);
+  return <SheetRoutePanel title={t(choice.titleKey)}>
+    <View style={styles.choices}>
+      {options.map(code => (
+        <UiChoiceChip key={code} label={code} selected={code === choice.selected} onPress={() => onSelect(code)} />
+      ))}
+    </View>
+  </SheetRoutePanel>;
+}
+
 const styles = StyleSheet.create({
+  choices: { padding: visual.space.page, gap: visual.space.card },
   clock: { alignItems: "center", padding: visual.space.page },
 });

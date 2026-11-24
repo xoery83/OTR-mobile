@@ -1,3 +1,4 @@
+import { hostedTripMetadataEnabled } from "@/features/day-feed/tripMetadataSheet";
 import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
 import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
@@ -139,6 +140,18 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedTripCreateEnabled}>
               <Stack.Screen
                 name="trip-create"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedTripMetadataEnabled}>
+              <Stack.Screen
+                name="trip-metadata-sheet"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",

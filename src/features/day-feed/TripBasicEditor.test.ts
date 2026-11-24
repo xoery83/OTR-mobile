@@ -457,6 +457,31 @@ it("retains a picked photo through the owning photo repository, stages only its 
   });
 });
 
+it("does not import a picked photo until its hosted chooser returns to the original editor", async () => {
+  const save = vi.fn();
+  vi.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: "file://picker/temporary" }],
+  } as any);
+  const addTripPhoto = vi.fn().mockResolvedValue({
+    assetId: "00000000-0000-4000-8000-000000000002", localUri: "file://retained/photo",
+  });
+  vi.mocked(readLocalTripPhotoRepository).mockResolvedValue({ addTripPhoto } as any);
+  const choose = render(save).find(node => node.type === TripCoverPicker)!.props
+    .onChoosePhoto as NonNullable<Parameters<typeof TripCoverPicker>[0]["onChoosePhoto"]>;
+  const returnToEditor = vi.fn(() => {
+    expect(addTripPhoto).not.toHaveBeenCalled();
+    return false;
+  });
+  await expect(choose(async () => {}, { isCurrent: () => true, returnToEditor })).resolves.toBe(false);
+  expect(returnToEditor).toHaveBeenCalledTimes(1);
+  expect(addTripPhoto).not.toHaveBeenCalled();
+  returnToEditor.mockReturnValueOnce(true);
+  await expect(choose(async () => {}, { isCurrent: () => true, returnToEditor })).resolves.toBe(true);
+  expect(addTripPhoto).toHaveBeenCalledExactlyOnceWith(trip.id, "file://picker/temporary");
+  expect(save).not.toHaveBeenCalled();
+});
+
 it("keeps an AUTO switch change draft-only until the Editor owning Save", async () => {
   const save = vi.fn().mockResolvedValue(undefined);
   const current = {

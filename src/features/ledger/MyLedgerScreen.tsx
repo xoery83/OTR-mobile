@@ -6,7 +6,7 @@ import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { MoneyText } from "./MoneyText";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -28,11 +28,13 @@ import { formatLedgerDateRange, formatLedgerMoney } from "./format";
 import { visual as cv } from "@/ui/visual";
 import { createLatestRequest } from "./latestRequest";
 import { loadMyLedger } from "./loadMyLedger";
+import { hostedLedgerCurrencySheetEnabled, useLedgerCurrencySheet } from "./ledgerCurrencySheet";
 import type { Period } from "./myLedgerAnalytics";
 import { settlementPositionLabel, spendingPercentage } from "./dashboardPresentation";
 
 type ViewData = Awaited<ReturnType<typeof loadMyLedger>>;
 type Section = "SPENDING" | "SETTLEMENTS";
+const noCurrencyOptions: readonly string[] = [];
 
 export function MyLedgerScreen() {
   useUiLocale();
@@ -151,6 +153,49 @@ export function MyLedgerScreen() {
     view.section === section
       ? view
       : null;
+  const openDisplayCurrency = useLedgerCurrencySheet("my-ledger", `${period}:${section}`);
+  const [visibleReport] = useState(() => {
+    let report: ViewData | null = null;
+    const listeners = new Set<() => void>();
+    return {
+      get: () => report,
+      update(next: ViewData | null) {
+        if (report === next) return;
+        report = next;
+        listeners.forEach(listener => listener());
+      },
+      subscribe(listener: () => void) {
+        listeners.add(listener);
+        return () => { listeners.delete(listener); };
+      },
+    };
+  });
+  useLayoutEffect(() => {
+    visibleReport.update(shown);
+  }, [shown, visibleReport]);
+  useLayoutEffect(() => () => visibleReport.update(null), [visibleReport]);
+  const chooseDisplayCurrency = () => {
+    if (!shown) {
+      if (!hostedLedgerCurrencySheetEnabled) setCurrencyOpen(true);
+      return;
+    }
+    const current = () => {
+      const report = visibleReport.get();
+      return viewGeneration === getAccountGeneration() && report?.period === period &&
+        report.section === section && report.currency === currency ? report : null;
+    };
+    if (!openDisplayCurrency({
+      kind: "display",
+      titleKey: "ui.displayCurrency",
+      selected: currency,
+      readOptions: () => current()?.options ?? noCurrencyOptions,
+      subscribeOptions: visibleReport.subscribe,
+      isCurrent: () => current() !== null,
+      choose: code => {
+        if (current()?.options.includes(code)) changeCurrency(code);
+      },
+    })) setCurrencyOpen(true);
+  };
   const spending = shown?.spending;
   const maxMonth = Math.max(1, ...(spending?.months.map(([, amount]) => amount) ?? []));
 
@@ -187,7 +232,7 @@ export function MyLedgerScreen() {
               currency: currency ?? t("common.loading"),
             })}
             style={styles.currencyControl}
-            onPress={() => setCurrencyOpen(true)}
+            onPress={chooseDisplayCurrency}
           >
             <Text style={styles.filterLabel}>{t("ui.displayCurrency")}</Text>
             <Text style={styles.currency}>{currency ?? "—"} ▾</Text>

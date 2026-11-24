@@ -124,6 +124,11 @@ available to the legacy callers and with the flag off. Existing capture draft,
 Operation and permissions continue to belong to Capture. An external Quick Add
 handoff applies only after the originating Sheet's own successful close.
 
+My Ledger display and journey currency settings reuse the shared Ledger
+picker. Choices return only to the originating report or settings entry.
+The existing settings owner retains its local save or Account preview and
+commit flow.
+
 The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.
@@ -131,6 +136,9 @@ original Trip Create workspace.
 The default-off Trip Create Sheet uses the existing create workspace and draft
 owner. The native Stack presents the form and its field pickers. A saved trip
 opens only after the Sheet returns to its originating My Trips route.
+
+The default-off Trip Settings Sheet retains the existing editor and save
+owner. Its date selector returns a draft choice only to that editor.
 
 ## State Strategy
 

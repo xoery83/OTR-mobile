@@ -75,6 +75,7 @@ const nodes = (n: ReactNode): Node[] =>
   isValidElement(n)
     ? [n as Node, ...Children.toArray((n as Node).props.children).flatMap(nodes)]
     : [];
+vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "SheetRoutePanel" }));
 beforeEach(() => {
   state.cleanup?.();
   state.cleanup = null;
@@ -92,7 +93,7 @@ function render(
   onSelect = vi.fn().mockResolvedValue(undefined),
   onChoosePhoto?: Parameters<typeof TripCoverPicker>[0]["onChoosePhoto"],
   selectedRaw: string | null | undefined = "city",
-  extra: Pick<Parameters<typeof TripCoverPicker>[0], "presentation" | "onClose"> = {},
+  extra: Pick<Parameters<typeof TripCoverPicker>[0], "presentation" | "onClose" | "hosted"> = {},
 ) {
   state.cursor = state.refCursor = 0;
   return nodes(
@@ -105,6 +106,22 @@ function render(
     }),
   );
 }
+it("uses the Sheet panel and ignores cover taps once its route is exiting", () => {
+  const select = vi.fn().mockResolvedValue(undefined);
+  const close = vi.fn();
+  const setBusy = vi.fn();
+  const view = render(select, undefined, "city", {
+    presentation: "standalone",
+    onClose: close,
+    hosted: { setBusy, canInteract: () => false },
+  });
+  expect(view.some(node => node.type === "Modal")).toBe(false);
+  expect(view.some(node => node.type === "SheetRoutePanel")).toBe(true);
+  view.find(node => node.props.accessibilityLabel?.startsWith("coverLibrary.option"))!.props.onPress();
+  expect(select).not.toHaveBeenCalled();
+  expect(close).not.toHaveBeenCalled();
+  expect(setBusy).not.toHaveBeenCalled();
+});
 it("opens from a cover edit glyph and shows current plus exactly six other ranked images", () => {
   let v = render();
   v.find((n) => n.props.accessibilityLabel === "myTrips.chooseCover")!.props.onPress();
@@ -345,4 +362,26 @@ it("does not close or publish photo status after the Gallery unmounts", async ()
   await paintFeedback();
   expect(state.writes).toBe(writes);
   expect(onClose).not.toHaveBeenCalled();
+});
+
+it("keeps the hosted library usable when the exit after a committed cover is interrupted", async () => {
+  const select = vi.fn().mockResolvedValue(undefined);
+  const close = vi.fn();
+  const setBusy = vi.fn();
+  const options = {
+    presentation: "standalone" as const,
+    onClose: close,
+    hosted: { setBusy, canInteract: () => true },
+  };
+  const choices = (nodes: ReturnType<typeof render>) =>
+    nodes.filter(node => node.props.accessibilityLabel?.startsWith("coverLibrary.option"));
+  const initially = choices(render(select, undefined, "city", options));
+  initially[0].props.onPress();
+  await Promise.resolve();
+  await Promise.resolve();
+
+  expect(select).toHaveBeenCalledOnce();
+  expect(close).toHaveBeenCalledOnce();
+  expect(setBusy.mock.calls.map(([value]) => value)).toEqual([true, false]);
+  expect(choices(render(select, undefined, "city", options))).toHaveLength(initially.length);
 });

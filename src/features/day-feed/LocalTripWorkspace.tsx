@@ -94,6 +94,7 @@ import { MyTripsList, type TodayEntry } from "./MyTripsList";
 import { MyTripsListSkeleton } from "./MyTripsListSkeleton";
 import { calendarDate } from "./TripCalendarField";
 import { TripBasicEditor } from "./TripBasicEditor";
+import { TripMetadataPresentation } from "./TripMetadataPresentation";
 import type { TripPreparationSetup } from "@/data/repositories/tripPreparationSetupRepository";
 import { TripMembersSummary } from "./TripSetupRows";
 import { TripMembersSheet } from "./TripMembersSheet";
@@ -1381,78 +1382,75 @@ function LocalTripContent({
     );
   // The retained local editor owns Guest cover/draft recovery; mount only one editor.
   const metadataEditor = !selected && editorTrip ? (
-    <Modal
-      visible={coverOpen}
-      presentationStyle="pageSheet"
-      allowSwipeDismissal={!editorSaving && !editorDirty && !editorFrozen}
-      onRequestClose={() => {
+    <TripMetadataPresentation
+      generation={generation}
+      tripId={editorTrip.id}
+      swipeEnabled={!editorSaving && !editorDirty && !editorFrozen}
+      style={styles.modal}
+      requestClose={() => {
         if (!editorBusy.current && !editorHandoff.current) {
           if (editorDismiss.current) editorDismiss.current();
           else setCoverOpen(false);
         }
       }}
-      animationType="slide"
     >
-      <SafeAreaProvider style={styles.modal}>
-        {coverOpen ? (
-          <TripBasicEditor
-            trip={{
-              ...editorTrip,
-              selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
-            }}
-            guestLocal={false}
-            
-            onHandoffFrozenChange={(frozen) => {
-              editorHandoff.current = frozen;
-              setEditorFrozen(frozen);
-            }}
-            onClose={() => {
-              if (!editorBusy.current && !editorHandoff.current) setCoverOpen(false);
-            }}
-            registerDismiss={(handler) => {
-              editorDismiss.current = handler;
-            }}
-            onDirtyChange={setEditorDirty}
-            onSavingChange={(saving) => {
-              editorBusy.current = saving;
-              setEditorSaving(saving);
-            }}
-            setup={setup?.context.tripId === editorTrip.id ? setup : null}
-            currencyAvailable={guest === false}
-            coverAvailable={!!personalCover.selection}
-            metadataEditable={metadataEditable || !!remoteMetadataEditor}
-            onSelectCover={selectCover}
-            onSaveMetadata={async (before, after, cover, operationId, destinations) => {
-              if (!alive.current || generation !== getAccountGeneration() || !remoteMetadataEditor)
-                throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-              const base = remoteMetadataEditor.snapshot;
-              const next = {
-                ...after,
-                destination: null,
-                destinations: [...(destinations?.after ?? base.metadata.destinations)],
-              };
-              if (
-                canonicalCoreJson(base.metadata as Json) !==
-                canonicalCoreJson(next as Json)
-              ) {
-                await saveServerParentTripMetadata(remoteMetadataEditor.context, {
-                  formatVersion: 3,
-                  operationId,
-                  tripId: base.tripId,
-                  expectedMetadataRevision: base.metadataRevision,
-                  before: base.metadata,
-                  after: next,
-                });
-              }
-              if (cover) await personalCover.select(cover.after);
-              if (!alive.current || generation !== getAccountGeneration()) return;
-              setCoverOpen(false);
-              void kickLocalTripSync().then(() => load()).catch(() => undefined);
-            }}
-          />
-        ) : null}
-      </SafeAreaProvider>
-    </Modal>
+      {coverOpen ? (
+        <TripBasicEditor
+          trip={{
+            ...editorTrip,
+            selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
+          }}
+          guestLocal={false}
+          onHandoffFrozenChange={(frozen) => {
+            editorHandoff.current = frozen;
+            setEditorFrozen(frozen);
+          }}
+          onClose={() => {
+            if (!editorBusy.current && !editorHandoff.current) setCoverOpen(false);
+          }}
+          registerDismiss={(handler) => {
+            editorDismiss.current = handler;
+          }}
+          onDirtyChange={setEditorDirty}
+          onSavingChange={(saving) => {
+            editorBusy.current = saving;
+            setEditorSaving(saving);
+          }}
+          setup={setup?.context.tripId === editorTrip.id ? setup : null}
+          currencyAvailable={guest === false}
+          coverAvailable={!!personalCover.selection}
+          metadataEditable={metadataEditable || !!remoteMetadataEditor}
+          onSelectCover={selectCover}
+          onSaveMetadata={async (before, after, cover, operationId, destinations) => {
+            if (!alive.current || generation !== getAccountGeneration() || !remoteMetadataEditor)
+              throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+            const base = remoteMetadataEditor.snapshot;
+            const next = {
+              ...after,
+              destination: null,
+              destinations: [...(destinations?.after ?? base.metadata.destinations)],
+            };
+            if (
+              canonicalCoreJson(base.metadata as Json) !==
+              canonicalCoreJson(next as Json)
+            ) {
+              await saveServerParentTripMetadata(remoteMetadataEditor.context, {
+                formatVersion: 3,
+                operationId,
+                tripId: base.tripId,
+                expectedMetadataRevision: base.metadataRevision,
+                before: base.metadata,
+                after: next,
+              });
+            }
+            if (cover) await personalCover.select(cover.after);
+            if (!alive.current || generation !== getAccountGeneration()) return;
+            setCoverOpen(false);
+            void kickLocalTripSync().then(() => load()).catch(() => undefined);
+          }}
+        />
+      ) : null}
+    </TripMetadataPresentation>
   ) : null;
 
   const createFieldsDisabled = saving || createFrozen || createCommitted;
@@ -1684,161 +1682,159 @@ function LocalTripContent({
                 : undefined
             }
           />
-          <Modal
-            visible={coverOpen}
-            presentationStyle="pageSheet"
-            allowSwipeDismissal={!editorSaving && !editorDirty && !editorFrozen}
-            onRequestClose={() => {
+          <TripMetadataPresentation
+            generation={generation}
+            tripId={selected.id}
+            swipeEnabled={!editorSaving && !editorDirty && !editorFrozen}
+            style={styles.modal}
+            requestClose={() => {
               if (!editorBusy.current && !editorHandoff.current) {
                 if (editorDismiss.current) editorDismiss.current();
                 else setCoverOpen(false);
               }
             }}
-            animationType="slide"
           >
-            <SafeAreaProvider style={styles.modal}>
-              {coverOpen ? (
-                <TripBasicEditor
-                  trip={{
-                    ...selected,
-                    selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
-                  }}
-                  guestLocal={guest === true}
-                  readGuestRecoveryContext={() => {
-                    if (
-                      !alive.current ||
-                      generation !== getAccountGeneration() ||
-                      editorBusy.current
-                    )
-                      throw Error("GUEST_TRIP_EDIT_CONTEXT_CHANGED");
-                    return JSON.parse(
-                      JSON.stringify({
-                        tripId: selected.id,
-                        syncFormatVersion: selected.syncFormatVersion ?? null,
-                        metadataBase: metadataEditBase.current,
-                        deferredMetadataBase: deferredMetadataEditBase.current,
-                        deferredActionId: deferredMetadataActionId.current,
-                      }),
-                    ) as Json;
-                  }}
-                  onHandoffFrozenChange={(frozen) => {
-                    editorHandoff.current = frozen;
-                    setEditorFrozen(frozen);
-                  }}
-                  onClose={() => {
-                    if (!editorBusy.current && !editorHandoff.current)
-                      setCoverOpen(false);
-                  }}
-                  registerDismiss={(handler) => {
-                    editorDismiss.current = handler;
-                  }}
-                  onDirtyChange={setEditorDirty}
-                  onSavingChange={(saving) => {
-                    editorBusy.current = saving;
-                    setEditorSaving(saving);
-                  }}
-                  setup={setup?.context.tripId === selected.id ? setup : null}
-                  currencyAvailable={guest !== null}
-                  coverAvailable={guest !== null}
-                  metadataEditable={metadataEditable}
-                  onSelectCover={selectCover}
-                  onSaveMetadata={async (
-                    before,
-                    after,
-                    cover,
-                    operationId,
-                    destinations,
-                  ) => {
-                    if (!alive.current || generation !== getAccountGeneration())
-                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                    const repo = await readLocalTripRepository();
-                    if (!alive.current || generation !== getAccountGeneration())
-                      throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
-                    // Guest cover choice stays in the existing local preference, never metadata sync.
-                    const metadataCover = guest === true ? undefined : cover;
-                    if (
-                      guest !== true ||
-                      canonicalCoreJson(before as Json) !==
-                        canonicalCoreJson(after as Json) ||
-                      destinations !== undefined
-                    ) {
-                      if (selected.syncFormatVersion === 2) {
-                        const deferred = deferredMetadataEditBase.current;
-                        const actionId = deferredMetadataActionId.current;
-                        const base = metadataEditBase.current;
-                        if (deferred && actionId) {
-                          await repo.deferMetadataUpdate({
-                            localActionVersion: 1,
-                            actionId,
+            {coverOpen ? (
+              <TripBasicEditor
+                trip={{
+                  ...selected,
+                  selectedCoverAssetIdRaw: displayCover?.selectedCoverAssetIdRaw,
+                }}
+                guestLocal={guest === true}
+                readGuestRecoveryContext={() => {
+                  if (
+                    !alive.current ||
+                    generation !== getAccountGeneration() ||
+                    editorBusy.current
+                  )
+                    throw Error("GUEST_TRIP_EDIT_CONTEXT_CHANGED");
+                  return JSON.parse(
+                    JSON.stringify({
+                      tripId: selected.id,
+                      syncFormatVersion: selected.syncFormatVersion ?? null,
+                      metadataBase: metadataEditBase.current,
+                      deferredMetadataBase: deferredMetadataEditBase.current,
+                      deferredActionId: deferredMetadataActionId.current,
+                    }),
+                  ) as Json;
+                }}
+                onHandoffFrozenChange={(frozen) => {
+                  editorHandoff.current = frozen;
+                  setEditorFrozen(frozen);
+                }}
+                onClose={() => {
+                  if (!editorBusy.current && !editorHandoff.current)
+                    setCoverOpen(false);
+                }}
+                registerDismiss={(handler) => {
+                  editorDismiss.current = handler;
+                }}
+                onDirtyChange={setEditorDirty}
+                onSavingChange={(saving) => {
+                  editorBusy.current = saving;
+                  setEditorSaving(saving);
+                }}
+                setup={setup?.context.tripId === selected.id ? setup : null}
+                currencyAvailable={guest !== null}
+                coverAvailable={guest !== null}
+                metadataEditable={metadataEditable}
+                onSelectCover={selectCover}
+                onSaveMetadata={async (
+                  before,
+                  after,
+                  cover,
+                  operationId,
+                  destinations,
+                ) => {
+                  if (!alive.current || generation !== getAccountGeneration())
+                    throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                  const repo = await readLocalTripRepository();
+                  if (!alive.current || generation !== getAccountGeneration())
+                    throw new Error("TRIP_METADATA_CONTEXT_CHANGED");
+                  // Guest cover choice stays in the existing local preference, never metadata sync.
+                  const metadataCover = guest === true ? undefined : cover;
+                  if (
+                    guest !== true ||
+                    canonicalCoreJson(before as Json) !==
+                      canonicalCoreJson(after as Json) ||
+                    destinations !== undefined
+                  ) {
+                    if (selected.syncFormatVersion === 2) {
+                      const deferred = deferredMetadataEditBase.current;
+                      const actionId = deferredMetadataActionId.current;
+                      const base = metadataEditBase.current;
+                      if (deferred && actionId) {
+                        await repo.deferMetadataUpdate({
+                          localActionVersion: 1,
+                          actionId,
+                          operationId,
+                          tripId: selected.id,
+                          before: deferred,
+                          after: {
+                            ...after,
+                            destination: null,
+                            destinations: [
+                              ...(destinations?.after ?? deferred.destinations),
+                            ],
+                          },
+                          ...(metadataCover ? { cover: metadataCover } : {}),
+                        });
+                      } else {
+                        if (!base || base.tripId !== selected.id)
+                          throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
+                        await repo.updateMetadata(
+                          {
+                            formatVersion: 3,
                             operationId,
                             tripId: selected.id,
-                            before: deferred,
+                            expectedMetadataRevision: base.metadataRevision,
+                            before: base.metadata,
                             after: {
                               ...after,
                               destination: null,
                               destinations: [
-                                ...(destinations?.after ?? deferred.destinations),
+                                ...(destinations?.after ?? base.metadata.destinations),
                               ],
                             },
-                            ...(metadataCover ? { cover: metadataCover } : {}),
-                          });
-                        } else {
-                          if (!base || base.tripId !== selected.id)
-                            throw new Error("TRIP_METADATA_CONFIRMED_BASE_REQUIRED");
-                          await repo.updateMetadata(
-                            {
-                              formatVersion: 3,
-                              operationId,
-                              tripId: selected.id,
-                              expectedMetadataRevision: base.metadataRevision,
-                              before: base.metadata,
-                              after: {
-                                ...after,
-                                destination: null,
-                                destinations: [
-                                  ...(destinations?.after ?? base.metadata.destinations),
-                                ],
-                              },
-                            },
-                            metadataCover,
-                          );
-                        }
-                      } else {
-                        await repo.updateMetadata(
-                          { operationId, tripId: selected.id, before, after },
+                          },
                           metadataCover,
-                          destinations,
                         );
                       }
+                    } else {
+                      await repo.updateMetadata(
+                        { operationId, tripId: selected.id, before, after },
+                        metadataCover,
+                        destinations,
+                      );
                     }
-                    if (guest === true && cover) await personalCover.select(cover.after);
-                    void kickLocalTripSync().catch(() => undefined);
-                    const committed = await repo.getTrip(selected.id);
-                    if (alive.current && generation === getAccountGeneration()) {
-                      // Fence an older focus read that started before this local commit.
-                      request.current++;
-                      setSelected({
-                        ...selected,
-                        ...after,
-                        ...(committed ? { destinations: committed.destinations } : {}),
-                        ...(cover
-                          ? {
-                              selectedCoverAssetId: isTripCoverAssetId(cover.after)
-                                ? cover.after
-                                : null,
-                              selectedCoverAssetIdRaw: cover.after,
-                            }
-                          : {}),
-                      });
-                      setCoverOpen(false);
-                      // Retained Day/Home consumers must observe this local commit too.
-                      onTripMetadataSaved?.(selected.id, generation);
-                    }
-                  }}
-                />
-              ) : null}
-            </SafeAreaProvider>
-          </Modal>
+                  }
+                  if (guest === true && cover) await personalCover.select(cover.after);
+                  void kickLocalTripSync().catch(() => undefined);
+                  const committed = await repo.getTrip(selected.id);
+                  if (alive.current && generation === getAccountGeneration()) {
+                    // Fence an older focus read that started before this local commit.
+                    request.current++;
+                    setSelected({
+                      ...selected,
+                      ...after,
+                      ...(committed ? { destinations: committed.destinations } : {}),
+                      ...(cover
+                        ? {
+                            selectedCoverAssetId: isTripCoverAssetId(cover.after)
+                              ? cover.after
+                              : null,
+                            selectedCoverAssetIdRaw: cover.after,
+                          }
+                        : {}),
+                    });
+                    setCoverOpen(false);
+                    // Retained Day/Home consumers must observe this local commit too.
+                    onTripMetadataSaved?.(selected.id, generation);
+                  }
+                }}
+              />
+            ) : null}
+          </TripMetadataPresentation>
           {itemFormOpen ? (
             <Modal
               visible
