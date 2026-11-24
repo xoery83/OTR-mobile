@@ -27,9 +27,9 @@ Feature modules may compose UI, hooks, and repositories. Domain modules must not
 
 ## Application Sheet navigation
 
-Ledger Analysis date, category and excluded-expense views share the QA Sheet.
-Selection returns to the original Analysis scope. The exclusion list closes
-before opening the original expense Detail route.
+Ledger Analysis date, category, excluded expenses and chart period summaries
+share the QA Sheet. Selection returns to the original Analysis scope. Expense
+detail and period search open after the Sheet returns to the original report.
 
 ## Canonical Trip Person foundation
 

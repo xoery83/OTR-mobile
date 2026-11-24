@@ -310,15 +310,85 @@ export function AnalysisCategories({
   );
 }
 
+export function AnalysisPeriodDetails({
+  period,
+  money,
+  inlineTitle,
+}: {
+  period: AnalysisPeriod;
+  money: AnalysisMoney;
+  inlineTitle?: string;
+}) {
+  useUiLocale();
+  const styles = useThemedStyles(createStyles);
+  return (
+    <View style={styles.timeDetail}>
+      {inlineTitle ? (
+        <Text accessibilityRole="header" style={styles.rowTitle}>{inlineTitle}</Text>
+      ) : null}
+      <MoneyText
+        style={styles.amount}
+        variant="standard"
+        minor={period.totalMinor}
+        currency={money.currency}
+        scale={money.scale}
+      />
+      <Text style={styles.meta}>{formatExpenseCount(period.expenseCount)}</Text>
+      {period.categories.map((category) => (
+        <View key={category.key} style={styles.rowHeading}>
+          <Text style={styles.meta}>{categoryLabel(category.key)}</Text>
+          <MoneyText
+            style={styles.amount}
+            minor={category.totalMinor}
+            currency={money.currency}
+            scale={money.scale}
+          />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function AnalysisPeriodExpensesAction({
+  period,
+  disabled = false,
+  onPress,
+}: {
+  period: AnalysisPeriod;
+  disabled?: boolean;
+  onPress(): void;
+}) {
+  useUiLocale();
+  const colors = useUiTheme();
+  const styles = useThemedStyles(createStyles);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={styles.briefFooter}
+    >
+      <Text style={styles.link}>
+        {t("ui.view")}
+        {formatExpenseCount(period.expenseCount).toLowerCase()}
+      </Text>
+      <AppIcon name="chevron.right" size={14} color={colors.accent} />
+    </Pressable>
+  );
+}
+
 export function AnalysisTimeline({
   dashboard,
   money,
   drilldown,
+  onOpenPeriod,
   currencyScale = 2,
 }: {
   dashboard: AnalysisDashboard;
   money: AnalysisMoney;
   drilldown: AnalysisDrilldown;
+  onOpenPeriod?: (period: AnalysisPeriod, title: string) => void;
   currencyScale?: number;
 }) {
   useUiLocale();
@@ -364,49 +434,20 @@ export function AnalysisTimeline({
   const periodLabel = (item: AnalysisPeriod) =>
     formatLedgerDateFilter(item.from, item.to);
   const details = (item: AnalysisPeriod, inline = false) => (
-    <View style={styles.timeDetail}>
-      {inline ? (
-        <Text accessibilityRole="header" style={styles.rowTitle}>
-          {periodLabel(item)}
-        </Text>
-      ) : null}
-      <MoneyText
-        style={styles.amount}
-        variant="standard"
-        minor={item.totalMinor}
-        currency={money.currency}
-        scale={money.scale}
-      />
-      <Text style={styles.meta}>{formatExpenseCount(item.expenseCount)}</Text>
-      {item.categories.map((category) => (
-        <View key={category.key} style={styles.rowHeading}>
-          <Text style={styles.meta}>{categoryLabel(category.key)}</Text>
-          <MoneyText
-            style={styles.amount}
-            variant="standard"
-            minor={category.totalMinor}
-            currency={money.currency}
-            scale={money.scale}
-          />
-        </View>
-      ))}
-    </View>
+    <AnalysisPeriodDetails
+      period={item}
+      money={money}
+      inlineTitle={inline ? periodLabel(item) : undefined}
+    />
   );
   const viewExpenses = (item: AnalysisPeriod) => (
-    <Pressable
-      accessibilityRole="button"
+    <AnalysisPeriodExpensesAction
+      period={item}
       onPress={() => {
         setSelected(null);
         drilldown({ from: item.from, to: item.to }, periodLabel(item));
       }}
-      style={styles.briefFooter}
-    >
-      <Text style={styles.link}>
-        {t("ui.view")}
-        {formatExpenseCount(item.expenseCount).toLowerCase()}
-      </Text>
-      <AppIcon name="chevron.right" size={14} color={colors.accent} />
-    </Pressable>
+    />
   );
   const resetZoom = () => {
     setZoom(1);
@@ -581,7 +622,9 @@ export function AnalysisTimeline({
                       count: formatExpenseCount(item.expenseCount),
                     })}
                     onPress={() => {
-                      if (!pinching) setSelected(item.key);
+                      if (pinching) return;
+                      if (onOpenPeriod) onOpenPeriod(item, periodLabel(item));
+                      else setSelected(item.key);
                     }}
                     style={[styles.chartColumn, { width: columnWidth }]}
                   >
@@ -668,42 +711,44 @@ export function AnalysisTimeline({
               </View>
             ))}
           </View>
-          <Modal
-            visible={!!period}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setSelected(null)}
-          >
-            <View style={styles.popupBackdrop}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("ui.dismissSpendingBrief")}
-                style={StyleSheet.absoluteFill}
-                onPress={() => setSelected(null)}
-              />
-              <View accessibilityViewIsModal style={styles.popup}>
-                <View style={styles.briefHeader}>
-                  <Text
-                    accessibilityRole="header"
-                    style={[styles.rowTitle, styles.average]}
+          {!onOpenPeriod ? (
+            <Modal
+              visible={!!period}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setSelected(null)}
+            >
+              <View style={styles.popupBackdrop}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("ui.dismissSpendingBrief")}
+                  style={StyleSheet.absoluteFill}
+                  onPress={() => setSelected(null)}
+                />
+                <View accessibilityViewIsModal style={styles.popup}>
+                  <View style={styles.briefHeader}>
+                    <Text
+                      accessibilityRole="header"
+                      style={[styles.rowTitle, styles.average]}
+                    >
+                      {period ? periodLabel(period) : ""}
+                    </Text>
+                    <OverlayDismissAction
+                      label={t("ui.closeSpendingBrief")}
+                      onPress={() => setSelected(null)}
+                    />
+                  </View>
+                  <ScrollView
+                    keyboardShouldPersistTaps="handled"
+                    style={styles.briefScroll}
                   >
-                    {period ? periodLabel(period) : ""}
-                  </Text>
-                  <OverlayDismissAction
-                    label={t("ui.closeSpendingBrief")}
-                    onPress={() => setSelected(null)}
-                  />
+                    {period ? details(period) : null}
+                  </ScrollView>
+                  {period ? viewExpenses(period) : null}
                 </View>
-                <ScrollView
-                  keyboardShouldPersistTaps="handled"
-                  style={styles.briefScroll}
-                >
-                  {period ? details(period) : null}
-                </ScrollView>
-                {period ? viewExpenses(period) : null}
               </View>
-            </View>
-          </Modal>
+            </Modal>
+          ) : null}
         </>
       )}
     </AnalysisSection>

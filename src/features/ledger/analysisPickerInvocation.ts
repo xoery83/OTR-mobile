@@ -4,11 +4,12 @@ import {
 } from "@/data/auth/accountGeneration";
 import type {
   AnalysisExpense,
+  AnalysisPeriod,
   AnalysisRange,
   AnalysisRangePreset,
 } from "@/domain/ledger/spendingAnalysis";
-
 import type { ReportingScope } from "@/domain/ledger/reporting";
+import type { AnalysisMoney } from "./SpendingAnalysisSections";
 
 export const hostedLedgerAnalysisPickerEnabled =
   process.env.EXPO_PUBLIC_OTR_SHEET_LEDGER_ANALYSIS_QA === "true";
@@ -19,6 +20,13 @@ export type AnalysisPicker =
       scope: ReportingScope;
       expenses: readonly AnalysisExpense[];
       open(id: string): void;
+    }
+  | {
+      kind: "period";
+      title: string;
+      period: AnalysisPeriod;
+      money: AnalysisMoney;
+      open(): void;
     }
   | {
       kind: "range";

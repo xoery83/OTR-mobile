@@ -546,6 +546,16 @@ export function LedgerAnalysisScreen() {
                     currencyScale={view.dataset.journey.settlementScale}
                     money={money}
                     drilldown={drilldown}
+                    onOpenPeriod={hostedLedgerAnalysisPickerEnabled
+                      ? (period, title) =>
+                          openHostedPicker({
+                            kind: "period",
+                            period,
+                            title,
+                            money,
+                            open: () => drilldown({ from: period.from, to: period.to }, title),
+                          })
+                      : undefined}
                   />
                   {scope === "MINE" ? (
                     <AnalysisSection

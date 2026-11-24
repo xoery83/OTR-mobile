@@ -8,6 +8,10 @@ import {
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
 import { AnalysisExcludedExpenses } from "@/features/ledger/AnalysisExcludedExpenses";
+import {
+  AnalysisPeriodDetails,
+  AnalysisPeriodExpensesAction,
+} from "@/features/ledger/SpendingAnalysisSections";
 import { AnalysisPickerFields } from "@/features/ledger/AnalysisPickerFields";
 import {
   completeAnalysisPicker,
@@ -55,6 +59,19 @@ export default function LedgerAnalysisPickerRoute() {
         <AnalysisExcludedExpenses expenses={picker.expenses} scope={picker.scope} onOpen={id => {
           if (picker.expenses.some(expense => expense.id === id)) choose(() => picker.open(id));
         }} />
+      </View>
+    </SheetRoutePanel>
+  );
+
+  if (picker?.kind === "period") return (
+    <SheetRoutePanel title={picker.title}>
+      <View style={styles.content}>
+        <AnalysisPeriodDetails period={picker.period} money={picker.money} />
+        <AnalysisPeriodExpensesAction
+          period={picker.period}
+          disabled={exitPending}
+          onPress={() => choose(picker.open)}
+        />
       </View>
     </SheetRoutePanel>
   );

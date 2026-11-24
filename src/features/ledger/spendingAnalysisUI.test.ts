@@ -17,6 +17,7 @@ import {
   AnalysisExpenseRows,
   AnalysisInsights,
   AnalysisPeople,
+  AnalysisPeriodExpensesAction,
   AnalysisSkeleton,
   AnalysisTimeline,
 } from "./SpendingAnalysisSections";
@@ -35,7 +36,8 @@ const ui = vi.hoisted(() => ({
   fontScale: 1,
   push: vi.fn(),
   hosted: false,
-  nav: { getParent: () => ({ setOptions: ui.options }), isFocused: () => true },
+  focused: true,
+  nav: { getParent: () => ({ setOptions: ui.options }), isFocused: () => ui.focused },
 }));
 vi.mock("./analysisPickerInvocation", async original => ({
   ...(await original<typeof import("./analysisPickerInvocation")>()),
@@ -222,6 +224,7 @@ beforeEach(() => {
   ui.params.scope = "MINE";
   ui.fontScale = 1;
   ui.hosted = false;
+  ui.focused = true;
 });
 
 describe("Analysis UI transitions and request guardrails", () => {
@@ -423,6 +426,34 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(texts(render())).toContain("MY SPENDING");
     expect(texts(render())).toContain("Tap to try again");
   });
+  it("opens exactly one period search after returning to the owning Analysis report", async () => {
+    ui.hosted = true;
+    const screen = await ready();
+    const timeline = nodes(screen).find(node => node.type === AnalysisTimeline)!;
+    const { dashboard, onOpenPeriod } = timeline.props as ComponentProps<typeof AnalysisTimeline>;
+    const period = dashboard.periods[0]!;
+    onOpenPeriod!(period, "Original period");
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "period") throw new Error("Expected the hosted period summary");
+    expect(picker.period).toBe(period);
+    const apply = () => completeAnalysisPicker(params.invocation, picker, picker.open);
+    ui.focused = false;
+    apply();
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    ui.focused = true;
+    apply();
+    apply();
+    expect(ui.push).toHaveBeenCalledTimes(2);
+    expect(ui.push).toHaveBeenLastCalledWith({
+      pathname: "/expenses/search",
+      params: {
+        journeyId: "j", memberId: "a", scope: "MINE", analysisState: "INCLUDED",
+        from: period.from, to: period.to, origin: "Original period",
+      },
+    });
+  });
   it("uses a structured skeleton, then preserves previous data on local failure", async () => {
     ui.projection.mockResolvedValue(data());
     expect(nodes(render()).some((node) => node.type === AnalysisSkeleton)).toBe(true);
@@ -592,11 +623,12 @@ describe("Analysis UI transitions and request guardrails", () => {
     );
     ui.cursor = 0;
     element = AnalysisTimeline(props);
-    press(
-      nodes(element).find(
-        (node) => node.props.onPress && /View\s+0 expenses/.test(texts(node)),
-      )!,
+    const expenses = nodes(element).find(node => node.type === AnalysisPeriodExpensesAction)!;
+    const control = AnalysisPeriodExpensesAction(
+      expenses.props as ComponentProps<typeof AnalysisPeriodExpensesAction>,
     );
+    expect(texts(control)).toMatch(/View\s+0 expenses/);
+    press(nodes(control)[0]!);
     expect(drilldown).toHaveBeenCalledWith(
       { from: dashboard.periods[0]!.from, to: dashboard.periods[0]!.to },
       expect.any(String),
@@ -708,7 +740,26 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(nodes(popup).some((node) => node.props.accessibilityRole === "header")).toBe(
       true,
     );
-    expect(texts(popup)).toMatch(/View\s+0 expenses/);
+    expect(nodes(body).some(node => node.type === AnalysisPeriodExpensesAction)).toBe(false);
+    expect(nodes(popup).some(node => node.type === AnalysisPeriodExpensesAction)).toBe(true);
+  });
+
+  it("forwards the tapped period to the owning Sheet without mounting the legacy modal", () => {
+    const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
+    const onOpenPeriod = vi.fn();
+    const drilldown = vi.fn();
+    const timeline = AnalysisTimeline({
+      dashboard,
+      onOpenPeriod,
+      drilldown,
+      money: { format: String, currency: "NZD", scale: 2 },
+    });
+    const firstBar = nodes(timeline).find(node => node.props.accessibilityHint === "Opens spending brief");
+    press(firstBar!);
+    expect(onOpenPeriod).toHaveBeenCalledExactlyOnceWith(dashboard.periods[0], expect.any(String));
+    expect(nodes(timeline).some(node => node.type === "modal")).toBe(false);
+    expect(drilldown).not.toHaveBeenCalled();
+    expect(ui.projection).not.toHaveBeenCalled();
   });
   it("keeps traveller expansion only for all categories and routes filtered travellers and payers directly", () => {
     const drilldown = vi.fn();
