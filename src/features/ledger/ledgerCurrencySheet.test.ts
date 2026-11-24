@@ -44,6 +44,10 @@ it("uses a single scoped selection and drops it on permission, account or owner 
   const embedded = useLedgerCurrencySheet("trip", "embedded", false);
   expect(embedded(choice)).toBe(false);
   expect(state.push).not.toHaveBeenCalled();
+  allowed = false;
+  expect(open(choice)).toBe(true);
+  expect(state.push).not.toHaveBeenCalled();
+  allowed = true;
   expect(open(choice)).toBe(true);
   expect(open(choice)).toBe(true);
   expect(state.push).toHaveBeenCalledOnce();

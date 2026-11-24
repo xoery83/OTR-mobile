@@ -71,6 +71,7 @@ export function useLedgerCurrencySheet(
 
   return useCallback((choice: LedgerCurrencyChoice) => {
     if (!enabled || !featureEnabled) return false;
+    if (choice.isCurrent?.() === false) return true;
     const token = owner.current;
     if (!journeyId) return false;
     if (token?.journeyId !== journeyId || token.sourceKey !== sourceKey ||
