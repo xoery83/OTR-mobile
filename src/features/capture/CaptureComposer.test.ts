@@ -19,6 +19,7 @@ const state = vi.hoisted(() => ({
   cursor: 0,
   os: "ios",
   isPad: false,
+  landscape: false,
   voice: { status: "idle" as string },
   voiceStart: vi.fn(),
   voiceStop: vi.fn(),
@@ -107,7 +108,9 @@ vi.mock("react-native", () => {
       hairlineWidth: 1,
       absoluteFill: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 },
     },
-    useWindowDimensions: () => ({ height: 874, width: 402, fontScale: 2.143 }),
+    useWindowDimensions: () => state.landscape
+      ? { height: 402, width: 874, fontScale: 2.143 }
+      : { height: 874, width: 402, fontScale: 2.143 },
   };
 });
 vi.mock("react-native-safe-area-context", () => ({
@@ -187,6 +190,7 @@ beforeEach(() => {
   state.hooks = [];
   state.os = "ios";
   state.isPad = false;
+  state.landscape = false;
   state.voice = { status: "idle" };
   for (const fn of [
     state.voiceStart,
@@ -696,7 +700,10 @@ it("fits the hosted composer at a large text size without changing the legacy ed
   expect(state.nodes.find((node) => node.multiline).style[1].height).toBe(44);
 });
 
-it("lets iPhone scroll to the focused hosted editor without adding a second adjustment on iPad", () => {
+it("only adjusts the hosted editor scroll inset in iPhone landscape", () => {
+  render(empty, 0, { hosted: true });
+  expect(state.nodes.some(node => node.keyboardInsets === true)).toBe(false);
+  state.landscape = true;
   render(empty, 0, { hosted: true });
   expect(state.nodes.some(node => node.keyboardInsets === true)).toBe(true);
   state.isPad = true;

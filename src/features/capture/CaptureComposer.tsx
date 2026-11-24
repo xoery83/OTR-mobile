@@ -754,8 +754,10 @@ export function CaptureComposer({
   if (hosted) {
     if (!visible) return null;
     const nested = page !== "composer" || Boolean(onBack ?? onParentBack);
-    // The iPad SheetHost already accounts for the full keyboard; native scrolling adds a second adjustment.
-    const keyboardInsets = content == null && page === "composer" && Platform.OS === "ios" && !Platform.isPad;
+    // The landscape iPhone reports a separate native scroll inset when focusing the editor.
+    // In portrait and on iPad, the host adjustment is sufficient.
+    const keyboardInsets = content == null && page === "composer" &&
+      Platform.OS === "ios" && !Platform.isPad && width > height;
     return (
       <SheetRoutePanel
         title={header}
