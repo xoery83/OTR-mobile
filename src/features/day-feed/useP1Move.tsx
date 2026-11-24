@@ -19,7 +19,7 @@ import {
 } from "react-native";
 import { UiText } from "@/ui/controls";
 import { SheetHeader } from "@/components/SheetHeader";
-import { t, formatUiDate } from "@/ui/locale";
+import { t, formatUiDate, type MessageKey } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -78,6 +78,16 @@ type MoveConfirmation = Pick<
   Drag,
   "item" | "proposal" | "ntc" | "date" | "minutes" | "duration"
 >;
+export type DayMoveConfirmation = {
+  proposalIdentity: object;
+  body: ReactNode;
+  titleKey: MessageKey;
+  disabled: boolean;
+  isBusy(): boolean;
+  isCurrent(): boolean;
+  apply(): Promise<boolean>;
+  dismiss(): void;
+};
 export type P1MovePorts = {
   item(id: string): (MoveItem & { id: string; title: string }) | undefined;
   rows(previews: Record<string, FixtureMovePreview>): PlacementRow[];
@@ -450,7 +460,7 @@ export function useP1Move(
       !moveProposalInScope(d.item, p) ||
       !p.date
     )
-      return;
+      return false;
     if (portsRef.current.commit) {
       commitBusy.current = true;
       setSaving(true);
@@ -461,13 +471,14 @@ export function useP1Move(
           confirmationRef.current = null;
           setConfirmation(null);
         }
+        return true;
       } catch {
         if (confirmationRef.current === d) setSaveError(true);
+        return false;
       } finally {
         commitBusy.current = false;
         setSaving(false);
       }
-      return;
     }
     confirmationRef.current = null;
     durations.current.set(d.item.id, p.durationMinutes ?? null);
@@ -484,7 +495,83 @@ export function useP1Move(
       },
     }));
     setConfirmation(null);
+    return true;
   };
+  const titleKey = confirmation?.item.clockRole ? "bookingRead.moveStay" : "fidelity.moveTitle";
+  const confirmationBody = (
+    <>
+      <UiText style={styles.title}>{confirmation?.item.title}</UiText>
+      <View style={styles.placements}>
+        {[
+          { label: t("fidelity.moveFrom"), value: confirmation?.item },
+          { label: t("fidelity.moveTo"), value: confirmation?.proposal },
+        ].map(({ label, value }) => (
+          <View key={label} style={styles.placement}>
+            <UiText style={styles.meta}>{label}</UiText>
+            <UiText style={styles.title}>
+              {value?.date
+                ? formatUiDate(new Date(`${value.date}T12:00:00Z`), {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })
+                : ""}
+            </UiText>
+            <UiText style={styles.meta}>
+              {confirmation?.item.clockRole
+                ? `${t(confirmation.item.clockRole === "CHECKIN" ? "p3.role.checkin" : "p3.role.checkout")} · ${value?.time ?? t("fidelity.moveNoTime")}`
+                : t("fidelity.moveStartTime", {
+                    time: value?.time ?? t("fidelity.moveNoTime"),
+                  })}
+            </UiText>
+            {!confirmation?.item.clockRole ? (
+              <UiText style={styles.meta}>
+                {t("fidelity.moveEndTime", {
+                  time: value?.endTime
+                    ? `${value.endDate && value.endDate !== value.date ? formatUiDate(new Date(`${value.endDate}T12:00:00Z`), { month: "short", day: "numeric", timeZone: "UTC" }) + " · " : ""}${value.endTime}`
+                    : t("fidelity.moveNoTime"),
+                })}
+              </UiText>
+            ) : null}
+          </View>
+        ))}
+      </View>
+      {confirmation?.proposal.status !== "READY" ? (
+        <UiText style={styles.meta}>
+          {t(
+            confirmation?.proposal.unavailableReason === "STAY_ORDER"
+              ? "bookingRead.moveStayOrder"
+              : confirmation?.proposal.unavailableReason === "DAY_LOCK"
+                ? "bookingRead.moveStayDay"
+                : confirmation?.item.zone
+                  ? "fidelity.moveUnqualified"
+                  : "fidelity.moveMissingZone",
+          )}
+        </UiText>
+      ) : null}
+      {saveError ? (
+        <UiText accessibilityRole="alert" style={styles.meta}>
+          {t("tripCreate.saveFailed")}
+        </UiText>
+      ) : null}
+      <UiText style={styles.meta}>
+        {t(
+          ports.commit ? "fidelity.moveLocalNotice" : "fidelity.movePreviewNotice",
+        )}
+      </UiText>
+    </>
+  );
+  const confirmationModel: DayMoveConfirmation | null = confirmation ? {
+    proposalIdentity: confirmation,
+    body: confirmationBody,
+    titleKey,
+    disabled: saving || confirmation.proposal.status !== "READY",
+    isBusy: () => commitBusy.current,
+    isCurrent: () => confirmationRef.current === confirmation,
+    apply,
+    dismiss: dismissConfirmation,
+  } : null;
   const label = (p: MoveProposal) =>
     [p.date, p.time ?? t("fidelity.moveNtc"), p.endTime].filter(Boolean).join(" · ");
   return {
@@ -624,6 +711,7 @@ export function useP1Move(
           );
         })()
       : null,
+    confirmationModel,
     confirmation: (
       <Modal
         transparent
@@ -636,76 +724,13 @@ export function useP1Move(
           <View style={styles.confirm}>
             <SheetHeader
               category="picker"
-              title={t(
-                confirmation?.item.clockRole
-                  ? "bookingRead.moveStay"
-                  : "fidelity.moveTitle",
-              )}
+              title={t(titleKey)}
               onLeft={dismissConfirmation}
               rightLabel={t("fidelity.moveConfirm")}
               rightDisabled={saving || confirmation?.proposal.status !== "READY"}
               onRight={() => void apply()}
             />
-            <UiText style={styles.title}>{confirmation?.item.title}</UiText>
-            <View style={styles.placements}>
-              {[
-                { label: t("fidelity.moveFrom"), value: confirmation?.item },
-                { label: t("fidelity.moveTo"), value: confirmation?.proposal },
-              ].map(({ label, value }) => (
-                <View key={label} style={styles.placement}>
-                  <UiText style={styles.meta}>{label}</UiText>
-                  <UiText style={styles.title}>
-                    {value?.date
-                      ? formatUiDate(new Date(`${value.date}T12:00:00Z`), {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          timeZone: "UTC",
-                        })
-                      : ""}
-                  </UiText>
-                  <UiText style={styles.meta}>
-                    {confirmation?.item.clockRole
-                      ? `${t(confirmation.item.clockRole === "CHECKIN" ? "p3.role.checkin" : "p3.role.checkout")} · ${value?.time ?? t("fidelity.moveNoTime")}`
-                      : t("fidelity.moveStartTime", {
-                          time: value?.time ?? t("fidelity.moveNoTime"),
-                        })}
-                  </UiText>
-                  {!confirmation?.item.clockRole ? (
-                    <UiText style={styles.meta}>
-                      {t("fidelity.moveEndTime", {
-                        time: value?.endTime
-                          ? `${value.endDate && value.endDate !== value.date ? formatUiDate(new Date(`${value.endDate}T12:00:00Z`), { month: "short", day: "numeric", timeZone: "UTC" }) + " · " : ""}${value.endTime}`
-                          : t("fidelity.moveNoTime"),
-                      })}
-                    </UiText>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-            {confirmation?.proposal.status !== "READY" ? (
-              <UiText style={styles.meta}>
-                {t(
-                  confirmation?.proposal.unavailableReason === "STAY_ORDER"
-                    ? "bookingRead.moveStayOrder"
-                    : confirmation?.proposal.unavailableReason === "DAY_LOCK"
-                      ? "bookingRead.moveStayDay"
-                      : confirmation?.item.zone
-                        ? "fidelity.moveUnqualified"
-                        : "fidelity.moveMissingZone",
-                )}
-              </UiText>
-            ) : null}
-            {saveError ? (
-              <UiText accessibilityRole="alert" style={styles.meta}>
-                {t("tripCreate.saveFailed")}
-              </UiText>
-            ) : null}
-            <UiText style={styles.meta}>
-              {t(
-                ports.commit ? "fidelity.moveLocalNotice" : "fidelity.movePreviewNotice",
-              )}
-            </UiText>
+            {confirmationBody}
           </View>
         </View>
       </Modal>

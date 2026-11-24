@@ -5,6 +5,7 @@ import { UiGlassSurface } from "@/ui/UiGlassSurface";
 import { dayFeedAppearanceDate, dayFeedPhaseColor, dayFeedPreviousColor } from "./dayFeedAppearance";
 import { useMinuteClock } from "./useMinuteClock";
 import { useP1CivilMove } from "./useP1CivilMove";
+import { useHostedDayMoveConfirmation } from "./useHostedDayMoveConfirmation";
 import { P1MeasuredMoveRegion } from "./useP1Move";
 import {
   readLocalTripRepository,
@@ -1557,6 +1558,9 @@ function TripContent({
     () => dayShell.observeReadingStopped(),
   );
   const moveActive = move.active;
+  const showLegacyMoveConfirmation = useHostedDayMoveConfirmation(
+    dayActive ? move.confirmationModel : null, dayActive, today, requested, generation,
+  );
   const readingOnly = dayActive && dayPastIntroduction && !dayShell.navigationVisible;
   useLayoutEffect(() => {
     if (!dayActive || !navigation.isFocused()) return;
@@ -2179,7 +2183,7 @@ function TripContent({
           ) : null}
           {move.overlay}
         </View>
-        {move.confirmation}
+        {showLegacyMoveConfirmation ? move.confirmation : null}
         <DayFeedCalendarSheet
           hostedScope={requested}
           today={appearanceToday}

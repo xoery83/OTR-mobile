@@ -160,6 +160,11 @@ coverage and list jump. A date applies only after its own completed dismissal.
 Closing without selecting restores the originating Day viewport unless the user
 starts scrolling. The original entry and presenter remain available behind the QA gate.
 
+Day move confirmation reuses the existing proposal and Day-owned save in
+the common Sheet. The move must still belong to the originating Day and
+account. Dismissal runs the existing cancel callback only after returning
+to that Day, and a write in progress guards exit.
+
 The default-off Import QA entry places Trip Quick Add, its Import composer and
 hosted Review inside the native Sheet Stack. Existing standalone routes remain
 available to the legacy callers and with the flag off. Existing capture draft,

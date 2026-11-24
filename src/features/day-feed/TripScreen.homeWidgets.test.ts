@@ -24,6 +24,7 @@ vi.mock("./useMinuteClock", () => ({
 }));
 vi.mock("./useP1CivilMove", () => ({
   useP1CivilMove: () => ({
+    confirmationModel: null,
     active: false,
     canMove: () => false,
     handlers: {},

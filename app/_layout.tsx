@@ -12,6 +12,7 @@ import { hostedLedgerAnalysisPickerEnabled } from "@/features/ledger/analysisPic
 import { hostedLedgerJourneySheetEnabled } from "@/features/ledger/ledgerJourneySheet";
 import { hostedTripPhotosEnabled } from "@/features/day-feed/hostedTripPhotos";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
+import { hostedDayMoveEnabled } from "@/features/day-feed/dayMoveConfirmationSheet";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
 import { TripViewProvider } from "@/features/day-feed/TripViewContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -312,6 +313,18 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedLedgerJourneySheetEnabled}>
               <Stack.Screen
                 name="ledger-journey-picker"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedDayMoveEnabled}>
+              <Stack.Screen
+                name="day-move"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",
