@@ -37,6 +37,7 @@ const state = vi.hoisted(() => ({
   quickAddOwnerRef: { current: null as { key: string; scope: string } | null },
   startTripRef: { current: null as symbol | null },
   hostedStartTripRef: { current: undefined as string | undefined },
+  pendingManualCreateRef: { current: null as { routeKey: string; generation: number } | null },
   hostedImport: false,
   currentRouteKey: "trips",
   resolveReduced: null as null | ((value: boolean) => void),
@@ -72,7 +73,7 @@ vi.mock("@/features/capture/hostedImport", () => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
-  useRef: () => [state.targetRef, state.startTripRef, state.hostedStartTripRef, state.quickAddOwnerRef][state.refCalls++ % 4],
+  useRef: () => [state.targetRef, state.startTripRef, state.hostedStartTripRef, state.pendingManualCreateRef, state.quickAddOwnerRef][state.refCalls++ % 5],
   useContext: () => state.reportHeight,
   useState: (initial: unknown) =>
     initial === null
@@ -211,6 +212,7 @@ beforeEach(() => {
   state.startTripRef.current = null;
   releaseStartTrip(state.hostedStartTripRef.current);
   state.hostedStartTripRef.current = undefined;
+  state.pendingManualCreateRef.current = null;
   state.hostedImport = false;
   state.currentRouteKey = "trips";
   state.glassCapability = null;
@@ -941,6 +943,27 @@ it("stages a hosted start chooser and launches Create only from the exact restor
   entry?.create();
   expect(state.setParams).not.toHaveBeenCalled();
   state.currentRouteKey = "trips";
-  entry?.create();
-  expect(state.setParams).toHaveBeenCalledExactlyOnceWith({ tripId: "", date: "", zone: "", view: "create" });
+  const frames: (() => void)[] = [];
+  vi.stubGlobal("requestAnimationFrame", (callback: () => void) => frames.push(callback));
+  try {
+    entry?.create();
+    state.activePath = "/import-plans/start-trip";
+    ExperienceBottomShell({ visible: true, pathname: "/trip" });
+    expect(frames).toHaveLength(0);
+
+    state.activePath = "/trip";
+    ExperienceBottomShell({ visible: true, pathname: "/trip" });
+    expect(frames).toHaveLength(1);
+    expect(state.setParams).not.toHaveBeenCalled();
+    frames[0]();
+    expect(state.setParams).toHaveBeenCalledExactlyOnceWith({ tripId: "", date: "", zone: "", view: "create" });
+
+    entry?.create();
+    ExperienceBottomShell({ visible: true, pathname: "/trip" });
+    state.currentRouteKey = "another-trips-instance";
+    frames[1]();
+    expect(state.setParams).toHaveBeenCalledOnce();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

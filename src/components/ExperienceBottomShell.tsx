@@ -171,7 +171,29 @@ export function ExperienceBottomShell({
   const currentTarget = useRef<symbol | null>(null);
   const startTripLease = useRef<symbol | null>(null);
   const hostedStartTrip = useRef<string | undefined>(undefined);
-  useLayoutEffect(() => () => releaseStartTrip(hostedStartTrip.current), []);
+  const pendingManualCreate = useRef<{ routeKey: string; generation: number } | null>(null);
+  useLayoutEffect(() => {
+    const pending = pendingManualCreate.current;
+    if (!pending) return;
+    if (pending.generation !== generation || (activePath && activePath !== "/trip" && !activePath.startsWith("/import-plans"))) {
+      pendingManualCreate.current = null;
+      return;
+    }
+    if (activePath !== "/trip") return;
+    // Present the native Create modal after the restored My Trips view has committed.
+    const frame = requestAnimationFrame(() => {
+      if (pendingManualCreate.current !== pending) return;
+      pendingManualCreate.current = null;
+      if (pending.generation === getAccountGeneration() && rootNavigation.getCurrentRoute()?.key === pending.routeKey) {
+        router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activePath, generation, rootNavigation]);
+  useLayoutEffect(() => () => {
+    releaseStartTrip(hostedStartTrip.current);
+    pendingManualCreate.current = null;
+  }, []);
   const quickAddOwner = useRef<{ key: string; scope: string } | null>(null);
   const quickAddScope = JSON.stringify([generation, workingTrip?.tripId, view?.tripId]);
   const sheetActive = activePath === "/import-plans" || activePath.startsWith("/import-plans/");
@@ -210,12 +232,12 @@ export function ExperienceBottomShell({
     if (generation !== getAccountGeneration() || renderedTarget !== currentTarget.current)
       return;
     if (hostedImportEnabled) {
-      const currentRouteKey = () => (rootNavigation.getCurrentRoute() as { key: string } | undefined)?.key;
-      const originalKey = currentRouteKey();
+      const originalKey = rootNavigation.getCurrentRoute()?.key;
       if (!originalKey) return;
       const invocation = stageStartTrip(() => {
-        if (generation === getAccountGeneration() && currentRouteKey() === originalKey)
-          router.setParams({ tripId: "", date: "", zone: "", view: "create" });
+        if (generation === getAccountGeneration() && rootNavigation.getCurrentRoute()?.key === originalKey) {
+          pendingManualCreate.current = { routeKey: originalKey, generation };
+        }
       });
       if (invocation) {
         hostedStartTrip.current = invocation;
