@@ -3,7 +3,7 @@ import type { UiColors } from "@/ui/palette";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { systemMessage } from "@/ui/domainLabels";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -25,7 +25,9 @@ import {
   type AccountIdentity,
 } from "@/data/auth/authRepository";
 import { createDefaultAccountSwitchCoordinator } from "@/data/auth/defaultAccountSwitchCoordinator";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { authenticateDevAccount } from "@/data/auth/devAccountAuthentication";
+import { hostedSignInEnabled, readSignIn, releaseSignIn, stageSignIn } from "@/features/auth/hostedSignIn";
 import { EmailOtpSignIn } from "@/features/auth/EmailOtpSignIn";
 import { GuestAdoptionPanel } from "@/features/auth/GuestAdoptionPanel";
 import { readPendingGuestAdoption } from "@/data/auth/pendingGuestAdoption";
@@ -44,12 +46,18 @@ export function AccountManagementScreen({ authBoundary = false }) {
   const styles = useThemedStyles(createStyles);
   const scrollRef = useRef<ScrollView>(null);
   const screenScope = useRef(new AbortController());
+  const hostedInvocation = useRef<string>(undefined);
+  const navigation = useNavigation();
+  useEffect(() => () => releaseSignIn(hostedInvocation.current), []);
+  const getScreenScope = useCallback(() => {
+    if (screenScope.current.signal.aborted) screenScope.current = new AbortController();
+    return screenScope.current;
+  }, []);
   useFocusEffect(
     useCallback(() => {
-      const scope = new AbortController();
-      screenScope.current = scope;
+      const scope = getScreenScope();
       return () => scope.abort();
-    }, []),
+    }, [getScreenScope]),
   );
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ mode?: string; returnTo?: string }>();
@@ -61,6 +69,7 @@ export function AccountManagementScreen({ authBoundary = false }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [showLogin, setShowLogin] = useState(authBoundary);
+  const openedAtBoundary = useRef(false);
   const [adoption, setAdoption] = useState<{
     session: LocalSession;
     generation: number;
@@ -117,12 +126,12 @@ export function AccountManagementScreen({ authBoundary = false }) {
   }, [authBoundary]);
 
   useEffect(() => {
-    if (!showLogin) return;
+    if (!showLogin || (hostedSignInEnabled && !devSelector)) return;
     const listener = Keyboard.addListener("keyboardDidShow", () =>
       scrollRef.current?.scrollToEnd({ animated: true }),
     );
     return () => listener.remove();
-  }, [showLogin]);
+  }, [showLogin, devSelector]);
 
   const switchAccount = async (account: LocalAccount) => {
     setBusy(true);
@@ -209,6 +218,66 @@ export function AccountManagementScreen({ authBoundary = false }) {
       },
     ]);
 
+  async function authenticateOtp(
+    session: LocalSession,
+    generation: number,
+    signal: AbortSignal,
+  ) {
+    try {
+      await accountSwitch.activateSession(session, generation, signal);
+    } catch (error) {
+      if (
+        !signal.aborted &&
+        process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
+        process.env.EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED === "true" &&
+        error instanceof Error &&
+        error.message === "GUEST_ADOPTION_PREFLIGHT_REQUIRED"
+      ) {
+        return {
+          generation,
+          finish: (ownerSignal: AbortSignal) => setAdoption({ session, generation, signal: ownerSignal }),
+        };
+      }
+      throw error;
+    }
+    return {
+      // activateSession holds one account transition lease.
+      generation: generation + 1,
+      finish: () => {
+        if (router.canGoBack()) router.back();
+        else router.replace(returnTo);
+      },
+    };
+  }
+
+  function openHostedSignIn() {
+    if (!navigation.isFocused() || readSignIn(hostedInvocation.current)) return;
+    const invocation = stageSignIn({
+      onBusyChange: setBusy,
+      async authenticate(session, generation, signal) {
+        const result = await authenticateOtp(session, generation, signal);
+        return {
+          generation: result.generation,
+          apply: () => {
+            queueMicrotask(() => {
+              if (hostedInvocation.current === invocation && navigation.isFocused() &&
+                  result.generation === getAccountGeneration()) result.finish(getScreenScope().signal);
+            });
+          },
+        };
+      },
+    });
+    hostedInvocation.current = invocation;
+    router.push({ pathname: "/account-sign-in", params: { invocation } });
+  }
+  const openSignInAtBoundary = useEffectEvent(openHostedSignIn);
+
+  useEffect(() => {
+    if (!hostedSignInEnabled || !authBoundary || devSelector || loading || adoption || !showLogin || openedAtBoundary.current) return;
+    openedAtBoundary.current = true;
+    openSignInAtBoundary();
+  }, [authBoundary, devSelector, loading, adoption, showLogin]);
+
   const active = accounts.find((account) => account.active);
   const remembered = accounts.filter(
     (account) => !account.active && (!devSelector || isApprovedDevIdentity(account)),
@@ -271,7 +340,9 @@ export function AccountManagementScreen({ authBoundary = false }) {
             icon="person.badge.plus"
             label={t("account.addLogin")}
             onPress={() => {
-              if (!busy) setShowLogin((visible) => !visible);
+              if (busy || adoption) return;
+              if (hostedSignInEnabled && !devSelector) openHostedSignIn();
+              else setShowLogin((visible) => !visible);
             }}
           />
           {active ? (
@@ -304,35 +375,19 @@ export function AccountManagementScreen({ authBoundary = false }) {
             }
             onFinished={() => {
               if (router.canGoBack()) router.back();
-              else router.replace(returnTo as never);
+              else router.replace(returnTo);
             }}
           />
         ) : null}
 
-        {showLogin && !devSelector && !adoption ? (
+        {showLogin && !devSelector && !adoption && !hostedSignInEnabled ? (
           <EmailOtpSignIn
             onBusyChange={setBusy}
             onCancel={() => setShowLogin(false)}
             onAuthenticated={async (session, generation) => {
               const signal = screenScope.current.signal;
-              try {
-                await accountSwitch.activateSession(session, generation, signal);
-              } catch (error) {
-                if (
-                  !signal.aborted &&
-                  process.env.EXPO_PUBLIC_OTR_SYNC_TRANSPORT === "dev" &&
-                  process.env.EXPO_PUBLIC_OTR_GUEST_ADOPTION_ENABLED === "true" &&
-                  error instanceof Error &&
-                  error.message === "GUEST_ADOPTION_PREFLIGHT_REQUIRED"
-                ) {
-                  setAdoption({ session, generation, signal });
-                  return;
-                }
-                throw error;
-              }
-              if (signal.aborted) return;
-              if (router.canGoBack()) router.back();
-              else router.replace(returnTo as never);
+              const result = await authenticateOtp(session, generation, signal);
+              if (!signal.aborted) result.finish(signal);
             }}
           />
         ) : null}
