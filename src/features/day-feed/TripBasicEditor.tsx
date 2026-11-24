@@ -622,6 +622,7 @@ export function TripBasicEditor({
         disabled: handoffFrozen || saving || destinationBusy || !valid || !dirty,
       } : undefined}
       overlay={currencyEditor}
+      preferNativeScroll
     >
       <View style={styles.root}>{fields}</View>
     </SheetPanel>

@@ -39,7 +39,10 @@ export default function TripMetadataSheetRoute() {
       if (!invocation || !navigation.isFocused() || isExitPending()) return false;
       const selection = metadataCalendar.stage(() => readTripMetadataSheet(invocation)?.open ? read() : null);
       if (!selection) return false;
-      router.push({ pathname: "/trip-metadata-sheet/dates", params: { invocation, selection } });
+      router.push({
+        pathname: "/trip-metadata-sheet/dates",
+        params: { invocation, selection, editorKey: route.key },
+      });
       return true;
     }}>
       {cloneElement(sheet.editor, {

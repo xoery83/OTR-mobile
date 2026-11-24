@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   dispatch: vi.fn(),
   onChange: vi.fn(),
   onClose: vi.fn(),
+  release: vi.fn(),
 }));
 
 vi.mock("react", async original => ({
@@ -26,7 +27,7 @@ vi.mock("react", async original => ({
   useSyncExternalStore: (_subscribe: unknown, read: () => unknown) => read(),
 }));
 vi.mock("expo-router", () => ({
-  useLocalSearchParams: () => ({ invocation: "owner", selection: "range" }),
+  useLocalSearchParams: () => ({ invocation: "owner", selection: "range", editorKey: "settings" }),
   useNavigation: () => ({
     getState: () => state.nav,
     isFocused: () => state.focused,
@@ -52,7 +53,7 @@ vi.mock("@/features/day-feed/tripMetadataSheet", () => ({
   subscribeTripMetadataSheet: () => () => {},
   metadataCalendar: {
     read: (id?: string) => id === "range" ? { onChange: state.onChange, onClose: state.onClose } : undefined,
-    release: () => {},
+    release: state.release,
   },
 }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
@@ -84,6 +85,8 @@ beforeEach(() => {
   state.exitPending = false;
   state.dispatch.mockReset();
   state.onChange.mockClear();
+  state.onClose.mockClear();
+  state.release.mockClear();
 });
 
 it("applies Done once after the exact date route returned to its editor", () => {
@@ -95,6 +98,8 @@ it("applies Done once after the exact date route returned to its editor", () => 
     type: "GO_BACK", target: "settings-stack", source: "date-child",
   });
   expect(state.onChange).toHaveBeenCalledExactlyOnceWith(selected);
+  expect(state.release).toHaveBeenCalledExactlyOnceWith("range");
+  expect(state.onClose).toHaveBeenCalledOnce();
 });
 
 it("leaves the original range unchanged when Done was refused and the user later backs out", () => {
@@ -114,6 +119,15 @@ it("does not apply a date after the owning editor was retired", () => {
     acceptPop();
   });
   render().onDone(selected);
+  expect(state.onChange).not.toHaveBeenCalled();
+});
+
+it("does not open or apply a date above a different instance of the editor route", () => {
+  const { onDone } = render();
+  state.nav.routes[0] = { name: "index", key: "different-settings" };
+  expect(render().onDone).toBeUndefined();
+  onDone(selected);
+  expect(state.dispatch).not.toHaveBeenCalled();
   expect(state.onChange).not.toHaveBeenCalled();
 });
 
