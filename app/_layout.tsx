@@ -399,6 +399,16 @@ export default function RootLayout() {
               />
             ) : null}
             <Stack.Screen
+              name="trip-item-expense"
+              options={{
+                presentation: "modal",
+                gestureEnabled: false,
+                headerShown: true,
+                headerShadowVisible: false,
+                headerTitle: t("ui.newExpense"),
+              }}
+            />
+            <Stack.Screen
               name="trip-expense/[id]"
               options={{ headerShown: true, headerTitle: t("common.expense") }}
             />

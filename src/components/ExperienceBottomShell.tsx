@@ -297,7 +297,8 @@ export function ExperienceBottomShell({
         return;
       }
       router.push({
-        pathname: "/expenses/new",
+        // Keep Quick Add on the Trip stack so Back reveals its original screen.
+        pathname: fromHome ? "/trip-item-expense" : "/expenses/new",
         params: {
           journeyId: targetId,
           returnTo: fromHome ? "home" : "source",

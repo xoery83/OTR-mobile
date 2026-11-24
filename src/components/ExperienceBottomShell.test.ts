@@ -464,7 +464,7 @@ it("A→B→A cannot revive an older delayed Expense action", async () => {
   expect(state.navigate).not.toHaveBeenCalled();
 });
 
-it("Day Expense caller passes a distinct weak suggestedDate, preserving legacy focusDate flag semantics", async () => {
+it("keeps Day Quick Add Expense above its owner and preserves the suggested date", async () => {
   state.view = { tripId: "a", date: "2027-01-01", zone: "Asia/Tokyo", generation: 1 };
   const tree = ExperienceBottomShell({ visible: true, pathname: "/" });
   const find = (node: ReactNode): ReactElement<any> | null => {
@@ -480,7 +480,7 @@ it("Day Expense caller passes a distinct weak suggestedDate, preserving legacy f
   find(tree)!.props.expense("2027-01-02");
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(state.push).toHaveBeenCalledWith({
-    pathname: "/expenses/new",
+    pathname: "/trip-item-expense",
     params: { journeyId: "a", returnTo: "home", suggestedDate: "2027-01-02" },
   });
   expect(state.push.mock.calls[0][0].params.focusDate).toBeUndefined();

@@ -1,17 +1,6 @@
-import { Stack } from "expo-router";
 import { LedgerExpenseEntryScreen } from "@/features/ledger/LedgerExpenseEntryScreen";
-import { t } from "@/ui/locale";
-import { useUiLocale } from "@/ui/useUiLocale";
 
-// Keep the existing Ledger form above the originating Immersive screen, outside the Ledger tab stack.
+// Keep the Ledger workspace above the originating Trip screen.
 export default function TripItemExpenseRoute() {
-  useUiLocale();
-  return (
-    <>
-      <Stack.Screen
-        options={{ headerShown: true, presentation: "modal", headerTitle: t("ui.newExpense") }}
-      />
-      <LedgerExpenseEntryScreen />
-    </>
-  );
+  return <LedgerExpenseEntryScreen />;
 }
