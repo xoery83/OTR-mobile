@@ -22,6 +22,8 @@ import { activeImportSheetPage } from "@/features/capture/importSheetNavigation"
 import { createCaptureStaging } from "@/features/capture/captureStaging";
 import { pickCaptureMaterial } from "@/native/capturePicker";
 import { CaptureContent } from "@/features/capture/CaptureContent";
+import { stageImportManualFallback } from "@/features/capture/hostedImportManual";
+import { hostedManualItineraryEnabled } from "@/features/day-feed/hostedManualItinerary";
 import { UiButton } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -246,6 +248,16 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
           hostedChild={hostedChild}
           onHostedBack={hostedChild && onHostedClose ? () => {
             if (isCurrent()) onHostedClose();
+          } : undefined}
+          onOpenManualFallback={hosted && hostedManualItineraryEnabled ? request => {
+            const state = activeImportSheetPage(navigation, route.key);
+            if (!state || !isCurrent() || canUseHostedSource?.() === false) return;
+            const sourceKey = route.key;
+            const fallback = stageImportManualFallback({ ...request, generation, sourceKey });
+            if (fallback) navigation.dispatch({
+              type: "PUSH", target: state.key, source: sourceKey,
+              payload: { name: "manual", params: { fallback, editorKey: sourceKey } },
+            });
           } : undefined}
           activityPositionsRef={activityPositionsRef}
           activityScope={hosted ? admission.current : undefined}

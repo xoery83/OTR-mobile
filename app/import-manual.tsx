@@ -1,13 +1,11 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
 } from "@/data/auth/accountGeneration";
-import { captureAccountRequestContext } from "@/data/auth/accountRequestContext";
-import { requireActiveUserId } from "@/data/auth/authRepository";
-import { listCaptureTripPriors } from "@/data/operations/captureTripPrior";
+import { useImportManualTripChoices } from "@/features/capture/useImportManualTripChoices";
 import { ManualItineraryContent } from "@/features/day-feed/ManualItineraryContent";
 import { SheetHeader } from "@/components/SheetHeader";
 import { UiButton, UiText } from "@/ui/controls";
@@ -41,30 +39,7 @@ function ImportManualContent({
   generation: number;
 }) {
   const styles = useThemedStyles(createStyles);
-  const [choices, setChoices] = useState<{ id: string; name: string }[] | null>(null);
-  const [target, setTarget] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-  const current = params.originGeneration === String(generation);
-  useEffect(() => {
-    let active = true;
-    if (!current) return;
-    void captureAccountRequestContext("", requireActiveUserId)
-      .then((context) => listCaptureTripPriors(context))
-      .then((trips) => {
-        if (!active || generation !== getAccountGeneration()) return;
-        setChoices(trips);
-        if (params.tripId) {
-          if (trips.some((trip) => trip.id === params.tripId)) setTarget(params.tripId);
-          else setFailed(true);
-        }
-      })
-      .catch(() => {
-        if (active && generation === getAccountGeneration()) setFailed(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, [current, generation, params.tripId]);
+  const { choices, target, failed, current, setTarget } = useImportManualTripChoices(params, generation);
   return (
     <View style={styles.body}>
       <Stack.Screen

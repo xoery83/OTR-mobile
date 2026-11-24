@@ -67,6 +67,15 @@ in the shared QA Sheet. Results apply after the Sheet returns to the same editor
 and update its current draft. The existing Expense Save and allocation
 contracts still own persistence.
 
+### Import manual fallback
+
+When both Import and manual-itinerary QA flags are enabled, the existing Import
+Results fallback opens the authorized Trip and itinerary family inside the same
+Sheet. Back restores the original Batch. A confirmed manual itinerary Save uses
+the original editor, repository and Operation, then returns to that Batch
+without changing its execution, materials or review state. Flag-off routes
+retain the legacy handoff.
+
 ## Canonical Trip Person foundation
 
 A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from

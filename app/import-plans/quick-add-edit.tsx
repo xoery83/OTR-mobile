@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams, useNavigation } from "expo-router";
-import { usePreventRemove, useRoute } from "expo-router/react-navigation";
+import { StackActions, usePreventRemove, useRoute } from "expo-router/react-navigation";
 import { useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useWindowDimensions } from "react-native";
 import { SheetNavigationHeader, useSheetContentSize } from "@/components/SheetNavigationHeader";
@@ -29,8 +29,8 @@ export default function QuickAddItineraryEditorRoute() {
 type Exit = { kind: "back" | "close"; afterClose?: () => void } | { kind: "saved"; id: string };
 
 function HostedQuickAddEditor() {
-  const { invocation, family, chooserKey, detail } = useLocalSearchParams<{
-    invocation?: string; family?: string; chooserKey?: string; detail?: string;
+  const { invocation, family, chooserKey, detail, fallback } = useLocalSearchParams<{
+    invocation?: string; family?: string; chooserKey?: string; detail?: string; fallback?: string;
   }>();
   useSyncExternalStore(subscribeAccountGeneration, getAccountGeneration);
   const entry = useSyncExternalStore(subscribeManualItinerary, () => readManualItinerary(invocation));
@@ -57,14 +57,20 @@ function HostedQuickAddEditor() {
   const hasChooser = useCallback(() => {
     const routes = navigation.getState()?.routes;
     const index = routes?.findIndex(candidate => candidate.key === route.key) ?? -1;
-    return index > 0 && Boolean(chooserKey && routes?.[index - 1]?.key === chooserKey);
-  }, [chooserKey, navigation, route.key]);
+    if (index < 1 || !chooserKey || routes?.[index - 1]?.key !== chooserKey) return false;
+    const origin = entry?.importFallback;
+    if (!origin) return fallback === undefined;
+    return fallback === origin.invocation && chooserKey === origin.chooserKey &&
+      routes?.[index - 2]?.key === origin.sourceKey;
+  }, [chooserKey, entry, fallback, navigation, route.key]);
   const belongsToOwner = useCallback(() => {
     const origin = entry?.detailEdit;
-    if (!origin) return !standalone && hasChooser() && (entry?.entryPoint !== "day-insertion" ||
-      (!!entry.dayInsertionOriginKey && exit?.hasOrigin?.(entry.dayInsertionOriginKey) === true));
-    return standalone && !chooserKey && origin.family === family && exit?.hasOrigin?.(origin.originKey) === true;
-  }, [chooserKey, entry, exit, family, hasChooser, standalone]);
+    if (origin) return standalone && fallback === undefined && !chooserKey &&
+      origin.family === family && exit?.hasOrigin?.(origin.originKey) === true;
+    if (standalone || !hasChooser()) return false;
+    if (entry?.entryPoint !== "day-insertion") return true;
+    return !!entry.dayInsertionOriginKey && exit?.hasOrigin?.(entry.dayInsertionOriginKey) === true;
+  }, [chooserKey, entry, exit, fallback, family, hasChooser, standalone]);
   const familyAllowed = entry && belongsToOwner() && family && isManualItineraryFamily(family, entry.localOnly) ? family : null;
 
   const canEdit = useCallback(() =>
@@ -120,14 +126,37 @@ function HostedQuickAddEditor() {
       return true;
     }
     const previous = state.routes[state.index - 1];
-    if (!previous || (!unavailable && previous.key !== chooserKey)) return false;
+    if (!previous || (!unavailable && !belongsToOwner())) return false;
     navigation.dispatch({ type: "GO_BACK", target: state.key, source: route.key });
     const next = navigation.getState();
     if (next?.key !== state.key || next.routes[next.index]?.key !== previous.key ||
         next.routes.some(candidate => candidate.key === route.key)) return false;
-    if (readManualItinerary(invocation) === entry) afterClose?.();
+    if (!unavailable && entry && readManualItinerary(invocation) === entry) {
+      afterClose?.();
+      if (entry.importFallback) entry.onClose();
+    }
     return true;
-  }, [chooserKey, entry, invocation, isExitPending, navigation, requestClose, route.key]);
+  }, [belongsToOwner, entry, invocation, isExitPending, navigation, requestClose, route.key]);
+  const returnToBatch = useCallback((action: () => void) => {
+    const origin = entry?.importFallback;
+    const state = navigation.getState();
+    const current = state?.routes[state.index];
+    if (!origin || !state || !current || isExitPending() || !hasChooser() ||
+        readManualItinerary(invocation) !== entry) return false;
+    const editorIsCurrent = current.key === route.key && navigation.isFocused();
+    const params = current.params;
+    const ownsCurrentPicker = navigation.getParent()?.isFocused() &&
+      state.routes[state.index - 1]?.key === route.key && params && "invocation" in params &&
+      params.invocation === invocation && "editorKey" in params && params.editorKey === route.key;
+    if (!editorIsCurrent && !ownsCurrentPicker) return false;
+    navigation.dispatch({ ...StackActions.pop(editorIsCurrent ? 2 : 3), target: state.key, source: current.key });
+    const next = navigation.getState();
+    if (next?.key !== state.key || next.routes[next.index]?.key !== origin.sourceKey ||
+        next.routes.some(candidate => candidate.key === current.key ||
+          candidate.key === route.key || candidate.key === origin.chooserKey)) return false;
+    if (readManualItinerary(invocation) === entry) action();
+    return true;
+  }, [entry, hasChooser, invocation, isExitPending, navigation, route.key]);
   const registerDismissHandler = useCallback((handler: () => void) => {
     dismiss.current = handler;
     const unregister = exit?.registerClose(() => {
@@ -170,13 +199,26 @@ function HostedQuickAddEditor() {
   useEffect(() => {
     if (!approved || dispatched.current) return;
     dispatched.current = true;
+    const retryDismissal = () => {
+      queueMicrotask(() => {
+        dispatched.current = false;
+        setApproved(current => current === approved ? undefined : current);
+      });
+    };
     if (approved.kind === "back") {
-      if (!goBack(approved.afterClose)) {
-        queueMicrotask(() => {
-          dispatched.current = false;
-          setApproved(current => current === approved ? undefined : current);
-        });
-      }
+      if (!goBack(approved.afterClose)) retryDismissal();
+      return;
+    }
+    if (entry?.importFallback) {
+      if (!returnToBatch(() => {
+        if (approved.kind === "saved") {
+          savedId.current = null;
+          entry.onSaved(approved.id);
+        } else {
+          approved.afterClose?.();
+          entry.onClose();
+        }
+      })) retryDismissal();
       return;
     }
     const detailOwner = standalone ? readManualItinerary(invocation) : undefined;
@@ -198,12 +240,12 @@ function HostedQuickAddEditor() {
         readManualItinerary(invocation)?.onSaved(approved.id);
       } else approved.afterClose?.();
     });
-  }, [approved, belongsToOwner, entry, exit, goBack, invocation, requestCloseWithAction, standalone]);
+  }, [approved, belongsToOwner, entry, exit, goBack, invocation, requestCloseWithAction, returnToBatch, standalone]);
   useEffect(() => {
-    if (!approved || approved.kind === "back" || !dispatched.current || exitPending || isExitPending()) return;
+    if (entry?.importFallback || !approved || approved.kind === "back" || !dispatched.current || exitPending || isExitPending()) return;
     dispatched.current = false;
     setApproved(undefined);
-  }, [approved, exitPending, isExitPending]);
+  }, [approved, entry, exitPending, isExitPending]);
 
   if (!entry || !familyAllowed)
     return <SheetRoutePanel title={t("formEntry.title")} onBack={standalone ? undefined : () => goBack(undefined, true)}>{null}</SheetRoutePanel>;

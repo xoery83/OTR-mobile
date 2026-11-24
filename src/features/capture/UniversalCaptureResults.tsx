@@ -46,6 +46,7 @@ import { AppIcon } from "@/components/AppIcon";
 import type { RelatedImportActivity } from "./importSheetNavigation";
 
 export function UniversalCaptureResults({
+  onOpenManualFallback,
   model,
   historical = false,
   isCurrent,
@@ -64,6 +65,7 @@ export function UniversalCaptureResults({
 }: {
   model: CaptureJobReadModel;
   historical?: boolean;
+  onOpenManualFallback?(): void;
   readTripTargets?: () => Promise<readonly { id: string; name: string }[]>;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   originalsListedElsewhere?: boolean;
@@ -171,6 +173,7 @@ export function UniversalCaptureResults({
     return (
       <>
         <UniversalV3Activity
+          onOpenManualFallback={onOpenManualFallback}
           key={model.batch.batchId}
           model={model}
           execution={state.localFirst}
@@ -213,6 +216,7 @@ export function UniversalCaptureResults({
 }
 // Only a retained Submit intent permits admission; historical Activity remains read-only.
 export function UniversalV3Activity({
+  onOpenManualFallback,
   model,
   execution,
   unavailable,
@@ -228,6 +232,7 @@ export function UniversalV3Activity({
 }: {
   onDone?(): void;
   onHistoryChange?(open: boolean): void;
+  onOpenManualFallback?(): void;
   model: CaptureJobReadModel;
   execution: UniversalV3ExecutionStatus | null;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
@@ -393,7 +398,7 @@ export function UniversalV3Activity({
       onOpenDocument={onOpenDocument}
       onDone={onDone}
       onHistoryChange={onHistoryChange}
-      onAddManually={() => {
+      onAddManually={onOpenManualFallback ?? (() => {
         void Promise.all([
           import("expo-router"),
           import("@/data/auth/accountGeneration"),
@@ -407,7 +412,7 @@ export function UniversalV3Activity({
               },
             });
         });
-      }}
+      })}
       onUpdates={() => {
         if (!isCurrent()) return;
         const activity = {

@@ -9,12 +9,17 @@ const qa = vi.hoisted(() => ({
   detail: undefined as string | undefined,
   originMatches: true,
   originFocused: true,
+  fallback: undefined as string | undefined,
   approved: undefined as unknown,
   refs: [] as { current: unknown }[],
   ref: 0,
   pending: false,
+  focused: true,
   actions: [] as (() => void)[],
-  navigation: { key: "stack", index: 1, routes: [{ key: "chooser" }, { key: "editor" }] },
+  navigation: {
+    key: "stack", index: 1,
+    routes: [{ key: "chooser" }, { key: "editor" }] as { key: string; params?: { invocation: string; editorKey: string } }[],
+  },
   dispatch: vi.fn(),
 }));
 
@@ -24,15 +29,19 @@ vi.mock("./hostedManualItinerary", async (original) => ({
   hostedManualItineraryEnabled: true,
 }));
 vi.mock("expo-router", () => ({
-  useLocalSearchParams: () => ({ invocation: qa.id, family: "P2", chooserKey: qa.detail ? undefined : "chooser", detail: qa.detail }),
+  useLocalSearchParams: () => ({ invocation: qa.id, family: "P2", chooserKey: qa.detail ? undefined : "chooser", detail: qa.detail, fallback: qa.fallback }),
   useNavigation: () => ({
     addListener: () => () => {},
-    isFocused: () => true,
+    isFocused: () => qa.focused,
+    getParent: () => ({ isFocused: () => true }),
     getState: () => qa.navigation,
     dispatch: qa.dispatch,
   }),
 }));
-vi.mock("expo-router/react-navigation", () => ({ usePreventRemove: vi.fn(), useRoute: () => ({ key: "editor" }) }));
+vi.mock("expo-router/react-navigation", () => ({
+  usePreventRemove: vi.fn(), useRoute: () => ({ key: "editor" }),
+  StackActions: { pop: (count: number) => ({ type: "POP", payload: { count } }) },
+}));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useEffect: (run: () => void) => run(),
@@ -73,8 +82,10 @@ beforeEach(() => {
   qa.originMatches = true;
   qa.originFocused = true;
   qa.approved = undefined;
+  qa.fallback = undefined;
   qa.refs = [];
   qa.pending = false;
+  qa.focused = true;
   qa.actions = [];
   qa.navigation = { key: "stack", index: 1, routes: [{ key: "chooser" }, { key: "editor" }] };
   qa.dispatch.mockReset();
@@ -205,4 +216,85 @@ it("does not mount on a wrong predecessor or report to a different active detail
   qa.originFocused = false;
   qa.actions[0]();
   expect(onSaved).not.toHaveBeenCalled();
+});
+
+it("retries a refused Import return without saving again or sending a receipt to another Batch", async () => {
+  qa.fallback = "import-request";
+  const batch = { key: "batch" };
+  const routes = [batch, ...qa.navigation.routes];
+  qa.navigation = { ...qa.navigation, index: 2, routes };
+  const entry = {
+    tripId: "trip", generation: getAccountGeneration(), initialDate: null,
+    onClose: vi.fn(), onSaved: vi.fn(),
+    importFallback: { invocation: qa.fallback, sourceKey: batch.key, chooserKey: "chooser" },
+  };
+  qa.id = stageManualItinerary(() => entry);
+  const editor = QuickAddItineraryEditorRoute().type;
+  const render = () => { qa.ref = 0; return editor().props; };
+  const screen = render();
+  let content = screen.children;
+  while (content.type !== "Editor") content = content.props.children;
+  content.props.onSaved("item");
+  render();
+  await Promise.resolve();
+  expect(entry.onSaved).not.toHaveBeenCalled();
+  expect(readManualItinerary(qa.id)).toBe(entry);
+  expect(qa.actions).toHaveLength(0);
+  const header = render().children.props.value({ leftDisabled: true });
+  expect(header.props).toMatchObject({ leftDisabled: false, rightDisabled: true });
+
+  qa.navigation.routes = [{ key: "other-batch" }, ...routes.slice(1)];
+  header.props.onLeft();
+  render();
+  await Promise.resolve();
+  expect(qa.dispatch).toHaveBeenCalledOnce();
+  expect(entry.onSaved).not.toHaveBeenCalled();
+
+  qa.navigation.routes = routes;
+  qa.dispatch.mockImplementation(() => {
+    qa.navigation = { key: "stack", index: 0, routes: [batch] };
+  });
+  header.props.onLeft();
+  render();
+  expect(qa.dispatch).toHaveBeenLastCalledWith({
+    type: "POP", payload: { count: 2 }, source: "editor", target: "stack",
+  });
+  expect(entry.onSaved).toHaveBeenCalledExactlyOnceWith("item");
+  releaseManualItinerary(qa.id);
+});
+
+it("dismisses an approved Import draft from an owned child and returns only to its originating Batch", async () => {
+  qa.fallback = "import-request";
+  const afterClose = vi.fn();
+  const onClose = vi.fn();
+  const entry = {
+    tripId: "trip", generation: getAccountGeneration(), initialDate: null,
+    onClose, onSaved: vi.fn(),
+    importFallback: { invocation: qa.fallback, sourceKey: "batch", chooserKey: "chooser" },
+  };
+  qa.id = stageManualItinerary(() => entry);
+  qa.focused = false;
+  const batch = { key: "batch" };
+  const picker = { key: "picker", params: { invocation: qa.id, editorKey: "unrelated" } };
+  qa.navigation = { ...qa.navigation, index: 3, routes: [batch, ...qa.navigation.routes, picker] };
+  const editor = QuickAddItineraryEditorRoute().type;
+  const render = () => { qa.ref = 0; return editor(); };
+  qa.approved = { kind: "close", afterClose };
+  render();
+  await Promise.resolve();
+  expect(qa.dispatch).not.toHaveBeenCalled();
+  expect(afterClose).not.toHaveBeenCalled();
+
+  picker.params.editorKey = "editor";
+  qa.approved = { kind: "close", afterClose };
+  qa.dispatch.mockImplementation(() => {
+    qa.navigation = { key: "stack", index: 0, routes: [batch] };
+  });
+  render();
+  expect(qa.dispatch).toHaveBeenCalledExactlyOnceWith({
+    type: "POP", payload: { count: 3 }, source: "picker", target: "stack",
+  });
+  expect(afterClose).toHaveBeenCalledOnce();
+  expect(onClose).toHaveBeenCalledOnce();
+  releaseManualItinerary(qa.id);
 });

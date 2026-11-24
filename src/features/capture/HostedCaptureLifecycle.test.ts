@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { CaptureContent } from "./CaptureContent";
 import { createCaptureStaging } from "./captureStaging";
 import { announceCaptureProcessingActivity } from "@/data/operations/captureProcessingActivity";
+import type { ImportManualRequest } from "./hostedImportManual";
 
 const qa = vi.hoisted(() => {
   type Effect = { values?: unknown[]; clean?: () => void };
@@ -102,4 +103,37 @@ it("requalifies the same retained job on Review return and ignores events while 
   announceCaptureProcessingActivity("account-a", "job-a");
   await vi.waitFor(() => expect(qa.reopen).toHaveBeenCalledTimes(3));
   expect(qa.reopen.mock.calls).toEqual([["job-a"], ["job-a"], ["job-a"]]);
+});
+
+it("keeps a covered manual fallback lease only for the original Batch and Trip assignment", async () => {
+  const staging = createCaptureStaging(vi.fn(), () => true, { accountId: "account-a", tripPrior: null });
+  const model = {
+    batch: { accountId: "account-a", jobId: "job-a", batchId: "batch-a", context: {} },
+    inputs: [], assignedTripId: "trip-a",
+  };
+  qa.reopen.mockResolvedValue(model);
+  const admission = vi.fn(() => true);
+  const open = vi.fn<(request: ImportManualRequest) => void>();
+  const props = {
+    draftStaging: staging, isCurrent: admission, activityScope: () => true, onCancel: vi.fn(),
+    onOpenManualFallback: open, hostedComposer: true, accountId: "account-a", jobId: "job-a",
+  };
+  render(props);
+  await vi.waitFor(() => expect(qa.reopen).toHaveBeenCalledOnce());
+  const progress = render(props).props.content.props.children[0].props.children.props;
+  progress.onOpenManualFallback();
+  expect(open).toHaveBeenCalledOnce();
+  const lease = open.mock.calls[0][0];
+  expect(lease.tripId).toBe("trip-a");
+
+  admission.mockReturnValue(false);
+  expect(lease.isBatchCurrent()).toBe(true);
+  progress.onOpenManualFallback();
+  expect(open).toHaveBeenCalledOnce();
+
+  qa.reopen.mockResolvedValue({ ...model, assignedTripId: "trip-b" });
+  announceCaptureProcessingActivity("account-a", "job-a");
+  await vi.waitFor(() => expect(qa.reopen).toHaveBeenCalledTimes(2));
+  render(props);
+  expect(lease.isBatchCurrent()).toBe(false);
 });

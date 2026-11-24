@@ -1,3 +1,4 @@
+import type { ImportManualRequest } from "./hostedImportManual";
 import { LocalItemImportOriginals } from "@/features/day-feed/LocalItemImportOriginals";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { ImportDocumentsPanel } from "@/features/documents/ImportDocumentsPanel";
@@ -46,6 +47,7 @@ export function CaptureContent({
   activityScope,
   embeddedComposer = false,
   hostedComposer = false,
+  onOpenManualFallback,
   hostedChild = false,
   onHostedBack,
   accountId,
@@ -68,6 +70,7 @@ export function CaptureContent({
   activityScope?: () => boolean;
   embeddedComposer?: boolean;
   hostedComposer?: boolean;
+  onOpenManualFallback?(request: ImportManualRequest): void;
   hostedChild?: boolean;
   onHostedBack?: () => void;
   accountId?: string;
@@ -450,6 +453,21 @@ export function CaptureContent({
             : undefined
         }
         onDone={hide}
+        onOpenManualFallback={onOpenManualFallback && model ? () => {
+          const { accountId, batchId, jobId } = model.batch;
+          const tripId = model.batch.context.tripPrior?.id ?? model.assignedTripId ?? undefined;
+          const isBatchCurrent = () => {
+            const latest = modelRef.current;
+            return active.current && readEpoch.current === materialReadEpoch &&
+              latest?.batch.accountId === accountId && latest.batch.batchId === batchId && latest.batch.jobId === jobId &&
+              (latest.batch.context.tripPrior?.id ?? latest.assignedTripId ?? undefined) === tripId;
+          };
+          if (!current() || !isBatchCurrent()) return;
+          onOpenManualFallback({
+            tripId,
+            isBatchCurrent,
+          });
+        } : undefined}
         onResultsReady={(ready) => setResultsJob(ready ? model?.batch.jobId : undefined)}
         activityPositionsRef={positionsRef}
         onReturnToTrip={onReturnToTrip}

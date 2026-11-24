@@ -15,6 +15,7 @@ export type DetailEditorPresentation = Pick<ManualItineraryProps, "registerDismi
 };
 
 export type HostedManualItinerary = ManualItineraryProps & {
+  importFallback?: { invocation: string; sourceKey: string; chooserKey: string };
   entryPoint?: "day-insertion";
   dayInsertionOriginKey?: string;
   detailEdit?: {

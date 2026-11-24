@@ -51,6 +51,7 @@ export function CaptureProgress({
   onOpenAcceptedItem,
   onOpenReview,
   onOpenRelatedUpdates,
+  onOpenManualFallback,
   onOpenDocument,
   onReturnToTrip,
   onResultsReady,
@@ -78,6 +79,7 @@ export function CaptureProgress({
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   onOpenReview?(jobId: string): void;
   onOpenRelatedUpdates?(activity: RelatedImportActivity): void;
+  onOpenManualFallback?(): void;
   onOpenDocument?(itemId: string, documentId: string): void;
   onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
   onResultsReady?(ready: boolean): void;
@@ -276,6 +278,7 @@ export function CaptureProgress({
               }
             >
               <UniversalResults
+                onOpenManualFallback={onOpenManualFallback}
                 historical={historical}
                 originalsListedElsewhere
                 readTripTargets={readTripTargets}
