@@ -173,7 +173,10 @@ export function CaptureComposer({
   // Keep the material names visible while the multiline editor owns the keyboard.
   const inputLines = keyboardVisible && snapshot.items.length ? 3 : 6;
   const maxInputHeight = inputLines * 22 * Math.max(1, fontScale) + 20;
-  const minInputHeight = hosted ? Math.max(44, Math.ceil(fontScale * 22) + 20) : 44;
+  const enlargedEditor = hosted && fontScale > 1.5;
+  const prioritizeEditor = hosted && (enlargedEditor || width > height);
+  const placeholderLines = enlargedEditor && !snapshot.editorText ? 2 : 1;
+  const minInputHeight = hosted ? Math.max(44, Math.ceil(fontScale * 22) * placeholderLines + 20) : 44;
   const overLimit = maxAttachments !== undefined && count > maxAttachments;
   const sendDisabled =
     locked ||
@@ -246,13 +249,91 @@ export function CaptureComposer({
       style={[
         styles.input,
         {
-          height: snapshot.editorText
+          height: hosted || snapshot.editorText
             ? Math.min(maxInputHeight, Math.max(minInputHeight, inputHeight))
             : minInputHeight,
           maxHeight: maxInputHeight,
         },
       ]}
     />
+  );
+  const editorControls = (
+    <View key="editor" style={[styles.composerShadow, keyboardVisible && styles.keyboardEditor]}>
+      <UiGlassSurface style={styles.composer}>
+        {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
+        <View style={styles.footer}>
+          {snapshot.editorText.trim() ? (
+            <UiButton
+              variant="text"
+              label={t("capture.composer.add")}
+              disabled={locked || overLimit}
+              onPress={onAddText}
+            />
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("capture.composer.addAttachments")}
+            accessibilityState={{ disabled: locked }}
+            disabled={locked}
+            style={styles.target}
+            onPress={attachments}
+          >
+            <AppIcon name="plus" size={25} color={colors.textPrimary} />
+          </Pressable>
+          <View style={styles.spacer} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t(
+              voice.busy ? "capture.voice.stop" : "capture.voice.start",
+            )}
+            accessibilityState={{
+              disabled:
+                snapshot.selecting ||
+                voice.state.status === "starting" ||
+                voice.state.status === "finishing",
+            }}
+            disabled={
+              snapshot.selecting ||
+              voice.state.status === "starting" ||
+              voice.state.status === "finishing"
+            }
+            onPress={() =>
+              voice.busy
+                ? voice.stop()
+                : voice.start(
+                    snapshot.editorText,
+                    locale === "zh-Hans" ? "zh-CN" : "en-US",
+                  )
+            }
+            style={styles.target}
+          >
+            <AppIcon
+              name={voice.busy ? "stop.fill" : "mic"}
+              size={22}
+              color={snapshot.selecting ? colors.disabled : colors.accent}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("capture.composer.submit")}
+            accessibilityState={{ disabled: sendDisabled }}
+            disabled={sendDisabled}
+            onPress={onSubmit}
+            style={[
+              styles.target,
+              styles.send,
+              sendDisabled && styles.sendDisabled,
+            ]}
+          >
+            <AppIcon
+              name="arrow.up"
+              size={23}
+              color={sendDisabled ? colors.disabled : colors.onAccent}
+            />
+          </Pressable>
+        </View>
+      </UiGlassSurface>
+    </View>
   );
   const BodyScroll = hosted ? InlineComposerBody : ScrollView;
   const body = (
@@ -316,6 +397,7 @@ export function CaptureComposer({
       </BodyScroll>
     ) : (
       <>
+        {prioritizeEditor ? editorControls : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("capture.composer.contextTitle")}
@@ -545,13 +627,13 @@ export function CaptureComposer({
           ) : null}
         </BodyScroll>
         {count ? (
-          <View style={[styles.footer, styles.countFooter]}>
+          <View style={[styles.footer, styles.countFooter, enlargedEditor && styles.countFooterLarge]}>
             <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
               {t(count === 1 ? "capture.countOne" : "capture.countOther", {
                 count,
               })}
             </UiText>
-            <View style={styles.spacer} />
+            {!enlargedEditor ? <View style={styles.spacer} /> : null}
             <UiButton
               variant="text"
               label={t("capture.composer.clear")}
@@ -573,82 +655,7 @@ export function CaptureComposer({
             />
           </View>
         ) : null}
-        <View style={[styles.composerShadow, keyboardVisible && { marginTop: 0 }]}>
-          <UiGlassSurface style={styles.composer}>
-            {renderImagePaste ? renderImagePaste(!locked, editor) : editor}
-            <View style={styles.footer}>
-              {snapshot.editorText.trim() ? (
-                <UiButton
-                  variant="text"
-                  label={t("capture.composer.add")}
-                  disabled={locked || overLimit}
-                  onPress={onAddText}
-                />
-              ) : null}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("capture.composer.addAttachments")}
-                accessibilityState={{ disabled: locked }}
-                disabled={locked}
-                style={styles.target}
-                onPress={attachments}
-              >
-                <AppIcon name="plus" size={25} color={colors.textPrimary} />
-              </Pressable>
-              <View style={styles.spacer} />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t(
-                  voice.busy ? "capture.voice.stop" : "capture.voice.start",
-                )}
-                accessibilityState={{
-                  disabled:
-                    snapshot.selecting ||
-                    voice.state.status === "starting" ||
-                    voice.state.status === "finishing",
-                }}
-                disabled={
-                  snapshot.selecting ||
-                  voice.state.status === "starting" ||
-                  voice.state.status === "finishing"
-                }
-                onPress={() =>
-                  voice.busy
-                    ? voice.stop()
-                    : voice.start(
-                        snapshot.editorText,
-                        locale === "zh-Hans" ? "zh-CN" : "en-US",
-                      )
-                }
-                style={styles.target}
-              >
-                <AppIcon
-                  name={voice.busy ? "stop.fill" : "mic"}
-                  size={22}
-                  color={snapshot.selecting ? colors.disabled : colors.accent}
-                />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("capture.composer.submit")}
-                accessibilityState={{ disabled: sendDisabled }}
-                disabled={sendDisabled}
-                onPress={onSubmit}
-                style={[
-                  styles.target,
-                  styles.send,
-                  sendDisabled && styles.sendDisabled,
-                ]}
-              >
-                <AppIcon
-                  name="arrow.up"
-                  size={23}
-                  color={sendDisabled ? colors.disabled : colors.onAccent}
-                />
-              </Pressable>
-            </View>
-          </UiGlassSurface>
-        </View>
+        {!prioritizeEditor ? editorControls : null}
         {voice.state.status !== "idle" ? (
           <View style={styles.voiceStatus}>
             <UiText accessibilityLiveRegion="polite" style={styles.secondary}>
@@ -915,6 +922,7 @@ const createStyles = (c: UiColors) =>
       gap: 8,
     },
     countFooter: { paddingHorizontal: visual.space.page },
+    countFooterLarge: { flexDirection: "column", alignItems: "flex-start" },
     target: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
     spacer: { flex: 1 },
     send: { borderRadius: visual.radius.pill, backgroundColor: c.accent },
@@ -927,6 +935,7 @@ const createStyles = (c: UiColors) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: c.separator,
     },
+    keyboardEditor: { marginTop: 0 },
     composerShadow: {
       marginHorizontal: visual.space.page,
       marginTop: 6,
