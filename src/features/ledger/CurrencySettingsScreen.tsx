@@ -41,7 +41,7 @@ import { chooseJourneyEntry } from "@/domain/ledger/journeyContext";
 import { createLocalId } from "@/domain/localId";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { currencyName } from "@/features/ledger/currencyPickerData";
-import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
+import { hostedLedgerCurrencySheetEnabled, useLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
 import { ExchangeRateLookup } from "@/features/ledger/ExchangeRateLookup";
 import { SheetHeader } from "@/components/SheetHeader";
 import {
@@ -128,6 +128,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
       ? journeyRead
       : null;
   const preview = journey ? previewRead : null;
+  const openHostedCurrency = useLedgerCurrencySheet(journey?.journeyId, journeyId);
 
   useLayoutEffect(
     () => () => {
@@ -348,6 +349,36 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
     }
   };
 
+  const availableCurrencyPicker = journey && canChange && !locked && !working && (guestLocal || online);
+  const currentPicker = useRef<{
+    journey: NonNullable<typeof journey>;
+    guestLocal: boolean;
+    select: typeof selectCurrency;
+  } | null>(null);
+  useLayoutEffect(() => {
+    currentPicker.current = availableCurrencyPicker ? { journey, guestLocal, select: selectCurrency } : null;
+    return () => { currentPicker.current = null; };
+  });
+  const presentCurrencyPicker = () => {
+    const owner = lane.current;
+    const scope = currentPicker.current;
+    if (!owner?.valid() || !scope) return;
+    const current = () => {
+      const picker = currentPicker.current;
+      return owner.valid() && picker?.journey.journeyId === scope.journey.journeyId &&
+        picker.journey.settlementCurrency === scope.journey.settlementCurrency &&
+        picker.guestLocal === scope.guestLocal ? picker : null;
+    };
+    if (!openHostedCurrency({
+      kind: "currency",
+      titleKey: "currencySettings.copy31",
+      selected: scope.journey.settlementCurrency,
+      suggestions: [scope.journey.settlementCurrency, "EUR", "USD"],
+      isCurrent: () => current() !== null,
+      choose: code => { void current()?.select(code); },
+    })) setPickerOpen(true);
+  };
+
   const confirmChange = () => {
     const current = lane.current;
     const scope = current?.scope;
@@ -451,7 +482,7 @@ export function CurrencySettingsScreen({ journeyId, hostLookupPickers = false }:
                 disabled: locked || !canChange || (!guestLocal && !online) || working,
               }}
               disabled={locked || !canChange || (!guestLocal && !online) || working}
-              onPress={() => setPickerOpen(true)}
+              onPress={presentCurrencyPicker}
               style={styles.row}
             >
               <View style={styles.grow}>

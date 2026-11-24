@@ -21,6 +21,7 @@ const state = vi.hoisted(() => ({
   refCursor: 0,
   online: true,
   hosted: false,
+  openHostedCurrency: vi.fn(),
   generation: 1,
   accountId: "account-a",
 }));
@@ -42,8 +43,8 @@ vi.mock("react", async (original) => ({
     const i = state.refCursor++;
     return state.refs[i] ?? (state.refs[i] = { current: v });
   },
-  useLayoutEffect: (fn: any) => {
-    if (state.mount) {
+  useLayoutEffect: (fn: any, dependencies?: unknown[]) => {
+    if (state.mount || dependencies === undefined) {
       const cleanup = fn();
       if (typeof cleanup === "function") state.cleanups.push(cleanup);
     }
@@ -87,7 +88,10 @@ vi.mock("@/data/operations/ledgerActivity", () => ({
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "AppIcon" }));
 vi.mock("@/components/SheetHeader", () => ({ SheetHeader: "SheetHeader" }));
 vi.mock("./CurrencyPicker", () => ({ CurrencyPicker: "CurrencyPicker" }));
-vi.mock("./ledgerCurrencySheet", () => ({ get hostedLedgerCurrencySheetEnabled() { return state.hosted; } }));
+vi.mock("./ledgerCurrencySheet", () => ({
+  get hostedLedgerCurrencySheetEnabled() { return state.hosted; },
+  useLedgerCurrencySheet: () => state.openHostedCurrency,
+}));
 vi.mock("./ExchangeRateLookup", () => ({ ExchangeRateLookup: "ExchangeRateLookup" }));
 vi.mock("@/data/repositories/tripRepository", () => ({
   readLocalTripRepository: async () => ({
@@ -148,6 +152,7 @@ const flush = async () => {
 };
 beforeEach(() => {
   state.hosted = false;
+  state.openHostedCurrency.mockReset().mockReturnValue(false);
   state.cleanups = [];
   state.refs = [];
   state.refCursor = 0;
@@ -187,6 +192,27 @@ it("never falls back to another Trip or previews/commits its currency when expli
   expect(state.preview).not.toHaveBeenCalled();
   expect(state.commit).not.toHaveBeenCalled();
   expect(v.some((n) => n.props.children === "Other Trip")).toBe(false);
+});
+
+it("opens the hosted setting with the original journey and drops a result after account change", async () => {
+  state.openHostedCurrency.mockReturnValue(true);
+  render("b", true);
+  await flush();
+  const row = render("b", true).find(node =>
+    node.type === "Pressable" && nodes(node).some(child => child.props.children === "NZD"),
+  );
+  expect(row).toBeDefined();
+  row?.props.onPress();
+  const [choice] = state.openHostedCurrency.mock.lastCall ?? [];
+  expect(choice?.selected).toBe("NZD");
+  expect(choice.isCurrent()).toBe(true);
+  expect(state.preview).not.toHaveBeenCalled();
+  state.generation += 1;
+  expect(choice.isCurrent()).toBe(false);
+  choice.choose("USD");
+  await flush();
+  expect(state.preview).not.toHaveBeenCalled();
+  expect(state.commit).not.toHaveBeenCalled();
 });
 it("keeps explicit same-Trip lookup and existing owner authority", async () => {
   render("b");

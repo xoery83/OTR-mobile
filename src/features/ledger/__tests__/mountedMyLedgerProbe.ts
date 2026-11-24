@@ -22,6 +22,7 @@ export function createMountedMyLedgerProbe(generation: () => number) {
       useRef: (v: unknown) => ({ current: v }),
       useCallback: (f: unknown) => f,
       useEffect: (f: () => unknown) => effects.push(f),
+      useLayoutEffect: (f: () => unknown) => effects.push(f),
     },
     "react/jsx-runtime": { jsx: () => null, jsxs: () => null },
     "react-native": { StyleSheet: { create: (x: unknown) => x } },

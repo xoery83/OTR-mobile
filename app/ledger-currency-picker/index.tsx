@@ -6,7 +6,7 @@ import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
 import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
-import { UiDatePicker } from "@/ui/forms";
+import { UiChoiceChip, UiDatePicker } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { visual } from "@/ui/visual";
@@ -34,6 +34,20 @@ export default function LedgerCurrencyPickerRoute() {
       <CurrencyPicker hosted selected={picker.selected} suggestions={picker.suggestions} onSelect={code => select(() => picker.choose(code))} />
     </SheetRoutePanel>;
   }
+  if (picker?.kind === "display") {
+    return <SheetRoutePanel title={title}>
+      <View style={styles.choices}>
+        {picker.options.map(code => (
+          <UiChoiceChip
+            key={code}
+            label={code}
+            selected={code === picker.selected}
+            onPress={() => select(() => picker.choose(code))}
+          />
+        ))}
+      </View>
+    </SheetRoutePanel>;
+  }
   return <SheetRoutePanel title={title} action={picker?.kind === "date" ? {
     label: t("common.done"), disabled: exitPending, onPress: () => select(() => picker.choose(date)),
   } : undefined}>
@@ -45,5 +59,6 @@ export default function LedgerCurrencyPickerRoute() {
 }
 
 const styles = StyleSheet.create({
+  choices: { padding: visual.space.page, gap: visual.space.card },
   clock: { alignItems: "center", padding: visual.space.page },
 });

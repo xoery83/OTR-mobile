@@ -11,6 +11,7 @@ export type LedgerCurrencyChoice = {
   isCurrent?(): boolean;
 } & (
   | { kind: "currency"; selected: string; suggestions: string[]; choose(code: string): void }
+  | { kind: "display"; selected: string | null; options: readonly string[]; choose(code: string): void }
   | { kind: "date"; initial: Date; maximumDate?: Date; choose(date: Date): void }
 );
 
