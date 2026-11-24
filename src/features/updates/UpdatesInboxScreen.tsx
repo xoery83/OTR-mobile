@@ -1,3 +1,5 @@
+import { useSheetScrollDismissal } from "@/components/SheetHost";
+import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { ImportUpdatesSection } from "./ImportUpdatesSection";
 import {
   useCallback,
@@ -50,14 +52,22 @@ export const updatesCardTitle = (card: CaptureUpdateCard) =>
     ? t("updates.needsInput", { count: card.recoveryInputs.length })
     : t(`updates.state.${card.sourceState}`);
 
-export function UpdatesInboxScreen() {
+type OpenImport = (jobId: string, originGeneration: number, destination?: "REVIEW") => void;
+
+type UpdatesInboxProps = {
+  onOpenImport?: OpenImport;
+  bindRefresh?(refresh: (() => void) | null): void;
+};
+
+export function UpdatesInboxScreen(props: UpdatesInboxProps = {}) {
   const generation = useSyncExternalStore(
     subscribeAccountGeneration,
     getAccountGeneration,
   );
-  return <UpdatesInboxContent key={generation} generation={generation} />;
+  return <UpdatesInboxContent key={generation} generation={generation} {...props} />;
 }
-function UpdatesInboxContent({ generation }: { generation: number }) {
+function UpdatesInboxContent({ generation, onOpenImport, bindRefresh }: UpdatesInboxProps & { generation: number }) {
+  const sheetScroll = useSheetScrollDismissal();
   const locale = useUiLocale();
   const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
@@ -69,8 +79,9 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
     activityTripId?: string;
     originGeneration?: string;
   }>();
+  const [showAll, setShowAll] = useState(false);
   const activityId =
-    params.originGeneration === String(generation) &&
+    !showAll && params.originGeneration === String(generation) &&
     typeof params.activityId === "string"
       ? params.activityId
       : undefined;
@@ -221,6 +232,15 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       };
     }, [load]),
   );
+  const refresh = useCallback(() => {
+    if (!active.current || generation !== getAccountGeneration()) return;
+    void load();
+    setRefreshKey((value) => value + 1);
+  }, [generation, load]);
+  useLayoutEffect(() => {
+    bindRefresh?.(refresh);
+    return () => bindRefresh?.(null);
+  }, [bindRefresh, refresh]);
   const operate = async (work: (reader: Session) => Promise<void>) => {
     const ticket = request.current,
       owner = renderedIntent,
@@ -239,6 +259,17 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       if (active.current && generation === getAccountGeneration()) setBusy(false);
     }
   };
+  const navigateToImport: OpenImport = (jobId, originGeneration, destination) => {
+    if (onOpenImport) {
+      onOpenImport(jobId, originGeneration, destination);
+      return;
+    }
+    const review = hostedImportEnabled ? "/import-plans/review" : "/import-review";
+    router.push({
+      pathname: destination === "REVIEW" ? review : "/import-plans",
+      params: { jobId, origin: "UPDATES", originGeneration: String(originGeneration) },
+    });
+  };
   const open = (card: CaptureUpdateCard) =>
     operate(async (reader) => {
       const ticket = request.current,
@@ -251,14 +282,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
       );
       if (!current(ticket, owner)) return;
       assertAccountRequestGeneration(reader.context);
-      router.push({
-        pathname: "/import-plans",
-        params: {
-          jobId: target.job.batch.jobId,
-          origin: "UPDATES",
-          originGeneration: String(reader.context.generation),
-        },
-      });
+      navigateToImport(target.job.batch.jobId, reader.context.generation);
     });
   const intakeCards =
     page?.cards.filter((card) => !activityId || card.batchId === activityId) ?? [];
@@ -272,14 +296,15 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
           <UiButton
             label={t("updates.batchScope")}
             variant="text"
-            onPress={() =>
-              router.setParams({
+            onPress={() => {
+              if (onOpenImport) setShowAll(true);
+              else router.setParams({
                 activityId: undefined,
                 activityJobId: undefined,
                 activityTripId: undefined,
                 originGeneration: undefined,
-              })
-            }
+              });
+            }}
           />
         ) : null}
         <ScrollView
@@ -320,19 +345,13 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
         />
       </View>
       <ScrollView
+        {...sheetScroll}
         style={styles.list}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={() => {
-              void load();
-              setRefreshKey((value) => value + 1);
-            }}
-            tintColor={colors.accent}
-          />
-        }
+        refreshControl={bindRefresh ? undefined : (
+          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.accent} />
+        )}
       >
         <ImportUpdatesSection
           filter={filter}
@@ -390,14 +409,7 @@ function UpdatesInboxContent({ generation }: { generation: number }) {
               originGeneration !== generation
             )
               return;
-            router.push({
-              pathname: destination === "REVIEW" ? "/import-review" : "/import-plans",
-              params: {
-                jobId,
-                origin: "UPDATES",
-                originGeneration: String(originGeneration),
-              },
-            });
+            navigateToImport(jobId, originGeneration, destination);
           }}
         />
         {loading ? (

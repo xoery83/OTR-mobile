@@ -166,6 +166,12 @@ picker. Choices return only to the originating report or settings entry.
 The existing settings owner retains its local save or Account preview and
 commit flow.
 
+Related Updates retains the exact originating Results entry while it opens in
+the Import stack. The same authorized Job returns to that Results entry.
+Review and other Jobs open as children of the Updates entry. A Review opened
+directly from standalone Updates has its own Sheet close and retains the
+existing Review reader, permission checks and operations.
+
 The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.

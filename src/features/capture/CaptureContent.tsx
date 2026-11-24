@@ -8,6 +8,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { UiButton, UiSection } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
+import type { RelatedImportActivity } from "./importSheetNavigation";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
@@ -39,6 +40,7 @@ export function CaptureContent({
   onReopenJob,
   onOpenAcceptedItem,
   onOpenReview,
+  onOpenRelatedUpdates,
   onReturnToTrip,
   activityPositionsRef,
   activityScope,
@@ -60,6 +62,7 @@ export function CaptureContent({
   onReopenJob?: (id: string) => void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   onOpenReview?(jobId: string): void;
+  onOpenRelatedUpdates?(activity: RelatedImportActivity): void;
   onReturnToTrip?(view: "home" | "day", tripId: string, jobId: string): void;
   activityPositionsRef?: { current: Record<string, number> };
   activityScope?: () => boolean;
@@ -390,6 +393,14 @@ export function CaptureContent({
       <CaptureProgress
         historical={reopening && !attempted}
         hosted={hostedComposer}
+        onOpenRelatedUpdates={onOpenRelatedUpdates ? activity => {
+          const live = modelRef.current;
+          if (!current() || materialReadEpoch !== readEpoch.current || !live ||
+              live.batch.accountId !== accountId || live.batch.batchId !== activity.batchId ||
+              live.batch.jobId !== activity.jobId ||
+              (live.batch.context.tripPrior?.id ?? live.assignedTripId ?? "") !== activity.tripId) return;
+          onOpenRelatedUpdates(activity);
+        } : undefined}
         historicalTripName={
           (model?.batch.context.tripPrior?.id ?? model?.assignedTripId) ===
           selectedTripPrior

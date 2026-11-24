@@ -22,7 +22,8 @@ export default function ImportSheetLayout() {
   if (!hostedImportEnabled) {
     return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.transparent } }} />;
   }
-  const immersive = Boolean(jobId) || pathname === "/import-plans/quick-add-edit"
+  const batchPage = pathname === "/import-plans/review" || pathname === "/import-plans/updates";
+  const immersive = Boolean(jobId) || batchPage || pathname === "/import-plans/quick-add-edit"
     || pathname === "/import-plans/quick-add-airport" || pathname === "/import-plans/quick-add-calendar-range"
     || pathname === "/import-plans/quick-add-place";
   return <HostedImportRoutes immersive={immersive} />;

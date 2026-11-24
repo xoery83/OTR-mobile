@@ -5,6 +5,7 @@ import {
 } from "@/features/capture/captureTripPrior";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { router, useFocusEffect, useIsFocused, useLocalSearchParams, useNavigation } from "expo-router";
+import { useRoute, type NavigationProp, type NavigationState } from "expo-router/react-navigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, Text, View } from "react-native";
 import { readLocalSession } from "@/data/auth/authRepository";
@@ -17,6 +18,7 @@ import {
   withAccountApplyGate,
 } from "@/data/auth/accountRequestContext";
 import { captureOriginPath } from "@/features/capture/captureOriginPath";
+import { activeImportSheetPage } from "@/features/capture/importSheetNavigation";
 import { createCaptureStaging } from "@/features/capture/captureStaging";
 import { pickCaptureMaterial } from "@/native/capturePicker";
 import { CaptureContent } from "@/features/capture/CaptureContent";
@@ -61,27 +63,10 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
     origin?: string;
     originGeneration?: string;
   }>();
-  const navigation = useNavigation<{
-    isFocused(): boolean;
-    getState?(): {
-      index: number;
-      routes: { name: string; params?: { importJobId?: string } }[];
-    };
-    getParent():
-      | {
-          getState(): {
-            index: number;
-            routes: { name: string; params?: { importJobId?: string } }[];
-          };
-        }
-      | undefined;
-    setParams(params: {
-      tripId?: string;
-      jobId?: string;
-      origin?: string;
-      originGeneration?: string;
-    }): void;
-  }>();
+  const navigation = useNavigation<Omit<NavigationProp<{
+    capture: { tripId?: string; jobId?: string; origin?: string; originGeneration?: string };
+  }>, "getState"> & { getState(): NavigationState | undefined }>();
+  const route = useRoute();
   useUiLocale();
   const focused = useIsFocused();
   const styles = useThemedStyles(createStyles);
@@ -215,12 +200,13 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
         stopSaving?.();
         active = false;
         // Dependency cleanup must not erase a newer focused invocation.
-        const parent = hosted ? navigation.getState?.() : navigation.getParent()?.getState() ?? navigation.getState?.();
+        const parent = hosted ? navigation.getState() : navigation.getParent()?.getState() ?? navigation.getState();
         const destination = parent?.routes[parent.index];
         const openingReview =
           (hosted && (openingHostedReview.current || destination?.name === "review")) ||
           destination?.name === "import-review" ||
-          typeof destination?.params?.importJobId === "string";
+          Boolean(destination?.params && "importJobId" in destination.params &&
+            typeof destination.params.importJobId === "string");
         if (hosted || !openingReview) visibleStaging?.hide();
         if (!hosted && !openingReview) setAdmission(null);
         if (!overlay && !navigation.isFocused() && !openingReview)
@@ -298,13 +284,34 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
             return Boolean(await readCaptureTripPrior(id, admission)) && isCurrent();
           }}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
+          onOpenRelatedUpdates={hosted ? ({ batchId, jobId, tripId }) => {
+            const state = activeImportSheetPage(navigation, route.key);
+            if (!state || !isCurrent() || canUseHostedSource?.() === false) return;
+            navigation.dispatch({
+              type: "PUSH", target: state.key, source: route.key,
+              payload: {
+                name: "updates",
+                params: {
+                  activityId: batchId, activityJobId: jobId, activityTripId: tripId,
+                  originGeneration: String(generation), originKey: route.key,
+                },
+              },
+            });
+          } : undefined}
           onOpenReview={(id) => {
             if (!isCurrent()) return;
             if (hosted) {
-              if (openingHostedReview.current) return;
+              const state = activeImportSheetPage(navigation, route.key);
+              if (openingHostedReview.current || !state || canUseHostedSource?.() === false) return;
               openingHostedReview.current = true;
-            } else navigation.setParams({ jobId: id });
-            router.push({ pathname: hosted ? "/import-plans/review" : "/import-review", params: { jobId: id } });
+              navigation.dispatch({
+                type: "PUSH", target: state.key, source: route.key,
+                payload: { name: "review", params: { jobId: id, originGeneration: String(generation), originKey: route.key } },
+              });
+            } else {
+              navigation.setParams({ jobId: id });
+              router.push({ pathname: "/import-review", params: { jobId: id } });
+            }
           }}
           onCancel={() => {
             const target = captureOriginPath(

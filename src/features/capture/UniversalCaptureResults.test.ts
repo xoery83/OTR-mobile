@@ -77,6 +77,31 @@ it("offers only a status read on a historical import with unconfirmed results", 
   expect(recover).toHaveBeenCalledOnce();
   expect(start).not.toHaveBeenCalled();
 });
+
+it("opens related Updates through its hosted Results owner with the exact Batch and Job", () => {
+  const { model: source } = fixture().props;
+  const model = { ...source, batch: { ...source.batch, createdAt: "2026-11-23T09:00:00Z" } };
+  vi.mocked(useUniversalCapture).mockReturnValueOnce({
+    localFirstSelected: true,
+    localFirst: { state: "REVIEW_READY", candidates: [] },
+    unavailable: false,
+    busy: false,
+  } as never);
+  let current = true;
+  const open = vi.fn();
+  renderToStaticMarkup(createElement(UniversalCaptureResults, {
+    model, isCurrent: () => current, onOpenRelatedUpdates: open,
+  }));
+  const related = state.buttons.find(({ label }) => label === t("updates.relatedActivity"))!;
+  related.onPress();
+  current = false;
+  related.onPress();
+  expect(open).toHaveBeenCalledExactlyOnceWith({
+    batchId: model.batch.batchId,
+    jobId: model.batch.jobId,
+    tripId: model.batch.context.tripPrior?.id ?? model.assignedTripId ?? "",
+  });
+});
 function fixture() {
   const accountId = randomUUID(),
     tripId = randomUUID(),
