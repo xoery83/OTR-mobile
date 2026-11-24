@@ -686,9 +686,8 @@ vi.mock("@/components/SheetRoutePanel", () => ({
   },
 }));
 
-it("lets the hosted composer follow the keyboard and fit one line at a large text size", () => {
+it("fits the hosted composer at a large text size without changing the legacy editor", () => {
   render(empty, 0, { hosted: true });
-  expect(state.nodes.some((node) => node.keyboardInsets === true)).toBe(true);
   expect(state.nodes.find((node) => node.multiline).style[1].height).toBeGreaterThan(44);
   render(empty, 0);
   expect(state.nodes.find((node) => node.multiline).style[1].height).toBe(44);

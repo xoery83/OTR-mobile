@@ -755,7 +755,6 @@ export function CaptureComposer({
         title={header}
         onBack={nested ? close : undefined}
         ownsScroll={content != null}
-        keyboardInsets={content == null && page === "composer"}
         overlay={attachmentMenu}
       >
         {body}
