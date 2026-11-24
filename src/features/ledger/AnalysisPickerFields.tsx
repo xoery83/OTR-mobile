@@ -85,14 +85,14 @@ function RangeFields({
             accessibilityLabel={t("ui.analysisStartDate")}
             placeholder={t("ui.yyyymmdd")}
             value={draft.from}
-            onChangeText={(from) => setDraft({ ...draft, from })}
+            onChangeText={(from) => setDraft(current => current && { ...current, from })}
           />
           <UiText>{t("ui.endDate")}</UiText>
           <UiTextInput
             accessibilityLabel={t("ui.analysisEndDate")}
             placeholder={t("ui.yyyymmdd")}
             value={draft.through}
-            onChangeText={(through) => setDraft({ ...draft, through })}
+            onChangeText={(through) => setDraft(current => current && { ...current, through })}
           />
           {invalid ? (
             <UiText accessibilityLiveRegion="polite" accessibilityRole="alert">

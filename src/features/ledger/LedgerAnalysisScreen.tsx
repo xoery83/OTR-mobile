@@ -94,6 +94,7 @@ export function LedgerAnalysisScreen() {
   const [scopeHeight, setScopeHeight] = useState(52);
   const rangeRef = useRef<AnalysisRange>({});
   const pendingRange = useRef<AnalysisRange | null>(null);
+  const refreshFocused = useRef<(() => void) | null>(null);
   const pickerId = useRef<string>(undefined);
   const owningNavigation = useNavigation();
   const generation = getAccountGeneration();
@@ -119,8 +120,9 @@ export function LedgerAnalysisScreen() {
 
   const load = useCallback(
     async (range: AnalysisRange) => {
-      if (!params.journeyId || !params.memberId) return;
+      if (!params.journeyId || !params.memberId || generation !== getAccountGeneration()) return;
       const id = request.begin();
+      const isCurrent = () => request.isCurrent(id) && generation === getAccountGeneration();
       setUpdating(true);
       setError(null);
       try {
@@ -128,27 +130,45 @@ export function LedgerAnalysisScreen() {
         const data = await (
           await repository.current
         ).loadSpendingAnalysisProjection(params.journeyId, params.memberId, range);
-        if (!request.isCurrent(id)) return;
-        if (pendingRange.current === range) pendingRange.current = null;
+        if (!isCurrent()) return;
         rangeRef.current = range;
         setView({ dataset: data, range });
       } catch {
-        repository.current = null;
-        if (request.isCurrent(id))
+        if (isCurrent()) {
+          repository.current = null;
           setError(t("ui.spendingAnalysisCouldNotBeRefreshedYourPreviousViewIs"));
+        }
       } finally {
-        if (request.isCurrent(id)) setUpdating(false);
+        if (isCurrent()) setUpdating(false);
       }
     },
-    [params.journeyId, params.memberId, request],
+    [generation, params.journeyId, params.memberId, request],
   );
 
   useFocusEffect(
     useCallback(() => {
-      const range = pendingRange.current ?? rangeRef.current;
-      pendingRange.current = null;
-      void load(range);
-      return () => request.cancel();
+      let active = true;
+      let scheduled = false;
+      const refresh = () => {
+        if (scheduled) return;
+        scheduled = true;
+        queueMicrotask(() => {
+          scheduled = false;
+          if (!active) return;
+          const range = pendingRange.current ?? rangeRef.current;
+          pendingRange.current = null;
+          void load(range);
+        });
+      };
+      if (hostedLedgerAnalysisPickerEnabled) {
+        refreshFocused.current = refresh;
+        refresh();
+      } else void load(rangeRef.current);
+      return () => {
+        active = false;
+        refreshFocused.current = null;
+        request.cancel();
+      };
     }, [load, request]),
   );
 
@@ -258,9 +278,13 @@ export function LedgerAnalysisScreen() {
         : (view?.dataset.journey.endDate?.slice(0, 10) ?? today),
     },
     choose: (range) => {
-      if (hostedLedgerAnalysisPickerEnabled) pendingRange.current = range;
-      else setRangeOpen(false);
-      void load(range);
+      if (hostedLedgerAnalysisPickerEnabled) {
+        pendingRange.current = range;
+        refreshFocused.current?.();
+      } else {
+        setRangeOpen(false);
+        void load(range);
+      }
     },
   };
   function categoryPicker(menu: NonNullable<typeof categoryMenu>): Extract<AnalysisPicker, { kind: "category" }> {

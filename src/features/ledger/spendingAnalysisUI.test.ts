@@ -1,6 +1,6 @@
 import { AnalysisExcludedExpenses } from "./AnalysisExcludedExpenses";
 import { AnalysisPickerFields } from "./AnalysisPickerFields";
-import type { AnalysisPicker } from "./analysisPickerInvocation";
+import { completeAnalysisPicker, readAnalysisPicker, type AnalysisPicker } from "./analysisPickerInvocation";
 import type { ComponentProps, ReactElement } from "react";
 import { MoneyText } from "./MoneyText";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,7 +34,12 @@ const ui = vi.hoisted(() => ({
   options: vi.fn(),
   fontScale: 1,
   push: vi.fn(),
+  hosted: false,
   nav: { getParent: () => ({ setOptions: ui.options }), isFocused: () => true },
+}));
+vi.mock("./analysisPickerInvocation", async original => ({
+  ...(await original<typeof import("./analysisPickerInvocation")>()),
+  get hostedLedgerAnalysisPickerEnabled() { return ui.hosted; },
 }));
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -216,6 +221,7 @@ beforeEach(() => {
   ui.push.mockClear();
   ui.params.scope = "MINE";
   ui.fontScale = 1;
+  ui.hosted = false;
 });
 
 describe("Analysis UI transitions and request guardrails", () => {
@@ -395,6 +401,27 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(sheet).toBeDefined();
     expect(ui.projection).toHaveBeenCalledTimes(2);
     expect(texts(action)).not.toContain("Range");
+  });
+  it.each([true, false])("reads the applied hosted range once when refocus arrives first: %s", async focusFirst => {
+    ui.hosted = true;
+    const screen = await ready(data(31));
+    const action = nodes(screen).find((node) => node.props.accessibilityLabel === "Choose date range")!;
+    press(action);
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "range") throw new Error("Expected the hosted range picker");
+    ui.cleanup?.();
+    const refocus = () => { ui.cleanup = ui.focus?.() ?? null; };
+    const apply = () => completeAnalysisPicker(params.invocation, picker, () => picker.choose({ from: "2026-09-02T00:00:00.000Z" }));
+    ui.projection.mockRejectedValueOnce(new Error("local range unavailable"));
+    if (focusFirst) refocus();
+    apply();
+    if (!focusFirst) refocus();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(ui.projection).toHaveBeenCalledTimes(2);
+    expect(ui.projection).toHaveBeenLastCalledWith("j", "a", { from: "2026-09-02T00:00:00.000Z" });
+    expect(texts(render())).toContain("MY SPENDING");
+    expect(texts(render())).toContain("Tap to try again");
   });
   it("uses a structured skeleton, then preserves previous data on local failure", async () => {
     ui.projection.mockResolvedValue(data());
