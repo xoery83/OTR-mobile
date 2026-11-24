@@ -5,6 +5,7 @@ import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
+import { ExpenseCategoryPicker } from "@/features/ledger/ExpenseCategoryPicker";
 import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
 import { UiDatePicker } from "@/ui/forms";
 import { t } from "@/ui/locale";
@@ -32,6 +33,11 @@ export default function LedgerCurrencyPickerRoute() {
   if (picker?.kind === "currency") {
     return <SheetRoutePanel title={title} ownsScroll>
       <CurrencyPicker hosted selected={picker.selected} suggestions={picker.suggestions} onSelect={code => select(() => picker.choose(code))} />
+    </SheetRoutePanel>;
+  }
+  if (picker?.kind === "category") {
+    return <SheetRoutePanel title={title}>
+      <ExpenseCategoryPicker hosted category={picker.selected} onSelect={category => select(() => picker.choose(category))} />
     </SheetRoutePanel>;
   }
   return <SheetRoutePanel title={title} action={picker?.kind === "date" ? {

@@ -1,3 +1,5 @@
+import { ExpenseCategoryPicker } from "./ExpenseCategoryPicker";
+import { hostedExpenseFieldsEnabled, useLedgerCurrencySheet } from "./ledgerCurrencySheet";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { useTripView } from "@/features/day-feed/TripViewContext";
 import { systemMessage, categoryLabel, domainLabel } from "@/ui/domainLabels";
@@ -13,7 +15,6 @@ import type { UiColors } from "@/ui/palette";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { MoneyText, type MoneyTextProps } from "./MoneyText";
 import {
-  type ComponentProps,
   useCallback,
   useEffect,
   useMemo,
@@ -171,47 +172,6 @@ const splitLabels: Record<ExpenseSplitMethod, MessageKey> = {
   PERCENTAGE: "ui.percentages",
 };
 
-const categoryGroups: {
-  titleKey: MessageKey;
-  items: {
-    id: (typeof EXPENSE_CATEGORIES)[number];
-    icon: ComponentProps<typeof AppIcon>["name"];
-  }[];
-}[] = [
-  {
-    titleKey: "ui.foodShopping",
-    items: [
-      { id: "food", icon: "fork.knife" },
-      { id: "shopping", icon: "bag" },
-      { id: "groceries", icon: "basket" },
-    ],
-  },
-  {
-    titleKey: "ui.gettingAround",
-    items: [
-      { id: "flight", icon: "airplane" },
-      { id: "car", icon: "car" },
-      { id: "fuel", icon: "fuelpump" },
-      { id: "transport", icon: "tram" },
-    ],
-  },
-  {
-    titleKey: "ui.stayExperiences",
-    items: [
-      { id: "hotel", icon: "bed.double" },
-      { id: "ticket", icon: "ticket" },
-      { id: "activity", icon: "figure.walk" },
-    ],
-  },
-  {
-    titleKey: "ui.insuranceOther",
-    items: [
-      { id: "insurance", icon: "shield" },
-      { id: "other", icon: "square.grid.2x2" },
-    ],
-  },
-];
-
 export function LedgerExpenseEntryScreen() {
   useUiLocale();
   const { reportLocalOutcome } = useTripView();
@@ -274,6 +234,36 @@ export function LedgerExpenseEntryScreen() {
   const addingReceiptRef = useRef(false);
   const [selectingReceipt, setSelectingReceipt] = useState(false);
   const expenseDraftId = useRef(createLocalId("ledger-expense"));
+  const openExpenseField = useLedgerCurrencySheet(
+    context?.journeyId,
+    params.expenseId ?? params.correctionRootId,
+    true,
+    hostedExpenseFieldsEnabled,
+  );
+  const chooseCategory = (category: string) => {
+    setCategoryManual(true);
+    setDraft(current => current && { ...current, category });
+    setCategorySheet(false);
+  };
+  const chooseExpenseCurrency = (code: string) => {
+    currencyChosen.current = true;
+    setDraft(current => {
+      if (!current) return current;
+      return {
+        ...correctedCurrencyDraft(current, code),
+        exact: Object.fromEntries(
+          Object.entries(current.exact).map(([id, amount]) => [
+            id,
+            correctedCurrencyDraft({ amount, currency: current.currency }, code).amount,
+          ]),
+        ),
+      };
+    });
+    setCurrencySheet(false);
+  };
+  const chooseExpenseDate = (value: Date) => {
+    setDraft(current => current && { ...current, date: dateKey(value) });
+  };
   const scanOcrQueue = useRef<string[]>([]);
   const [scanSourceVisible, setScanSourceVisible] = useState(false);
   const scanSourceAddPart = useRef(false);
@@ -302,8 +292,7 @@ export function LedgerExpenseEntryScreen() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      if (commit)
-        setDraft((current) => current && { ...current, date: dateKey(pendingDate) });
+      if (commit) chooseExpenseDate(pendingDate);
       setDatePicker(false);
       dateDismissing.current = false;
     });
@@ -1361,7 +1350,16 @@ export function LedgerExpenseEntryScreen() {
           <View style={styles.currencyHalf}>
             <FormRow
               label={t("ui.currency")}
-              onPress={() => setCurrencySheet(true)}
+              onPress={() => {
+                if (!openExpenseField({
+                  kind: "currency",
+                  titleKey: "ui.currency",
+                  selected: draft.currency,
+                  suggestions: [...context.recentCurrencies, draft.currency, context.settlementCurrency, context.defaultCurrency],
+                  isCurrent: () => mountedRef.current && !savingRef.current,
+                  choose: chooseExpenseCurrency,
+                })) setCurrencySheet(true);
+              }}
               value={draft.currency}
             />
           </View>
@@ -1468,7 +1466,15 @@ export function LedgerExpenseEntryScreen() {
           <View style={styles.compactHalf}>
             <FormRow
               label={t("ui.category")}
-              onPress={() => setCategorySheet(true)}
+              onPress={() => {
+                if (!openExpenseField({
+                  kind: "category",
+                  titleKey: "ui.category",
+                  selected: draft.category,
+                  isCurrent: () => mountedRef.current && !savingRef.current,
+                  choose: chooseCategory,
+                })) setCategorySheet(true);
+              }}
               value={categoryLabel(draft.category)}
               stacked
             />
@@ -1478,6 +1484,13 @@ export function LedgerExpenseEntryScreen() {
               label={t("ui.date")}
               onPress={() => {
                 Keyboard.dismiss();
+                if (openExpenseField({
+                  kind: "date",
+                  titleKey: "ui.expenseDate",
+                  initial: date,
+                  isCurrent: () => mountedRef.current && !savingRef.current,
+                  choose: chooseExpenseDate,
+                })) return;
                 setPendingDate(date);
                 setDatePicker(true);
               }}
@@ -1975,21 +1988,7 @@ export function LedgerExpenseEntryScreen() {
               context.settlementCurrency,
               context.defaultCurrency,
             ]}
-            onSelect={(code) => {
-              currencyChosen.current = true;
-              const corrected = correctedCurrencyDraft(draft, code);
-              setDraft({
-                ...corrected,
-                exact: Object.fromEntries(
-                  Object.entries(draft.exact).map(([id, amount]) => [
-                    id,
-                    correctedCurrencyDraft({ amount, currency: draft.currency }, code)
-                      .amount,
-                  ]),
-                ),
-              });
-              setCurrencySheet(false);
-            }}
+            onSelect={chooseExpenseCurrency}
           />
         ) : null}
       </Modal>
@@ -2002,44 +2001,8 @@ export function LedgerExpenseEntryScreen() {
         visible={categorySheet}
       >
         <SheetHeader onLeft={() => setCategorySheet(false)} title={t("ui.category")} />
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.categoryContent}
-          style={styles.flex}
-        >
-          {categoryGroups.map((group) => (
-            <View key={t(group.titleKey)}>
-              <Text style={styles.categoryHeading}>{t(group.titleKey)}</Text>
-              <View style={styles.categoryGrid}>
-                {group.items.map(({ id, icon }) => {
-                  const selected = draft.category === id;
-                  return (
-                    <Pressable
-                      accessibilityLabel={categoryLabel(id)}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      key={id}
-                      onPress={() => {
-                        setCategoryManual(true);
-                        setDraft({ ...draft, category: id });
-                        setCategorySheet(false);
-                      }}
-                      style={[
-                        styles.categoryTile,
-                        selected && styles.categoryTileSelected,
-                      ]}
-                    >
-                      <AppIcon color={colors.accent} name={icon} size={22} />
-                      <Text style={styles.categoryTileText}>{categoryLabel(id)}</Text>
-                      {selected ? (
-                        <AppIcon color={colors.accent} name="checkmark" size={16} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ))}
+        <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex}>
+          <ExpenseCategoryPicker category={draft.category} onSelect={chooseCategory} />
         </ScrollView>
       </Modal>
 
@@ -2442,36 +2405,6 @@ const createStyles = (colors: UiColors) =>
     allocationValue: { color: colors.textPrimary, fontSize: 14, fontWeight: "700" },
     allocationWarning: { color: colors.destructive },
     allocationHint: { color: colors.destructive, fontSize: 13 },
-    categoryContent: { gap: 24, padding: 16, paddingBottom: 48 },
-    categoryHeading: {
-      color: colors.textSecondary,
-      fontSize: 14,
-      fontWeight: "700",
-      marginBottom: 10,
-    },
-    categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-    categoryTile: {
-      alignItems: "center",
-      backgroundColor: colors.surface,
-      borderColor: colors.separator,
-      borderRadius: 12,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: 8,
-      minHeight: 60,
-      paddingHorizontal: 12,
-      width: "48%",
-    },
-    categoryTileSelected: {
-      backgroundColor: colors.selected,
-      borderColor: colors.accent,
-    },
-    categoryTileText: {
-      color: colors.textPrimary,
-      flex: 1,
-      fontSize: 16,
-      fontWeight: "600",
-    },
     customRow: { alignItems: "center", flexDirection: "row", gap: 12 },
     customRowLargeText: { alignItems: "stretch", flexDirection: "column" },
     customInput: {

@@ -1,5 +1,5 @@
 import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
-import { hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
+import { hostedExpenseFieldsEnabled, hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedDayCalendarEnabled } from "@/features/day-feed/dayCalendarHandoff";
 import { hostedDocumentsTripPickerEnabled } from "@/features/documents/documentsTripPicker";
@@ -157,7 +157,7 @@ export default function RootLayout() {
                 }}
               />
             </Stack.Protected>
-            <Stack.Protected guard={hostedLedgerCurrencySheetEnabled}>
+            <Stack.Protected guard={hostedLedgerCurrencySheetEnabled || hostedExpenseFieldsEnabled}>
               <Stack.Screen
                 name="ledger-currency-picker"
                 options={{

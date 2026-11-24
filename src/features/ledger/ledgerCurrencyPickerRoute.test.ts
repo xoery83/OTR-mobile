@@ -29,6 +29,7 @@ vi.mock("@/components/SheetHost", () => ({
 }));
 vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "panel" }));
 vi.mock("@/features/ledger/CurrencyPicker", () => ({ CurrencyPicker: "currency-picker" }));
+vi.mock("@/features/ledger/ExpenseCategoryPicker", () => ({ ExpenseCategoryPicker: "expense-category-picker" }));
 vi.mock("@/features/ledger/ledgerCurrencySheet", () => ({
   readLedgerCurrencySheet: (id: string) => id === "selection" ? state.choice : undefined,
   completeLedgerCurrencySheet: (id: string, choice: LedgerCurrencyChoice, apply: () => void) => {
@@ -70,4 +71,15 @@ it("does not use a currency selection after cancellation or when the owner has c
   state.choice = undefined;
   interrupted?.();
   expect(choose).not.toHaveBeenCalled();
+});
+
+it("applies an expense category only when its own dismissal completes", () => {
+  const choose = vi.fn();
+  state.choice = { kind: "category", titleKey: "ui.category", selected: "other", choose };
+  const route = LedgerCurrencyPickerRoute();
+  route.props.children.props.onSelect("food");
+  expect(choose).not.toHaveBeenCalled();
+  state.exit?.();
+  state.exit?.();
+  expect(choose).toHaveBeenCalledExactlyOnceWith("food");
 });
