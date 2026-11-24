@@ -26,8 +26,9 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
   const colors = useUiTheme();
   const dismissal = useSheetScrollDismissal(hosted);
   const [query, setQuery] = useState("");
-  const { width, height } = useWindowDimensions();
+  const { width, height, fontScale } = useWindowDimensions();
   const compactLandscape = hosted && width > height && height < 480;
+  const largeText = hosted && fontScale > 1.5;
   useUiLocale();
   const locale = getFormatLocale();
   const rows = useMemo(() => searchCurrencies(query), [query]);
@@ -58,7 +59,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
           searching ? null : (
             <View style={styles.top}>
               <Text style={styles.heading}>{t("currency.suggested")}</Text>
-              <View style={styles.chips}>
+              <View style={largeText ? styles.largeChips : styles.chips}>
                 {suggested.map((code) => (
                   <Pressable
                     key={code}
@@ -66,7 +67,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
                     accessibilityRole="button"
                     accessibilityState={{ selected: selected === code }}
                     onPress={() => onSelect(code)}
-                    style={[styles.chip, selected === code && styles.selectedChip]}
+                    style={[styles.chip, largeText && styles.largeChip, selected === code && styles.selectedChip]}
                   >
                     {selected === code ? (
                       <AppIcon color={colors.accent} name="checkmark" size={14} />
@@ -75,8 +76,8 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
                       {code}
                     </Text>
                     <Text
-                      numberOfLines={1}
-                      style={[styles.chipName, selected === code && styles.selectedText]}
+                      numberOfLines={largeText ? undefined : 1}
+                      style={[styles.chipName, largeText && styles.largeChipName, selected === code && styles.selectedText]}
                     >
                       {currencyName(code, locale)}
                     </Text>
@@ -97,7 +98,7 @@ export function CurrencyPicker({ selected, suggestions, onSelect, hosted = false
             style={styles.row}
           >
             <Text style={styles.code}>{item}</Text>
-            <Text numberOfLines={1} style={styles.rowName}>
+            <Text numberOfLines={largeText ? undefined : 1} style={styles.rowName}>
               {currencyName(item, locale)}
             </Text>
             {selected === item ? (
@@ -135,6 +136,7 @@ const createStyles = (colors: UiColors) =>
       textTransform: "uppercase",
     },
     chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    largeChips: { gap: 8 },
     chip: {
       alignItems: "center",
       backgroundColor: colors.surface,
@@ -147,10 +149,12 @@ const createStyles = (colors: UiColors) =>
       maxWidth: 148,
       paddingHorizontal: 10,
     },
+    largeChip: { maxWidth: "100%", paddingVertical: 6 },
     selectedChip: { backgroundColor: colors.selected, borderColor: colors.accent },
     code: { color: colors.textPrimary, fontSize: 15, fontWeight: "700" },
     selectedText: { color: colors.accent },
     chipName: { color: colors.textTertiary, flexShrink: 1, fontSize: 13, maxWidth: 130 },
+    largeChipName: { flex: 1, maxWidth: "100%" },
     allHeading: { marginBottom: 0, marginTop: 16 },
     row: {
       alignItems: "center",
