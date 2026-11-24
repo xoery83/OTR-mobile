@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { expect, it, vi } from "vitest";
+import { tripDiscoveryBoundary } from "../backend/src/tripDiscovery";
 import {
   betaCapabilities,
   betaRequest,
@@ -66,6 +67,45 @@ function fixture() {
     (await rpc("tools/call", { name, arguments: args })).result;
   return { backend, confirm, auth, rpc, tool, handle };
 }
+
+it("passes the default Trip List through the authenticated discovery contract", async () => {
+  const f = fixture();
+  const trip = {
+    id: randomUUID(),
+    name: "QA Trip",
+    destination: null,
+    startDate: null,
+    endDate: null,
+    createdAt: null,
+    lifecycleState: "ACTIVE",
+    metadataRevision: 4,
+  };
+  const page = { trips: [trip], nextCursor: null };
+  const discoverTrips = vi.fn(async () => page);
+  f.backend.mockImplementation(({ path, method }) =>
+    tripDiscoveryBoundary(
+      new Request(new URL(path, resource), { method }),
+      f.auth.accountId,
+      { discoverTrips },
+    ),
+  );
+  const response = await f.tool("list_trips", {
+    call: {
+      capabilityId: "otr.trip.list",
+      toolName: "list_trips",
+      pathParams: {},
+      query: {},
+      request: {},
+    },
+  });
+  expect(response.structuredContent).toMatchObject({
+    outcome: "SERVER_RESPONSE",
+    httpStatus: 200,
+    result: page,
+  });
+  expect(discoverTrips).toHaveBeenCalledWith(f.auth.accountId, null, 20, "ACTIVE");
+});
+
 it("discovers exactly all 103 frozen capabilities with concrete schemas and the original Guide", async () => {
   const f = fixture();
   const listed = await f.rpc("tools/list");

@@ -15,5 +15,18 @@ export const tripDiscoveryPageSchema = z.object({
   nextCursor: coreUuid.nullable(),
 });
 
+const tripDiscoveryListedStateSchema = z.enum(["ACTIVE", "ARCHIVED"]);
+
+export const tripDiscoveryLifecycleSchema = z.enum(["ACTIVE", "ARCHIVED", "ALL"]);
+export const tripDiscoveryLifecyclePageSchema = tripDiscoveryPageSchema.extend({
+  trips: z
+    .array(tripDiscoverySummarySchema.extend({
+      lifecycleState: tripDiscoveryListedStateSchema,
+      metadataRevision: z.number().int().nonnegative().safe(),
+    }))
+    .max(25),
+});
+
 export type TripDiscoverySummary = z.infer<typeof tripDiscoverySummarySchema>;
 export type TripDiscoveryPage = z.infer<typeof tripDiscoveryPageSchema>;
+export type TripDiscoveryLifecycle = z.infer<typeof tripDiscoveryLifecycleSchema>;

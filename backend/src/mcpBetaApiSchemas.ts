@@ -9,8 +9,8 @@ import {
   structuredTripCreateResultSchema,
 } from "../../src/domain/trip/tripCreateWireContract";
 import {
-  tripDiscoveryPageSchema,
-  tripDiscoverySummarySchema,
+  tripDiscoveryLifecyclePageSchema,
+  tripDiscoveryLifecycleSchema,
 } from "../../src/domain/trip/tripDiscoveryContract";
 import { coreHash, coreUuid } from "../../src/domain/trip/tripCoreV2";
 import { coreReceiptSchema } from "../../src/domain/trip/tripCoreV2Receipt";
@@ -131,7 +131,7 @@ export function betaRequestSchema(id: string): z.ZodType {
       return z.strictObject({
         cursor: coreUuid.optional(),
         limit: z.number().int().min(1).max(25).default(20),
-        lifecycle: z.enum(["ACTIVE", "ARCHIVED", "ALL"]).default("ACTIVE"),
+        lifecycle: tripDiscoveryLifecycleSchema.default("ACTIVE"),
       });
     case "otr.trip.get":
       return z.strictObject({ formatVersion: z.literal(3).default(3) });
@@ -288,16 +288,7 @@ export function betaResponseSchema(id: string): z.ZodType {
   }
   switch (id) {
     case "otr.trip.list":
-      return tripDiscoveryPageSchema.extend({
-        trips: z
-          .array(
-            tripDiscoverySummarySchema.extend({
-              lifecycleState: z.enum(["ACTIVE", "ARCHIVED"]),
-              metadataRevision: z.number().int().nonnegative().safe(),
-            }),
-          )
-          .max(25),
-      });
+      return tripDiscoveryLifecyclePageSchema;
     case "otr.trip.get":
       return structuredTripMetadataSnapshotSchema;
     case "otr.trip.create":

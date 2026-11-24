@@ -35,11 +35,23 @@ it("authenticates before listing, validates a bounded cursor and keeps a missing
   expect(gateway.discoverTrips).not.toHaveBeenCalled();
   expect((await handle(request("/v2/trips?limit=26"))).status).toBe(400);
   expect((await handle(request("/v2/trips?cursor=foreign"))).status).toBe(400);
+  expect((await handle(request("/v2/trips?lifecycle=DELETED"))).status).toBe(400);
+  expect((await handle(request("/v2/trips?lifecycle=ACTIVE&lifecycle=ALL"))).status).toBe(400);
   const response = await handle(request("/v2/trips?limit=2"));
   expect(response.status).toBe(200);
   expect(response.headers.get("Cache-Control")).toBe("private, no-store");
   expect(await response.json()).toEqual({ trips: [summary(ids[0])], nextCursor: null });
   expect(gateway.discoverTrips).toHaveBeenCalledWith(actor, null, 2);
+  const archived = { ...summary(ids[0]), lifecycleState: "ARCHIVED", metadataRevision: 6 };
+  gateway.discoverTrips = vi.fn(async () => ({ trips: [archived], nextCursor: null }));
+  const filtered = await handle(request("/v2/trips?limit=2&lifecycle=ARCHIVED"));
+  expect(filtered.status).toBe(200);
+  expect(await filtered.json()).toEqual({ trips: [archived], nextCursor: null });
+  expect(gateway.discoverTrips).toHaveBeenCalledWith(actor, null, 2, "ARCHIVED");
+  expect((await handle(request("/v2/trips?lifecycle=ACTIVE"))).status).toBe(503);
+  expect(await (await handle(request("/v2/trips"))).json()).toEqual({
+    trips: [summary(ids[0])], nextCursor: null,
+  });
   gateway.discoverTrips = vi.fn(async () => {
     throw new Error("private database detail");
   });
@@ -77,15 +89,24 @@ it("enumerates only actor candidate sources, deduplicates and rechecks live admi
         .slice(3)
         .replace(/[()]/g, "")
         .split(",");
+      const lifecycleFilter = url.searchParams.get("lifecycle_state");
+      const states: Record<string, string> = {
+        [ids[0]]: "ACTIVE",
+        [ids[1]]: "ARCHIVED",
+        [ids[2]]: "DELETED",
+      };
       return Response.json(
-        selected.map((id) => ({
-          id,
-          name: `Trip ${id.at(-1)}`,
-          destination: null,
-          start_date: null,
-          end_date: null,
-          created_at: "2026-10-13T00:00:00Z",
-        })),
+        selected
+          .filter((id) => !lifecycleFilter || lifecycleFilter.includes(states[id]))
+          .map((id) => ({
+            id,
+            name: `Trip ${id.at(-1)}`,
+            destination: null,
+            start_date: null,
+            end_date: null,
+            created_at: "2026-10-13T00:00:00Z",
+            ...(lifecycleFilter ? { lifecycle_state: states[id], metadata_revision: 6 } : {}),
+          })),
       );
     }
     if (exact && !after) {
@@ -123,6 +144,20 @@ it("enumerates only actor candidate sources, deduplicates and rechecks live admi
     const second = await gateway.discoverTrips!(actor, first.nextCursor, 2);
     expect(second.trips.map((trip) => trip.id)).toEqual([ids[2]]);
     expect(second.nextCursor).toBeNull();
+    const archivedEmpty = await gateway.discoverTrips!(actor, null, 1, "ARCHIVED");
+    expect(archivedEmpty).toEqual({ trips: [], nextCursor: ids[0] });
+    const archived = await gateway.discoverTrips!(actor, archivedEmpty.nextCursor, 2, "ARCHIVED");
+    expect(archived.trips).toEqual([
+      { ...summary(ids[1]), lifecycleState: "ARCHIVED", metadataRevision: 6 },
+    ]);
+    const active = await gateway.discoverTrips!(actor, null, 2, "ACTIVE");
+    expect(active.trips).toEqual([
+      { ...summary(ids[0]), lifecycleState: "ACTIVE", metadataRevision: 6 },
+    ]);
+    const all = await gateway.discoverTrips!(actor, null, 2, "ALL");
+    expect(all.trips).toEqual([...active.trips, ...archived.trips]);
+    expect(await gateway.discoverTrips!(actor, all.nextCursor, 2, "ALL"))
+      .toEqual({ trips: [], nextCursor: null });
     expect(
       seen
         .filter((url) => url.searchParams.get("id")?.startsWith("in."))
@@ -131,7 +166,7 @@ it("enumerates only actor candidate sources, deduplicates and rechecks live admi
     expect(
       seen
         .filter((url) => url.searchParams.get("trip_id")?.startsWith("gt."))
-        .every((url) => url.searchParams.get("trip_id") === `gt.${ids[1]}`),
+        .every((url) => [`gt.${ids[0]}`, `gt.${ids[1]}`].includes(url.searchParams.get("trip_id")!)),
     ).toBe(true);
     expect(
       seen

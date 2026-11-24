@@ -916,7 +916,7 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       return projectLedgerOperation(rows, userId, tripId, operationId, query);
     },
 
-    async discoverTrips(userId, cursor, limit) {
+    async discoverTrips(userId, cursor, limit, lifecycle) {
       let createdQuery = service.from("trips").select("id").eq("created_by", userId);
       let legacyQuery = service
         .from("trip_members")
@@ -954,10 +954,16 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
       );
       const visibleIds = pageIds.filter((_, index) => admitted[index]);
       if (!visibleIds.length) return { trips: [], nextCursor };
-      const details = await service
-        .from("trips")
-        .select("id,name,destination,start_date,end_date,created_at")
-        .in("id", visibleIds);
+      const tripsTable = service.from("trips");
+      const details = await (lifecycle
+        ? tripsTable
+          .select("id,name,destination,start_date,end_date,created_at,lifecycle_state,metadata_revision")
+          .in("id", visibleIds)
+          .in(
+            "lifecycle_state",
+            lifecycle === "ALL" ? ["ACTIVE", "ARCHIVED"] : [lifecycle],
+          )
+        : tripsTable.select("id,name,destination,start_date,end_date,created_at").in("id", visibleIds));
       if (details.error) throw new Error("TRIP_DISCOVERY_UNAVAILABLE");
       const byId = new Map(details.data.map((row) => [row.id, row]));
       return {
@@ -972,6 +978,12 @@ export function createSupabaseDevGateway(config: SupabaseDevConfig): DevBackendG
                   startDate: row.start_date,
                   endDate: row.end_date,
                   createdAt: row.created_at,
+                  ...(lifecycle && "lifecycle_state" in row
+                    ? {
+                        lifecycleState: row.lifecycle_state,
+                        metadataRevision: row.metadata_revision,
+                      }
+                    : {}),
                 },
               ]
             : [];

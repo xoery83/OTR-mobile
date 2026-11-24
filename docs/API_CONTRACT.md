@@ -70,6 +70,10 @@ relation. The Backend deduplicates stable UUIDs, rechecks each candidate with
 the existing `canReadTrip` rule, then returns only
 `{id,name,destination,startDate,endDate,createdAt}` and a continuation cursor.
 The default page size is 20; errors fail closed. The response is private/no-store.
+The MCP Trip List supplies `lifecycle=ACTIVE`, `ARCHIVED` or `ALL`. With this
+parameter the same actor-scoped reader returns only matching non-deleted Trips
+and includes their stored `lifecycleState` and `metadataRevision`. The cursor
+advances over candidate IDs, so a filtered page can be empty with a continuation.
 The existing `POST /v2/trips` create and per-Trip admission remain separate.
 The Backend route is local main code only, without installed DEV endpoint evidence.
 An isolated Mobile SQLite61 read projection/transport candidate now caches complete
