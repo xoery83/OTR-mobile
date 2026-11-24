@@ -6,7 +6,7 @@ import { useSheetMotion } from "./SheetHost";
 import { useSheetRouteLayout } from "./sheetRouteContext";
 
 export function SheetRoutePanel({
-  title, onBack, leadingDisabled, action, ownsScroll = false, keyboardInsets = false, children, overlay,
+  title, onBack, leadingDisabled, action, ownsScroll = false, keyboardInsets = false, preferNativeScroll, children, overlay,
 }: {
   title: string;
   onBack?: () => void;
@@ -14,6 +14,7 @@ export function SheetRoutePanel({
   action?: ComponentProps<typeof SheetNavigationHeader>["action"];
   ownsScroll?: boolean;
   keyboardInsets?: boolean;
+  preferNativeScroll?: boolean;
   children: ReactNode;
   overlay?: ReactNode;
 }) {
@@ -43,6 +44,7 @@ export function SheetRoutePanel({
       ) : (
         <SheetScrollView
           automaticallyAdjustKeyboardInsets={keyboardInsets}
+          preferNativeScroll={preferNativeScroll}
           onSwipeRight={swipeBack}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={onContentSizeChange}

@@ -5,12 +5,12 @@ import { createSheetBackSwipe } from "./sheetDrag";
 
 export function SheetScrollView({
   onScroll, onScrollBeginDrag, onScrollEndDrag, onSwipeRight, onLayout, onContentSizeChange,
-  scrollEnabled, ref, ...props
-}: ScrollViewProps & { onSwipeRight?: () => void; ref?: Ref<ScrollView> }) {
+  scrollEnabled, preferNativeScroll = false, ref, ...props
+}: ScrollViewProps & { onSwipeRight?: () => void; preferNativeScroll?: boolean; ref?: Ref<ScrollView> }) {
   const bodyDrag = useShortSheetBodyDrag();
   const [viewportHeight, setViewportHeight] = useState<number>();
   const [contentHeight, setContentHeight] = useState<number>();
-  const shortBody = Boolean(bodyDrag) && !props.automaticallyAdjustKeyboardInsets &&
+  const shortBody = !preferNativeScroll && Boolean(bodyDrag) && !props.automaticallyAdjustKeyboardInsets &&
     viewportHeight !== undefined && viewportHeight > 0 &&
     contentHeight !== undefined && contentHeight <= viewportHeight;
   const dismissal = useSheetScrollDismissal(!shortBody);

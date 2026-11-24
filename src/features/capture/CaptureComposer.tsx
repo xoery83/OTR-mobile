@@ -757,14 +757,16 @@ export function CaptureComposer({
     const nested = page !== "composer" || Boolean(onBack ?? onParentBack);
     // The landscape iPhone reports a separate native scroll inset when focusing the editor.
     // In portrait and on iPad, the host adjustment is sufficient.
-    const keyboardInsets = content == null && page === "composer" &&
-      Platform.OS === "ios" && !Platform.isPad && width > height;
+    const isEditorPage = content == null && page === "composer";
+    const keyboardInsets = isEditorPage && Platform.OS === "ios" && !Platform.isPad && width > height;
     return (
       <SheetRoutePanel
         title={header}
         onBack={nested ? close : undefined}
         ownsScroll={content != null}
         keyboardInsets={keyboardInsets}
+        // The first input adds the count footer. Keep the same scroll mode while it appears.
+        preferNativeScroll={isEditorPage}
       >
         {body}
       </SheetRoutePanel>

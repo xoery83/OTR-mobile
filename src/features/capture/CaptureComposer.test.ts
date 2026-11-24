@@ -737,6 +737,7 @@ it("puts every hosted attachment source in the composer scroll body", () => {
 it("keeps the hosted portrait editor ahead of the count that appears on first input", () => {
   state.fontScale = 1;
   render({ ...empty, editorText: "note" }, 1, { hosted: true });
+  expect(state.nodes.some(node => node.preferNativeScroll === true)).toBe(true);
   const editor = state.nodes.findIndex(node => node.multiline);
   const count = state.nodes.findIndex(node => node.children === t("capture.countOne", { count: 1 }));
   expect(editor).toBeGreaterThanOrEqual(0);
