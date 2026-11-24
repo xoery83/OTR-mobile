@@ -83,3 +83,20 @@ it("only applies when a completed exit actually returns to the originating looku
   completeLedgerCurrencySheet(reopened, choice, () => choose("USD"));
   expect(choose).toHaveBeenCalledExactlyOnceWith("USD");
 });
+
+it("does not apply a result to a replacement expense draft for the same Trip", async () => {
+  const { completeLedgerCurrencySheet, useLedgerCurrencySheet } = await import("./ledgerCurrencySheet");
+  const choose = vi.fn();
+  const loaded = {};
+  let currentDraft = loaded;
+  const choice = {
+    kind: "category" as const, titleKey: "ui.category" as const,
+    selected: "other", choose, isCurrent: () => currentDraft === loaded,
+  };
+  const open = useLedgerCurrencySheet("trip", "expense-route", true, true);
+  open(choice);
+  const invocation = state.push.mock.lastCall?.[0].params.invocation;
+  currentDraft = {};
+  completeLedgerCurrencySheet(invocation, choice, () => choose("food"));
+  expect(choose).not.toHaveBeenCalled();
+});

@@ -62,6 +62,11 @@ Day insertion can open the shared manual itinerary chooser directly. The
 displayed date and suggested time come from the existing Day insertion
 calculation, and the owning editor still controls local Save and recovery.
 
+The expense editor can present currency, date, category and sharing fields
+in the shared QA Sheet. Results apply after the Sheet returns to the same editor
+and update its current draft. The existing Expense Save and allocation
+contracts still own persistence.
+
 ## Canonical Trip Person foundation
 
 A1-I1 uses `journey_members.id` as the Trip-scoped `TripPersonId`, distinct from

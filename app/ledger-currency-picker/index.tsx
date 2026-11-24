@@ -5,6 +5,8 @@ import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
+import { ExpenseSharingSheet } from "@/features/ledger/ExpenseSharingSheet";
+import { ExpenseCategoryPicker } from "@/features/ledger/ExpenseCategoryPicker";
 import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet, type LedgerCurrencyChoice } from "@/features/ledger/ledgerCurrencySheet";
 import { UiChoiceChip, UiDatePicker } from "@/ui/forms";
 import { t } from "@/ui/locale";
@@ -38,6 +40,20 @@ export default function LedgerCurrencyPickerRoute() {
     return <DisplayCurrencyOptions choice={picker} onSelect={code => {
       if (picker.readOptions().includes(code)) select(() => picker.choose(code));
     }} />;
+  }
+  if (picker?.kind === "sharing") {
+    return <ExpenseSharingSheet
+      key={invocation}
+      {...picker}
+      hosted
+      exitPending={exitPending}
+      onApply={staged => select(() => picker.onApply(staged))}
+    />;
+  }
+  if (picker?.kind === "category") {
+    return <SheetRoutePanel title={title}>
+      <ExpenseCategoryPicker hosted category={picker.selected} onSelect={category => select(() => picker.choose(category))} />
+    </SheetRoutePanel>;
   }
   return <SheetRoutePanel title={title} action={picker?.kind === "date" ? {
     label: t("common.done"), disabled: exitPending, onPress: () => select(() => picker.choose(date)),
