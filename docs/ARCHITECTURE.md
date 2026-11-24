@@ -196,6 +196,10 @@ Review and other Jobs open as children of the Updates entry. A Review opened
 directly from standalone Updates has its own Sheet close and retains the
 existing Review reader, permission checks and operations.
 
+The existing Settlement review payment row can open its draft currency in
+the shared Ledger picker. The original row retains the draft and its payment
+submission. The selection applies only after returning to the same row.
+
 The My Trips start chooser opens in the same QA Sheet Stack. Import pushes the
 existing composer. Manual creation closes the chooser before opening the
 original Trip Create workspace.

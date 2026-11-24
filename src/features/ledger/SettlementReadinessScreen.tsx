@@ -1391,6 +1391,7 @@ function PaymentsSection({
               <PersonalPaymentSection
                 actorMemberId={actorMemberId}
                 from={{ id: transfer.fromMemberId, name: from }}
+                hostCurrencyPicker
                 journeyId={journeyId}
                 onChanged={onPaymentsChanged}
                 settlementCurrency={currency}

@@ -5,7 +5,7 @@ import { UiTextInput as TextInput } from "@/ui/forms";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { MoneyText } from "./MoneyText";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { getDefaultLedgerPersonalPaymentRepository } from "@/data/repositories/defaultLedgerPersonalPaymentRepository";
@@ -22,12 +22,14 @@ import { formatLedgerMoney, formatLedgerDate } from "./format";
 import { parseCurrencyAmount } from "./expenseDraft";
 import { chronologicalPersonalPayments } from "./settlementSections";
 import { SheetHeader } from "@/components/SheetHeader";
+import { hostedLedgerCurrencySheetEnabled, useLedgerCurrencySheet } from "./ledgerCurrencySheet";
 
 type Pair = { id: string; name: string };
 
 export function PersonalPaymentSection({
   actorMemberId,
   from,
+  hostCurrencyPicker = false,
   journeyId,
   onChanged,
   settlementCurrency,
@@ -35,6 +37,7 @@ export function PersonalPaymentSection({
 }: {
   actorMemberId: string | null;
   from: Pair;
+  hostCurrencyPicker?: boolean;
   journeyId: string;
   onChanged?: (records: LocalPersonalPayment[]) => void;
   settlementCurrency: string;
@@ -89,6 +92,36 @@ export function PersonalPaymentSection({
             counterparty: from,
           }
         : null;
+  const canPickCurrency = action !== null && !savingQuick;
+  const pickerOwner = useRef<object | null>(null);
+  const openPaymentCurrency = useLedgerCurrencySheet(
+    journeyId,
+    JSON.stringify([actorMemberId, from.id, to.id, settlementCurrency, quickCurrency]),
+    hostCurrencyPicker && canPickCurrency,
+  );
+  useLayoutEffect(() => {
+    pickerOwner.current = canPickCurrency ? {} : null;
+    return () => { pickerOwner.current = null; };
+  }, [actorMemberId, canPickCurrency, from.id, journeyId, quickCurrency, settlementCurrency, to.id]);
+
+  const presentPaymentCurrency = () => {
+    if (!hostCurrencyPicker || !hostedLedgerCurrencySheetEnabled) {
+      setQuickCurrencyOpen(true);
+      return;
+    }
+    const owner = pickerOwner.current;
+    if (!owner) return;
+    if (!openPaymentCurrency({
+      kind: "currency",
+      titleKey: "ui.chooseCurrency",
+      selected: quickCurrency,
+      suggestions: [settlementCurrency, quickCurrency],
+      isCurrent: () => pickerOwner.current === owner,
+      choose: code => {
+        if (pickerOwner.current === owner) setQuickCurrency(code);
+      },
+    })) setQuickCurrencyOpen(true);
+  };
 
   const remove = (record: LocalPersonalPayment) =>
     Alert.alert(t("ui.deleteYourRecord"), t("ui.itWillRemainInTheAuditHistory"), [
@@ -214,7 +247,7 @@ export function PersonalPaymentSection({
             <Pressable
               accessibilityLabel={t("payment.currency", { currency: quickCurrency })}
               accessibilityRole="button"
-              onPress={() => setQuickCurrencyOpen(true)}
+              onPress={presentPaymentCurrency}
               style={styles.currencyButton}
             >
               <Text style={styles.currencyButtonText}>{quickCurrency} ⌄</Text>
