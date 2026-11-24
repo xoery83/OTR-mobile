@@ -1,6 +1,8 @@
 import { hostedTripMetadataEnabled } from "@/features/day-feed/tripMetadataSheet";
 import { hostedTripCoverEnabled } from "@/features/day-feed/tripCoverSheet";
 import { hostedLedgerSearchFiltersEnabled } from "@/features/ledger/ledgerSearchFilterInvocation";
+import { hostedLedgerReceiptReviewEnabled } from "@/features/ledger/ledgerReceiptReviewSheet";
+import { finishLedgerReceiptNativeTransition } from "@/features/ledger/ledgerReceiptSourceSheet";
 import { hostedExpenseFieldsEnabled, hostedLedgerCurrencySheetEnabled } from "@/features/ledger/ledgerCurrencySheet";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { hostedTripCreateEnabled } from "@/features/day-feed/hostedTripCreate";
@@ -33,6 +35,7 @@ import {
 } from "@/data/bootstrap/defaultBootstrapDependencies";
 
 export const unstable_settings = { initialRouteName: "(tabs)" };
+const receiptStackEvents = { onFinishTransitioning: finishLedgerReceiptNativeTransition };
 
 export default function RootLayout() {
   useEffect(() => {
@@ -129,6 +132,7 @@ export default function RootLayout() {
       >
         <TripViewProvider persistReading={readingOwner === generation}>
           <Stack
+            unstable_nativeProps={hostedLedgerReceiptReviewEnabled ? receiptStackEvents : undefined}
             screenOptions={{
               headerBackButtonDisplayMode: "minimal",
               headerShown: false,
@@ -237,6 +241,28 @@ export default function RootLayout() {
             <Stack.Protected guard={hostedLedgerCurrencySheetEnabled || hostedExpenseFieldsEnabled}>
               <Stack.Screen
                 name="ledger-currency-picker"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+            </Stack.Protected>
+            <Stack.Protected guard={hostedLedgerReceiptReviewEnabled}>
+              <Stack.Screen
+                name="ledger-receipt-source"
+                options={{
+                  presentation: "transparentModal",
+                  animation: "none",
+                  contentStyle: { backgroundColor: colors.transparent },
+                  gestureEnabled: false,
+                  orientation: "all",
+                }}
+              />
+              <Stack.Screen
+                name="ledger-receipt-review"
                 options={{
                   presentation: "transparentModal",
                   animation: "none",

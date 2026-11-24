@@ -282,6 +282,13 @@ are committed with the Expense locally. Unconfirmed local originals are
 protected. See ADR 0048 for the ownership, visibility, and future storage
 provider boundary; see the Phase 1 plan under `docs/ledger/` for implementation.
 
+The QA receipt review Sheet keeps expense draft ownership in the originating
+editor. The review and its child choices are scoped to the active scan and
+account. A choice applies after returning to the originating review. The
+existing confirmation transfers local receipt drafts to the expense editor.
+The initial receipt source opens a short Sheet and returns to its original
+expense editor before handing off to the system camera, photos, or files.
+
 ## Auth
 
 Supabase Auth remains the Phase 1 identity provider, wrapped behind a Mobile auth adapter or repository. Mobile feature code must not call Supabase Auth directly. The OTR API validates Supabase-issued identity tokens.

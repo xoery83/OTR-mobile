@@ -49,8 +49,11 @@ describe("New Expense compact presentation", () => {
     expect(source).not.toContain("headerRight:");
     expect(source).toContain("gestureEnabled: false");
     expect(source).toContain(
-      'headerTitle: existing ? t("ui.editExpense") : t("ui.newExpense")',
+      'headerTitle: receiptSourceInvocation ? "" : existing ? t("ui.editExpense") : t("ui.newExpense")',
     );
+    expect(source.match(/hidden=\{Boolean\(receiptSourceInvocation\)\}/g)).toHaveLength(2);
+    expect(source).toContain("headerBackVisible: receiptSourceInvocation ? false : undefined");
+    expect(source).not.toContain("<Stack.Header hidden");
   });
 
   it("uses local compact dates without changing the stored key", () => {
@@ -207,6 +210,8 @@ describe("New Expense compact presentation", () => {
       "utf8",
     );
     expect(source).not.toContain("More Details");
+    expect(source).toMatch(/!receiptSourcePending.current && !addingReceiptRef.current;\s*return openExpenseField\(\{ \.\.\.choice, isCurrent \}\)/);
+    expect(source).toMatch(/const chooseReceipt = \(scan = false, addPart = false\) => \{\s*if \(receiptSourcePending.current\) return;/);
     expect(source).toMatch(
       /label=\{t\("ui.category"\)\}[\s\S]*?setCategorySheet\(true\)/,
     );
@@ -256,13 +261,19 @@ describe("New Expense compact presentation", () => {
     expect(source).toContain("multiple: true");
     expect(source).toContain("selectionLimit: remaining");
     expect(source).toContain("selectExpenseReceiptDraftBatch(");
-    expect(source).toContain('t("ui.scanOneReceiptOrAddMultiplePartsOfALong")');
-    expect(source).toContain('t("extra.copy0")');
-    expect(source).toContain('t("extra.copy1")');
-    expect(source).toContain('t("extra.copy2")');
+    const receiptSources = readFileSync(
+      new URL("./ReceiptScanSourceFields.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(source).toContain("<ReceiptScanSourceFields");
+    expect(receiptSources).toContain('t("ui.scanOneReceiptOrAddMultiplePartsOfALong")');
+    expect(receiptSources).toContain('["camera", "ui.camera", "extra.copy0"]');
+    expect(receiptSources).toContain('["photo", "ui.photoLibrary", "extra.copy1"]');
+    expect(receiptSources).toContain('["file", "ui.files", "extra.copy2"]');
     expect(source).toContain('...(scan ? [] : ["application/pdf"])');
     expect(source).toContain("scanOcrQueue.current.push(next.id)");
-    expect(source).toContain("onScanAnother={() => chooseReceipt(true, true)}");
+    expect(source).toContain("void attach(source, true, true, canLaunch)");
+    expect(source).toContain("chooseReceipt(true, true)");
     expect(source).not.toContain("scrollToEnd");
     expect(source).not.toContain("KeyboardAvoidingView");
     expect(source).toContain("setPreviewDraft(next)");

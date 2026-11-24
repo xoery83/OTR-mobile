@@ -104,3 +104,22 @@ it("does not apply a result to a replacement expense draft for the same Trip", a
   completeLedgerCurrencySheet(invocation, choice, () => choose("food"));
   expect(choose).not.toHaveBeenCalled();
 });
+
+it("consumes a field tap while the expense source is preparing, then allows the next tap", async () => {
+  const { useLedgerCurrencySheet } = await import("./ledgerCurrencySheet");
+  const open = useLedgerCurrencySheet("trip", "expense-route", true, true);
+  let preparing = true;
+  let finishPreparation!: () => void;
+  const preparation = new Promise<void>(resolve => { finishPreparation = resolve; })
+    .then(() => { preparing = false; });
+  const choice = {
+    kind: "category" as const, titleKey: "ui.category" as const, selected: "other",
+    choose: vi.fn(), isCurrent: () => !preparing,
+  };
+  expect(open(choice)).toBe(true);
+  expect(state.push).not.toHaveBeenCalled();
+  finishPreparation();
+  await preparation;
+  expect(open(choice)).toBe(true);
+  expect(state.push).toHaveBeenCalledOnce();
+});
