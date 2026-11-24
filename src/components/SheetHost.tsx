@@ -240,7 +240,9 @@ function SheetCaptionDrag({ drag, height }: { drag: SheetDrag; height: number })
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     viewport: { flex: 1, overflow: "hidden" },
-    backdrop: { backgroundColor: colors.overlay },
+    backdrop: {
+      experimental_backgroundImage: `linear-gradient(180deg, ${colors.transparent} 0%, ${colors.overlay} 100%)`,
+    },
     keyboard: { flex: 1 },
     placement: { flex: 1, justifyContent: "flex-end" },
     fill: { flex: 1 },

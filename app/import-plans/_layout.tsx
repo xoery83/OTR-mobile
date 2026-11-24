@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useUiTheme } from "@/ui/theme";
 import { SheetRouteLayout } from "@/components/SheetRouteLayout";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { createFlightAirportHandoff, FlightAirportHandoffContext } from "@/features/day-feed/hostedFlightAirport";
@@ -8,8 +9,11 @@ import { ManualItineraryExitContext } from "@/features/day-feed/hostedManualItin
 export const unstable_settings = { initialRouteName: "index" };
 
 export default function ImportSheetLayout() {
+  const colors = useUiTheme();
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
-  if (!hostedImportEnabled) return <Stack screenOptions={{ headerShown: false }} />;
+  if (!hostedImportEnabled) {
+    return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.transparent } }} />;
+  }
   return <HostedImportRoutes immersive={Boolean(jobId)} />;
 }
 
