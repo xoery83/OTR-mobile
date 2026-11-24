@@ -31,6 +31,11 @@ vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "panel" }));
 vi.mock("@/features/ledger/CurrencyPicker", () => ({ CurrencyPicker: "currency-picker" }));
 vi.mock("@/features/ledger/ledgerCurrencySheet", () => ({
   readLedgerCurrencySheet: (id: string) => id === "selection" ? state.choice : undefined,
+  completeLedgerCurrencySheet: (id: string, choice: LedgerCurrencyChoice, apply: () => void) => {
+    if (id !== "selection" || state.choice !== choice) return;
+    state.choice = undefined;
+    apply();
+  },
   releaseLedgerCurrencySheet: (id: string) => { if (id === "selection") state.choice = undefined; },
 }));
 vi.mock("@/ui/forms", () => ({ UiDatePicker: "date-picker" }));

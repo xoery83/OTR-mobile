@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 
@@ -15,7 +15,7 @@ export type LedgerCurrencyChoice = {
 );
 
 let sequence = 0;
-let active: { id: string; current(): boolean; choice: LedgerCurrencyChoice } | undefined;
+let active: { id: string; current(): boolean; originFocused(): boolean; choice: LedgerCurrencyChoice } | undefined;
 
 subscribeAccountGeneration(() => { active = undefined; });
 
@@ -29,7 +29,18 @@ export function releaseLedgerCurrencySheet(id: string | undefined) {
   active = undefined;
 }
 
+export function completeLedgerCurrencySheet(
+  id: string | undefined,
+  expected: LedgerCurrencyChoice,
+  apply: () => void,
+) {
+  const returnedToOrigin = readLedgerCurrencySheet(id) === expected && active?.originFocused();
+  releaseLedgerCurrencySheet(id);
+  if (returnedToOrigin) apply();
+}
+
 export function useLedgerCurrencySheet(journeyId: string | undefined, sourceKey?: string, enabled = true) {
+  const navigation = useNavigation();
   const owner = useRef<{ journeyId?: string; sourceKey?: string; generation: number } | null>(null);
   const invocation = useRef<string | undefined>(undefined);
   const generation = getAccountGeneration();
@@ -48,14 +59,14 @@ export function useLedgerCurrencySheet(journeyId: string | undefined, sourceKey?
     if (!journeyId) return false;
     if (token?.journeyId !== journeyId || token.sourceKey !== sourceKey ||
       token.generation !== generation || generation !== getAccountGeneration()) return true;
-    if (active?.current()) return true;
+    if (!navigation.isFocused() || active?.current()) return true;
     const id = String(++sequence);
     active = {
-      id, choice,
+      id, choice, originFocused: () => navigation.isFocused(),
       current: () => owner.current === token && generation === getAccountGeneration(),
     };
     invocation.current = id;
     router.push({ pathname: "/ledger-currency-picker", params: { invocation: id } });
     return true;
-  }, [enabled, generation, journeyId, sourceKey]);
+  }, [enabled, generation, journeyId, navigation, sourceKey]);
 }

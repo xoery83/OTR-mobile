@@ -1,12 +1,13 @@
-import { expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 
 const state = vi.hoisted(() => ({
   push: vi.fn(),
+  focused: true,
   refs: [] as { current: unknown }[],
   cleanup: undefined as (() => void) | undefined,
 }));
-vi.mock("expo-router", () => ({ router: { push: state.push } }));
+vi.mock("expo-router", () => ({ router: { push: state.push }, useNavigation: () => ({ isFocused: () => state.focused }) }));
 vi.mock("react", async original => ({
   ...(await original<typeof import("react")>()),
   useCallback: (callback: unknown) => callback,
@@ -18,37 +19,67 @@ vi.mock("react", async original => ({
   useLayoutEffect: (effect: () => () => void) => { state.cleanup = effect(); },
 }));
 
-it("uses a single scoped selection and drops it on permission, account or owner change", async () => {
+beforeEach(() => {
   vi.stubEnv("EXPO_PUBLIC_OTR_SHEET_LEDGER_CURRENCY_QA", "true");
-  try {
-    const { useLedgerCurrencySheet, readLedgerCurrencySheet } = await import("./ledgerCurrencySheet");
-    const open = useLedgerCurrencySheet("trip", "expense");
-    let allowed = true;
-    const choice = {
-      kind: "currency" as const,
-      titleKey: "ui.fromCurrency" as const,
-      selected: "NZD",
-      suggestions: ["NZD", "USD"],
-      isCurrent: () => allowed,
-      choose: vi.fn(),
-    };
-    const embedded = useLedgerCurrencySheet("trip", "embedded", false);
-    expect(embedded(choice)).toBe(false);
-    expect(state.push).not.toHaveBeenCalled();
-    expect(open(choice)).toBe(true);
-    expect(open(choice)).toBe(true);
-    expect(state.push).toHaveBeenCalledOnce();
-    const { invocation } = state.push.mock.calls[0][0].params;
-    expect(readLedgerCurrencySheet(invocation)).toBe(choice);
-    allowed = false;
-    expect(readLedgerCurrencySheet(invocation)).toBeUndefined();
-    allowed = true;
-    advanceAccountGeneration();
-    expect(readLedgerCurrencySheet(invocation)).toBeUndefined();
-    state.cleanup?.();
-    open(choice);
-    expect(state.push).toHaveBeenCalledOnce();
-  } finally {
-    vi.unstubAllEnvs();
-  }
+  state.focused = true;
+  state.push.mockClear();
+});
+afterEach(() => {
+  state.cleanup?.();
+  vi.unstubAllEnvs();
+});
+
+it("uses a single scoped selection and drops it on permission, account or owner change", async () => {
+  const { useLedgerCurrencySheet, readLedgerCurrencySheet } = await import("./ledgerCurrencySheet");
+  const open = useLedgerCurrencySheet("trip", "expense");
+  let allowed = true;
+  const choice = {
+    kind: "currency" as const,
+    titleKey: "ui.fromCurrency" as const,
+    selected: "NZD",
+    suggestions: ["NZD", "USD"],
+    isCurrent: () => allowed,
+    choose: vi.fn(),
+  };
+  const embedded = useLedgerCurrencySheet("trip", "embedded", false);
+  expect(embedded(choice)).toBe(false);
+  expect(state.push).not.toHaveBeenCalled();
+  expect(open(choice)).toBe(true);
+  expect(open(choice)).toBe(true);
+  expect(state.push).toHaveBeenCalledOnce();
+  const { invocation } = state.push.mock.calls[0][0].params;
+  expect(readLedgerCurrencySheet(invocation)).toBe(choice);
+  allowed = false;
+  expect(readLedgerCurrencySheet(invocation)).toBeUndefined();
+  allowed = true;
+  advanceAccountGeneration();
+  expect(readLedgerCurrencySheet(invocation)).toBeUndefined();
+  state.cleanup?.();
+  open(choice);
+  expect(state.push).toHaveBeenCalledOnce();
+});
+
+it("only applies when a completed exit actually returns to the originating lookup", async () => {
+  const { completeLedgerCurrencySheet, readLedgerCurrencySheet, useLedgerCurrencySheet } = await import("./ledgerCurrencySheet");
+  const choose = vi.fn();
+  const choice = {
+    kind: "currency" as const, titleKey: "ui.fromCurrency" as const,
+    selected: "NZD", suggestions: ["USD"], choose,
+  };
+  const open = useLedgerCurrencySheet("trip", "exchange-rate-lookup");
+  state.focused = false;
+  expect(open(choice)).toBe(true);
+  expect(state.push).not.toHaveBeenCalled();
+  state.focused = true;
+  open(choice);
+  const first = state.push.mock.lastCall?.[0].params.invocation;
+  state.focused = false;
+  completeLedgerCurrencySheet(first, choice, () => choose("USD"));
+  expect(choose).not.toHaveBeenCalled();
+  expect(readLedgerCurrencySheet(first)).toBeUndefined();
+  state.focused = true;
+  open(choice);
+  const reopened = state.push.mock.lastCall?.[0].params.invocation;
+  completeLedgerCurrencySheet(reopened, choice, () => choose("USD"));
+  expect(choose).toHaveBeenCalledExactlyOnceWith("USD");
 });

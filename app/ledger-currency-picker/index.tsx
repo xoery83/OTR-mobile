@@ -5,7 +5,7 @@ import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
-import { readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
+import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
 import { UiDatePicker } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -25,11 +25,7 @@ export default function LedgerCurrencyPickerRoute() {
   function select(apply: () => void) {
     if (isExitPending() || !picker || readLedgerCurrencySheet(invocation) !== picker) return;
     Keyboard.dismiss();
-    requestCloseWithAction(() => {
-      if (readLedgerCurrencySheet(invocation) !== picker) return;
-      releaseLedgerCurrencySheet(invocation);
-      apply();
-    });
+    requestCloseWithAction(() => completeLedgerCurrencySheet(invocation, picker, apply));
   }
 
   const title = t(picker?.titleKey ?? "currencySettings.copy31");
