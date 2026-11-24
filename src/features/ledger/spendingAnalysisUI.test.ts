@@ -454,6 +454,26 @@ describe("Analysis UI transitions and request guardrails", () => {
       },
     });
   });
+  it("does not let a queued Mine chart press open a period from the Group report", async () => {
+    ui.hosted = true;
+    const screen = await ready();
+    const timeline = (element: unknown) =>
+      nodes(element).find(node => node.type === AnalysisTimeline)!.props as ComponentProps<typeof AnalysisTimeline>;
+    const mine = timeline(screen);
+    press(nodes(screen).find(node => node.props.accessibilityRole === "tab" && texts(node) === "Group")!);
+    const group = timeline(render());
+    mine.onOpenPeriod!(mine.dashboard.periods[0]!, "Mine period");
+    expect(ui.push).not.toHaveBeenCalled();
+    group.onOpenPeriod!(group.dashboard.periods[0]!, "Group period");
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "period") throw new Error("Expected the hosted period summary");
+    completeAnalysisPicker(params.invocation, picker, picker.open);
+    expect(ui.push).toHaveBeenLastCalledWith(expect.objectContaining({
+      pathname: "/expenses/search",
+      params: expect.objectContaining({ scope: "GROUP", origin: "Group period" }),
+    }));
+  });
   it("blocks the previous chart while an applied range is loading and resumes that range after blur", async () => {
     ui.hosted = true;
     const dataset = data(31);

@@ -80,6 +80,7 @@ export function LedgerAnalysisScreen() {
   const [view, setView] = useState<{
     dataset: AnalysisDataset;
     range: AnalysisRange;
+    projectionOwner: symbol;
   } | null>(null);
   const [updating, setUpdating] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,15 +99,20 @@ export function LedgerAnalysisScreen() {
   const pickerId = useRef<string>(undefined);
   const owningNavigation = useNavigation();
   const generation = getAccountGeneration();
+  const projectionOwner = useMemo(
+    () => Symbol(),
+    [generation, params.journeyId, params.memberId],
+  );
+  const reportOwner = useMemo(() => Symbol(), [projectionOwner, scope]);
   const pickerOwner = useRef<symbol | null>(null);
   useLayoutEffect(() => {
-    pickerOwner.current = Symbol();
+    pickerOwner.current = reportOwner;
     pendingRange.current = null;
     return () => {
       pickerOwner.current = null;
       releaseAnalysisPicker(pickerId.current);
     };
-  }, [generation, params.journeyId, params.memberId, scope]);
+  }, [reportOwner]);
   const repository = useRef<ReturnType<
     typeof getDefaultLedgerReportingRepository
   > | null>(null);
@@ -132,7 +138,7 @@ export function LedgerAnalysisScreen() {
         ).loadSpendingAnalysisProjection(params.journeyId, params.memberId, range);
         if (!isCurrent()) return;
         rangeRef.current = range;
-        setView({ dataset: data, range });
+        setView({ dataset: data, range, projectionOwner });
       } catch {
         if (isCurrent()) {
           repository.current = null;
@@ -145,7 +151,7 @@ export function LedgerAnalysisScreen() {
         }
       }
     },
-    [generation, params.journeyId, params.memberId, request],
+    [generation, params.journeyId, params.memberId, projectionOwner, request],
   );
 
   useFocusEffect(
@@ -251,11 +257,13 @@ export function LedgerAnalysisScreen() {
   function openHostedPicker(picker: AnalysisPicker) {
     const owner = pickerOwner.current;
     if (
-      !owner ||
+      owner !== reportOwner ||
       !owningNavigation.isFocused() ||
       generation !== getAccountGeneration() ||
       (picker.kind === "period" &&
-        (pendingRange.current !== null || rangeRef.current !== view?.range)) ||
+        (pendingRange.current !== null ||
+          rangeRef.current !== view?.range ||
+          view.projectionOwner !== projectionOwner)) ||
       readAnalysisPicker(pickerId.current)
     )
       return;
