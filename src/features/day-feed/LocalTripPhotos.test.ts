@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { beforeEach, expect, it, vi } from "vitest";
 import { advanceAccountGeneration } from "@/data/auth/accountGeneration";
 import { LocalTripPhotos } from "./LocalTripPhotos";
+import { readTripPhotosSheet, releaseTripPhotosSheet } from "./hostedTripPhotos";
 
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup(node: ReactNode): string;
@@ -19,11 +20,14 @@ const state = vi.hoisted(() => ({
   buttons: [] as { label: string; disabled: boolean; onPress(): void }[],
   repository: vi.fn(),
   picker: vi.fn(),
+  push: vi.fn(),
+  hosted: false,
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useSyncExternalStore: (_: unknown, snapshot: () => unknown) => snapshot(),
   useCallback: (callback: unknown) => callback,
+  useLayoutEffect: (effect: () => void) => { state.effects.push(effect); },
   useEffect: (effect: () => void | (() => void)) => {
     if (state.mount || state.refreshEffects) state.effects.push(effect);
   },
@@ -40,11 +44,19 @@ vi.mock("react", async (original) => ({
   },
   useRef: (initial: unknown) => (state.refs[state.refCursor++] ??= { current: initial }),
 }));
+vi.mock("expo-router", () => ({ router: { push: state.push } }));
+vi.mock("./hostedTripPhotos", async (original) => ({
+  ...(await original<typeof import("./hostedTripPhotos")>()),
+  get hostedTripPhotosEnabled() { return state.hosted; },
+}));
 vi.mock("react-native", () => ({
   Modal: "aside",
   ScrollView: "main",
   AppState: { addEventListener: () => ({ remove: vi.fn() }) },
-  Image: (props: any) => createElement("img", { src: props.source.uri }),
+  Image: (props: any) => createElement("img", {
+    src: props.source.uri,
+    alt: props.accessible && props.accessibilityRole === "image" ? props.accessibilityLabel : undefined,
+  }),
   StyleSheet: { create: (styles: unknown) => styles },
   Text: (props: any) => createElement("span", null, props.children),
   View: (props: any) => createElement("div", null, props.children),
@@ -123,6 +135,8 @@ beforeEach(() => {
   state.buttons = [];
   state.repository.mockReset();
   state.picker.mockReset();
+  state.push.mockReset();
+  state.hosted = false;
 });
 
 it("lists local retained photos and only saves the explicitly selected picker file", async () => {
@@ -231,7 +245,9 @@ it("clears old Account images before the same Trip finishes reloading", async ()
   state.repository.mockResolvedValue(repo);
   render();
   await flush();
-  expect(render()).toContain("file:///old-account.jpg");
+  const loaded = render();
+  expect(loaded).toContain("file:///old-account.jpg");
+  expect(loaded).toContain('alt="tripPhotos.photoNumber"');
   advanceAccountGeneration();
   state.repository.mockReturnValueOnce(new Promise(() => {}));
   const immediate = render();
@@ -337,5 +353,58 @@ it("shows retained photos in the read-only module without any add capability", a
   expect(html).toContain("file:///photo.jpg");
   expect(html).not.toContain("tripPhotos.choose");
   expect(registerAdd).toHaveBeenCalledWith(null);
+  expect(repo.addTripPhoto).not.toHaveBeenCalled();
+});
+
+it("opens one shared gallery with the original picker, then retires it on account change", async () => {
+  state.hosted = true;
+  const repo = {
+    listTripPhotos: vi.fn(async () => []),
+    addTripPhoto: vi.fn(),
+  };
+  state.repository.mockResolvedValue(repo);
+  render(tripId, true);
+  await flush();
+  render(tripId, true);
+  const open = state.buttons.find(({ label }) => label === "tripPhotos.title")?.onPress;
+  open?.();
+  open?.();
+  expect(state.push).toHaveBeenCalledOnce();
+  const route = state.push.mock.calls[0][0];
+  expect(route.pathname).toBe("/trip-photos-sheet");
+  const id = route.params.invocation;
+  const gallery = readTripPhotosSheet(id);
+  expect(renderToStaticMarkup(gallery?.content)).toContain("tripPhotos.empty");
+  let cancel!: (result: { canceled: true }) => void;
+  state.picker.mockReturnValue(new Promise(resolve => { cancel = resolve; }));
+  state.buttons.find(({ label }) => label === "tripPhotos.choose")?.onPress();
+  expect(gallery?.isBusy()).toBe(true);
+  cancel({ canceled: true });
+  await flush();
+  expect(gallery?.isBusy()).toBe(false);
+  expect(repo.addTripPhoto).not.toHaveBeenCalled();
+  expect(readTripPhotosSheet(id)).toBeDefined();
+  advanceAccountGeneration();
+  expect(readTripPhotosSheet(id)).toBeUndefined();
+  releaseTripPhotosSheet(id);
+});
+
+it("drops a late system Photos result once the gallery route has left its owning Trip Home", async () => {
+  state.hosted = true;
+  const repo = { listTripPhotos: vi.fn(async () => []), addTripPhoto: vi.fn() };
+  state.repository.mockResolvedValue(repo);
+  render(tripId, true);
+  await flush();
+  render(tripId, true);
+  state.buttons.find(({ label }) => label === "tripPhotos.title")?.onPress();
+  const id = state.push.mock.calls[0][0].params.invocation;
+  renderToStaticMarkup(readTripPhotosSheet(id)?.content);
+  let complete!: (result: unknown) => void;
+  state.picker.mockReturnValue(new Promise(resolve => { complete = resolve; }));
+  state.buttons.find(({ label }) => label === "tripPhotos.choose")?.onPress();
+  expect(readTripPhotosSheet(id)?.isBusy()).toBe(true);
+  releaseTripPhotosSheet(id);
+  complete({ canceled: false, assets: [{ uri: "file:///late-photo.jpg" }] });
+  await flush();
   expect(repo.addTripPhoto).not.toHaveBeenCalled();
 });

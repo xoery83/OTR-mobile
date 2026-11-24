@@ -163,6 +163,10 @@ Document Detail. The route repeats the existing scoped metadata read using
 only the document identity and invoking account generation. Original sharing
 retains the existing confirmation and repository authorization.
 
+The default-off Trip Photos QA entry presents the compact Trip Home gallery
+inside the shared Sheet. The originating Trip and Account generation still own
+gallery reads and local photo writes. System Photos remains a native handoff.
+
 ## State Strategy
 
 Use local SQLite as durable state and repositories as the authoritative app-facing API.

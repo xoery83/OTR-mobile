@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { router } from "expo-router";
+import {
+  hostedTripPhotosEnabled,
+  readTripPhotosSheet, releaseTripPhotosSheet, stageTripPhotosSheet, updateTripPhotosSheet,
+} from "./hostedTripPhotos";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AppState, Image, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SheetHeader } from "@/components/SheetHeader";
@@ -67,6 +72,9 @@ function LocalTripPhotoContent({
   const alive = useRef(true);
   const request = useRef(0);
   const busy = useRef(false);
+  const invocation = useRef<string>(undefined);
+  const latestReadOnly = useRef(readOnly);
+  useLayoutEffect(() => { latestReadOnly.current = readOnly; }, [readOnly]);
   const [photos, setPhotos] = useState<TripPhoto[]>([]);
   const [status, setStatus] = useState<"LOADING" | "READY" | "UNAVAILABLE">("LOADING");
   const [adding, setAdding] = useState(false);
@@ -102,10 +110,13 @@ function LocalTripPhotoContent({
       alive.current = false;
       request.current += 1;
       listener.remove();
+      releaseTripPhotosSheet(invocation.current);
     };
   }, [load]);
-  const add = useCallback(async () => {
-    if (readOnly || busy.current || !current() || status !== "READY") return;
+  const add = useCallback(async (invocationId?: string) => {
+    const valid = () => current() && !latestReadOnly.current &&
+      (!invocationId || Boolean(readTripPhotosSheet(invocationId)));
+    if (readOnly || busy.current || !valid() || status !== "READY") return;
     busy.current = true;
     setAdding(true);
     setAddError(false);
@@ -117,19 +128,19 @@ function LocalTripPhotoContent({
         base64: false,
         exif: false,
       });
-      if (!current() || choice.canceled) return;
+      if (!valid() || choice.canceled) return;
       const repo = await readLocalTripPhotoRepository();
       for (const asset of choice.assets) {
-        if (!current()) return;
+        if (!valid()) return;
         const uri = asset.uri;
         if (!uri?.startsWith("file://"))
           throw new Error("TRIP_PHOTO_PICKER_FILE_UNAVAILABLE");
         await repo.addTripPhoto(tripId, uri);
       }
-      if (current() && choice.assets.length) onSaved?.();
-      if (current()) await load();
+      if (valid() && choice.assets.length) onSaved?.();
+      if (valid()) await load();
     } catch {
-      if (current()) {
+      if (valid()) {
         setAddError(true);
         await load();
       }
@@ -148,13 +159,13 @@ function LocalTripPhotoContent({
     );
     return () => registerAdd?.(null);
   }, [registerAdd, status, add, readOnly]);
-  const content = (
+  const content = (invocationId?: string) => (
     <>
       {!readOnly ? (
         <UiButton
           label={t("tripPhotos.choose")}
           disabled={adding || status !== "READY"}
-          onPress={() => void add()}
+          onPress={() => void add(invocationId)}
         />
       ) : null}
       {addError ? (
@@ -176,6 +187,8 @@ function LocalTripPhotoContent({
                 source={{ uri: photo.localUri }}
                 style={styles.photo}
                 resizeMode="contain"
+                accessible
+                accessibilityRole="image"
                 accessibilityLabel={t("tripPhotos.photoNumber", {
                   number: index + 1,
                 })}
@@ -191,7 +204,11 @@ function LocalTripPhotoContent({
       )}
     </>
   );
-  if (!compact) return <UiSection title={t("tripPhotos.title")}>{content}</UiSection>;
+  const gallery = (id: string) => <View style={styles.gallery}>{content(id)}</View>;
+  useLayoutEffect(() => {
+    if (invocation.current) updateTripPhotosSheet(invocation.current, gallery(invocation.current));
+  });
+  if (!compact) return <UiSection title={t("tripPhotos.title")}>{content()}</UiSection>;
   const close = () => setExpanded(false);
   return (
     <>
@@ -201,6 +218,19 @@ function LocalTripPhotoContent({
           value={status === "READY" ? String(photos.length) : ""}
           onPress={() => {
             if (!current()) return;
+            if (hostedTripPhotosEnabled) {
+              if (busy.current || readTripPhotosSheet(invocation.current)) return;
+              const id = stageTripPhotosSheet({
+                content: null,
+                isCurrent: current,
+                isBusy: () => busy.current,
+              });
+              invocation.current = id;
+              updateTripPhotosSheet(id, gallery(id));
+              router.push({ pathname: "/trip-photos-sheet", params: { invocation: id } });
+              if (status !== "READY") void load();
+              return;
+            }
             setExpanded(true);
             if (status !== "READY") void load();
           }}
@@ -225,7 +255,7 @@ function LocalTripPhotoContent({
               wrapActions
             />
             <ScrollView contentContainerStyle={styles.gallery}>
-              {content}
+              {content()}
             </ScrollView>
           </SafeAreaView>
         </Modal>
