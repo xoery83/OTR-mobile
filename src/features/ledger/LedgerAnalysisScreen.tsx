@@ -80,7 +80,7 @@ export function LedgerAnalysisScreen() {
   const [view, setView] = useState<{
     dataset: AnalysisDataset;
     range: AnalysisRange;
-    projectionOwner: symbol;
+    projectionOwner: { generation: number; journeyId: string; memberId: string };
   } | null>(null);
   const [updating, setUpdating] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,11 +100,11 @@ export function LedgerAnalysisScreen() {
   const owningNavigation = useNavigation();
   const generation = getAccountGeneration();
   const projectionOwner = useMemo(
-    () => Symbol(),
+    () => ({ generation, journeyId: params.journeyId, memberId: params.memberId }),
     [generation, params.journeyId, params.memberId],
   );
-  const reportOwner = useMemo(() => Symbol(), [projectionOwner, scope]);
-  const pickerOwner = useRef<symbol | null>(null);
+  const reportOwner = useMemo(() => ({ projectionOwner, scope }), [projectionOwner, scope]);
+  const pickerOwner = useRef<typeof reportOwner | null>(null);
   useLayoutEffect(() => {
     pickerOwner.current = reportOwner;
     pendingRange.current = null;
@@ -558,7 +558,7 @@ export function LedgerAnalysisScreen() {
                     currencyScale={view.dataset.journey.settlementScale}
                     money={money}
                     drilldown={drilldown}
-                    periodDisabled={hostedLedgerAnalysisPickerEnabled && pendingRange.current !== null}
+                    periodDisabled={hostedLedgerAnalysisPickerEnabled && updating}
                     onOpenPeriod={hostedLedgerAnalysisPickerEnabled
                       ? (period, title) =>
                           openHostedPicker({
