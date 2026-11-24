@@ -20,6 +20,7 @@ const state = vi.hoisted(() => ({
   os: "ios",
   isPad: false,
   landscape: false,
+  fontScale: 2.143,
   voice: { status: "idle" as string },
   voiceStart: vi.fn(),
   voiceStop: vi.fn(),
@@ -109,8 +110,8 @@ vi.mock("react-native", () => {
       absoluteFill: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 },
     },
     useWindowDimensions: () => state.landscape
-      ? { height: 402, width: 874, fontScale: 2.143 }
-      : { height: 874, width: 402, fontScale: 2.143 },
+      ? { height: 402, width: 874, fontScale: state.fontScale }
+      : { height: 874, width: 402, fontScale: state.fontScale },
   };
 });
 vi.mock("react-native-safe-area-context", () => ({
@@ -191,6 +192,7 @@ beforeEach(() => {
   state.os = "ios";
   state.isPad = false;
   state.landscape = false;
+  state.fontScale = 2.143;
   state.voice = { status: "idle" };
   for (const fn of [
     state.voiceStart,
@@ -733,6 +735,7 @@ it("puts every hosted attachment source in the composer scroll body", () => {
 });
 
 it("keeps the hosted portrait editor ahead of the count that appears on first input", () => {
+  state.fontScale = 1;
   render({ ...empty, editorText: "note" }, 1, { hosted: true });
   const editor = state.nodes.findIndex(node => node.multiline);
   const count = state.nodes.findIndex(node => node.children === t("capture.countOne", { count: 1 }));
