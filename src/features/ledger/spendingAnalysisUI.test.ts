@@ -1,8 +1,12 @@
+import { AnalysisExcludedExpenses } from "./AnalysisExcludedExpenses";
+import { AnalysisPickerFields } from "./AnalysisPickerFields";
+import { completeAnalysisPicker, readAnalysisPicker, type AnalysisPicker } from "./analysisPickerInvocation";
+import type { ComponentProps, ReactElement } from "react";
 import { MoneyText } from "./MoneyText";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import type { ReactElement } from "react";
 import {
+  analysisPresetBounds,
   buildSpendingAnalysis,
   type AnalysisDataset,
 } from "@/domain/ledger/spendingAnalysis";
@@ -13,6 +17,7 @@ import {
   AnalysisExpenseRows,
   AnalysisInsights,
   AnalysisPeople,
+  AnalysisPeriodExpensesAction,
   AnalysisSkeleton,
   AnalysisTimeline,
 } from "./SpendingAnalysisSections";
@@ -30,7 +35,13 @@ const ui = vi.hoisted(() => ({
   options: vi.fn(),
   fontScale: 1,
   push: vi.fn(),
-  nav: { getParent: () => ({ setOptions: ui.options }) },
+  hosted: false,
+  focused: true,
+  nav: { getParent: () => ({ setOptions: ui.options }), isFocused: () => ui.focused },
+}));
+vi.mock("./analysisPickerInvocation", async original => ({
+  ...(await original<typeof import("./analysisPickerInvocation")>()),
+  get hostedLedgerAnalysisPickerEnabled() { return ui.hosted; },
 }));
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -212,6 +223,8 @@ beforeEach(() => {
   ui.push.mockClear();
   ui.params.scope = "MINE";
   ui.fontScale = 1;
+  ui.hosted = false;
+  ui.focused = true;
 });
 
 describe("Analysis UI transitions and request guardrails", () => {
@@ -262,9 +275,12 @@ describe("Analysis UI transitions and request guardrails", () => {
       "Entire trip",
     );
     expect(ui.projection).toHaveBeenCalledTimes(1);
-    press(
-      nodes(screen).find((node) => node.props.onPress && texts(node) === "This month")!,
-    );
+    press(nodes(screen).find((node) => node.props.accessibilityLabel === "Choose date range")!);
+    const picker = nodes(render()).find(node => node.type === AnalysisPickerFields)!.props.picker as
+      Extract<AnalysisPicker, { kind: "range" }>;
+    expect(picker.kind).toBe("range");
+    expect(picker.presets).toContain("MONTH");
+    picker.choose(analysisPresetBounds("MONTH", picker.today));
     await new Promise<void>((resolve) => setImmediate(resolve));
     expect(ui.projection).toHaveBeenCalledTimes(2);
     expect(ui.projection.mock.calls[1][2]).toHaveProperty("from");
@@ -280,7 +296,11 @@ describe("Analysis UI transitions and request guardrails", () => {
     )!;
     press(menu);
     screen = render();
-    press(nodes(screen).find((node) => node.props.onPress && texts(node) === "Hotel")!);
+    const picker = nodes(screen).find(node => node.type === AnalysisPickerFields)!.props.picker as
+      Extract<AnalysisPicker, { kind: "category" }>;
+    expect(picker.kind).toBe("category");
+    expect(picker.options).toContain("hotel");
+    picker.choose("hotel");
     screen = render();
     const rows = nodes(screen).find((node) => node.type === AnalysisExpenseRows)!;
     expect(rows.props.expenses).toEqual([dataset.expenses[0]]);
@@ -385,6 +405,107 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(ui.projection).toHaveBeenCalledTimes(2);
     expect(texts(action)).not.toContain("Range");
   });
+  it.each([true, false])("reads the applied hosted range once when refocus arrives first: %s", async focusFirst => {
+    ui.hosted = true;
+    const screen = await ready(data(31));
+    const action = nodes(screen).find((node) => node.props.accessibilityLabel === "Choose date range")!;
+    press(action);
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "range") throw new Error("Expected the hosted range picker");
+    ui.cleanup?.();
+    const refocus = () => { ui.cleanup = ui.focus?.() ?? null; };
+    const apply = () => completeAnalysisPicker(params.invocation, picker, () => picker.choose({ from: "2026-09-02T00:00:00.000Z" }));
+    ui.projection.mockRejectedValueOnce(new Error("local range unavailable"));
+    if (focusFirst) refocus();
+    apply();
+    if (!focusFirst) refocus();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(ui.projection).toHaveBeenCalledTimes(2);
+    expect(ui.projection).toHaveBeenLastCalledWith("j", "a", { from: "2026-09-02T00:00:00.000Z" });
+    expect(texts(render())).toContain("MY SPENDING");
+    expect(texts(render())).toContain("Tap to try again");
+  });
+  it("opens exactly one period search after returning to the owning Analysis report", async () => {
+    ui.hosted = true;
+    const screen = await ready();
+    const timeline = nodes(screen).find(node => node.type === AnalysisTimeline)!;
+    const { dashboard, onOpenPeriod } = timeline.props as ComponentProps<typeof AnalysisTimeline>;
+    const period = dashboard.periods[0]!;
+    onOpenPeriod!(period, "Original period");
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "period") throw new Error("Expected the hosted period summary");
+    expect(picker.period).toBe(period);
+    const apply = () => completeAnalysisPicker(params.invocation, picker, picker.open);
+    ui.focused = false;
+    apply();
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    ui.focused = true;
+    apply();
+    apply();
+    expect(ui.push).toHaveBeenCalledTimes(2);
+    expect(ui.push).toHaveBeenLastCalledWith({
+      pathname: "/expenses/search",
+      params: {
+        journeyId: "j", memberId: "a", scope: "MINE", analysisState: "INCLUDED",
+        from: period.from, to: period.to, origin: "Original period",
+      },
+    });
+  });
+  it("does not let a queued Mine chart press open a period from the Group report", async () => {
+    ui.hosted = true;
+    const screen = await ready();
+    const timeline = (element: unknown) =>
+      nodes(element).find(node => node.type === AnalysisTimeline)!.props as ComponentProps<typeof AnalysisTimeline>;
+    const mine = timeline(screen);
+    press(nodes(screen).find(node => node.props.accessibilityRole === "tab" && texts(node) === "Group")!);
+    const group = timeline(render());
+    mine.onOpenPeriod!(mine.dashboard.periods[0]!, "Mine period");
+    expect(ui.push).not.toHaveBeenCalled();
+    group.onOpenPeriod!(group.dashboard.periods[0]!, "Group period");
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "period") throw new Error("Expected the hosted period summary");
+    completeAnalysisPicker(params.invocation, picker, picker.open);
+    expect(ui.push).toHaveBeenLastCalledWith(expect.objectContaining({
+      pathname: "/expenses/search",
+      params: expect.objectContaining({ scope: "GROUP", origin: "Group period" }),
+    }));
+  });
+  it("blocks the previous chart while an applied range is loading and resumes that range after blur", async () => {
+    ui.hosted = true;
+    const dataset = data(31);
+    const screen = await ready(dataset);
+    const timeline = (element: unknown) =>
+      nodes(element).find(node => node.type === AnalysisTimeline)!.props as ComponentProps<typeof AnalysisTimeline>;
+    const previous = timeline(screen);
+    const pressPrevious = () => previous.onOpenPeriod!(previous.dashboard.periods[0]!, "Old period");
+    press(nodes(screen).find(node => node.props.accessibilityLabel === "Choose date range")!);
+    const [{ params }] = ui.push.mock.lastCall!;
+    const picker = readAnalysisPicker(params.invocation);
+    if (picker?.kind !== "range") throw new Error("Expected the hosted range selector");
+    const range = { from: "2026-09-02T00:00:00.000Z" };
+    ui.projection.mockImplementationOnce(() => new Promise(() => {}));
+    completeAnalysisPicker(params.invocation, picker, () => picker.choose(range));
+    pressPrevious();
+    await new Promise<void>(resolve => setImmediate(resolve));
+    expect(timeline(render()).periodDisabled).toBe(true);
+    pressPrevious();
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    ui.cleanup?.();
+    ui.cleanup = ui.focus?.() ?? null;
+    await new Promise<void>(resolve => setImmediate(resolve));
+    expect(ui.projection).toHaveBeenCalledTimes(3);
+    expect(ui.projection).toHaveBeenLastCalledWith("j", "a", range);
+    const current = timeline(render());
+    expect(current.periodDisabled).toBe(false);
+    pressPrevious();
+    expect(ui.push).toHaveBeenCalledTimes(1);
+    current.onOpenPeriod!(current.dashboard.periods[0]!, "Current period");
+    expect(ui.push).toHaveBeenCalledTimes(2);
+  });
   it("uses a structured skeleton, then preserves previous data on local failure", async () => {
     ui.projection.mockResolvedValue(data());
     expect(nodes(render()).some((node) => node.type === AnalysisSkeleton)).toBe(true);
@@ -447,11 +568,16 @@ describe("Analysis UI transitions and request guardrails", () => {
     const popup = nodes(screen).find(
       (node) => node.type === "modal" && node.props.visible === true,
     )!;
-    expect(texts(popup)).toContain("Waiting for confirmed Journey currency value");
-    expect(texts(popup)).toContain("Changes need review");
-    expect(texts(popup)).toContain("Your share is not available yet");
-    expect(texts(popup)).toMatch(/Original total\s+€10\.00/);
-    expect(texts(popup)).not.toContain("Expense 3");
+    const rows = (element: unknown) => AnalysisExcludedExpenses(
+      nodes(element).find(node => node.type === AnalysisExcludedExpenses)!.props as
+        ComponentProps<typeof AnalysisExcludedExpenses>,
+    );
+    const displayed = texts(rows(popup));
+    expect(displayed).toContain("Waiting for confirmed Journey currency value");
+    expect(displayed).toContain("Changes need review");
+    expect(displayed).toContain("Your share is not available yet");
+    expect(displayed).toMatch(/Original total\s+€10\.00/);
+    expect(displayed).not.toContain("Expense 3");
     (popup.props.onRequestClose as () => void)();
     expect(
       nodes(render()).filter(
@@ -465,7 +591,7 @@ describe("Analysis UI transitions and request guardrails", () => {
     );
     screen = render();
     press(
-      nodes(screen).find(
+      nodes(rows(screen)).find(
         (node) => node.props.onPress && texts(node).startsWith("Expense 0"),
       )!,
     );
@@ -549,11 +675,12 @@ describe("Analysis UI transitions and request guardrails", () => {
     );
     ui.cursor = 0;
     element = AnalysisTimeline(props);
-    press(
-      nodes(element).find(
-        (node) => node.props.onPress && /View\s+0 expenses/.test(texts(node)),
-      )!,
+    const expenses = nodes(element).find(node => node.type === AnalysisPeriodExpensesAction)!;
+    const control = AnalysisPeriodExpensesAction(
+      expenses.props as ComponentProps<typeof AnalysisPeriodExpensesAction>,
     );
+    expect(texts(control)).toMatch(/View\s+0 expenses/);
+    press(nodes(control)[0]!);
     expect(drilldown).toHaveBeenCalledWith(
       { from: dashboard.periods[0]!.from, to: dashboard.periods[0]!.to },
       expect.any(String),
@@ -665,7 +792,26 @@ describe("Analysis UI transitions and request guardrails", () => {
     expect(nodes(popup).some((node) => node.props.accessibilityRole === "header")).toBe(
       true,
     );
-    expect(texts(popup)).toMatch(/View\s+0 expenses/);
+    expect(nodes(body).some(node => node.type === AnalysisPeriodExpensesAction)).toBe(false);
+    expect(nodes(popup).some(node => node.type === AnalysisPeriodExpensesAction)).toBe(true);
+  });
+
+  it("forwards the tapped period to the owning Sheet without mounting the legacy modal", () => {
+    const dashboard = buildSpendingAnalysis(data(), "a", "MINE", {}, "2026-09-29");
+    const onOpenPeriod = vi.fn();
+    const drilldown = vi.fn();
+    const timeline = AnalysisTimeline({
+      dashboard,
+      onOpenPeriod,
+      drilldown,
+      money: { format: String, currency: "NZD", scale: 2 },
+    });
+    const firstBar = nodes(timeline).find(node => node.props.accessibilityHint === "Opens spending brief");
+    press(firstBar!);
+    expect(onOpenPeriod).toHaveBeenCalledExactlyOnceWith(dashboard.periods[0], expect.any(String));
+    expect(nodes(timeline).some(node => node.type === "modal")).toBe(false);
+    expect(drilldown).not.toHaveBeenCalled();
+    expect(ui.projection).not.toHaveBeenCalled();
   });
   it("keeps traveller expansion only for all categories and routes filtered travellers and payers directly", () => {
     const drilldown = vi.fn();

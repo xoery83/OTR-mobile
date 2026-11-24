@@ -1,8 +1,10 @@
 import { segmentedControlTokens } from "@/ui/segmented";
 import { formatExpenseCount } from "./searchFilters";
-import { categoryLabel, systemMessage } from "@/ui/domainLabels";
+import { systemMessage } from "@/ui/domainLabels";
 import { t } from "@/ui/locale";
-import { UiTextInput as TextInput } from "@/ui/forms";
+import { AnalysisExcludedExpenses } from "./AnalysisExcludedExpenses";
+import { AnalysisPickerFields } from "./AnalysisPickerFields";
+import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { useUiTheme, useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -16,7 +18,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Stack, router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { Stack, router, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 
 import { AppIcon } from "@/components/AppIcon";
@@ -26,19 +28,14 @@ import { getDefaultLedgerReportingRepository } from "@/data/repositories/default
 import {
   aggregateAnalysisPeople,
   addAnalysisDays,
-  analysisDateBounds,
-  analysisPresetBounds,
   analysisRangePresets,
   buildSpendingAnalysis,
   type AnalysisDataset,
-  type AnalysisExpense,
   type AnalysisRange,
-  type AnalysisRangePreset,
 } from "@/domain/ledger/spendingAnalysis";
 import type { ReportingScope } from "@/domain/ledger/reporting";
 import { createLatestRequest } from "./latestRequest";
 import {
-  formatLedgerDate,
   formatLedgerDateFilter,
   formatLedgerMoney,
   localDateKey,
@@ -57,23 +54,13 @@ import {
   type AnalysisDrilldown,
 } from "./SpendingAnalysisSections";
 
-const rangeLabels = (): Record<AnalysisRangePreset, string> => ({
-  ENTIRE: t("extra.copy21"),
-  LAST_30: t("extra.copy22"),
-  MONTH: t("extra.copy23"),
-  YEAR: t("extra.copy24"),
-  CUSTOM: t("extra.copy25"),
-});
-
-function exclusionReason(expense: AnalysisExpense, scope: ReportingScope) {
-  if (expense.hasOpenConflict) return t("ui.changesNeedReview");
-  if (expense.businessStatus === "DRAFT") return t("ui.draftExpense");
-  if (expense.businessStatus === "RATE_REQUIRED" || expense.totalMinor === null)
-    return t("ui.waitingForConfirmedJourneyCurrencyValue");
-  if (scope === "MINE" && expense.personalMinor === null)
-    return t("ui.yourShareIsNotAvailableYet");
-  return t("ui.notIncludedInSpendingTotal");
-}
+import {
+  hostedLedgerAnalysisPickerEnabled,
+  openAnalysisPicker,
+  readAnalysisPicker,
+  releaseAnalysisPicker,
+  type AnalysisPicker,
+} from "./analysisPickerInvocation";
 
 export function LedgerAnalysisScreen() {
   useUiLocale();
@@ -93,12 +80,11 @@ export function LedgerAnalysisScreen() {
   const [view, setView] = useState<{
     dataset: AnalysisDataset;
     range: AnalysisRange;
+    projectionOwner: { generation: number; journeyId: string; memberId: string };
   } | null>(null);
   const [updating, setUpdating] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rangeOpen, setRangeOpen] = useState(false);
-  const [rangeDraft, setRangeDraft] = useState({ from: "", through: "" });
-  const [rangeError, setRangeError] = useState<string | null>(null);
   const [completenessOpen, setCompletenessOpen] = useState(false);
   const [biggestCategory, setBiggestCategory] = useState<string | null>(null);
   const [travellerCategory, setTravellerCategory] = useState<string | null>(null);
@@ -108,6 +94,25 @@ export function LedgerAnalysisScreen() {
   >(null);
   const [scopeHeight, setScopeHeight] = useState(52);
   const rangeRef = useRef<AnalysisRange>({});
+  const pendingRange = useRef<AnalysisRange | null>(null);
+  const refreshFocused = useRef<(() => void) | null>(null);
+  const pickerId = useRef<string>(undefined);
+  const owningNavigation = useNavigation();
+  const generation = getAccountGeneration();
+  const projectionOwner = useMemo(
+    () => ({ generation, journeyId: params.journeyId, memberId: params.memberId }),
+    [generation, params.journeyId, params.memberId],
+  );
+  const reportOwner = useMemo(() => ({ projectionOwner, scope }), [projectionOwner, scope]);
+  const pickerOwner = useRef<typeof reportOwner | null>(null);
+  useLayoutEffect(() => {
+    pickerOwner.current = reportOwner;
+    pendingRange.current = null;
+    return () => {
+      pickerOwner.current = null;
+      releaseAnalysisPicker(pickerId.current);
+    };
+  }, [reportOwner]);
   const repository = useRef<ReturnType<
     typeof getDefaultLedgerReportingRepository
   > | null>(null);
@@ -121,8 +126,9 @@ export function LedgerAnalysisScreen() {
 
   const load = useCallback(
     async (range: AnalysisRange) => {
-      if (!params.journeyId || !params.memberId) return;
+      if (!params.journeyId || !params.memberId || generation !== getAccountGeneration()) return;
       const id = request.begin();
+      const isCurrent = () => request.isCurrent(id) && generation === getAccountGeneration();
       setUpdating(true);
       setError(null);
       try {
@@ -130,24 +136,47 @@ export function LedgerAnalysisScreen() {
         const data = await (
           await repository.current
         ).loadSpendingAnalysisProjection(params.journeyId, params.memberId, range);
-        if (!request.isCurrent(id)) return;
+        if (!isCurrent()) return;
         rangeRef.current = range;
-        setView({ dataset: data, range });
+        setView({ dataset: data, range, projectionOwner });
       } catch {
-        repository.current = null;
-        if (request.isCurrent(id))
+        if (isCurrent()) {
+          repository.current = null;
           setError(t("ui.spendingAnalysisCouldNotBeRefreshedYourPreviousViewIs"));
+        }
       } finally {
-        if (request.isCurrent(id)) setUpdating(false);
+        if (isCurrent()) {
+          if (pendingRange.current === range) pendingRange.current = null;
+          setUpdating(false);
+        }
       }
     },
-    [params.journeyId, params.memberId, request],
+    [generation, params.journeyId, params.memberId, projectionOwner, request],
   );
 
   useFocusEffect(
     useCallback(() => {
-      void load(rangeRef.current);
-      return () => request.cancel();
+      let active = true;
+      let scheduled = false;
+      const refresh = () => {
+        if (scheduled) return;
+        scheduled = true;
+        queueMicrotask(() => {
+          scheduled = false;
+          if (!active) return;
+          const range = pendingRange.current ?? rangeRef.current;
+          void load(range);
+        });
+      };
+      if (hostedLedgerAnalysisPickerEnabled) {
+        refreshFocused.current = refresh;
+        refresh();
+      } else void load(rangeRef.current);
+      return () => {
+        active = false;
+        refreshFocused.current = null;
+        request.cancel();
+      };
     }, [load, request]),
   );
 
@@ -225,23 +254,73 @@ export function LedgerAnalysisScreen() {
       },
     });
   };
-  const changeRange = (preset: AnalysisRangePreset) => {
-    if (preset === "CUSTOM") {
-      setRangeDraft({
-        from:
-          view?.range.from?.slice(0, 10) ??
-          view?.dataset.journey.startDate?.slice(0, 10) ??
-          today,
-        through: view?.range.to
-          ? addAnalysisDays(view.range.to.slice(0, 10), -1)
-          : (view?.dataset.journey.endDate?.slice(0, 10) ?? today),
-      });
-      setRangeError(null);
+  function openHostedPicker(picker: AnalysisPicker) {
+    const owner = pickerOwner.current;
+    if (
+      owner !== reportOwner ||
+      !owningNavigation.isFocused() ||
+      generation !== getAccountGeneration() ||
+      (picker.kind === "period" &&
+        (pendingRange.current !== null ||
+          rangeRef.current !== view?.range ||
+          view.projectionOwner !== projectionOwner)) ||
+      readAnalysisPicker(pickerId.current)
+    )
       return;
-    }
-    setRangeOpen(false);
-    void load(analysisPresetBounds(preset, today));
+    const invocation = openAnalysisPicker(
+      picker,
+      () => pickerOwner.current === owner,
+      () => owningNavigation.isFocused(),
+    );
+    pickerId.current = invocation;
+    router.push({ pathname: "/ledger-analysis-picker", params: { invocation } });
+  }
+
+  const rangePicker: AnalysisPicker = {
+    kind: "range",
+    presets,
+    today,
+    initial: {
+      from:
+        view?.range.from?.slice(0, 10) ??
+        view?.dataset.journey.startDate?.slice(0, 10) ??
+        today,
+      through: view?.range.to
+        ? addAnalysisDays(view.range.to.slice(0, 10), -1)
+        : (view?.dataset.journey.endDate?.slice(0, 10) ?? today),
+    },
+    choose: (range) => {
+      if (hostedLedgerAnalysisPickerEnabled) {
+        pendingRange.current = range;
+        refreshFocused.current?.();
+      } else {
+        setRangeOpen(false);
+        void load(range);
+      }
+    },
   };
+  function categoryPicker(menu: NonNullable<typeof categoryMenu>): Extract<AnalysisPicker, { kind: "category" }> {
+    const { selected, setSelected } =
+      menu === "BIGGEST"
+        ? { selected: biggestCategory, setSelected: setBiggestCategory }
+        : menu === "TRAVELLER"
+          ? { selected: travellerCategory, setSelected: setTravellerCategory }
+          : { selected: payerCategory, setSelected: setPayerCategory };
+    return {
+      kind: "category",
+      options: categoryChoices,
+      selected,
+      choose: (category) => {
+        setSelected(category);
+        setCategoryMenu(null);
+      },
+    };
+  }
+  function chooseCategory(menu: NonNullable<typeof categoryMenu>) {
+    if (hostedLedgerAnalysisPickerEnabled) openHostedPicker(categoryPicker(menu));
+    else setCategoryMenu(menu);
+  }
+
   const scopeControl = (
     <View
       accessibilityRole="tablist"
@@ -301,8 +380,8 @@ export function LedgerAnalysisScreen() {
           icon="calendar"
           selected={Boolean(view?.range.from)}
           onPress={() => {
-            setRangeDraft({ from: "", through: "" });
-            setRangeOpen(true);
+            if (hostedLedgerAnalysisPickerEnabled) openHostedPicker(rangePicker);
+            else setRangeOpen(true);
           }}
         />
       </Stack.Toolbar>
@@ -381,7 +460,15 @@ export function LedgerAnalysisScreen() {
                         count: dashboard.incomplete.length,
                       })}
                       hitSlop={12}
-                      onPress={() => setCompletenessOpen(true)}
+                      onPress={() => {
+                        if (hostedLedgerAnalysisPickerEnabled) openHostedPicker({
+                          kind: "excluded",
+                          scope,
+                          expenses: dashboard.incomplete,
+                          open: id => router.push(`/expenses/expense/${id}`),
+                        });
+                        else setCompletenessOpen(true);
+                      }}
                     >
                       <Text style={shared.meta}>ⓘ</Text>
                     </Pressable>
@@ -434,7 +521,7 @@ export function LedgerAnalysisScreen() {
                           <AnalysisCategoryMenu
                             title={t("ui.travellers")}
                             value={travellerCategory}
-                            onPress={() => setCategoryMenu("TRAVELLER")}
+                            onPress={() => chooseCategory("TRAVELLER")}
                           />
                         }
                       />
@@ -452,7 +539,7 @@ export function LedgerAnalysisScreen() {
                           <AnalysisCategoryMenu
                             title={t("ui.whoPaid")}
                             value={payerCategory}
-                            onPress={() => setCategoryMenu("PAYER")}
+                            onPress={() => chooseCategory("PAYER")}
                           />
                         }
                       />
@@ -471,6 +558,17 @@ export function LedgerAnalysisScreen() {
                     currencyScale={view.dataset.journey.settlementScale}
                     money={money}
                     drilldown={drilldown}
+                    periodDisabled={hostedLedgerAnalysisPickerEnabled && updating}
+                    onOpenPeriod={hostedLedgerAnalysisPickerEnabled
+                      ? (period, title) =>
+                          openHostedPicker({
+                            kind: "period",
+                            period,
+                            title,
+                            money,
+                            open: () => drilldown({ from: period.from, to: period.to }, title),
+                          })
+                      : undefined}
                   />
                   {scope === "MINE" ? (
                     <AnalysisSection
@@ -479,7 +577,7 @@ export function LedgerAnalysisScreen() {
                         <AnalysisCategoryMenu
                           title={t("ui.biggestExpenses2")}
                           value={biggestCategory}
-                          onPress={() => setCategoryMenu("BIGGEST")}
+                          onPress={() => chooseCategory("BIGGEST")}
                         />
                       }
                     >
@@ -547,146 +645,61 @@ export function LedgerAnalysisScreen() {
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.modalContent}
             >
-              <Text style={shared.meta}>
-                {formatExpenseCount(dashboard.incomplete.length)} ·{" "}
-                {scope === "MINE" ? t("ledger.mine") : t("ledger.group")}
-              </Text>
-              {dashboard.incomplete.map((expense) => (
-                <Pressable
-                  key={expense.id}
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setCompletenessOpen(false);
-                    router.push(`/expenses/expense/${expense.id}`);
-                  }}
-                  style={styles.excludedExpense}
-                >
-                  <Text numberOfLines={2} style={styles.excludedTitle}>
-                    {expense.title}
-                  </Text>
-                  <Text style={shared.meta}>
-                    {t("analysis.originalTotal", {
-                      date: formatLedgerDate(expense.occurredAt),
-                      amount: formatLedgerMoney(
-                        expense.originalMinor,
-                        expense.originalCurrency,
-                        expense.originalScale,
-                      ),
-                    })}
-                  </Text>
-                  <Text style={shared.meta}>{exclusionReason(expense, scope)}</Text>
-                </Pressable>
-              ))}
+              <AnalysisExcludedExpenses
+                expenses={dashboard.incomplete}
+                scope={scope}
+                onOpen={id => {
+                  setCompletenessOpen(false);
+                  router.push(`/expenses/expense/${id}`);
+                }}
+              />
             </ScrollView>
           </View>
         </Modal>
       ) : null}
-      <Modal
-        visible={rangeOpen}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setRangeOpen(false)}
-      >
-        <View style={styles.modalPage}>
-          <SheetHeader
-            title={t("ui.analysisDates")}
-            leftLabel={t("ui.cancel")}
-            onLeft={() => setRangeOpen(false)}
-          />
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.modalContent}
-          >
-            {presets.map((preset) => (
-              <Pressable
-                accessibilityRole="button"
-                key={preset}
-                onPress={() => changeRange(preset)}
-                style={styles.rangeOption}
-              >
-                <Text style={shared.link}>{rangeLabels()[preset]}</Text>
-              </Pressable>
-            ))}
-            {rangeDraft.from ? (
-              <>
-                <Text style={shared.meta}>{t("ui.startDate")}</Text>
-                <TextInput
-                  accessibilityLabel={t("ui.analysisStartDate")}
-                  placeholder={t("ui.yyyymmdd")}
-                  value={rangeDraft.from}
-                  onChangeText={(from) => setRangeDraft((draft) => ({ ...draft, from }))}
-                  style={styles.dateInput}
-                />
-                <Text style={shared.meta}>{t("ui.endDate")}</Text>
-                <TextInput
-                  accessibilityLabel={t("ui.analysisEndDate")}
-                  placeholder={t("ui.yyyymmdd")}
-                  value={rangeDraft.through}
-                  onChangeText={(through) =>
-                    setRangeDraft((draft) => ({ ...draft, through }))
-                  }
-                  style={styles.dateInput}
-                />
-                {rangeError ? (
-                  <Text accessibilityLiveRegion="polite" style={shared.error}>
-                    {rangeError}
-                  </Text>
-                ) : null}
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => {
-                    const range = analysisDateBounds(rangeDraft.from, rangeDraft.through);
-                    if (!range) {
-                      setRangeError(t("ui.enterValidDatesAsYyyymmddWithTheEndOnOr"));
-                      return;
-                    }
-                    setRangeOpen(false);
-                    void load(range);
-                  }}
-                  style={styles.rangeOption}
-                >
-                  <Text style={shared.link}>{t("ui.applyCustomRange")}</Text>
-                </Pressable>
-              </>
-            ) : null}
-          </ScrollView>
-        </View>
-      </Modal>
-      <Modal
-        visible={categoryMenu !== null}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setCategoryMenu(null)}
-      >
-        <View style={styles.modalPage}>
-          <SheetHeader
-            title={t("ui.chooseCategory")}
-            onLeft={() => setCategoryMenu(null)}
-          />
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.modalContent}
-          >
-            {[null, ...categoryChoices].map((category) => (
-              <Pressable
-                accessibilityRole="button"
-                key={category ?? "__all__"}
-                onPress={() => {
-                  if (categoryMenu === "BIGGEST") setBiggestCategory(category);
-                  if (categoryMenu === "TRAVELLER") setTravellerCategory(category);
-                  if (categoryMenu === "PAYER") setPayerCategory(category);
-                  setCategoryMenu(null);
-                }}
-                style={styles.rangeOption}
-              >
-                <Text style={shared.link}>
-                  {category ? categoryLabel(category) : t("ui.allCategories")}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-      </Modal>
+      {rangeOpen ? (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setRangeOpen(false)}
+        >
+          <View style={styles.modalPage}>
+            <SheetHeader
+              title={t("ui.analysisDates")}
+              leftLabel={t("ui.cancel")}
+              onLeft={() => setRangeOpen(false)}
+            />
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalContent}
+            >
+              <AnalysisPickerFields picker={rangePicker} />
+            </ScrollView>
+          </View>
+        </Modal>
+      ) : null}
+      {categoryMenu ? (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setCategoryMenu(null)}
+        >
+          <View style={styles.modalPage}>
+            <SheetHeader
+              title={t("ui.chooseCategory")}
+              onLeft={() => setCategoryMenu(null)}
+            />
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalContent}
+            >
+              <AnalysisPickerFields picker={categoryPicker(categoryMenu)} />
+            </ScrollView>
+          </View>
+        </Modal>
+      ) : null}
     </View>
   );
 }
@@ -729,33 +742,9 @@ const createStyles = (colors: UiColors) => {
     segmentText: { color: segment.label, fontSize: 16, fontWeight: "600" },
     segmentTextSelected: { color: segment.selectedLabel },
     countLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 5 },
-    excludedExpense: {
-      padding: 12,
-      gap: 5,
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-    },
-    excludedTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: "600" },
     retry: { minHeight: 44, justifyContent: "center" },
     surface: { backgroundColor: colors.surface, borderRadius: 14, overflow: "hidden" },
     modalPage: { flex: 1, backgroundColor: colors.background },
     modalContent: { padding: 16, gap: 10 },
-    rangeOption: {
-      minHeight: 48,
-      justifyContent: "center",
-      padding: 12,
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-    },
-    dateInput: {
-      minHeight: 48,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: colors.separator,
-      borderRadius: 10,
-      backgroundColor: colors.surface,
-      color: colors.textPrimary,
-      fontSize: 16,
-    },
   });
 };
