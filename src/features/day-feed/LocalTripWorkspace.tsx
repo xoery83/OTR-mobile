@@ -1408,6 +1408,7 @@ function LocalTripContent({
           readOnly={!selected}
           registerAdd={selected ? registerPhotos : undefined}
           onSaved={selected ? photosSaved : undefined}
+          onOpenGallery={retireMetadataOpen}
         />
       ) : null}
       {canEditHomeTrip ? (

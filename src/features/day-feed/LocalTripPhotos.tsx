@@ -28,12 +28,14 @@ export function LocalTripPhotos({
   tripId,
   registerAdd,
   onSaved,
+  onOpenGallery,
   compact = false,
   readOnly = false,
 }: {
   tripId: string;
   registerAdd?: (add: (() => void) | null) => void;
   onSaved?: () => void;
+  onOpenGallery?: () => void;
   compact?: boolean;
   readOnly?: boolean;
 }) {
@@ -47,6 +49,7 @@ export function LocalTripPhotos({
       tripId={tripId}
       registerAdd={registerAdd}
       onSaved={onSaved}
+      onOpenGallery={onOpenGallery}
       compact={compact}
       readOnly={readOnly}
     />
@@ -57,12 +60,14 @@ function LocalTripPhotoContent({
   tripId,
   registerAdd,
   onSaved,
+  onOpenGallery,
   compact = false,
   readOnly = false,
 }: {
   tripId: string;
   registerAdd?: (add: (() => void) | null) => void;
   onSaved?: () => void;
+  onOpenGallery?: () => void;
   compact?: boolean;
   readOnly?: boolean;
 }) {
@@ -218,8 +223,10 @@ function LocalTripPhotoContent({
           value={status === "READY" ? String(photos.length) : ""}
           onPress={() => {
             if (!current()) return;
+            if (hostedTripPhotosEnabled && (busy.current || readTripPhotosSheet(invocation.current)))
+              return;
+            onOpenGallery?.();
             if (hostedTripPhotosEnabled) {
-              if (busy.current || readTripPhotosSheet(invocation.current)) return;
               const id = stageTripPhotosSheet({
                 content: null,
                 isCurrent: current,

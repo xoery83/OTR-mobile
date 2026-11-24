@@ -348,11 +348,13 @@ vi.mock("./MyTripsList", async (original) => {
   };
 });
 vi.mock("./LocalTripPhotos", () => ({
-  LocalTripPhotos: (p: { tripId: string; readOnly?: boolean }) =>
-    createElement("div", {
+  LocalTripPhotos: (p: { tripId: string; readOnly?: boolean; onOpenGallery?(): void }) => {
+    state.nodes.push({ openTripGallery: p.onOpenGallery });
+    return createElement("div", {
       "data-trip-photos": p.tripId,
       "data-read-only": p.readOnly,
-    }),
+    });
+  },
 }));
 vi.mock("./TripCoverPicker", () => ({
   TripCoverPicker: (p: any) => {
@@ -1721,7 +1723,7 @@ it("captures the confirmed ordered-list baseline on opening, never rebases revis
   );
 });
 
-it.each(["another route", "Day on the same route", "legacy roster", "roster before the qualified editor renders"])(
+it.each(["another route", "Day on the same route", "legacy roster", "roster before the qualified editor renders", "Trip gallery"])(
   "retires a hosted Settings attempt covered by %s",
   async (cover) => {
     state.hostedMetadata = true;
@@ -1757,6 +1759,8 @@ it.each(["another route", "Day on the same route", "legacy roster", "roster befo
       state.focused = true;
     } else if (cover === "Day on the same route") {
       state.routeView = "day";
+    } else if (cover === "Trip gallery") {
+      state.nodes.find(node => node.openTripGallery)!.openTripGallery();
     } else {
       const actions = state.publish.mock.calls.filter(([action]) => action?.members).at(-1)?.[0];
       actions.members();
