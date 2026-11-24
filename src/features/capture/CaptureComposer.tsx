@@ -750,11 +750,14 @@ export function CaptureComposer({
   if (hosted) {
     if (!visible) return null;
     const nested = page !== "composer" || Boolean(onBack ?? onParentBack);
+    // The iPad SheetHost already accounts for the full keyboard; native scrolling adds a second adjustment.
+    const keyboardInsets = content == null && page === "composer" && Platform.OS === "ios" && !Platform.isPad;
     return (
       <SheetRoutePanel
         title={header}
         onBack={nested ? close : undefined}
         ownsScroll={content != null}
+        keyboardInsets={keyboardInsets}
         overlay={attachmentMenu}
       >
         {body}

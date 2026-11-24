@@ -6,13 +6,14 @@ import { useSheetMotion } from "./SheetHost";
 import { useSheetRouteLayout } from "./sheetRouteContext";
 
 export function SheetRoutePanel({
-  title, onBack, leadingDisabled, action, ownsScroll = false, children, overlay,
+  title, onBack, leadingDisabled, action, ownsScroll = false, keyboardInsets = false, children, overlay,
 }: {
   title: string;
   onBack?: () => void;
   leadingDisabled?: boolean;
   action?: ComponentProps<typeof SheetNavigationHeader>["action"];
   ownsScroll?: boolean;
+  keyboardInsets?: boolean;
   children: ReactNode;
   overlay?: ReactNode;
 }) {
@@ -41,8 +42,7 @@ export function SheetRoutePanel({
         </View>
       ) : (
         <SheetScrollView
-          // SheetHost already resizes the viewport around the keyboard.
-          automaticallyAdjustKeyboardInsets={false}
+          automaticallyAdjustKeyboardInsets={keyboardInsets}
           onSwipeRight={swipeBack}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={onContentSizeChange}

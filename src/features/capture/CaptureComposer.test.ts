@@ -18,6 +18,7 @@ const state = vi.hoisted(() => ({
   hooks: [] as any[],
   cursor: 0,
   os: "ios",
+  isPad: false,
   voice: { status: "idle" as string },
   voiceStart: vi.fn(),
   voiceStop: vi.fn(),
@@ -95,6 +96,7 @@ vi.mock("react-native", () => {
       },
     },
     Platform: {
+      get isPad() { return state.isPad; },
       get OS() {
         return state.os;
       },
@@ -184,6 +186,7 @@ function render(
 beforeEach(() => {
   state.hooks = [];
   state.os = "ios";
+  state.isPad = false;
   state.voice = { status: "idle" };
   for (const fn of [
     state.voiceStart,
@@ -691,4 +694,12 @@ it("fits the hosted composer at a large text size without changing the legacy ed
   expect(state.nodes.find((node) => node.multiline).style[1].height).toBeGreaterThan(44);
   render(empty, 0);
   expect(state.nodes.find((node) => node.multiline).style[1].height).toBe(44);
+});
+
+it("lets iPhone scroll to the focused hosted editor without adding a second adjustment on iPad", () => {
+  render(empty, 0, { hosted: true });
+  expect(state.nodes.some(node => node.keyboardInsets === true)).toBe(true);
+  state.isPad = true;
+  render(empty, 0, { hosted: true });
+  expect(state.nodes.some(node => node.keyboardInsets === true)).toBe(false);
 });
