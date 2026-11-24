@@ -1,8 +1,10 @@
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 import TripMembersAddRoute from "../../../app/trip-members-sheet/add";
 
 const qa = vi.hoisted(() => ({
   childRoutes: [{ key: "roster" }, { key: "add" }],
+  index: 1,
+  focused: true,
   dispatch: vi.fn(),
   approved: undefined as "back" | "close" | undefined,
   entry: { members: { state: "AVAILABLE" }, onAddTraveler: vi.fn() },
@@ -10,11 +12,11 @@ const qa = vi.hoisted(() => ({
 }));
 
 vi.mock("expo-router", () => ({
-  useLocalSearchParams: () => ({ invocation: "1" }),
+  useLocalSearchParams: () => ({ invocation: "1", rosterKey: "roster" }),
   useNavigation: () => ({
-    getState: () => ({ key: "people-stack", index: 1, routes: qa.childRoutes }),
+    getState: () => ({ key: "people-stack", index: qa.index, routes: qa.childRoutes }),
     dispatch: qa.dispatch,
-    isFocused: () => false,
+    isFocused: () => qa.focused,
   }),
 }));
 vi.mock("expo-router/react-navigation", () => ({
@@ -32,15 +34,55 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("@/components/SheetRoutePanel", () => ({ SheetRoutePanel: "SheetRoutePanel" }));
 vi.mock("@/components/SheetHost", () => ({ useSheetMotion: () => ({ exitPending: false }) }));
+vi.mock("@/features/day-feed/hostedTripMembers", () => ({
+  TripMembersExitContext: {},
+  tripMembersInvocations: { read: () => qa.entry, subscribe: vi.fn() },
+}));
 vi.mock("@/features/people/AddTravelerSheet", () => ({ AddTravelerForm: "AddTravelerForm" }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: vi.fn() }));
 
-it("finishes an approved Add close on the owning child stack when a different root route is focused", () => {
+beforeEach(() => {
+  qa.childRoutes = [{ key: "roster" }, { key: "add" }];
+  qa.index = 1;
+  qa.focused = true;
+  qa.approved = undefined;
+  qa.dispatch.mockReset();
+});
+
+it("retries a refused Add return on the exact owning stack once it regains focus", () => {
   TripMembersAddRoute().props.onClose();
+  qa.focused = false;
+  TripMembersAddRoute();
+  expect(qa.dispatch).not.toHaveBeenCalled();
+  expect(qa.approved).toBeUndefined();
+
+  qa.focused = true;
+  TripMembersAddRoute().props.onClose();
+  qa.dispatch.mockImplementation(() => {
+    qa.index = 0;
+    qa.childRoutes = [{ key: "roster" }];
+  });
   TripMembersAddRoute();
   expect(qa.dispatch).toHaveBeenCalledExactlyOnceWith({
     type: "GO_BACK", target: "people-stack", source: "add",
   });
+});
+
+it("keeps Add mounted and permits Back to retry when the stack refuses to pop", () => {
+  TripMembersAddRoute().props.onClose();
+  TripMembersAddRoute();
+  expect(qa.approved).toBeUndefined();
+  expect(TripMembersAddRoute().type).toBe("AddTravelerForm");
+});
+
+it("does not submit to or pop onto a replacement roster", async () => {
+  const { onSave, onClose } = TripMembersAddRoute().props;
+  qa.childRoutes[0] = { key: "other-roster" };
+  await expect(onSave({})).rejects.toThrow("TRIP_MEMBERS_SCOPE_UNAVAILABLE");
+  onClose();
+  TripMembersAddRoute();
+  expect(qa.dispatch).not.toHaveBeenCalled();
+  expect(qa.entry.onAddTraveler).not.toHaveBeenCalled();
 });
 
 it("does not run the Add guard for a prevented removal from an unrelated root navigator", () => {

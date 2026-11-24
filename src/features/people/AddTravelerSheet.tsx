@@ -73,6 +73,7 @@ export function AddTravelerForm({
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [committed, setCommitted] = useState(false);
   const [ready, setReady] = useState(!draft && submissionEnabled);
   const [draftError, setDraftFeedback] = useState<{
     key: "people.draftLoadFailed" | "people.draftSaveFailed";
@@ -80,6 +81,7 @@ export function AddTravelerForm({
   const [generation] = useState(currentGeneration);
   const alive = useRef(true);
   const running = useRef(false);
+  const hostedCommit = useRef(false);
   const loading = useRef(false);
   const attempt = useRef<AddTravelerInput | null>(null);
   const currentName = useRef("");
@@ -139,6 +141,7 @@ export function AddTravelerForm({
       !valid() ||
       !ready ||
       running.current ||
+      hostedCommit.current ||
       !current.success
     )
       return;
@@ -172,7 +175,10 @@ export function AddTravelerForm({
       if (valid()) setBusy(false);
     }
     if (saved && valid()) {
-      alive.current = false;
+      if (HostedSurface) {
+        hostedCommit.current = true;
+        setCommitted(true);
+      } else alive.current = false;
       onClose();
     }
   }
@@ -208,6 +214,7 @@ export function AddTravelerForm({
     onPress: () => void (!ready ? loadDraft() : save()),
     disabled:
       busy ||
+      committed ||
       (ready && !submissionEnabled) ||
       (!ready ? draftError?.key !== "people.draftLoadFailed" : !parsed.success),
   };

@@ -10,14 +10,23 @@ import { useUiLocale } from "@/ui/useUiLocale";
 
 export default function TripMembersAddRoute() {
   useUiLocale();
-  const { invocation } = useLocalSearchParams<{ invocation?: string }>();
+  const { invocation, rosterKey } = useLocalSearchParams<{ invocation?: string; rosterKey?: string }>();
   const navigation = useNavigation();
   const route = useRoute();
-  const popAdd = useCallback(() => {
+  const owningStack = useCallback(() => {
     const state = navigation.getState();
-    if (state?.routes[state.index]?.key !== route.key) return;
+    if (!rosterKey || state?.routes[state.index]?.key !== route.key ||
+        state.routes[state.index - 1]?.key !== rosterKey) return undefined;
+    return state;
+  }, [navigation, rosterKey, route.key]);
+  const popAdd = useCallback(() => {
+    const state = owningStack();
+    if (!state || !navigation.isFocused()) return false;
     navigation.dispatch({ type: "GO_BACK", target: state.key, source: route.key });
-  }, [navigation, route.key]);
+    const returned = navigation.getState();
+    return returned?.key === state.key && returned.routes[returned.index]?.key === rosterKey &&
+      !returned.routes.some(candidate => candidate.key === route.key);
+  }, [navigation, owningStack, rosterKey, route.key]);
   const read = () => tripMembersInvocations.read(invocation);
   const entry = useSyncExternalStore(tripMembersInvocations.subscribe, read);
   const { exitPending, isExitPending, requestClose } = useSheetMotion();
@@ -36,13 +45,18 @@ export default function TripMembersAddRoute() {
   usePreventRemove(Boolean(entry && !approved), ({ data: { action } }) => {
     const state = navigation.getState();
     if (action.type !== "GO_BACK" && action.type !== "POP") return;
-    if (action.target ? action.target !== state?.key : !navigation.isFocused()) return;
+    if (!navigation.isFocused() || !owningStack() || (action.target && action.target !== state?.key)) return;
     guard.current?.(() => setApproved("back"));
   });
   useEffect(() => {
     if (!approved || dispatched.current) return;
     dispatched.current = true;
-    if (approved === "back") popAdd();
+    if (approved === "back") {
+      if (!popAdd()) {
+        dispatched.current = false;
+        setApproved(undefined);
+      }
+    }
     else {
       exit?.allowClose();
       requestClose();
@@ -54,7 +68,7 @@ export default function TripMembersAddRoute() {
     setApproved(undefined);
   }, [approved, exitPending, isExitPending]);
 
-  if (!entry) return <SheetRoutePanel title={t("people.addTraveler")} onBack={popAdd}>{null}</SheetRoutePanel>;
+  if (!entry || !owningStack()) return <SheetRoutePanel title={t("people.addTraveler")}>{null}</SheetRoutePanel>;
   return <AddTravelerForm
     HostedSurface={HostedAddTravelerSurface}
     submissionEnabled={!!entry.onAddTraveler && entry.members?.state === "AVAILABLE"}
@@ -62,7 +76,8 @@ export default function TripMembersAddRoute() {
     onClose={() => setApproved("back")}
     onSave={async input => {
       const latest = read();
-      if (!latest?.onAddTraveler || latest.members?.state !== "AVAILABLE")
+      if (!navigation.isFocused() || !owningStack() || isExitPending() ||
+          !latest?.onAddTraveler || latest.members?.state !== "AVAILABLE")
         throw Error("TRIP_MEMBERS_SCOPE_UNAVAILABLE");
       await latest.onAddTraveler(input);
     }}
@@ -71,7 +86,7 @@ export default function TripMembersAddRoute() {
 
 function HostedAddTravelerSurface({ title, close, closeDisabled, action, children }: AddTravelerSurfaceProps) {
   return (
-    <SheetRoutePanel title={title} onBack={close} leadingDisabled={closeDisabled} action={action}>
+    <SheetRoutePanel title={title} onBack={close} leadingDisabled={closeDisabled} action={action} preferNativeScroll>
       {children}
     </SheetRoutePanel>
   );

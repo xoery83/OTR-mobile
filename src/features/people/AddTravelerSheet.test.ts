@@ -485,4 +485,10 @@ it("keeps a hosted add open during Save and retries with the original operation"
   renderHosted().find(node => node.type === Surface)!.props.action.onPress();
   await vi.waitFor(() => expect(props.onClose).toHaveBeenCalledOnce());
   expect(vi.mocked(props.onSave).mock.calls[1][0]).toEqual(vi.mocked(props.onSave).mock.calls[0][0]);
+  const committed = renderHosted().find(node => node.type === Surface)!.props;
+  expect(committed.action.disabled).toBe(true);
+  committed.action.onPress();
+  expect(props.onSave).toHaveBeenCalledTimes(2);
+  dismiss?.(closeHost);
+  expect(closeHost).toHaveBeenCalledOnce();
 });

@@ -8,7 +8,7 @@ import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import {
   hostedTripMembersEnabled,
@@ -27,17 +27,25 @@ export function TripMembersSheet(props: TripMembersProps) {
 }
 
 function HostedPeopleLauncher(props: TripMembersProps) {
+  const navigation = useNavigation();
   const current = useRef(props);
   const invocation = useRef<string | undefined>(undefined);
   const generation = getAccountGeneration();
   useLayoutEffect(() => {
-    current.current = props;
-    tripMembersInvocations.update(invocation.current, props);
-  }, [props]);
+    current.current = {
+      ...props,
+      onInvitePerson: props.onInvitePerson ? personId => {
+        if (navigation.isFocused() && generation === getAccountGeneration())
+          props.onInvitePerson?.(personId);
+      } : undefined,
+    };
+    tripMembersInvocations.update(invocation.current, current.current);
+  }, [generation, navigation, props]);
   useEffect(() => {
     let alive = true;
     queueMicrotask(() => {
-      if (!alive || generation !== getAccountGeneration()) return;
+      if (!alive || !navigation.isFocused() || current.current.tripId !== props.tripId ||
+          generation !== getAccountGeneration()) return;
       invocation.current = tripMembersInvocations.stage(current.current);
       if (invocation.current)
         router.push({
@@ -50,7 +58,7 @@ function HostedPeopleLauncher(props: TripMembersProps) {
       tripMembersInvocations.release(invocation.current);
       invocation.current = undefined;
     };
-  }, [props.tripId, generation]);
+  }, [props.tripId, generation, navigation]);
   return null;
 }
 
