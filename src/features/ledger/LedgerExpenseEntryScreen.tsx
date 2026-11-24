@@ -1,5 +1,5 @@
 import { ExpenseCategoryPicker } from "./ExpenseCategoryPicker";
-import { hostedExpenseFieldsEnabled, useLedgerCurrencySheet } from "./ledgerCurrencySheet";
+import { hostedExpenseFieldsEnabled, useLedgerCurrencySheet, type LedgerCurrencyChoice } from "./ledgerCurrencySheet";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { useTripView } from "@/features/day-feed/TripViewContext";
 import { systemMessage, categoryLabel, domainLabel } from "@/ui/domainLabels";
@@ -234,12 +234,24 @@ export function LedgerExpenseEntryScreen() {
   const addingReceiptRef = useRef(false);
   const [selectingReceipt, setSelectingReceipt] = useState(false);
   const expenseDraftId = useRef(createLocalId("ledger-expense"));
+  const expenseSourceKey = JSON.stringify([
+    params.expenseId, params.correctionRootId, params.journeyId, params.receiptId,
+    params.mode, params.suggestedTitle, params.suggestedDate, params.focusDate,
+  ]);
+  const loadedExpense = useRef<{ sourceKey: string } | null>(null);
   const openExpenseField = useLedgerCurrencySheet(
     context?.journeyId,
-    params.expenseId ?? params.correctionRootId,
+    expenseSourceKey,
     true,
     hostedExpenseFieldsEnabled,
   );
+  const presentExpenseField = (choice: LedgerCurrencyChoice) => {
+    if (!hostedExpenseFieldsEnabled) return false;
+    const loaded = loadedExpense.current;
+    const isCurrent = () => loaded !== null && loaded.sourceKey === expenseSourceKey &&
+      loadedExpense.current === loaded && mountedRef.current && !savingRef.current && !allowClose.current;
+    return !isCurrent() || openExpenseField({ ...choice, isCurrent });
+  };
   const chooseCategory = (category: string) => {
     setCategoryManual(true);
     setDraft(current => current && { ...current, category });
@@ -330,6 +342,7 @@ export function LedgerExpenseEntryScreen() {
     )
       .then(async (value) => {
         if (!active) return;
+        loadedExpense.current = { sourceKey: expenseSourceKey };
         setContext(value.context);
         setExisting(value.existing);
         setExistingReceipts(value.receipts);
@@ -428,10 +441,12 @@ export function LedgerExpenseEntryScreen() {
       });
     return () => {
       active = false;
+      loadedExpense.current = null;
       ocrSession.clear();
     };
   }, [
     ocrSession,
+    expenseSourceKey,
     params.expenseId,
     params.journeyId,
     params.receiptId,
@@ -1351,12 +1366,11 @@ export function LedgerExpenseEntryScreen() {
             <FormRow
               label={t("ui.currency")}
               onPress={() => {
-                if (!openExpenseField({
+                if (!presentExpenseField({
                   kind: "currency",
                   titleKey: "ui.currency",
                   selected: draft.currency,
                   suggestions: [...context.recentCurrencies, draft.currency, context.settlementCurrency, context.defaultCurrency],
-                  isCurrent: () => mountedRef.current && !savingRef.current,
                   choose: chooseExpenseCurrency,
                 })) setCurrencySheet(true);
               }}
@@ -1467,11 +1481,10 @@ export function LedgerExpenseEntryScreen() {
             <FormRow
               label={t("ui.category")}
               onPress={() => {
-                if (!openExpenseField({
+                if (!presentExpenseField({
                   kind: "category",
                   titleKey: "ui.category",
                   selected: draft.category,
-                  isCurrent: () => mountedRef.current && !savingRef.current,
                   choose: chooseCategory,
                 })) setCategorySheet(true);
               }}
@@ -1484,11 +1497,10 @@ export function LedgerExpenseEntryScreen() {
               label={t("ui.date")}
               onPress={() => {
                 Keyboard.dismiss();
-                if (openExpenseField({
+                if (presentExpenseField({
                   kind: "date",
                   titleKey: "ui.expenseDate",
                   initial: date,
-                  isCurrent: () => mountedRef.current && !savingRef.current,
                   choose: chooseExpenseDate,
                 })) return;
                 setPendingDate(date);
