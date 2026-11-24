@@ -5,7 +5,7 @@ import { SheetRoutePanel } from "@/components/SheetRoutePanel";
 import { useSheetMotion } from "@/components/SheetHost";
 import { getAccountGeneration, subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { CurrencyPicker } from "@/features/ledger/CurrencyPicker";
-import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet } from "@/features/ledger/ledgerCurrencySheet";
+import { completeLedgerCurrencySheet, readLedgerCurrencySheet, releaseLedgerCurrencySheet, type LedgerCurrencyChoice } from "@/features/ledger/ledgerCurrencySheet";
 import { UiChoiceChip, UiDatePicker } from "@/ui/forms";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
@@ -35,18 +35,9 @@ export default function LedgerCurrencyPickerRoute() {
     </SheetRoutePanel>;
   }
   if (picker?.kind === "display") {
-    return <SheetRoutePanel title={title}>
-      <View style={styles.choices}>
-        {picker.options.map(code => (
-          <UiChoiceChip
-            key={code}
-            label={code}
-            selected={code === picker.selected}
-            onPress={() => select(() => picker.choose(code))}
-          />
-        ))}
-      </View>
-    </SheetRoutePanel>;
+    return <DisplayCurrencyOptions choice={picker} onSelect={code => {
+      if (picker.readOptions().includes(code)) select(() => picker.choose(code));
+    }} />;
   }
   return <SheetRoutePanel title={title} action={picker?.kind === "date" ? {
     label: t("common.done"), disabled: exitPending, onPress: () => select(() => picker.choose(date)),
@@ -55,6 +46,20 @@ export default function LedgerCurrencyPickerRoute() {
       <UiDatePicker display="spinner" maximumDate={picker.maximumDate} mode="date" value={date}
         accessibilityLabel={title} onChange={(_, next) => { if (next) setDate(next); }} />
     </View> : null}
+  </SheetRoutePanel>;
+}
+
+function DisplayCurrencyOptions({ choice, onSelect }: {
+  choice: Extract<LedgerCurrencyChoice, { kind: "display" }>;
+  onSelect(code: string): void;
+}) {
+  const options = useSyncExternalStore(choice.subscribeOptions, choice.readOptions);
+  return <SheetRoutePanel title={t(choice.titleKey)}>
+    <View style={styles.choices}>
+      {options.map(code => (
+        <UiChoiceChip key={code} label={code} selected={code === choice.selected} onPress={() => onSelect(code)} />
+      ))}
+    </View>
   </SheetRoutePanel>;
 }
 
