@@ -1319,6 +1319,7 @@ export function LedgerExpenseEntryScreen() {
       <Stack.Screen
         options={{
           gestureEnabled: false,
+          headerBackVisible: receiptSourceInvocation ? false : undefined,
           headerTitle: receiptSourceInvocation ? "" : existing ? t("ui.editExpense") : t("ui.newExpense"),
         }}
       />

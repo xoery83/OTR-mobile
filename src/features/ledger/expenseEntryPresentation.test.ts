@@ -52,6 +52,7 @@ describe("New Expense compact presentation", () => {
       'headerTitle: receiptSourceInvocation ? "" : existing ? t("ui.editExpense") : t("ui.newExpense")',
     );
     expect(source.match(/hidden=\{Boolean\(receiptSourceInvocation\)\}/g)).toHaveLength(2);
+    expect(source).toContain("headerBackVisible: receiptSourceInvocation ? false : undefined");
     expect(source).not.toContain("<Stack.Header hidden");
   });
 
