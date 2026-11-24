@@ -49,8 +49,10 @@ describe("New Expense compact presentation", () => {
     expect(source).not.toContain("headerRight:");
     expect(source).toContain("gestureEnabled: false");
     expect(source).toContain(
-      'headerTitle: existing ? t("ui.editExpense") : t("ui.newExpense")',
+      'headerTitle: receiptSourceInvocation ? "" : existing ? t("ui.editExpense") : t("ui.newExpense")',
     );
+    expect(source.match(/hidden=\{Boolean\(receiptSourceInvocation\)\}/g)).toHaveLength(2);
+    expect(source).not.toContain("<Stack.Header hidden");
   });
 
   it("uses local compact dates without changing the stored key", () => {

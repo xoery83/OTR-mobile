@@ -39,7 +39,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams, useNavigation } from "expo-router";
-import { useHeaderHeight } from "expo-router/react-navigation";
 
 import { AppIcon } from "@/components/AppIcon";
 
@@ -235,8 +234,8 @@ export function LedgerExpenseEntryScreen() {
     correctionReason?: string;
   }>();
   const navigation = useNavigation();
-  const headerHeight = useHeaderHeight();
-  const [receiptSourceLayer, setReceiptSourceLayer] = useState<{ id: string; headerHeight: number }>();
+  // Toggling the native header remounts the expense editor on iOS.
+  const [receiptSourceInvocation, setReceiptSourceInvocation] = useState<string>();
   const [context, setContext] = useState<EntryContext | null>(null);
   const [existing, setExisting] = useState<LedgerExpense | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -910,11 +909,11 @@ export function LedgerExpenseEntryScreen() {
           }),
           onClose: id => {
             if (mountedRef.current)
-              setReceiptSourceLayer(layer => layer?.id === id ? undefined : layer);
+              setReceiptSourceInvocation(current => current === id ? undefined : current);
           },
         }, generation);
         if (invocation) {
-          setReceiptSourceLayer({ id: invocation, headerHeight });
+          setReceiptSourceInvocation(invocation);
           requestAnimationFrame(() => {
             if (!canLaunch() || !readLedgerReceiptSource(invocation)) {
               releaseLedgerReceiptSource(invocation);
@@ -1320,37 +1319,30 @@ export function LedgerExpenseEntryScreen() {
       <Stack.Screen
         options={{
           gestureEnabled: false,
-          headerTitle: existing ? t("ui.editExpense") : t("ui.newExpense"),
+          headerTitle: receiptSourceInvocation ? "" : existing ? t("ui.editExpense") : t("ui.newExpense"),
         }}
       />
-      {receiptSourceLayer ? (
-        <>
-          <Stack.Header hidden />
-          <View style={{ height: receiptSourceLayer.headerHeight }} />
-        </>
-      ) : (
-        <>
-          <Stack.Toolbar placement="left">
-            <Stack.Toolbar.Button
-              accessibilityLabel={t("ui.cancel")}
-              disabled={saving || selectingReceipt}
-              onPress={close}
-            >
-              {t("ui.cancel")}
-            </Stack.Toolbar.Button>
-          </Stack.Toolbar>
-          <Stack.Toolbar placement="right">
-            <Stack.Toolbar.Button
-              accessibilityLabel={saving ? t("ui.saving") : t("ui.save")}
-              disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
-              onPress={() => void save()}
-              variant="done"
-            >
-              {saving ? t("ui.saving") : t("ui.save")}
-            </Stack.Toolbar.Button>
-          </Stack.Toolbar>
-        </>
-      )}
+      <Stack.Toolbar placement="left">
+        <Stack.Toolbar.Button
+          accessibilityLabel={t("ui.cancel")}
+          disabled={saving || selectingReceipt}
+          onPress={close}
+          hidden={Boolean(receiptSourceInvocation)}
+        >
+          {t("ui.cancel")}
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          accessibilityLabel={saving ? t("ui.saving") : t("ui.save")}
+          disabled={!draft.title.trim() || !draft.date || !effectiveSplits || saving}
+          onPress={() => void save()}
+          variant="done"
+          hidden={Boolean(receiptSourceInvocation)}
+        >
+          {saving ? t("ui.saving") : t("ui.save")}
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
       <ScrollView
         pointerEvents={saving ? "none" : "auto"}
         automaticallyAdjustKeyboardInsets
