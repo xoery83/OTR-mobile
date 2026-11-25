@@ -5,6 +5,7 @@ import { createTripCoreV2Repository } from "./tripCoreV2Repository";
 import { createTripRepository } from "./tripRepository";
 import { createTripSearchRepository } from "./tripSearchRepository";
 import { getAccountGeneration } from "../auth/accountGeneration";
+import { tripCoreTransportIdentityMigration } from "../db/migrations/tripCoreTransportIdentity";
 import {
   referenceTripV1Full,
   seedReferenceTripV1Full,
@@ -14,7 +15,7 @@ vi.mock("../auth/authRepository", () => ({ requireActiveUserId: vi.fn() }));
 vi.mock("../db/database", () => ({ readInitializedDatabase: vi.fn() }));
 
 it("normal accepted Reference collection supports P4–6 temporary detail while null zones need an explicit same-generation view", async () => {
-  const f = fixture(true, 79),
+  const f = fixture(true, tripCoreTransportIdentityMigration.id),
     account = f.getAccount;
   const core = createTripCoreV2Repository(f.db, account, sha256);
   const trips = createTripRepository(f.db, account, core);

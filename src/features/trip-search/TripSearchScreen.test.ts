@@ -12,6 +12,8 @@ const state = vi.hoisted(() => ({
   actions: [] as any[],
   input: null as any,
   list: null as any,
+  onFocus: undefined as undefined | (() => void),
+  focused: true,
   scroll: vi.fn(),
   offline: false,
   recents: { list: vi.fn(), record: vi.fn(), remove: vi.fn(), clear: vi.fn() },
@@ -86,6 +88,8 @@ vi.mock("@/data/repositories/searchRecentRepository", () => ({
 }));
 vi.mock("expo-router", () => ({
   useLocalSearchParams: () => state.params,
+  useNavigation: () => ({ isFocused: () => state.focused }),
+  useFocusEffect: (effect: () => void) => { state.onFocus = effect; },
   router: { push: state.push },
   Stack: { Screen: () => null },
 }));
@@ -175,6 +179,7 @@ beforeEach(() => {
   state.params = { entry: "HOME", tripId: "trip" };
   state.generation = 1;
   state.offline = false;
+  state.focused = true;
   state.recents.list.mockResolvedValue([]);
   state.recents.record.mockResolvedValue([]);
   state.recents.clear.mockResolvedValue([]);
@@ -401,6 +406,42 @@ it("opens a local P1 through its existing detail stack without selecting the Tri
   });
   expect(state.select).not.toHaveBeenCalled();
   expect(state.input.value).toBe("Museum");
+});
+it("restores the pre-navigation position when the native stack resets the covered search list", async () => {
+  state.reader.resolve.mockResolvedValue({
+    kind: "LOCAL_ITEM",
+    family: "P1",
+    tripId: "trip",
+    itemId: "item",
+  });
+  await query();
+  state.list.onScroll({ nativeEvent: { contentOffset: { y: 678 } } });
+  await state.actions.find((action) => action.label === "Museum").onPress();
+  expect(state.push).toHaveBeenCalledOnce();
+  state.focused = false;
+  state.list.onScrollBeginDrag();
+  state.list.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
+  state.focused = true;
+  state.onFocus?.();
+  expect(state.scroll).toHaveBeenLastCalledWith({ offset: 678, animated: false });
+  state.list.onScroll({ nativeEvent: { contentOffset: { y: 678 } } });
+  state.list.onScroll({ nativeEvent: { contentOffset: { y: 0 } } });
+  state.list.onContentSizeChange();
+  expect(state.scroll).toHaveBeenLastCalledWith({ offset: 678, animated: false });
+  state.list.onScrollBeginDrag();
+  state.list.onScroll({ nativeEvent: { contentOffset: { y: 320 } } });
+  state.list.onContentSizeChange();
+  expect(state.scroll).toHaveBeenLastCalledWith({ offset: 320, animated: false });
+
+  await state.actions.find((action) => action.label === "Museum").onPress();
+  state.focused = false;
+  state.list.onScrollToTop();
+  state.focused = true;
+  state.onFocus?.();
+  expect(state.scroll).toHaveBeenLastCalledWith({ offset: 320, animated: false });
+  state.list.onScrollToTop();
+  state.list.onContentSizeChange();
+  expect(state.scroll).toHaveBeenLastCalledWith({ offset: 0, animated: false });
 });
 it("does not save typed prefixes; Return or opened results commit a scoped recent search", async () => {
   await query();

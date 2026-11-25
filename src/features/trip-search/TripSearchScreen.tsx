@@ -23,7 +23,7 @@ import {
   type RecentSearch,
 } from "@/data/repositories/searchRecentRepository";
 import { searchRows, filterSearchRows } from "./searchPresentation";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
 import {
   getAccountGeneration,
   subscribeAccountGeneration,
@@ -114,8 +114,10 @@ function SearchContent({
   const offline = network.isConnected === false || network.isInternetReachable === false;
   const [recents, setRecents] = useState<RecentSearch[]>([]);
   const [recentError, setRecentError] = useState(false);
+  const navigation = useNavigation();
   const list = useRef<FlatList<SearchResult>>(null);
   const offset = useRef(0);
+  const returnOffset = useRef<number | null>(null);
   const searchInput = useRef<TextInput>(null);
   const [page, setPage] = useState<SearchPage | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -130,6 +132,19 @@ function SearchContent({
     pageRef.current = page;
     detailRef.current = detail;
   }, [page, detail]);
+  const restoreOffset = useCallback(() => {
+    if (navigation.isFocused() && pageRef.current?.results.length) {
+      list.current?.scrollToOffset({
+        offset: returnOffset.current ?? offset.current,
+        animated: false,
+      });
+    }
+  }, [navigation]);
+  useFocusEffect(useCallback(() => {
+    if (returnOffset.current === null) return;
+    const frame = requestAnimationFrame(restoreOffset);
+    return () => cancelAnimationFrame(frame);
+  }, [restoreOffset]));
   const [historyRequest] = useState(createLatestRequest);
   useEffect(() => {
     const id = historyRequest.begin();
@@ -312,6 +327,7 @@ function SearchContent({
         setUnavailable(true);
         return;
       }
+      if (resolved.kind !== "ITEM") returnOffset.current = offset.current || null;
       Keyboard.dismiss();
       void remember();
       if (resolved.kind === "TRIP")
@@ -362,18 +378,18 @@ function SearchContent({
     opener.cancel();
     setDetail(null);
     setUnavailable(false);
+    returnOffset.current = null;
     offset.current = 0;
     list.current?.scrollToOffset({ offset: 0, animated: false });
     setInput((value) => ({ ...value, query }));
   };
   const changeCategory = (category: SearchCategory) => {
     opener.cancel();
+    returnOffset.current = null;
     offset.current = 0;
     list.current?.scrollToOffset({ offset: 0, animated: false });
     setInput((value) => ({ ...value, category }));
   };
-  const restoreOffset = () =>
-    list.current?.scrollToOffset({ offset: offset.current, animated: false });
   const scopeName = visiblePage?.results.find(
     (row) => row.tripId === input.tripId,
   )?.tripName;
@@ -518,8 +534,19 @@ function SearchContent({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           scrollEventThrottle={16}
+          onScrollBeginDrag={() => {
+            if (navigation.isFocused()) returnOffset.current = null;
+          }}
+          onScrollToTop={() => {
+            if (navigation.isFocused()) {
+              returnOffset.current = null;
+              offset.current = 0;
+            }
+          }}
           onScroll={(event) => {
-            offset.current = event.nativeEvent.contentOffset.y;
+            // A late native measurement can report zero even after the first restore.
+            if (returnOffset.current === null)
+              offset.current = event.nativeEvent.contentOffset.y;
           }}
           onContentSizeChange={restoreOffset}
           contentContainerStyle={styles.results}
