@@ -59,6 +59,8 @@ const state = vi.hoisted(() => ({
   layouts: [] as (readonly unknown[] | undefined)[],
   memos: [] as { deps: readonly unknown[]; value: unknown }[],
   scrollTo: vi.fn(),
+  nativeOffset: 0,
+  modelNativeGeometry: false,
   platform: "ios",
   effects: [] as (() => unknown)[],
 }));
@@ -102,6 +104,11 @@ vi.mock("react", async (original) => ({
       state.memos[i] = { deps, value: create() };
     return state.memos[i].value;
   },
+  useImperativeHandle: (ref: { current: unknown } | ((value: unknown) => void) | undefined, create: () => unknown) => {
+    if (!state.modelNativeGeometry || !ref) return;
+    if (typeof ref === "function") ref(create());
+    else ref.current = create();
+  },
   useRef: (initial: unknown) => {
     const i = state.refCursor++;
     return (state.refs[i] ??= { current: initial });
@@ -112,7 +119,7 @@ vi.mock("react-native", async () => {
   const primitive = (props: Record<string, any>) => {
     state.nodes.push(props);
     if (props.onPress) state.presses.push(props);
-    if (typeof props.ref === "function") props.ref({ measureInWindow: (callback: (...v: number[]) => void) => callback(0, 0, 375, 100) });
+    if (typeof props.ref === "function") props.ref({ measureInWindow: (callback: (...v: number[]) => void) => callback(0, state.modelNativeGeometry ? -state.nativeOffset : 0, 375, state.modelNativeGeometry ? 500 : 100) });
     else if (props.ref) props.ref.current = { scrollTo: state.scrollTo };
     return createElement(
       "div",
@@ -218,6 +225,37 @@ const render = (node: ReactNode) => {
   state.effects = [];
   return renderToStaticMarkup(node);
 };
+// Give the real WindowedDayList one visible, measured row and a native offset.
+function modelNativeDayScroll(y: number) {
+  const list = state.nodes.find((n) => n.onViewableItemsChanged)!;
+  state.nativeOffset = y;
+  list.onScroll({ nativeEvent: { contentOffset: { y } } });
+  list.onViewableItemsChanged({
+    viewableItems: [{ item: list.data[0], index: 0, isViewable: true }],
+  });
+}
+function renderNativeDay(element: ReactNode) {
+  const html = render(element);
+  for (const effect of state.effects) effect();
+  return html;
+}
+function modelNativeFrames() {
+  const frames = new Map<number, () => void>();
+  let frameId = 0;
+  state.modelNativeGeometry = true;
+  vi.stubGlobal("requestAnimationFrame", (callback: () => void) => {
+    frames.set(++frameId, callback);
+    return frameId;
+  });
+  vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+  return () => {
+    for (const id of [...frames.keys()]) {
+      const frame = frames.get(id);
+      frames.delete(id);
+      frame?.();
+    }
+  };
+}
 afterEach(() => vi.unstubAllGlobals());
 beforeEach(() => {
   state.instant = "2026-10-10T00:30:00Z";
@@ -227,6 +265,8 @@ beforeEach(() => {
   state.memos = [];
   state.layouts = [];
   state.scrollTo.mockClear();
+  state.modelNativeGeometry = false;
+  state.nativeOffset = 0;
   state.platform = "ios";
   state.cursor = 0;
   state.scale = 1;
@@ -603,27 +643,26 @@ it("F1-R1: incomplete Browse retains accepted Compact A three-row geometry", () 
 });
 
 it("Immersive dismissal restores nonzero scroll and keeps manual Focus/date across NOW ticks and enrichment", () => {
+  const flushFrames = modelNativeFrames();
   const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
-  render(createElement(DayFeed, props));
-  state.nodes
-    .find((n) => n.onScroll)!
-    .onScroll({ nativeEvent: { contentOffset: { y: 293.33 } } });
+  renderNativeDay(createElement(DayFeed, props));
+  modelNativeDayScroll(293.33);
   state.presses
     .find(
       (p) =>
         p.accessibilityLabel === flight.title &&
-        p.accessibilityHint === t("p1r.focusHint"),
+        p.accessibilityHint === t("flight.focusHint"),
     )!
     .onPress();
-  render(createElement(DayFeed, props));
+  renderNativeDay(createElement(DayFeed, props));
   state.presses
     .find(
       (p) =>
         p.accessibilityLabel === flight.title &&
-        p.accessibilityHint === t("p1r.immersiveHint"),
+        p.accessibilityHint === t("flight.immersiveHint"),
     )!
     .onPress();
-  render(createElement(DayFeed, props));
+  renderNativeDay(createElement(DayFeed, props));
   const modal = state.nodes.find((n) => n.onDismiss)!;
   expect(modal.visible).toBe(true);
   state.instant = "2026-10-10T03:00:00Z";
@@ -637,14 +676,16 @@ it("Immersive dismissal restores nonzero scroll and keeps manual Focus/date acro
       })),
     },
   };
-  render(createElement(DayFeed, enriched));
+  renderNativeDay(createElement(DayFeed, enriched));
   state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
   modal.onDismiss();
-  const html = render(createElement(DayFeed, enriched));
+  state.nativeOffset = 0;
+  const html = renderNativeDay(createElement(DayFeed, enriched));
+  flushFrames();
   expect(state.scrollTo).toHaveBeenCalledExactlyOnceWith({ y: 293.33, animated: false });
   expect(state.nodes.some((n) => n.onDismiss)).toBe(false);
   expect(
-    state.presses.filter((p) => p.accessibilityHint === t("p1r.immersiveHint")),
+    state.presses.filter((p) => p.accessibilityHint === t("flight.immersiveHint")),
   ).toHaveLength(1);
   expect(html).toContain('data-testid="now-within"');
   expect(props.date).toBe("2026-10-10");
@@ -669,22 +710,23 @@ it("switching Focus between P1/P2 never leaves two active Focus rows", () => {
 });
 it("Android restores the captured offset even without a native Modal dismissal event", () => {
   state.platform = "android";
-  vi.stubGlobal("requestAnimationFrame", (callback: () => void) => callback());
-  try {
-    const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
-    render(createElement(DayFeed, props));
-    state.nodes
-      .find((n) => n.onScroll)!
-      .onScroll({ nativeEvent: { contentOffset: { y: 120 } } });
-    state.presses.find((p) => p.accessibilityLabel === flight.title)!.onPress();
-    render(createElement(DayFeed, props));
-    state.presses.find((p) => p.accessibilityLabel === flight.title)!.onPress();
-    render(createElement(DayFeed, props));
-    state.nodes.find((n) => n.onRequestClose)!.onRequestClose();
-    expect(state.scrollTo).toHaveBeenCalledExactlyOnceWith({ y: 120, animated: false });
-  } finally {
-    vi.unstubAllGlobals();
-  }
+  const flushFrames = modelNativeFrames();
+  const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
+  const draw = () => renderNativeDay(createElement(DayFeed, props));
+  draw();
+  modelNativeDayScroll(120);
+  state.presses.find((p) => p.accessibilityLabel === flight.title)!.onPress();
+  draw();
+  state.presses.find((p) => p.accessibilityLabel === flight.title)!.onPress();
+  draw();
+  const modal = state.nodes.find((n) => n.onRequestClose && n.visible);
+  expect(modal).toBeDefined();
+  modal!.onRequestClose();
+  flushFrames();
+  state.nativeOffset = 0;
+  draw();
+  flushFrames();
+  expect(state.scrollTo).toHaveBeenCalledExactlyOnceWith({ y: 120, animated: false });
 });
 
 it("v2 qualified unknown clocks and names omit empty rows in Browse, large Focus and Immersive", () => {
@@ -1874,15 +1916,14 @@ it("production renderer chain opens both same-day roles into one Rental detail w
 
 it("normal P1 first body tap visibly focuses, richer details opens and closes into the same focused scroll", () => {
   const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
-  const draw = () => render(createElement(DayFeed, props));
+  const flushFrames = modelNativeFrames();
+  const draw = () => renderNativeDay(createElement(DayFeed, props));
   draw();
-  state.nodes
-    .find((node) => node.onScroll)!
-    .onScroll({ nativeEvent: { contentOffset: { y: 172 } } });
+  modelNativeDayScroll(172);
   state.presses
     .find(
       (press) =>
-        press.accessibilityLabel === poi.title &&
+        press.accessibilityLabel === poiRowLabel() &&
         press.accessibilityHint === t("p1r.focusHint"),
     )!
     .onPress();
@@ -1894,10 +1935,14 @@ it("normal P1 first body tap visibly focuses, richer details opens and closes in
   const dismiss = state.nodes.find((node) => node.onDismiss)!.onDismiss;
   expect(state.nodes.find((node) => node.onDismiss)!.visible).toBe(true);
   state.presses
-    .find((press) => press.accessibilityLabel === t("common.close"))!
+    .find((press) => press.children?.props?.children === t("common.back"))!
     .onPress();
   expect(draw()).toContain('data-testid="focus-selected-region"');
+  expect(state.scrollTo).not.toHaveBeenCalled();
   dismiss();
+  state.nativeOffset = 0;
+  draw();
+  flushFrames();
   expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 172, animated: false });
 });
 
