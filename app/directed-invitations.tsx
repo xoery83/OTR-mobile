@@ -44,6 +44,8 @@ export default function IncomingInvitationsRoute() {
   const [entry, setEntry] = useState<Entry | null>(null);
   const [failed, setFailed] = useState<number | null>(null);
   const [reload, setReload] = useState(0);
+  const [settled, setSettled] = useState<{ generation: number; reload: number } | null>(null);
+  const checking = settled?.generation !== generation || settled.reload !== reload;
   useEffect(() => {
     let alive = true;
     void (async () => {
@@ -65,42 +67,51 @@ export default function IncomingInvitationsRoute() {
           invitations: result.selected ? [result.selected] : result.invitations,
         });
         setFailed(null);
+        setSettled({ generation, reload });
       }
     })().catch(() => {
-      if (alive && generation === getAccountGeneration()) setFailed(generation);
+      if (alive && generation === getAccountGeneration()) {
+        setFailed(generation);
+        setSettled({ generation, reload });
+      }
     });
     return () => {
       alive = false;
     };
   }, [generation, reload]);
   const current = entry?.scope.generation === generation ? entry : null;
-  const latest = useRef(current);
+  const latest = useRef(settled);
   useLayoutEffect(() => {
-    latest.current = current;
+    latest.current = checking ? null : settled;
     return () => {
       latest.current = null;
     };
-  });
+  }, [checking, settled]);
+  function reloadInbox() {
+    latest.current = null;
+    setReload((value) => value + 1);
+  }
   async function open(reference: IncomingInvitationReference) {
-    if (!current || latest.current !== current) return;
+    if (!current || !settled || latest.current !== settled) return;
     try {
       await assertAccountRequestContext(current.scope, requireAdoptedUserId);
+      if (latest.current !== settled) return;
       await current.ports.selection.select(current.scope, reference);
       await assertAccountRequestContext(current.scope, requireAdoptedUserId);
-      if (latest.current === current)
+      if (latest.current === settled)
         router.push({ pathname: "/pending-claim", params: reference });
     } catch {
-      if (current.scope.generation === getAccountGeneration()) setFailed(generation);
+      if (latest.current === settled && generation === getAccountGeneration()) setFailed(generation);
     }
   }
   async function showAll() {
-    if (!current?.selected || latest.current !== current) return;
+    if (!current?.selected || !settled || latest.current !== settled) return;
     try {
       // Navigation reference only: the original Claim checkpoint is never cleared here.
       await current.ports.selection.clear(current.scope, current.selected);
       await assertAccountRequestContext(current.scope, requireAdoptedUserId);
-      if (latest.current === current) setReload((value) => value + 1);
-    } catch { if (current.scope.generation === getAccountGeneration()) setFailed(generation); }
+      if (latest.current === settled) reloadInbox();
+    } catch { if (latest.current === settled && generation === getAccountGeneration()) setFailed(generation); }
   }
   return (
     <>
@@ -113,11 +124,11 @@ export default function IncomingInvitationsRoute() {
       <ScrollView>
         <UiSection title={t("people.claimResolution.incomingInvitations")}>
           <UiText>
-            {failed === generation
-              ? t("people.directedClaim.unavailable")
-              : !current
-                ? t("common.loading")
-                : current.invitations.length
+            {checking
+              ? t("people.directedInvite.loading")
+              : failed === generation
+                ? t("people.directedInvite.unavailable")
+                : current?.invitations.length
                   ? t("people.pendingClaim.ready")
                   : t("people.directedInvite.incomingEmpty")}
           </UiText>
@@ -125,16 +136,18 @@ export default function IncomingInvitationsRoute() {
             <UiButton
               key={reference.inviteId}
               label={t("people.directedClaim.title")}
+              disabled={checking}
               onPress={() => {
                 void open(reference);
               }}
             />
           ))}
-          {current?.selected ? <UiButton variant="secondary" label={t("people.directedInvite.all")} onPress={() => { void showAll(); }} /> : null}
+          {current?.selected ? <UiButton variant="secondary" label={t("people.directedInvite.all")} disabled={checking} onPress={() => { void showAll(); }} /> : null}
           <UiButton
             variant="secondary"
             label={t("people.directedInvite.reload")}
-            onPress={() => setReload((value) => value + 1)}
+            disabled={checking}
+            onPress={reloadInbox}
           />
         </UiSection>
       </ScrollView>

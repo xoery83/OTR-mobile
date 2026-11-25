@@ -85,3 +85,48 @@ it("does not navigate after the selected Account changes during selection", asyn
   finish(); await tick();
   expect(run.push).not.toHaveBeenCalled();
 });
+
+it("shows a failed inbox read separately from a pending retry and a verified empty response", async () => {
+  let finish!: (value: { selected: null; invitations: [] }) => void;
+  const open = vi.fn()
+    .mockRejectedValueOnce(new Error("unavailable"))
+    .mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+  run.ports.mockResolvedValue({ selection: { open } });
+  const retry = (tree: ReturnType<typeof render>) =>
+    tree.find((node) => node.props.label === "people.directedInvite.reload");
+  const message = (tree: ReturnType<typeof render>) =>
+    tree.find((node) => node.type === "Text").props.children;
+
+  render(); await effects();
+  expect(message(render())).toBe("people.directedInvite.unavailable");
+  retry(render()).props.onPress();
+  expect(message(render())).toBe("people.directedInvite.loading");
+  expect(retry(render()).props.disabled).toBe(true);
+  await effects();
+  finish({ selected: null, invitations: [] });
+  await tick();
+  expect(message(render())).toBe("people.directedInvite.incomingEmpty");
+  expect(retry(render()).props.disabled).toBe(false);
+});
+
+it("keeps a delayed old selection from navigating after a retry fails on the same Account", async () => {
+  let finishSelection!: () => void;
+  const reference = { tripId: randomUUID(), inviteId: randomUUID() };
+  const select = vi.fn(() => new Promise<void>((resolve) => { finishSelection = resolve; }));
+  run.ports.mockResolvedValue({ selection: {
+    open: vi.fn()
+      .mockResolvedValueOnce({ selected: null, invitations: [reference] })
+      .mockRejectedValueOnce(new Error("unavailable")),
+    select,
+  } });
+  render(); await effects();
+  const tree = render();
+  tree.find((node) => node.props.label === "people.directedClaim.title").props.onPress();
+  await tick();
+  expect(select).toHaveBeenCalledOnce();
+  tree.find((node) => node.props.label === "people.directedInvite.reload").props.onPress();
+  render(); await effects(); render();
+  finishSelection();
+  await tick();
+  expect(run.push).not.toHaveBeenCalled();
+});
