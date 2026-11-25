@@ -164,7 +164,7 @@ vi.mock("expo-sqlite", () => ({
   }),
 }));
 vi.mock("@react-native-community/datetimepicker", () => ({ default: () => null }));
-vi.mock("@/components/SheetHeader", () => ({ SheetHeader: () => null }));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "safe-area" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: () => null }));
 vi.mock("@/features/flexible-native-gallery/Gallery", () => ({
   FlexibleRenderer: () => null,
@@ -193,6 +193,8 @@ const poi = {
   status: "planned",
   boundaries: [boundary("START", "00"), boundary("END", "01")],
 } as DayEvent;
+const poiRowLabel = () =>
+  t("fidelity.rowTimes", { title: poi.title, start: "00:00", end: "01:00" });
 const flight = {
   ...poi,
   id: "flight",
@@ -240,26 +242,26 @@ it("composes actual production P1/P2/NOW without any supplemental fixture fields
   expect(html).toContain('data-testid="now-within"');
   expect(html).not.toMatch(/fixtureDocument|synthetic|Booking|Boarding pass/);
 });
-it("P1 Browse, Focus, Immersive and close dispatch the correct depth", () => {
+it("P1 Browse, Focus, Immersive and Back dispatch the correct depth", () => {
   const onDepth = vi.fn();
   render(createElement(P1Row, { event: poi, depth: "B", onDepth }));
-  state.presses.find((p) => p.accessibilityLabel === poi.title)!.onPress();
+  state.presses.find((p) => p.accessibilityLabel === poiRowLabel())!.onPress();
   expect(onDepth).toHaveBeenLastCalledWith("F");
   render(createElement(P1Row, { event: poi, depth: "F", onDepth }));
   state.presses.find((p) => p.accessibilityLabel === t("p1r.richerDetails"))!.onPress();
   expect(onDepth).toHaveBeenLastCalledWith("I");
   render(createElement(P1Row, { event: poi, depth: "I", onDepth }));
-  state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
+  state.presses.find((p) => p.children?.props?.children === t("common.back"))!.onPress();
   expect(onDepth).toHaveBeenLastCalledWith("F");
 });
 it("NOW ticks never set Focus and explicit collapse remains deselected", () => {
   const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
   render(createElement(DayFeed, props));
-  state.presses.find((p) => p.accessibilityLabel === poi.title)!.onPress();
+  state.presses.find((p) => p.accessibilityLabel === poiRowLabel())!.onPress();
   expect(render(createElement(DayFeed, props))).toContain(
     'data-testid="focus-selected-region"',
   );
-  state.presses.find((p) => p.accessibilityLabel === poi.title)!.onPress();
+  state.presses.find((p) => p.accessibilityLabel === poiRowLabel())!.onPress();
   const html = render(createElement(DayFeed, props));
   expect(html).not.toContain('data-testid="focus-selected-region"');
   expect(html).toContain('data-testid="now-within"');
