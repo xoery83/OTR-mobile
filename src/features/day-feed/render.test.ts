@@ -1348,42 +1348,48 @@ it("G2 Flexible empty header opens Immersive directly; Choice and Item share Foc
     instant: fixture.instant,
     ports: fixture.ports,
   };
-  let html = render(createElement(DayFeed, props));
+  const flushFrames = modelNativeFrames();
+  const draw = () => renderNativeDay(createElement(DayFeed, props));
+  const itemLabel = t("fidelity.rowTimes", {
+    title: t("dayLab.flexibleItem"),
+    start: "14:00",
+    end: "15:00",
+  });
+  let html = draw();
   expect(html).toContain(t("dayLab.flexibleEmpty"));
   expect(html).toContain(t("dayLab.flexibleChoices"));
   expect(html.match(/flexible-block-row/g)).toHaveLength(3);
-  expect(
-    state.presses.filter((p) => p.accessibilityLabel === t("dayLab.flexibleItem")),
-  ).toHaveLength(1);
-  state.nodes
-    .find((node) => node.onScroll)!
-    .onScroll({ nativeEvent: { contentOffset: { y: 188 } } });
+  expect(state.presses.filter((p) => p.accessibilityLabel === itemLabel)).toHaveLength(1);
+  modelNativeDayScroll(188);
   state.presses
     .find((p) => p.accessibilityLabel === t("dayLab.flexibleEmpty"))!
     .onPress();
-  render(createElement(DayFeed, props));
+  draw();
   expect(state.nodes.find((node) => node.onDismiss)?.visible).toBe(true);
   state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
   const dismiss = state.nodes.find((node) => node.onDismiss)!.onDismiss;
-  render(createElement(DayFeed, props));
+  draw();
+  state.nativeOffset = 0;
   dismiss();
+  draw();
+  flushFrames();
   expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 188, animated: false });
   state.presses
     .find((p) => p.accessibilityLabel === t("dayLab.flexibleMyChoice"))!
     .onPress();
-  render(createElement(DayFeed, props));
+  draw();
   expect(
     state.presses.find((p) => p.accessibilityLabel === t("dayLab.flexibleMyChoice"))
       ?.accessibilityState?.selected,
   ).toBe(true);
-  state.presses.find((p) => p.accessibilityLabel === t("dayLab.flexibleItem"))!.onPress();
-  render(createElement(DayFeed, props));
+  state.presses.find((p) => p.accessibilityLabel === itemLabel)!.onPress();
+  draw();
   expect(
     state.presses.find((p) => p.accessibilityLabel === t("dayLab.flexibleMyChoice"))
       ?.accessibilityState?.selected,
   ).toBe(false);
   state.presses.find((p) => p.accessibilityLabel === t("flexible.group"))!.onPress();
-  html = render(createElement(DayFeed, props));
+  html = draw();
   expect(html).toContain(t("dayLab.flexibleGroupChoice"));
   expect(html).not.toContain(t("dayLab.flexibleMyChoice"));
 });
@@ -1579,7 +1585,7 @@ it("rejects a queued old TTR tap after switching A to B to A", () => {
   expect(html).not.toContain(t("ttr.lab.noMode"));
 });
 
-function reactiveFeed() {
+function reactiveFeed(renderFeed = render) {
   const fixture = flexibleReactiveContribution();
   const seen: FlexibleBlockRendererProps[] = [];
   const Renderer = (props: FlexibleBlockRendererProps) => {
@@ -1599,23 +1605,21 @@ function reactiveFeed() {
   };
   const draw = () => {
     seen.length = 0;
-    return render(createElement(DayFeed, props));
+    return renderFeed(createElement(DayFeed, props));
   };
   const latest = () => seen.at(-1)!;
   return { fixture, props, draw, latest };
 }
 
 it("suspends Choice Focus, blocks background interaction, replaces snapshots without remounting and restores Focus/scroll", () => {
-  const { draw, latest } = reactiveFeed();
+  const flushFrames = modelNativeFrames();
+  const { draw, latest } = reactiveFeed(renderNativeDay);
   draw();
   state.presses
     .find((press) => press.accessibilityLabel === t("dayLab.flexibleMyChoice"))!
     .onPress();
   draw();
-  state.nodes
-    .find((node) => node.onScroll)!
-    .onScroll({ nativeEvent: { contentOffset: { y: 271 } } });
-  const originalRefs = [...state.refs];
+  modelNativeDayScroll(271);
   state.presses
     .find((press) => press.accessibilityLabel === t("dayLab.snapshotBlock"))!
     .onPress();
@@ -1627,6 +1631,7 @@ it("suspends Choice Focus, blocks background interaction, replaces snapshots wit
       (node) => node.pointerEvents === "none" && node.accessibilityElementsHidden,
     ),
   ).toBe(true);
+  const originalRefs = [...state.refs];
   const snapshot = latest().flexibleSnapshot!;
   expect(
     latest().onReplaceFlexibleSnapshot!(flexibleFixtureUpdate(snapshot, "COPY")),
@@ -1638,7 +1643,10 @@ it("suspends Choice Focus, blocks background interaction, replaces snapshots wit
   latest().onClose();
   const dismiss = state.nodes.find((node) => node.onDismiss)!.onDismiss;
   draw();
+  state.nativeOffset = 0;
   dismiss();
+  draw();
+  flushFrames();
   expect(latest().block.focusedChoiceKey).toContain("garden");
   expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 271, animated: false });
 });
@@ -1674,7 +1682,7 @@ it("clears deleted/hidden suspended Focus and deleted Block Immersive without lo
 });
 
 it("accepts rapid revisions and rejects stale callbacks across Account/Trip/date/generation and A→B→A", () => {
-  const { draw, latest, props, fixture } = reactiveFeed();
+  const { draw, latest, props, fixture } = reactiveFeed(renderNativeDay);
   draw();
   const publish = latest().onReplaceFlexibleSnapshot!;
   const first = flexibleFixtureUpdate(latest().flexibleSnapshot!, "COPY");
@@ -1727,12 +1735,13 @@ it("feature-owned local expansion selects one resource while Feed Focus stays su
 });
 
 it("consumes host prop replacements, preserves Item Focus through My/Group and clears lost Item access without resurrection", () => {
-  const { draw, latest, props, fixture } = reactiveFeed();
+  const { draw, latest, props, fixture } = reactiveFeed(renderNativeDay);
   draw();
   const title = fixture.projection.events.find(
     (event) => event.id === "reactive-item",
   )!.title;
-  state.presses.find((press) => press.accessibilityLabel === title)!.onPress();
+  const label = t("fidelity.rowTime", { title, time: "14:00" });
+  state.presses.find((press) => press.accessibilityLabel === label)!.onPress();
   expect(draw()).toContain('data-testid="focus-selected-region"');
   latest().onChoiceScopeIntent("GROUP");
   expect(draw()).toContain('data-testid="focus-selected-region"');
