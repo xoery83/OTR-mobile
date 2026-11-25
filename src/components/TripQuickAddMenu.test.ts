@@ -1,5 +1,17 @@
 import { readCaptureTripPrior } from "@/features/capture/captureTripPrior";
 import { getDefaultLedgerReportingRepository } from "@/data/repositories/defaultLedgerReportingRepository";
+import { router } from "expo-router";
+import { readHostedQuickAdd, releaseHostedQuickAdd } from "@/features/sheet-navigation/quickAddHandoff";
+import { createElement } from "react";
+import { createRequire } from "node:module";
+import { beforeEach, expect, it, vi } from "vitest";
+import {
+  TripQuickAddMenu,
+  TripQuickAddPanel,
+  shiftSuggestedDate,
+  validSuggestedDate,
+} from "./TripQuickAddMenu";
+
 vi.mock("@/features/day-feed/ManualItineraryContent", () => ({
   ManualItineraryContent: (props: any) => {
     state.manualProps = props;
@@ -10,15 +22,7 @@ vi.mock("@/data/auth/accountGeneration", () => ({
   getAccountGeneration: () => state.generation,
   subscribeAccountGeneration: () => () => {},
 }));
-import { createElement } from "react";
-import { createRequire } from "node:module";
-import { beforeEach, expect, it, vi } from "vitest";
-import {
-  TripQuickAddMenu,
-  TripQuickAddPanel,
-  shiftSuggestedDate,
-  validSuggestedDate,
-} from "./TripQuickAddMenu";
+
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server");
 const state = vi.hoisted(() => ({
   guest: false,
@@ -114,13 +118,13 @@ const itinerary = vi.fn(),
 let initialDate: string | undefined;
 let useManual = false;
 const manualSaved = vi.fn();
-function render(hosted = false) {
+function render(mode: "fallback" | "hosted" | "entry" = "fallback") {
   state.cursor = 0;
   state.refCursor = 0;
   state.nodes = [];
   return renderToStaticMarkup(
-    createElement(hosted ? TripQuickAddPanel : TripQuickAddMenu, {
-      hosted,
+    createElement(mode === "entry" ? TripQuickAddMenu : TripQuickAddPanel, {
+      hosted: mode === "hosted",
       tripId: "a",
       date: initialDate,
       showDate: true,
@@ -339,23 +343,42 @@ vi.mock("@/components/SheetRoutePanel", () => ({
 vi.mock("@/components/SheetHost", () => ({ useSheetMotion: vi.fn() }));
 vi.mock("expo-router", () => ({ router: { push: vi.fn(), navigate: vi.fn() }, useFocusEffect: vi.fn() }));
 
+it("opens the shared sheet route from the default Quick Add entry", () => {
+  render("entry");
+  button("actionIsland.addToTrip").onPress();
+
+  const open = vi.mocked(router.navigate).mock.lastCall?.[0];
+  expect(open).toMatchObject({
+    pathname: "/import-plans/quick-add",
+    params: { invocation: expect.any(String) },
+  });
+  if (typeof open === "object" && typeof open.params?.invocation === "string") {
+    const { invocation } = open.params;
+    try {
+      expect(readHostedQuickAdd(invocation)).toMatchObject({ tripId: "a", date: initialDate });
+    } finally {
+      releaseHostedQuickAdd(invocation);
+    }
+  }
+});
+
 it("hosts date completion in the trailing toolbar and keeps Back non-committing", () => {
-  render(true);
+  render("hosted");
   button("quickAdd.selectedDay").onPress();
-  render(true);
+  render("hosted");
   expect(state.hostedHeader.action?.label).toBe("common.done");
   expect(button("common.done")).toBeUndefined();
   expect(state.nodes.find(node => node.mode === "date")?.style.alignSelf).toBe("center");
   state.nodes.find(node => node.mode === "date").onChange(undefined, new Date(2027, 1, 9, 12));
-  render(true);
+  render("hosted");
   state.hostedHeader.onBack();
-  render(true);
+  render("hosted");
   expect(button("quickAdd.selectedDay").accessibilityValue.text).toBe("actionIsland.selectDate");
   button("quickAdd.selectedDay").onPress();
-  render(true);
+  render("hosted");
   state.nodes.find(node => node.mode === "date").onChange(undefined, new Date(2027, 1, 9, 12));
-  render(true);
+  render("hosted");
   state.hostedHeader.action.onPress();
-  render(true);
+  render("hosted");
   expect(button("quickAdd.selectedDay").accessibilityValue.text).toBe("2027-02-09");
 });
