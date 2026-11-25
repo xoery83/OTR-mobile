@@ -114,6 +114,19 @@ it("Browse and Immersive show the authored clock without a timezone warning", ()
   expect(html).toContain("15:00");
   expect(html).not.toContain("Timezone not confirmed");
 });
+it("marks an estimated end independently of an exact start, including the END occurrence", () => {
+  const e = event();
+  e.boundaries = [
+    boundary("START", "2027-01-16", "10:30"),
+    { ...boundary("END", "2027-01-17", "08:00"), quality: "ESTIMATED" },
+  ];
+  const props = { event: e, depth: "B" as const, onDepth: vi.fn() };
+  renderToStaticMarkup(createElement(P1Row, props));
+  expect(node("Botanical garden visit, 10:30, Around 08:00, +1")).toBeDefined();
+  const end = renderToStaticMarkup(createElement(P1Row, { ...props, occurrence: "END" }));
+  expect(end).toContain("≈08:00");
+  expect(node("Botanical garden visit, Ends around 08:00")).toBeDefined();
+});
 it("cross-day accessible labels include end clock/offset and identify the independent END projection", () => {
   const e = event();
   e.boundaries = [

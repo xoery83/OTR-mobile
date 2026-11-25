@@ -21,6 +21,7 @@ export function localP1Presentation(item: Item, occurrence: "START" | "END" = "S
           local_date: value.localDate ?? null,
           local_time: value.localTime ?? null,
           qualified: value.comparable,
+          quality: value.quality,
         }
       : undefined;
   const start = boundary("START", schedule.start),

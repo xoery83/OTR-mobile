@@ -41,12 +41,14 @@ export type P1RowDisplay = Pick<
       local_date: string | null;
       local_time: string | null;
       qualified: boolean;
+      quality?: string;
     };
     end?: {
       role: "END";
       local_date: string | null;
       local_time: string | null;
       qualified: boolean;
+      quality?: string;
     };
     primary: string | null;
     secondary: string | null;
@@ -76,6 +78,13 @@ export function ReadFactTag({ label, onPress }: { label: string; onPress?: () =>
     tag
   );
 }
+function p1ClockLabel(time: string, estimated: boolean, compact = false) {
+  if (!estimated) return time;
+  return t(compact ? "fidelity.estimatedClockRail" : "fidelity.estimatedClock", {
+    time,
+  });
+}
+
 export function P1Row({
   event: sourceEvent,
   display,
@@ -136,14 +145,22 @@ export function P1Row({
       event.authored_address ||
       event.accepted_address_line1 ||
       event.authored_address_line1;
+  const primaryBoundary = occurrence === "END" ? clocks.end : clocks.start;
+  const primaryEstimated = primaryBoundary?.quality === "ESTIMATED";
+  const secondaryEstimated = clocks.end?.quality === "ESTIMATED";
+  const secondaryTime =
+    clocks.secondary && p1ClockLabel(clocks.secondary, secondaryEstimated);
   const primaryLabel =
-    clocks.primary && occurrence === "END"
-      ? t("fidelity.endAtTime", { time: clocks.primary })
-      : clocks.primary;
+    clocks.primary &&
+    (occurrence === "END"
+      ? t(primaryEstimated ? "fidelity.estimatedEndAtTime" : "fidelity.endAtTime", {
+          time: clocks.primary,
+        })
+      : p1ClockLabel(clocks.primary, primaryEstimated));
   const secondaryLabel =
-    clocks.secondary && clocks.dayOffset
-      ? t("fidelity.clockOffset", { time: clocks.secondary, days: clocks.dayOffset })
-      : clocks.secondary;
+    secondaryTime && clocks.dayOffset
+      ? t("fidelity.clockOffset", { time: secondaryTime, days: clocks.dayOffset })
+      : secondaryTime;
   const rowLabel = primaryLabel
     ? secondaryLabel
       ? t("fidelity.rowTimes", {
@@ -286,7 +303,9 @@ export function P1Row({
                     </Text>
                   ) : null}
                   {b!.local_time ? (
-                    <Text style={styles.largeClock}>{b!.local_time.slice(0, 5)}</Text>
+                    <Text style={styles.largeClock}>
+                      {p1ClockLabel(b!.local_time.slice(0, 5), b!.quality === "ESTIMATED")}
+                    </Text>
                   ) : null}
                 </View>
               ))}
@@ -398,13 +417,18 @@ export function P1Row({
               </Text>
             ) : null}
             {clocks.primary
-              ? renderClock("PRIMARY", <Text style={styles.clock}>{clocks.primary}</Text>)
+              ? renderClock(
+                  "PRIMARY",
+                  <Text style={styles.clock}>
+                    {p1ClockLabel(clocks.primary, primaryEstimated, true)}
+                  </Text>,
+                )
               : null}
             {clocks.secondary
               ? renderClock(
                   "SECONDARY",
                   <Text style={styles.endClock}>
-                    {clocks.secondary}
+                    {p1ClockLabel(clocks.secondary, secondaryEstimated, true)}
                     {clocks.dayOffset ? (
                       <Text style={styles.offset}>⁺{clocks.dayOffset}</Text>
                     ) : null}

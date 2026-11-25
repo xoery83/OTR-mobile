@@ -56,7 +56,7 @@ it("reads only the real scoped Item and enables Edit only after repository quali
   });
   expect(state?.presentation.display.clocks).toMatchObject({
     primary: "10:30",
-    start: { local_time: "10:30", qualified: false },
+    start: { local_time: "10:30", qualified: false, quality: "ESTIMATED" },
   });
   expect(JSON.stringify(record)).toBe(bytes);
 });

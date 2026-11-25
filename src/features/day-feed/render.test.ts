@@ -2000,10 +2000,12 @@ it("P1 displays known estimated minute and named place without presenting a reso
     ],
   };
   const html = render(createElement(P1Row, { event, depth: "B", onDepth: () => {} }));
-  expect(html).toContain("09:15");
+  expect(html).toContain(t("fidelity.estimatedClockRail", { time: "09:15" }));
+  expect(html).toContain(t("fidelity.estimatedClock", { time: "09:15" }));
   expect(html).toContain("Named temple");
-  expect(html).toContain(t("p6.plannedUnresolved"));
-  expect(html.split("09:15")).toHaveLength(2);
+  expect(html).not.toContain(">09:15<");
+  expect(render(createElement(P1Row, { event, depth: "I", onDepth: () => {} })))
+    .toContain(t("fidelity.estimatedClock", { time: "09:15" }));
 });
 
 it("accepted Sparse Flight stays a Flight in Browse, Focus and Immersive without guessed airport/time facts", () => {
