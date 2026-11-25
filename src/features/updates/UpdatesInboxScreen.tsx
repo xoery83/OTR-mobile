@@ -32,6 +32,7 @@ import { useTripView } from "@/features/day-feed/TripViewContext";
 import { UiButton, UiText } from "@/ui/controls";
 import { UiChoiceChip, UiTextInput } from "@/ui/forms";
 import { formatUiDate, t, translate } from "@/ui/locale";
+import { useBottomShellHeight } from "@/ui/useBottomShellHeight";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
@@ -69,6 +70,7 @@ export function UpdatesInboxScreen(props: UpdatesInboxProps = {}) {
 function UpdatesInboxContent({ generation, onOpenImport, bindRefresh }: UpdatesInboxProps & { generation: number }) {
   const sheetScroll = useSheetScrollDismissal();
   const locale = useUiLocale();
+  const bottomShellHeight = useBottomShellHeight();
   const { fontScale } = useWindowDimensions();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
@@ -290,7 +292,10 @@ function UpdatesInboxContent({ generation, onOpenImport, bindRefresh }: UpdatesI
     intakeCards.filter((card) => card.unread && card.sourceState !== "UNAVAILABLE")
       .length ?? 0;
   return (
-    <SafeAreaView edges={["bottom", "left", "right"]} style={styles.root}>
+    <SafeAreaView
+      edges={bottomShellHeight ? ["left", "right"] : ["bottom", "left", "right"]}
+      style={[styles.root, { paddingBottom: bottomShellHeight }]}
+    >
       <View style={styles.filters}>
         {activityId ? (
           <UiButton

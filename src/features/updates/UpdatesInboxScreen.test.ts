@@ -24,6 +24,7 @@ const s = vi.hoisted(() => ({
   push: vi.fn(),
   trip: null as any,
   fontScale: 1,
+  bottomShellHeight: 0,
   hostedImport: false,
   params: {} as Record<string, string>,
 }));
@@ -93,6 +94,9 @@ vi.mock("react-native", () => ({
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "Safe" }));
 vi.mock("@/components/AppIcon", () => ({ AppIcon: "Icon" }));
+vi.mock("@/ui/useBottomShellHeight", () => ({
+  useBottomShellHeight: () => s.bottomShellHeight,
+}));
 vi.mock("@/ui/controls", () => ({ UiButton: "Button", UiText: "Text" }));
 vi.mock("@/ui/forms", () => ({ UiChoiceChip: "Chip", UiTextInput: "Input" }));
 vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
@@ -142,6 +146,7 @@ beforeEach(() => {
   s.slots = [];
   s.cursor = 0;
   s.fontScale = 1;
+  s.bottomShellHeight = 0;
   s.hostedImport = false;
   s.params = {};
   s.queued = [];
@@ -151,6 +156,15 @@ beforeEach(() => {
   s.trip = { tripId: randomUUID(), generation: getAccountGeneration() };
   setUiLocale("en");
 });
+
+it("reserves the floating shell once and keeps the standalone bottom safe area", () => {
+  expect(render().props.edges).toEqual(["bottom", "left", "right"]);
+  expect(render().props.style).toContainEqual({ paddingBottom: 0 });
+  s.bottomShellHeight = 176;
+  expect(render().props.edges).toEqual(["left", "right"]);
+  expect(render().props.style).toContainEqual({ paddingBottom: 176 });
+});
+
 async function setup(withFailure = true) {
   const f = fixture(),
     deps = { sha256, now: () => "2026-10-15T04:25:36.000Z", newId: randomUUID };
