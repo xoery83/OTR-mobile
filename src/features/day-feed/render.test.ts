@@ -39,7 +39,7 @@ import { FlightRows } from "./FlightRows";
 import { flightPresentation } from "./presentation";
 import { formatUiDate, formatUiNumber, t } from "@/ui/locale";
 import { uiPalette } from "@/ui/palette";
-import { timeRailWidth } from "./visualTokens";
+import { FlightFidelityGrid } from "./FlightFidelityGrid";
 import { faroeNegativeFixtures, syntheticDate } from "./faroeNegative.test.fixtures";
 const { renderToStaticMarkup } = createRequire(import.meta.url)("react-dom/server") as {
   renderToStaticMarkup: (node: ReactNode) => string;
@@ -328,14 +328,11 @@ it("F1 A1/A3/TC13: mixed historical P1/P2 keeps order, identities and planned st
       services: f.services,
     }),
   );
-  const positions = [f.before.title, f.segment.title, f.after.title].map((label, i) =>
-    state.presses.findIndex(
-      (p, n) =>
-        p.accessibilityLabel === label &&
-        (i !== 2 ||
-          n > state.presses.findIndex((a) => a.accessibilityLabel === f.segment.title)),
-    ),
-  );
+  const positions = [
+    t("fidelity.rowTime", { title: f.before.title, time: "08:00" }),
+    f.segment.title,
+    t("fidelity.rowTime", { title: f.after.title, time: "14:00" }),
+  ].map((label) => state.presses.findIndex((p) => p.accessibilityLabel === label));
   expect(positions.every((n) => n >= 0)).toBe(true);
   expect(positions[0]).toBeLessThan(positions[1]);
   expect(positions[1]).toBeLessThan(positions[2]);
@@ -359,17 +356,17 @@ it("F1 A1/A2/B7: Browse is compact and P1/P2 Focus retains the subtle theme outl
       createElement(P1Row, { event: f.before, depth: "B", onDepth: vi.fn() }),
     );
     expect(html).not.toContain('data-testid="focus-selected-region"');
-    expect(state.nodes.find((n) => n.children === f.before.title)?.numberOfLines).toBe(2);
+    expect(state.nodes.find((n) => [n.children].flat()[0] === f.before.title)?.numberOfLines).toBe(2);
     html = render(
       createElement(P1Row, { event: f.before, depth: "F", onDepth: vi.fn() }),
     );
     expect(html).toContain("Synthetic quay");
     expect(
-      state.nodes.find((n) => n.testID === "focus-selected-region")!.style,
+      Object.assign({}, ...state.nodes.find((n) => n.testID === "focus-selected-region")!.style),
     ).toMatchObject({ borderWidth: 1, borderColor: uiPalette(scheme).separator });
-    expect(
-      state.nodes.find((n) => n.children === f.before.title)?.numberOfLines,
-    ).toBeUndefined();
+    const focusTitle = state.nodes.find((n) => [n.children].flat()[0] === f.before.title);
+    expect(focusTitle).toBeDefined();
+    expect(focusTitle!.numberOfLines).toBeUndefined();
     state.hooks = [];
     const props = {
       projection: f.day,
@@ -393,31 +390,24 @@ it("F1 A1/A2/B7: Browse is compact and P1/P2 Focus retains the subtle theme outl
 });
 it("F1 A3/B5: P1/P2 rails share width for normal and enlarged text", () => {
   const f = faroeNegativeFixtures();
+  const clockWidth = () => state.nodes
+    .map((node) => Object.assign({}, ...[node.style].flat().filter(Boolean)))
+    .find((style) => style.flexShrink === 0 && style.paddingTop === 2)?.width;
+  const widths = [];
   for (const scale of [1, 2.4]) {
     state.scale = scale;
     state.hooks = [];
     render(createElement(P1Row, { event: f.before, depth: "B", onDepth: vi.fn() }));
-    expect(
-      state.nodes.some(
-        (n) =>
-          Array.isArray(n.style) &&
-          n.style.some((s: Record<string, any>) => s?.width === timeRailWidth(scale)),
-      ),
-    ).toBe(true);
+    const p1Width = clockWidth();
+    expect(p1Width).toBeGreaterThan(0);
     state.hooks = [];
-    render(
-      createElement(FlightRows, {
-        fixture: flightPresentation(f.segment, [f.services[f.segment.id][0]])!,
-      }),
-    );
-    expect(
-      state.nodes.some(
-        (n) =>
-          Array.isArray(n.style) &&
-          n.style.some((s: Record<string, any>) => s?.width === timeRailWidth(scale)),
-      ),
-    ).toBe(true);
+    render(createElement(FlightFidelityGrid, {
+      flight: flightPresentation(f.segment, [f.services[f.segment.id][0]])!,
+    }));
+    expect(clockWidth()).toBe(p1Width);
+    widths.push(p1Width);
   }
+  expect(widths[1]).toBeGreaterThan(widths[0]);
 });
 it("F1 A4/TC16/TC22/B2: dangling Ledger hints and blank amounts never become financial rows", () => {
   const f = faroeNegativeFixtures();
@@ -475,19 +465,14 @@ it("F1 B7: long multilingual title keeps full identity and unbounded Focus in bo
     state.scheme = scheme;
     state.scale = 2.4;
     state.hooks = [];
-    render(createElement(P1Row, { event: f.before, depth: "F", onDepth: vi.fn() }));
-    const title = state.nodes.find((n) => n.children === f.before.title)!;
+    const html = render(createElement(P1Row, { event: f.before, depth: "F", onDepth: vi.fn() }));
+    const title = state.nodes.find((n) => [n.children].flat()[0] === f.before.title)!;
     expect(title.numberOfLines).toBeUndefined();
-    expect(state.presses.some((p) => p.accessibilityLabel === f.before.title)).toBe(true);
-    title.onTextLayout({ nativeEvent: { lines: [{}, {}, {}] } });
-    render(createElement(P1Row, { event: f.before, depth: "F", onDepth: vi.fn() }));
-    expect(
-      state.nodes.some(
-        (n) =>
-          Array.isArray(n.style) &&
-          n.style.some((s: Record<string, any>) => s?.position === "relative"),
-      ),
-    ).toBe(true);
+    expect(html).toContain(f.before.title);
+    expect(state.presses.some((p) => p.accessibilityLabel ===
+      t("fidelity.rowTime", { title: f.before.title, time: "08:00" }),
+    )).toBe(true);
+    expect(state.nodes.some((n) => n.style?.flex === 1 && n.style?.minWidth === 0)).toBe(true);
   }
 });
 it("F1 B7/TC17: unavailable Flight optional labels and the empty detail row are omitted", () => {
