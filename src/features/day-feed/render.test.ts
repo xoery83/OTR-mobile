@@ -774,23 +774,28 @@ it("v2 qualified unknown clocks and names omit empty rows in Browse, large Focus
 it("DL1 uses production NOW/P1 and retains Trip/date/Focus across Immersive and nonzero scroll return", () => {
   state.instant = "2040-01-01T00:00:00Z"; // The fixture clock owns only this explicit input.
   const fixture = getFixtureCatalog()[0];
-  let html = render(createElement(DayFeedLabScreen));
+  const flushFrames = modelNativeFrames();
+  let html = renderNativeDay(createElement(DayFeedLabScreen));
   expect(html).toContain('data-testid="now-within"');
-  state.nodes
-    .find((n) => n.onScroll)!
-    .onScroll({ nativeEvent: { contentOffset: { y: 320 } } });
-  state.presses
-    .find((p) => p.accessibilityLabel === fixture.projection.events[0].title)!
-    .onPress();
-  render(createElement(DayFeedLabScreen));
+  modelNativeDayScroll(320);
+  const focusedCandidates = state.presses.filter(
+    (p) =>
+      p.accessibilityLabel?.startsWith(fixture.projection.events[0].title) &&
+      p.accessibilityHint === t("p1r.focusHint"),
+  );
+  expect(focusedCandidates).toHaveLength(1);
+  focusedCandidates[0].onPress();
+  renderNativeDay(createElement(DayFeedLabScreen));
   state.presses.find((p) => p.accessibilityLabel === t("p1r.richerDetails"))!.onPress();
-  html = render(createElement(DayFeedLabScreen));
+  html = renderNativeDay(createElement(DayFeedLabScreen));
   expect(html).toContain(fixture.id);
   expect(html).toContain("2027-01-15");
-  state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
-  const onDismiss = state.nodes.find((n) => n.onDismiss)!.onDismiss;
-  html = render(createElement(DayFeedLabScreen));
+  const onDismiss = state.nodes.find((n) => n.onDismiss && n.visible)!.onDismiss;
+  state.presses.find((p) => p.children?.props?.children === t("common.back"))!.onPress();
   onDismiss();
+  state.nativeOffset = 0;
+  html = renderNativeDay(createElement(DayFeedLabScreen));
+  flushFrames();
   expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 320, animated: false });
   expect(html).toContain('data-testid="focus-selected-region"');
   expect(html).toContain(fixture.id);
@@ -938,28 +943,29 @@ it("DL4 Stay renderer uses shared Focus/Immersive, typed details and nonzero scr
     query: stay.query,
     renderer: stay.renderer,
   };
-  let html = render(createElement(DayFeed, props));
+  const flushFrames = modelNativeFrames();
+  let html = renderNativeDay(createElement(DayFeed, props));
   const title = stay.projection.events[0].title;
   expect(html).toContain(title);
   expect(html).not.toContain(t("dayLab.stayInstructions"));
-  state.nodes
-    .find((n) => n.onScroll)!
-    .onScroll({ nativeEvent: { contentOffset: { y: 217 } } });
+  modelNativeDayScroll(217);
   state.presses.find((p) => p.accessibilityLabel === title)!.onPress();
-  html = render(createElement(DayFeed, props));
+  html = renderNativeDay(createElement(DayFeed, props));
   expect(html).toContain(t("p3.role.base"));
   expect(html).not.toContain(t("dayLab.stayInstructions"));
   state.presses.find((p) => p.accessibilityLabel === t("p1r.richerDetails"))!.onPress();
-  html = render(createElement(DayFeed, props));
+  html = renderNativeDay(createElement(DayFeed, props));
   expect(state.nodes.some((n) => n.contentInsetAdjustmentBehavior === "automatic")).toBe(
     true,
   );
   const onDismiss = state.nodes.find((n) => n.onDismiss)!.onDismiss;
   state.presses.find((p) => p.accessibilityLabel === t("common.close"))!.onPress();
-  render(createElement(DayFeed, props));
   onDismiss();
+  state.nativeOffset = 0;
+  renderNativeDay(createElement(DayFeed, props));
+  flushFrames();
   expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 217, animated: false });
-  expect(render(createElement(DayFeed, { ...props, renderer: () => null }))).toContain(
+  expect(renderNativeDay(createElement(DayFeed, { ...props, renderer: () => null }))).toContain(
     title,
   );
 });
@@ -1765,21 +1771,20 @@ it("same-day Rental Return retains its own Focus/Immersive endpoint and nonzero 
     renderer: fixture.renderer,
     services: fixture.services,
   };
-  const draw = () => render(createElement(DayFeed, props));
+  const flushFrames = modelNativeFrames();
+  const draw = () => renderNativeDay(createElement(DayFeed, props));
   draw();
-  const title = t("p4Lab.actualA");
-  state.nodes
-    .find((node) => node.onScroll)!
-    .onScroll({ nativeEvent: { contentOffset: { y: 281 } } });
+  const title = `${t("p4Lab.actualA")} · QA-P4-001`;
+  modelNativeDayScroll(281);
   const vehicleRows = state.presses.filter((press) => press.accessibilityLabel === title);
   expect(vehicleRows).toHaveLength(2);
   vehicleRows[1].onPress();
   draw();
   expect(
-    state.presses.filter((press) => press.accessibilityLabel === t("p1r.richerDetails")),
+    state.presses.filter((press) => press.accessibilityLabel === t("p4.details")),
   ).toHaveLength(1);
   state.presses
-    .find((press) => press.accessibilityLabel === t("p1r.richerDetails"))!
+    .find((press) => press.accessibilityLabel === t("p4.details"))!
     .onPress();
   draw();
   const immersive = state.nodes.find(
@@ -1791,11 +1796,13 @@ it("same-day Rental Return retains its own Focus/Immersive endpoint and nonzero 
   state.presses
     .find((press) => press.accessibilityLabel === t("common.close"))!
     .onPress();
-  draw();
   dismiss();
+  state.nativeOffset = 0;
+  draw();
+  flushFrames();
   expect(state.scrollTo).toHaveBeenLastCalledWith({ y: 281, animated: false });
   expect(
-    state.presses.filter((press) => press.accessibilityLabel === t("p1r.richerDetails")),
+    state.presses.filter((press) => press.accessibilityLabel === t("p4.details")),
   ).toHaveLength(1);
 });
 
@@ -1875,6 +1882,10 @@ it("production renderer chain opens both same-day roles into one Rental detail w
   );
   expect(rows).toHaveLength(2);
   for (const index of [0, 1]) {
+    state.hooks = [];
+    state.refs = [];
+    state.memos = [];
+    state.layouts = [];
     draw();
     state.presses
       .filter((press) => press.accessibilityLabel === "Contract Rental")
@@ -1882,11 +1893,11 @@ it("production renderer chain opens both same-day roles into one Rental detail w
     draw();
     expect(
       state.presses.filter(
-        (press) => press.accessibilityLabel === t("p1r.richerDetails"),
+        (press) => press.accessibilityLabel === t("p4.details"),
       ),
     ).toHaveLength(1);
     state.presses
-      .find((press) => press.accessibilityLabel === t("p1r.richerDetails"))!
+      .find((press) => press.accessibilityLabel === t("p4.details"))!
       .onPress();
     draw();
     html = renderToStaticMarkup(
@@ -1897,7 +1908,11 @@ it("production renderer chain opens both same-day roles into one Rental detail w
     expect(html).toContain("09:00");
     expect(html).toContain("18:00");
     expect(html).not.toContain(t("p4.booking"));
-    expect(html).not.toContain(t("p4.addExpense"));
+    for (const label of [t("fidelity.addExpense"), t("fidelity.linkExpense")]) {
+      expect(
+        state.presses.find((press) => press.accessibilityLabel === label)?.disabled,
+      ).toBe(true);
+    }
     expect(html).not.toContain(t("p4.edit"));
     state.presses
       .find((press) => press.accessibilityLabel === t("common.close"))!
