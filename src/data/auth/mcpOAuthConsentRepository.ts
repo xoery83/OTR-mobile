@@ -134,7 +134,8 @@ export class McpConsentError extends Error {
       | "OTP_FAILED"
       | "RATE_LIMIT"
       | "REQUEST_CHANGED"
-      | "LINK_UNRESOLVED",
+      | "LINK_UNRESOLVED"
+      | "DECISION_UNKNOWN",
   ) {
     super(code);
   }
@@ -186,6 +187,7 @@ export function createMcpOAuthConsentRepository(
   let expectedClient = beta?.managedDev?.clientId;
   let presentedWriteAccount: string | undefined;
   let managedVerifiedEmail: string | undefined;
+  let managedDecisionPending = false;
   const write = beta !== null || legacy?.businessAccess === "READ_WRITE";
   const current = () => {
     if (closed || Date.now() >= config.expiresAt) throw new McpConsentError("CLOSED");
@@ -462,8 +464,11 @@ export function createMcpOAuthConsentRepository(
     }
   }
   async function managedDetails(): Promise<McpConsentView> {
-    const { body, accountId } = await managedRequest({ action: "inspect" });
-    const view = z
+    const { body, accountId } = await managedRequest({ action: "inspect" }).catch((error) => {
+      if (managedDecisionPending) throw new McpConsentError("DECISION_UNKNOWN");
+      throw error;
+    });
+    const parsed = z
       .object({
         id: z.uuid(),
         accountId: z.uuid(),
@@ -478,7 +483,10 @@ export function createMcpOAuthConsentRepository(
           .optional(),
         managedWrite: z.literal(true).optional(),
       })
-      .parse(body);
+      .safeParse(body);
+    if (!parsed.success)
+      throw new McpConsentError(managedDecisionPending ? "DECISION_UNKNOWN" : "UNAVAILABLE");
+    const view = parsed.data;
     if (
       !managedPin ||
       view.id !== authorizationId ||
@@ -490,7 +498,13 @@ export function createMcpOAuthConsentRepository(
       view.policy.policyHash !== managedPin.policyHash
     )
       throw new McpConsentError("REQUEST_CHANGED");
-    if (view.state !== "PENDING") return { kind: "DECIDED", decision: view.state };
+    if (view.state !== "PENDING") {
+      managedDecisionPending = false;
+      presentedWriteAccount = undefined;
+      return { kind: "DECIDED", decision: view.state };
+    }
+    // A pending read can race an in-flight decision; it is not proof of rollback.
+    if (managedDecisionPending) throw new McpConsentError("DECISION_UNKNOWN");
     return {
       kind: "CONSENT",
       accountId: view.accountId,
@@ -705,25 +719,27 @@ export function createMcpOAuthConsentRepository(
       return run(async () => {
         const shownAccount = presentedWriteAccount;
         if (managedPin) {
+          if (managedDecisionPending) return managedDetails();
           if (!shownAccount) throw new McpConsentError("REQUEST_CHANGED");
           const expected = allow ? "APPROVED" : "DENIED";
-          let response: unknown;
+          managedDecisionPending = true;
           try {
-            response = (await managedRequest({ action: "decide", allow })).body;
-          } catch (error) {
-            // The original decision can commit even when its response is lost.
-            const current = await managedDetails().catch(() => null);
-            if (current?.kind !== "DECIDED" || current.decision !== expected) throw error;
+            const response = (await managedRequest({ action: "decide", allow })).body;
+            const result = z
+              .object({ id: z.uuid(), decision: z.enum(["APPROVED", "DENIED"]) })
+              .parse(response);
+            if (result.id !== authorizationId || result.decision !== expected)
+              throw new McpConsentError("REQUEST_CHANGED");
+            managedDecisionPending = false;
             presentedWriteAccount = undefined;
-            return current;
+            return { kind: "DECIDED" as const, decision: result.decision };
+          } catch (error) {
+            // Recover this request read-only; never resend or reverse an uncertain decision.
+            const current = await managedDetails().catch(() => null);
+            if (current?.kind === "DECIDED") return current;
+            if (error instanceof McpConsentError && error.code === "REQUEST_CHANGED") throw error;
+            throw new McpConsentError("DECISION_UNKNOWN");
           }
-          const result = z
-            .object({ id: z.uuid(), decision: z.enum(["APPROVED", "DENIED"]) })
-            .parse(response);
-          if (result.id !== authorizationId || result.decision !== expected)
-            throw new McpConsentError("REQUEST_CHANGED");
-          presentedWriteAccount = undefined;
-          return { kind: "DECIDED" as const, decision: result.decision };
         }
         if (consentPin) {
           const shown = presentedConsent;

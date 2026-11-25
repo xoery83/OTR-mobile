@@ -1,0 +1,128 @@
+{
+  "workItem": "R11/BETA15",
+  "date": "2026-11-25 Pacific/Auckland",
+  "baselineMain": "468696034a80837a058819136a057cfdb6d4a06e",
+  "branch": "codex/mcp-r11-beta15-20261125",
+  "betaDeliveryLead": "Native V2 / 01a209ca-36dd-7f20-8dd4-14abc2b9c37b",
+  "status": "PARTIAL_LOCAL_RECOVERY_PASS_HOSTED_STABILITY_OPEN",
+  "implementation": {
+    "status": "PASS_LOCAL",
+    "changed": [
+      "src/data/auth/mcpOAuthConsentRepository.ts",
+      "src/data/auth/mcpOAuthConsentRepository.test.ts",
+      "src/features/auth/McpOAuthConsent.tsx",
+      "src/features/auth/McpOAuthConsent.test.ts",
+      "src/ui/catalogs.ts"
+    ],
+    "provenDefect": "Lost decision response and unresolved original inspect left Allow/Deny enabled and offered no original-request read-only Check. Generic UNAVAILABLE lost the distinction between not submitted and uncertain.",
+    "behavior": "Track uncertain managed decision for this repository lifetime. Further decide or load only inspects the original challenge. PENDING/schema-invalid/network-unavailable remain DECISION_UNKNOWN; completed authoritative APPROVED/DENIED clears the latch. Current ID/account/policy checks are unchanged. UI disables Allow/Deny, offers read-only Check, and does not encourage repeating interrupted business saves.",
+    "notChanged": [
+      "Backend",
+      "SQL",
+      "Role or Scope",
+      "Consent TTL/security authority",
+      "business operation/receipt recovery",
+      "new identities",
+      "deployment",
+      "Provider"
+    ],
+    "limits": [
+      "Client pending latch is browser-repository memory, not a new durable journal. Existing owning Consent transaction protects terminal decisions across page recreation.",
+      "No new business operation or Consent was actually dispatched."
+    ]
+  },
+  "functionalAcceptance": {
+    "status": "PASS_ISOLATED",
+    "redBeforeFix": "2 tests failed,56 passed: uncertain decision classified UNAVAILABLE and decision buttons still enabled",
+    "focusedSuites": 5,
+    "focusedTestsPassed": 129,
+    "cases": [
+      "loss of decision response",
+      "existing403 response failure",
+      "original approved/denied readback",
+      "pending not proof of rollback",
+      "attempted opposite decision is read-only",
+      "schema-invalid recovery stays unknown",
+      "unavailable recovery stays unknown",
+      "one decision/one OTP, original challenge ID retained",
+      "OTP/provider/policy and stale-fragment regressions"
+    ],
+    "scopedTypecheck": "PASS changed files and dependency closure",
+    "eslint": "PASS five changed files",
+    "uiGuard": "PASS",
+    "browserConsentBuild": "PASS",
+    "diffCheck": "PASS",
+    "fullProjectTypecheck": "NOT_QUALIFIED: reused local dependencies lack @modelcontextprotocol/server,pg,expo-apple-authentication,@react-native-google-signin/google-signin and other workspace modules; not reported PASS"
+  },
+  "independentReview": {
+    "reviewer": "/root/r11_independent_review",
+    "code": "NO_BLOCKER after fixing malformed readback feedback found by reviewer",
+    "visual": "PASS_SYNTHETIC_SCOPED",
+    "visualScope": "New English/Chinese unknown feedback and read-only Check/disabled decision affordances; Chinese recovered message. Reviewer read actual screenshots but did not operate browser.",
+    "screenshots": {
+      "en-pending.png": {
+        "path": "/private/tmp/otr-r11-visual/en-pending.png",
+        "sha256": "5ae3e47f0bd05e0e934d286db9e6205da1dfe648f57e310209f9c49a17dc4a45"
+      },
+      "zh-pending.png": {
+        "path": "/private/tmp/otr-r11-visual/zh-pending.png",
+        "sha256": "d4941fb1f83e849184abd65e8d697883f04765d5d12adc0548bddfc527dcdb5f"
+      },
+      "zh-recovered.png": {
+        "path": "/private/tmp/otr-r11-visual/zh-recovered.png",
+        "sha256": "49f0e8a73d589547d8242aaf2ce62ed491752964861bfefbe93a86ec6fbd06e0"
+      }
+    },
+    "limits": [
+      "Local fake repository; no live Google/OAuth/Consent/account/business data.",
+      "Desktop viewport only; not narrow-screen/dynamic text/physical device or full-page acceptance.",
+      "White lower area of local fixture host is excluded from changed-controls review."
+    ]
+  },
+  "mainIntegration": {
+    "status": "NOT_MERGED_NOT_PUSHED",
+    "sourceCandidate": "Git commit containing this file",
+    "owner": "Native Beta Delivery Lead",
+    "conditions": "Fresh actual Main compatibility, integration-environment full typecheck and normal source-writer coordination; no implicit Hosted execution."
+  },
+  "remainingExternalDependency": {
+    "hostedRequestId": "R11-BETA15-20261125-HOSTED-01",
+    "archiveEvidence": "/Users/xoery/Project/otr-mobile-import/native-phase1-receipts-20261122/ROOT2_R03_S02_R11_ARCHIVE_READBACK_20261125.md",
+    "core503": {
+      "requestId": "c12e3655-ce2c-4209-9c0d-817ad1f6821a",
+      "container": "c726e8211a757772b9fad612e4669f65aa44b0bb49b9b75bfc46924a4f9978d6",
+      "image": "sha256:b4d460f1892262aa227a0277852714bc02c715329d52618b1ffd4b711cf746f0",
+      "captureSHA256": "3e1309759c27d139b4d959929c81e2f2bc44e546bab2a59239cd892306739618",
+      "classification": "COMMAND/SETUP/CONNECT_TIMEOUT",
+      "connectMs": 3001,
+      "connectBudgetMs": 3000,
+      "leaseWaitMs": 0,
+      "httpStatus": 503,
+      "httpDurationMs": 6915,
+      "sqlPhase": "NOT_RECORDED",
+      "nativeOperationAssociation": "NOT_PROVEN",
+      "dnsTcpTlsHandshakeCause": "NOT_PROVEN"
+    },
+    "googleApply": {
+      "operation": "298bc98b-e844-4269-ad78-1e244b708cc9",
+      "trip": "fb3e6c7f-5a14-4539-9258-9797e2097039",
+      "item": "efded495-9e22-4778-9035-fc7a163135fc",
+      "receipt": "0f5eb507-d39f-4700-aca7-da2a5c22d31c",
+      "outcome": "APPLIED",
+      "revision": 2,
+      "committedAt": "2026-11-21T09:20:41.690393Z",
+      "replayed": false,
+      "transportClosedHop": "NOT_PROVEN",
+      "nearbyCoreAndMcp200": "Not same-request proof; no Operation/Receipt binding in those lines"
+    },
+    "next": "Hosted owns exact fresh deployment preimage/rollback/config qualification. Future normal authorized traffic needs same opaque correlation, original operation/safe digest, response complete/abort and driver-exposed transport stage. No new calls for these historical samples; no blind replay."
+  },
+  "protectedExecution": {
+    "state": "NOT_REQUESTED_NOT_EXECUTED",
+    "reason": "Local UI fix ready; fresh Hosted software/current preimage/rollback qualification still missing. Prepare one precise Owner application only after Hosted qualifies exact asset/source and scope.",
+    "asset": "dist/auth-consent/app.js",
+    "assetSHA256": "6df6635f013c18c450e6a4161707a8199fe61be94ecead937e0c9a660a85f692",
+    "permittedFutureQualification": "Software-only existing Consent asset; no OAuth activation, new window/Scope, SQL/Role, Provider or business Apply authorization inferred."
+  },
+  "closure": "R11/BETA15 remains OPEN; prior Google/MCP/cloud/iPhone/cold PASS retained without rerun. No new Consumer reliability PASS."
+}

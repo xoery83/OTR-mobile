@@ -256,3 +256,33 @@ it("shows unavailable social options on managed QA relink without starting provi
   expect(q.render().some((node) => node.props.children === "oauthConsent.qaEmailOnly")).toBe(true);
   expect(q.repo.signInProvider).not.toHaveBeenCalled();
 });
+
+
+it("checks the same uncertain consent read-only instead of offering another decision", async () => {
+  const q = fixture();
+  q.fill("oauthConsent.email", "qa@example.invalid");
+  q.press("oauthConsent.send");
+  await vi.waitFor(() => expect(q.render().some((n) => n.props.accessibilityLabel === "oauthConsent.code")).toBe(true));
+  q.repo.verifyCode.mockResolvedValueOnce({ kind: "CONSENT", accountId: "unit", clientName: "Unit Client" });
+  q.fill("oauthConsent.code", "12345678");
+  q.press("oauthConsent.verify");
+  await vi.waitFor(() => expect(q.render().some((n) => n.props.label === "oauthConsent.allow")).toBe(true));
+  q.repo.decide.mockRejectedValueOnce(new McpConsentError("DECISION_UNKNOWN"));
+  q.press("oauthConsent.allow");
+  await vi.waitFor(() => expect(q.render().find((n) => n.props.accessibilityRole === "alert")?.props.children).toBe("oauthConsent.DECISION_UNKNOWN"));
+  for (const label of ["oauthConsent.allow", "oauthConsent.decline"]) {
+    expect(q.render().find((n) => n.props.label === label)?.props.disabled).toBe(true);
+  }
+  q.repo.load.mockRejectedValueOnce(new McpConsentError("DECISION_UNKNOWN"));
+  q.press("oauthConsent.checkDecision");
+  await vi.waitFor(() => expect(q.repo.load).toHaveBeenCalledTimes(1));
+  await vi.waitFor(() => expect(q.render().find((n) => n.props.label === "oauthConsent.checkDecision")?.props.disabled).toBe(false));
+  expect(q.render().find((n) => n.props.label === "oauthConsent.allow")?.props.disabled).toBe(true);
+  q.repo.load.mockResolvedValueOnce({ kind: "DECIDED", decision: "APPROVED" });
+  q.press("oauthConsent.checkDecision");
+  await vi.waitFor(() => expect(q.render().some((n) => n.props.children === "oauthConsent.managedApproved")).toBe(true));
+  expect(q.repo.decide).toHaveBeenCalledTimes(1);
+  expect(q.repo.verifyCode).toHaveBeenCalledTimes(1);
+  expect(q.repo.signInProvider).not.toHaveBeenCalled();
+  expect(q.navigate).not.toHaveBeenCalled();
+});

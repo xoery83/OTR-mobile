@@ -95,6 +95,7 @@ export function McpOAuthConsent({
       if (active.current) setLinkState((state) => ({ ...state, [provider]: "linked" }));
     });
   }
+  const decisionBlocked = busy || error === "DECISION_UNKNOWN" || error === "REQUEST_CHANGED" || error === "CLOSED";
   const seconds = Math.max(0, Math.ceil((retryAt - now) / 1000));
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const providers = showUnavailableProviders ? ["apple", "google"] as const : repository?.browserProviders;
@@ -256,7 +257,7 @@ export function McpOAuthConsent({
                       ? "oauthConsent.allowWrite"
                       : "oauthConsent.allow",
                 )}
-                disabled={busy}
+                disabled={decisionBlocked}
                 onPress={() =>
                   void run(async () => finish(await repository!.decide(true)))
                 }
@@ -264,12 +265,20 @@ export function McpOAuthConsent({
               <UiButton
                 label={t("oauthConsent.decline")}
                 variant="secondary"
-                disabled={busy}
+                disabled={decisionBlocked}
                 onPress={() =>
                   void run(async () => finish(await repository!.decide(false)))
                 }
               />
             </>
+          ) : null}
+          {error === "DECISION_UNKNOWN" && repository ? (
+            <UiButton
+              label={t("oauthConsent.checkDecision")}
+              variant="secondary"
+              disabled={busy}
+              onPress={() => void run(async () => finish(await repository.load()))}
+            />
           ) : null}
           {view?.kind === "REDIRECT" ? (
             <UiButton

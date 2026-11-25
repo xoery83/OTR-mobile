@@ -295,7 +295,7 @@ export const en = {
   "oauthConsent.managedRenameScope":
     "Read authorized Trips, itinerary items and Ledger records. This test connection can only rename the synthetic Trip from “{beforeName}” to “{afterName}”. Other edits and original-file access are unavailable.",
   "oauthConsent.managedPolicy": "Access policy {policyId}, version {policyVersion}. SHA-256 {policyHash}.",
-  "oauthConsent.managedApproved": "Access approved. Return to ChatGPT and retry the original request.",
+  "oauthConsent.managedApproved": "Access approved. Return to ChatGPT to continue. If a save was interrupted, check its existing result before trying again.",
   "oauthConsent.managedDenied": "Access declined.",
   "oauthConsent.writeScope":
     "Read Trips and create or edit itinerary items you have permission to change. Each save requires separate confirmation. Ledger records and original files are unavailable.",
@@ -308,6 +308,8 @@ export const en = {
   "oauthConsent.REQUEST_CHANGED":
     "The connection request changed. Start again from the connected app.",
   "oauthConsent.UNAVAILABLE": "The connection could not be checked. Try again.",
+  "oauthConsent.DECISION_UNKNOWN": "Your access decision could not be confirmed. Check its status before trying again.",
+  "oauthConsent.checkDecision": "Check access decision",
   "oauthConsent.BUSY": "A request is already in progress.",
   "importDocuments.importedItems":
     "Saved items linked through this Import Batch: {count}",
@@ -3986,7 +3988,7 @@ export const zhHans: Record<MessageKey, string> = {
   "oauthConsent.managedScope": "读取已获授权的旅行、行程事项和账本记录。此连接不提供修改或原始文件访问。",
   "oauthConsent.managedRenameScope": "读取已获授权的旅行、行程事项和账本记录。此测试连接仅可将合成旅行从「{beforeName}」改名为「{afterName}」。不提供其他修改或原始文件访问。",
   "oauthConsent.managedPolicy": "访问政策 {policyId}，版本 {policyVersion}。SHA-256 {policyHash}。",
-  "oauthConsent.managedApproved": "已允许访问。请返回 ChatGPT 重试原请求。",
+  "oauthConsent.managedApproved": "已允许访问。请返回 ChatGPT 继续；若此前保存中断，请先核对原保存结果，不要重复保存。",
   "oauthConsent.managedDenied": "已拒绝访问。",
   "oauthConsent.writeScope":
     "读取旅行，并创建或编辑你有权修改的行程事项。每次保存仍需单独确认。此连接不提供账本记录或原始文件。",
@@ -3997,6 +3999,8 @@ export const zhHans: Record<MessageKey, string> = {
   "oauthConsent.RATE_LIMIT": "请求过于频繁，请稍后重试。",
   "oauthConsent.REQUEST_CHANGED": "连接请求已变化，请从连接的应用重新开始。",
   "oauthConsent.UNAVAILABLE": "暂时无法核对连接，请重试。",
+  "oauthConsent.DECISION_UNKNOWN": "暂时无法确认访问授权结果，请先核对状态，不要重复提交。",
+  "oauthConsent.checkDecision": "核对授权结果",
   "oauthConsent.BUSY": "已有请求正在进行。",
   "importDocuments.importedItems": "通过本次导入关联的已保存事项：{count}",
   "importDocuments.itemLinksUnavailable": "暂时无法核对关联的已保存事项。",

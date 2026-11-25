@@ -585,7 +585,13 @@ it.each([true, false])("validates the pinned callback for a reused Managed OAuth
   await repo.close();
 });
 
-it.each(["APPROVED", "PENDING"] as const)("reads back a Managed decision after a lost response (%s)", async (state) => {
+it.each([
+  { state: "APPROVED", allow: true, lost: false },
+  { state: "APPROVED", allow: true, lost: true },
+  { state: "DENIED", allow: false, lost: true },
+  { state: "PENDING", allow: true, lost: false },
+  { state: "PENDING", allow: true, lost: true },
+])("reads the same Managed decision after failure ($state, lost=$lost)", async ({ state, allow, lost }) => {
   const q = fixture();
   const auth = { ...q.auth, getSession: vi.fn(async () => ({ data: { session: { access_token: "synthetic-first-party" } }, error: null })) };
   const challengeId = "55555555-5555-4555-8555-555555555555";
@@ -595,7 +601,10 @@ it.each(["APPROVED", "PENDING"] as const)("reads back a Managed decision after a
     .mockResolvedValueOnce(Response.json({}, { status: 403 }))
     .mockResolvedValueOnce(Response.json({}, { status: 503 }))
     .mockResolvedValueOnce(Response.json(challenge))
-    .mockResolvedValueOnce(Response.json({}, { status: 403 }))
+    .mockImplementationOnce(async () => {
+      if (lost) throw new TypeError("Transport closed");
+      return Response.json({}, { status: 403 });
+    })
     .mockResolvedValueOnce(Response.json({ ...challenge, state }));
   const repo = createMcpOAuthConsentRepository({
     authOrigin: "https://tuqigdxrvrerfewsxqgm.supabase.co/",
@@ -616,8 +625,21 @@ it.each(["APPROVED", "PENDING"] as const)("reads back a Managed decision after a
   await expect(repo.verifyCode("unit@example.invalid", "12345678"))
     .resolves.toMatchObject({ kind: "CONSENT" });
   expect(q.auth.verifyOtp).toHaveBeenCalledOnce();
-  if (state === "APPROVED") await expect(repo.decide(true)).resolves.toEqual({ kind: "DECIDED", decision: state });
-  else await expect(repo.decide(true)).rejects.toMatchObject({ code: "UNAVAILABLE" });
+  if (state !== "PENDING") await expect(repo.decide(allow)).resolves.toEqual({ kind: "DECIDED", decision: state });
+  else await expect(repo.decide(allow)).rejects.toMatchObject({ code: "DECISION_UNKNOWN" });
   expect(request.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).action)).toEqual(["inspect", "inspect", "inspect", "decide", "inspect"]);
+  if (state === "PENDING") {
+    request.mockResolvedValueOnce(Response.json({ ...challenge, state: "PENDING" }));
+    await expect(repo.decide(false)).rejects.toMatchObject({ code: "DECISION_UNKNOWN" });
+    request.mockResolvedValueOnce(Response.json({}));
+    await expect(repo.load()).rejects.toMatchObject({ code: "DECISION_UNKNOWN" });
+    request.mockRejectedValueOnce(new TypeError("Network unavailable"));
+    await expect(repo.load()).rejects.toMatchObject({ code: "DECISION_UNKNOWN" });
+    request.mockResolvedValueOnce(Response.json({ ...challenge, state: "APPROVED" }));
+    await expect(repo.load()).resolves.toEqual({ kind: "DECIDED", decision: "APPROVED" });
+    expect(request.mock.calls.filter(([, init]) => JSON.parse(String(init?.body)).action === "decide")).toHaveLength(1);
+    expect(request.mock.calls.every(([, init]) => JSON.parse(String(init?.body)).id === challengeId)).toBe(true);
+    expect(q.auth.verifyOtp).toHaveBeenCalledOnce();
+  }
   await repo.close();
 });
