@@ -109,7 +109,7 @@ export function scheduledTransportContribution(period: Period): FixtureContribut
   );
   graph.itinerary_transport_services = ids.map((id) =>
     itinerary_transport_servicesSchema.parse({
-      ...defaults(itinerary_transport_servicesSchema),
+      ...defaults(itinerary_transport_servicesSchema.omit({ identity_state: true })),
       event_id: id,
       trip_id: tripId,
       service_key: `synthetic:${id.slice(-2)}`,
