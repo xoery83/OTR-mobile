@@ -18,7 +18,7 @@ import {
   withAccountApplyGate,
 } from "@/data/auth/accountRequestContext";
 import { captureOriginPath } from "@/features/capture/captureOriginPath";
-import { activeImportSheetPage } from "@/features/capture/importSheetNavigation";
+import { activeImportSheetPage, pushImportHistoryFromActivity } from "@/features/capture/importSheetNavigation";
 import { createCaptureStaging } from "@/features/capture/captureStaging";
 import { pickCaptureMaterial } from "@/native/capturePicker";
 import { CaptureContent } from "@/features/capture/CaptureContent";
@@ -303,6 +303,14 @@ export default function CaptureRoute({ overlay = false, hosted = false, hostedCh
             return Boolean(await readCaptureTripPrior(id, admission)) && isCurrent();
           }}
           onReopenJob={(id) => navigation.setParams({ jobId: id })}
+          onOpenActivityJob={hosted ? (id) => {
+            if (!isCurrent() || canUseHostedSource?.() === false) return;
+            pushImportHistoryFromActivity(navigation, route.key, {
+              jobId: id,
+              tripId: admission.tripPrior ?? undefined,
+              originGeneration: String(generation),
+            });
+          } : undefined}
           onOpenRelatedUpdates={hosted ? ({ batchId, jobId, tripId }) => {
             const state = activeImportSheetPage(navigation, route.key);
             if (!state || !isCurrent() || canUseHostedSource?.() === false) return;

@@ -39,6 +39,7 @@ export function CaptureContent({
   draftStaging,
   draftPersistenceError = false,
   onReopenJob,
+  onOpenActivityJob,
   onOpenAcceptedItem,
   onOpenReview,
   onOpenRelatedUpdates,
@@ -62,6 +63,7 @@ export function CaptureContent({
   draftStaging?: ReturnType<typeof createCaptureStaging>;
   draftPersistenceError?: boolean;
   onReopenJob?: (id: string) => void;
+  onOpenActivityJob?(id: string): void;
   onOpenAcceptedItem?: OpenAcceptedImportItem;
   onOpenReview?(jobId: string): void;
   onOpenRelatedUpdates?(activity: RelatedImportActivity): void;
@@ -787,7 +789,11 @@ export function CaptureContent({
               <CaptureActivity
                 isCurrent={current}
                 expectedAccountId={accountId}
-                onOpenJob={(id) => void openJob(id)}
+                onOpenJob={(id) => {
+                  if (!current() || running.current) return;
+                  if (onOpenActivityJob) onOpenActivityJob(id);
+                  else void openJob(id);
+                }}
                 onReturn={() => setActivity(false)}
                 onHide={hide}
               />
