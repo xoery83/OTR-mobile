@@ -238,7 +238,7 @@ it("composes actual production P1/P2/NOW without any supplemental fixture fields
     createElement(DayFeed, { projection, date: "2026-10-10", zone: "UTC", services: {} }),
   );
   expect(html).toContain(poi.title);
-  expect(html).toContain('data-testid="flight-browse-geometry"');
+  expect(html).toContain('data-testid="flight-fidelity-grid"');
   expect(html).toContain('data-testid="now-within"');
   expect(html).not.toMatch(/fixtureDocument|synthetic|Booking|Boarding pass/);
 });
@@ -667,19 +667,19 @@ it("Immersive dismissal restores nonzero scroll and keeps manual Focus/date acro
 it("switching Focus between P1/P2 never leaves two active Focus rows", () => {
   const props = { projection, date: "2026-10-10", zone: "UTC", services: {} };
   render(createElement(DayFeed, props));
-  state.presses.find((p) => p.accessibilityLabel === poi.title)!.onPress();
-  render(createElement(DayFeed, props));
+  state.presses.find((p) => p.accessibilityLabel === poiRowLabel())!.onPress();
+  expect(render(createElement(DayFeed, props))).toContain('data-testid="focus-selected-region"');
   state.presses
     .find(
       (p) =>
         p.accessibilityLabel === flight.title &&
-        p.accessibilityHint === t("p1r.focusHint"),
+        p.accessibilityHint === t("flight.focusHint"),
     )!
     .onPress();
   const html = render(createElement(DayFeed, props));
   expect(html).not.toContain('data-testid="focus-selected-region"');
   expect(
-    state.presses.filter((p) => p.accessibilityHint === t("p1r.immersiveHint")),
+    state.presses.filter((p) => p.accessibilityHint === t("flight.immersiveHint")),
   ).toHaveLength(1);
 });
 it("Android restores the captured offset even without a native Modal dismissal event", () => {
@@ -801,7 +801,7 @@ it("DL1 controls switch bounded dates and Trips using the same P2 renderer in ei
     html = render(createElement(DayFeedLabScreen));
     expect(html).toContain("day-lab-faroe");
     expect(html).toContain("2027-01-15");
-    expect(html).toContain('data-testid="flight-browse-geometry"');
+    expect(html).toContain('data-testid="flight-fidelity-grid"');
     expect(html).toContain(getFixtureCatalog()[1].projection.events[2].title);
   }
 });
@@ -859,7 +859,7 @@ it("DL2 source selection uses one Feed, retains fixture context and withholds pr
   await vi.waitFor(() => {
     const html = render(createElement(DayFeedLabScreen));
     expect(html).toContain(coreTrip);
-    expect(html).toContain('data-testid="flight-browse-geometry"');
+    expect(html).toContain('data-testid="flight-fidelity-grid"');
     expect(html).not.toContain("day-lab-nelson");
   });
   state.presses.find((p) => p.accessibilityLabel === f.segment.title)!.onPress();
@@ -1979,7 +1979,7 @@ it("accepted Sparse Flight stays a Flight in Browse, Focus and Immersive without
       itemsForLocalDate({ ...projection, events: [sparse] }, date, zone),
   } as unknown as CoreFlightDayProjection;
   const before = JSON.stringify([sparse, facts]);
-  const browse = render(
+  const draw = () => render(
     createElement(DayFeed, {
       projection: p,
       date: "2026-10-10",
@@ -1987,11 +1987,8 @@ it("accepted Sparse Flight stays a Flight in Browse, Focus and Immersive without
       services: {},
     }),
   );
-  expect(browse).toContain("flight-sparse-summary");
-  const read = flightPresentation(sparse, [], facts)!;
-  for (const options of [{}, { focused: true }, { immersive: true }]) {
-    state.hooks = [];
-    const html = render(createElement(FlightRows, { fixture: read, ...options }));
+  const checkSparse = (html: string) => {
+    expect(html).toContain('data-testid="flight-fidelity-grid"');
     expect(html).toContain("ZZ2701");
     expect(html).toContain(
       formatUiDate(new Date("2026-10-10T12:00:00Z"), {
@@ -2002,7 +1999,7 @@ it("accepted Sparse Flight stays a Flight in Browse, Focus and Immersive without
       }),
     );
     expect(html).not.toContain(t("flight.unknownAirport"));
-    expect(html).not.toMatch(/undefined|NaN/);
+    expect(html).not.toMatch(/undefined|NaN|\b\d{1,2}:\d{2}\b/);
     expect(
       state.nodes.some((n) =>
         ["duration", "arrival-time", "flight-origin", "flight-destination"].includes(
@@ -2010,6 +2007,16 @@ it("accepted Sparse Flight stays a Flight in Browse, Focus and Immersive without
         ),
       ),
     ).toBe(false);
-  }
+  };
+  checkSparse(draw());
+  state.presses.find((p) =>
+    p.accessibilityLabel === sparse.title && p.accessibilityHint === t("flight.focusHint"),
+  )!.onPress();
+  checkSparse(draw());
+  state.presses.find((p) =>
+    p.accessibilityLabel === sparse.title && p.accessibilityHint === t("flight.immersiveHint"),
+  )!.onPress();
+  checkSparse(draw());
+  expect(state.nodes.some((node) => node.onDismiss && node.visible)).toBe(true);
   expect(JSON.stringify([sparse, facts])).toBe(before);
 });
