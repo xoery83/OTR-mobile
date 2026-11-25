@@ -1534,55 +1534,67 @@ it("renders suggested mode distinctly and synthetic permitted availability witho
 
 it("dispatches current synthetic TTR intent to owning Sheet Content and keeps Trip/date on close", async () => {
   vi.stubGlobal("__DEV__", true);
-  render(createElement(DayFeedLabScreen));
+  const draw = () => renderNativeDay(createElement(DayFeedLabScreen));
+  draw();
   state.presses
     .find((press) => press.accessibilityLabel.startsWith(t("dayLab.trip")))!
     .onPress();
-  render(createElement(DayFeedLabScreen));
+  draw();
   state.presses
     .find((press) => press.accessibilityLabel === t("dayLab.ttr.DRIVING_PENDING"))!
     .onPress();
-  let html = render(createElement(DayFeedLabScreen));
+  let html = draw();
   const fixture = ttrLabFixture("DRIVING_PENDING");
   expect(html).toContain(fixture.id);
-  for (const effect of state.effects) effect();
   await new Promise((resolve) => setTimeout(resolve, 0));
-  html = render(createElement(DayFeedLabScreen));
+  html = draw();
   state.presses
     .find((press) => press.accessibilityLabel?.includes(t("ttr.route.PENDING")))!
     .onPress();
-  html = render(createElement(DayFeedLabScreen));
+  html = draw();
   await new Promise((resolve) => setTimeout(resolve, 0));
-  html = render(createElement(DayFeedLabScreen));
+  html = draw();
   expect(html).toContain(t("ttr.lab.noMode"));
   expect(html).toContain(t("ttr.lab.confirm"));
   state.nodes.find((node) => node.onRequestClose && node.visible)!.onRequestClose();
-  html = render(createElement(DayFeedLabScreen));
+  html = draw();
   expect(html).toContain(fixture.id);
   expect(html).toContain(fixture.selectedDate);
   expect(html).not.toContain(t("ttr.lab.noMode"));
 });
 
-it("rejects a queued old TTR tap after switching A to B to A", () => {
+it("rejects a queued old TTR tap after switching A to B to A", async () => {
+  vi.stubGlobal("__DEV__", true);
+  const draw = () => renderNativeDay(createElement(DayFeedLabScreen));
   const select = (name: string) => {
     state.presses
       .find((press) => press.accessibilityLabel.startsWith(t("dayLab.trip")))!
       .onPress();
-    render(createElement(DayFeedLabScreen));
+    draw();
     state.presses.find((press) => press.accessibilityLabel === name)!.onPress();
-    render(createElement(DayFeedLabScreen));
+    draw();
   };
-  render(createElement(DayFeedLabScreen));
+  draw();
   select(t("dayLab.ttr.DRIVING_PENDING"));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  draw();
   const oldTap = state.presses.find((press) =>
     press.accessibilityLabel?.includes(t("ttr.route.PENDING")),
   )!.onPress;
   select(t("dayLab.ttr.WALKING_NO_ETA"));
   select(t("dayLab.ttr.DRIVING_PENDING"));
   oldTap();
-  const html = render(createElement(DayFeedLabScreen));
+  draw();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const html = draw();
   expect(html).toContain(t("dayLab.ttr.DRIVING_PENDING"));
-  expect(html).not.toContain(t("ttr.lab.noMode"));
+  expect(html).not.toContain(t("ttr.lab.title"));
+  state.presses
+    .find((press) => press.accessibilityLabel?.includes(t("ttr.route.PENDING")))!
+    .onPress();
+  draw();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(draw()).toContain(t("ttr.lab.noMode"));
 });
 
 function reactiveFeed(renderFeed = render) {
