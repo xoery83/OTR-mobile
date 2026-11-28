@@ -1,5 +1,5 @@
 import { SheetRoutePanel } from "@/components/SheetRoutePanel";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   AppState,
   KeyboardAvoidingView,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams } from "expo-router";
+import { usePreventRemove } from "expo-router/react-navigation";
 import { NavigationContextTitle } from "@/components/navigationChrome";
 import { AppIcon } from "@/components/AppIcon";
 import { UiButton, UiText } from "@/ui/controls";
@@ -49,6 +50,7 @@ import { verifyUtf8TextFile } from "@/domain/capture/utf8TextFile";
 import { localImportDocumentId } from "@/domain/trip/universalImportIdentity";
 import type { CaptureJobReadModel } from "@/domain/capture/captureSubmission";
 import { manualItineraryTypes } from "@/features/day-feed/manualItineraryTypes";
+import { ImportReviewDraftContext } from "./importReviewDraft";
 import { captureActivityTime } from "./CaptureActivity";
 
 type Owner = Awaited<ReturnType<typeof openUniversalV3Review>>;
@@ -57,10 +59,12 @@ export function ImportExceptionReviewScreen({
   hosted = false,
   onHostedBack,
   requiredGeneration,
+  draftKey,
 }: {
   hosted?: boolean;
   onHostedBack?(): void;
   requiredGeneration?: string;
+  draftKey?: string;
 } = {}) {
   useUiLocale();
   const { jobId } = useLocalSearchParams<{ jobId?: string }>();
@@ -71,6 +75,8 @@ export function ImportExceptionReviewScreen({
   const [statuses, setStatuses] = useState<Record<string, V3SaveObservation>>({});
   const [unavailable, setUnavailable] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
+  const [persisting, setPersisting] = useState(false);
+  usePreventRemove(Boolean(draftKey) && persisting, () => {});
   const alive = useRef(true);
   const [generation] = useState(getAccountGeneration);
   const generationMatches = requiredGeneration === undefined || requiredGeneration === String(generation);
@@ -163,6 +169,7 @@ export function ImportExceptionReviewScreen({
     if (!model || !owner || !current()) return;
     const id = candidate.candidateId;
     let saved = false;
+    setPersisting(true);
     try {
       const record = await updateImportSubmission(model, (prior) => ({
         ...prior,
@@ -180,6 +187,7 @@ export function ImportExceptionReviewScreen({
       setIntent(record);
       setUnavailable(false);
       durable();
+      setPersisting(false);
       if (record.confirmed) {
         const unknown = await readV3UnknownCandidates(model, [id]);
         const status = unknown.has(id)
@@ -193,12 +201,16 @@ export function ImportExceptionReviewScreen({
       if (current()) setUnavailable(true);
       if (!saved) throw Error("IMPORT_DECISION_NOT_SAVED");
     } finally {
-      if (current()) setRefreshVersion((v) => v + 1);
+      if (current()) {
+        if (!saved) setPersisting(false);
+        setRefreshVersion((v) => v + 1);
+      }
     }
   };
   const content = (
       <ImportExceptionReviewContent
         model={model}
+        draftKey={draftKey}
         owner={owner}
         rows={rows}
         statuses={statuses}
@@ -210,7 +222,7 @@ export function ImportExceptionReviewScreen({
   );
   if (hosted) {
     return (
-      <SheetRoutePanel title={t("common.review")} onBack={onHostedBack} ownsScroll>
+      <SheetRoutePanel title={t("common.review")} onBack={onHostedBack} leadingDisabled={Boolean(draftKey) && persisting} ownsScroll>
         {content}
       </SheetRoutePanel>
     );
@@ -233,6 +245,7 @@ export function ImportExceptionReviewScreen({
 // The normal route and isolated UI checks share this view; no separate Review engine.
 export function ImportExceptionReviewContent({
   model,
+  draftKey,
   owner,
   rows,
   statuses,
@@ -242,6 +255,7 @@ export function ImportExceptionReviewContent({
   onConfirm,
 }: {
   model?: CaptureJobReadModel;
+  draftKey?: string;
   owner?: {
     actions(candidate: Candidate, manual?: boolean): { NEW: boolean };
     targets: Owner["targets"];
@@ -261,10 +275,15 @@ export function ImportExceptionReviewContent({
   useUiLocale();
   const styles = useThemedStyles(createStyles),
     colors = useUiTheme();
-  const [expanded, setExpanded] = useState<string>();
-  const [source, setSource] = useState<string>();
-  const [values, setValues] = useState<Record<string, Record<string, string>>>({});
-  const [choices, setChoices] = useState<Record<string, UniversalV3Decision>>({});
+  const drafts = useContext(ImportReviewDraftContext);
+  const [retained] = useState(() => draftKey ? drafts?.get(draftKey) : undefined);
+  const [expanded, setExpanded] = useState(retained?.expanded);
+  const [source, setSource] = useState(retained?.source);
+  const [values, setValues] = useState(retained?.values ?? {});
+  const [choices, setChoices] = useState(retained?.choices ?? {});
+  useLayoutEffect(() => {
+    if (draftKey && isCurrent()) drafts?.set(draftKey, { expanded, source, values, choices });
+  }, [drafts, draftKey, expanded, source, values, choices, isCurrent]);
   const [calendar, setCalendar] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -688,6 +707,8 @@ export function ImportExceptionReviewContent({
                               manual && choice.action === "NEW",
                               () => {
                                 if (isCurrent()) {
+                                  setValues(({ [id]: _saved, ...rest }) => rest);
+                                  setChoices(({ [id]: _saved, ...rest }) => rest);
                                   setExpanded(undefined);
                                   setCalendar(undefined);
                                 }

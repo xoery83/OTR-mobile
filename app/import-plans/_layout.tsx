@@ -1,8 +1,10 @@
 import { Stack, useLocalSearchParams, useNavigation, usePathname } from "expo-router";
 import { useRoute } from "expo-router/react-navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUiTheme } from "@/ui/theme";
 import { SheetRouteLayout } from "@/components/SheetRouteLayout";
+import { ImportReviewDraftContext, type ImportReviewDraft } from "@/features/capture/importReviewDraft";
+import { subscribeAccountGeneration } from "@/data/auth/accountGeneration";
 import { hostedImportEnabled } from "@/features/capture/hostedImport";
 import { createFlightAirportHandoff, FlightAirportHandoffContext } from "@/features/day-feed/hostedFlightAirport";
 import { createParticipantPickerHandoff, ParticipantPickerHandoffContext } from "@/features/day-feed/participantPickerHandoff";
@@ -38,6 +40,8 @@ function HostedImportRoutes({ immersive }: { immersive: boolean }) {
   const [clock] = useState(createItineraryClockHandoff);
   const [place] = useState(createHostedPlaceSearchHandoff);
   const [scanSource] = useState(createFormScanSourceHandoff);
+  const [reviewDrafts] = useState(() => new Map<string, ImportReviewDraft>());
+  useEffect(() => subscribeAccountGeneration(() => reviewDrafts.clear()), [reviewDrafts]);
   const [transportType] = useState(createTransportTypeHandoff);
   const handler = useRef<(() => void) | null>(null);
   const allowed = useRef(false);
@@ -74,7 +78,9 @@ function HostedImportRoutes({ immersive }: { immersive: boolean }) {
               <HostedPlaceSearchHandoffContext.Provider value={place}>
                 <FormScanSourceHandoffContext.Provider value={scanSource}>
                   <TransportTypeHandoffContext.Provider value={transportType}>
-                    <SheetRouteLayout immersive={immersive} interceptClose={interceptClose} />
+                    <ImportReviewDraftContext.Provider value={reviewDrafts}>
+                      <SheetRouteLayout immersive={immersive} interceptClose={interceptClose} />
+                    </ImportReviewDraftContext.Provider>
                   </TransportTypeHandoffContext.Provider>
                 </FormScanSourceHandoffContext.Provider>
               </HostedPlaceSearchHandoffContext.Provider>

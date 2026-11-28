@@ -4,6 +4,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { getAccountGeneration } from "@/data/auth/accountGeneration";
 import { reopenDefaultCaptureJob } from "@/data/operations/defaultCaptureSubmission";
 import { ImportExceptionReviewScreen, ImportExceptionReviewContent } from "./ImportExceptionReviewScreen";
+import { ImportReviewDraftContext, type ImportReviewDraft } from "./importReviewDraft";
 import { setUiLocale, t } from "@/ui/locale";
 import { localImportDocumentId } from "@/domain/trip/universalImportIdentity";
 import {
@@ -21,6 +22,7 @@ const h = vi.hoisted(() => ({
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
+  useLayoutEffect: (effect: () => void) => { h.effects.push(effect); },
   useEffect: (effect: () => void | (() => void)) => { h.effects.push(effect); },
   useRef: (initial: unknown) => ({ current: initial }),
   useState: (initial: any) => {
@@ -50,6 +52,7 @@ vi.mock("react-native", () => ({
   },
 }));
 vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "div" }));
+vi.mock("expo-router/react-navigation", () => ({ usePreventRemove: () => {} }));
 vi.mock("expo-router", () => ({
   Stack: { Screen: () => null },
   useLocalSearchParams: () => ({ jobId: "qa-retained-job" }),
@@ -138,12 +141,15 @@ function fixture() {
   };
   return props;
 }
-function render(props: ReturnType<typeof fixture>) {
+function render(props: ReturnType<typeof fixture> & { draftKey?: string }, drafts?: Map<string, ImportReviewDraft>) {
   h.cursor = 0;
   h.buttons = [];
   h.inputs = [];
   h.scrolls = [];
-  return renderToStaticMarkup(createElement(ImportExceptionReviewContent, props));
+  return renderToStaticMarkup(
+    createElement(ImportReviewDraftContext.Provider, { value: drafts ?? null },
+      createElement(ImportExceptionReviewContent, props)),
+  );
 }
 const button = (label: string) =>
   h.buttons.find((b) => b.label === label || b.accessibilityLabel?.startsWith(label));
@@ -253,4 +259,39 @@ it("uses root Close and refuses reader work for a stale direct Updates Review", 
   const cleanups = h.effects.splice(0).map(effect => effect());
   expect(reopenDefaultCaptureJob).not.toHaveBeenCalled();
   for (const cleanup of cleanups) cleanup?.();
+});
+
+
+it("restores an unsaved answer only when reopening the same parent Batch review", () => {
+  const tracker = new Map<string, ImportReviewDraft>();
+  const props = { ...fixture(), draftKey: "same-account:parent:job" };
+  render(props, tracker);
+  button(t("capture.review.question.missing") + ", Museum 1").onPress();
+  render(props, tracker);
+  h.inputs[0].onChangeText("2026-12-02");
+  render(props, tracker);
+  for (const effect of h.effects.splice(0)) effect();
+
+  h.hooks = [];
+  render(props, tracker);
+  expect(h.inputs[0].value).toBe("2026-12-02");
+  expect(props.onConfirm).not.toHaveBeenCalled();
+
+  h.hooks = [];
+  render({ ...props, draftKey: "different-account:parent:job" }, tracker);
+  expect(h.inputs).toHaveLength(0);
+
+  h.hooks = [];
+  render(props, new Map());
+  expect(h.inputs).toHaveLength(0);
+});
+
+it("forwards the hosted Batch draft scope to the Review editor", () => {
+  const drafts = new Map<string, ImportReviewDraft>();
+  renderToStaticMarkup(createElement(ImportReviewDraftContext.Provider, { value: drafts },
+    createElement<NonNullable<Parameters<typeof ImportExceptionReviewScreen>[0]>>(
+      ImportExceptionReviewScreen, { hosted: true, draftKey: "original-batch" },
+    )));
+  h.effects.at(-1)?.();
+  expect(drafts.has("original-batch")).toBe(true);
 });

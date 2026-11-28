@@ -37,6 +37,7 @@ function HostedReview({ jobId, origin, originGeneration, originKey }: {
     <ImportExceptionReviewScreen
       key={JSON.stringify([jobId, generation])}
       hosted
+      draftKey={child && jobId ? JSON.stringify([generation, originKey, jobId]) : undefined}
       onHostedBack={child ? () => {
         if (!isExitPending()) popImportSheetPage(navigation, key, originKey);
       } : undefined}
