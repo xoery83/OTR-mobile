@@ -191,6 +191,7 @@ export function P4RentalEditor({
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
+  const unavailableRef = useRef(false);
   const firstAttemptRef = useRef<ManualRentalFields | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
@@ -237,6 +238,7 @@ export function P4RentalEditor({
           setSameReturnLocation(sameReturnRef.current);
           setFields(value);
           initialRef.current = JSON.stringify(value);
+          unavailableRef.current = false;
           setStatus("READY");
         } catch {
           if (alive.current && generation === getAccountGeneration())
@@ -358,7 +360,8 @@ export function P4RentalEditor({
     ]);
   };
   const save = async () => {
-    if (!source || !fieldsRef.current || busyRef.current || !current()) return;
+    if (!source || !fieldsRef.current || busyRef.current || !current() || unavailableRef.current)
+      return;
     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
     firstAttemptRef.current = attempt;
     busyRef.current = true;
@@ -372,22 +375,19 @@ export function P4RentalEditor({
     } catch (error) {
       if (current()) {
         const code = error instanceof Error ? error.message : "";
-        setStatus(
-          [
-            "MANUAL_PLAN_UNAVAILABLE",
-            "MANUAL_PLAN_SCOPE_CHANGED",
-            "MANUAL_PLAN_CONFLICT",
-            "MANUAL_PLAN_RETRY_MISMATCH",
-            "MANUAL_PLAN_DRAFT_UNAVAILABLE",
-            "MANUAL_PLAN_DRAFT_FROZEN",
-            "REVISION_CONFLICT",
-            "NOT_VISIBLE",
-            "CROSS_TRIP_PERSON",
-            "CORE_ACCESS_REVOKED",
-          ].includes(code)
-            ? "UNAVAILABLE"
-            : "ERROR",
-        );
+        unavailableRef.current = [
+          "MANUAL_PLAN_UNAVAILABLE",
+          "MANUAL_PLAN_SCOPE_CHANGED",
+          "MANUAL_PLAN_CONFLICT",
+          "MANUAL_PLAN_RETRY_MISMATCH",
+          "MANUAL_PLAN_DRAFT_UNAVAILABLE",
+          "MANUAL_PLAN_DRAFT_FROZEN",
+          "REVISION_CONFLICT",
+          "NOT_VISIBLE",
+          "CROSS_TRIP_PERSON",
+          "CORE_ACCESS_REVOKED",
+        ].includes(code);
+        setStatus(unavailableRef.current ? "UNAVAILABLE" : "ERROR");
       }
     } finally {
       busyRef.current = false;

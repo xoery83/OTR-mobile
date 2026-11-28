@@ -318,12 +318,16 @@ it("keeps the same draft and fields after an unknown save result; conflict disab
   render(p);
   expect(node("tripCreate.planName").editable).toBe(false);
   expect(node("ui.save").disabled).toBe(false);
-  node("ui.save").onPress();
+  const retry = node("ui.save").onPress;
+  retry();
   await Promise.resolve();
   render(p);
   expect(repo.save).toHaveBeenCalledTimes(2);
   expect(repo.save.mock.calls[1]).toEqual(repo.save.mock.calls[0]);
   expect(node("ui.save").disabled).toBe(true);
+  retry();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledTimes(2);
   expect(p.onSaved).not.toHaveBeenCalled();
   node("common.cancel").onPress();
   expect(p.onClose).not.toHaveBeenCalled();

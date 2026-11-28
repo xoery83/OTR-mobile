@@ -401,3 +401,33 @@ it("keeps place search actor-bound and stale results cannot overwrite the form",
   render(p);
   expect(node("tripCreate.departurePlace").value).toBe("Updated station");
 });
+
+
+it("ignores a retained Save callback after a terminal conflict", async () => {
+  const p = props();
+  const draft = {
+    mode: "CREATE",
+    itemId: "terminal-conflict-item",
+    fields: {
+      ...fields(),
+      title: "Train to town",
+      departureDate: "2027-12-29",
+      departureLocation: "Central Station",
+    },
+    participantOptions: [],
+  };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    save: vi.fn().mockRejectedValue(new Error("MANUAL_TRANSPORT_CONFLICT")),
+  };
+  await open(p, repo);
+  const save = node("ui.save").onPress;
+  save();
+  await Promise.resolve();
+  render(p);
+  expect(node("ui.save").disabled).toBe(true);
+  save();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledTimes(1);
+  expect(p.onSaved).not.toHaveBeenCalled();
+});

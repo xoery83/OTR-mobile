@@ -320,3 +320,28 @@ it("invalid start/end date range cannot freeze the draft by attempting Save", as
   expect(node("ui.save").disabled).toBe(false);
   expect(repo.save).not.toHaveBeenCalled();
 });
+
+
+it("ignores a retained Save callback after a terminal conflict", async () => {
+  const p = props();
+  const draft = {
+    mode: "CREATE",
+    itemId: "terminal-conflict-item",
+    fields: { ...fields(), title: "Museum", startDate: "2027-12-29" },
+    participantOptions: [],
+  };
+  const repo = {
+    createDraft: vi.fn(async () => draft),
+    save: vi.fn().mockRejectedValue(new Error("MANUAL_PLAN_CONFLICT")),
+  };
+  await open(p, repo);
+  const save = node("ui.save").onPress;
+  save();
+  await Promise.resolve();
+  render(p);
+  expect(node("ui.save").disabled).toBe(true);
+  save();
+  await Promise.resolve();
+  expect(repo.save).toHaveBeenCalledTimes(1);
+  expect(p.onSaved).not.toHaveBeenCalled();
+});

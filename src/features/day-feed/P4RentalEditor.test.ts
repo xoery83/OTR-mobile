@@ -519,3 +519,46 @@ it("restores same-return selection in an already opened rental draft", () => {
   expect(node("tripCreate.rentalSameLocation").accessibilityState.checked).toBe(true);
   expect(node("tripCreate.rentalReturnPlace").editable).toBe(false);
 });
+
+it("reuses an uncertain rental save and stops retained callbacks after a confirmed conflict", async () => {
+  const p = props();
+  const draft = {
+    mode: "CREATE",
+    itemId: "rental",
+    fields: {
+      ...fields(),
+      title: "Airport rental",
+      startDate: "2027-12-29",
+      startTime: "10:15",
+      endDate: "2028-01-02",
+      endTime: "11:15",
+      pickupLocation: "Airport",
+      returnLocation: "City",
+    },
+  };
+  const save = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("UNKNOWN"))
+    .mockRejectedValue(new Error("MANUAL_PLAN_CONFLICT"));
+  await open(p, { createDraft: vi.fn(async () => draft), save });
+
+  const retainedSave = node("ui.save").onPress;
+  retainedSave();
+  await Promise.resolve();
+  render(p);
+  expect(node("ui.save").disabled).toBe(false);
+  expect(node("tripCreate.rentalName").value).toBe("Airport rental");
+  node("ui.save").onPress();
+  await Promise.resolve();
+  render(p);
+
+  expect(save).toHaveBeenNthCalledWith(2, draft, draft.fields);
+  expect(save.mock.calls[1][1]).toBe(save.mock.calls[0][1]);
+  expect(node("ui.save").disabled).toBe(true);
+  expect(node("tripCreate.rentalName").value).toBe("Airport rental");
+
+  retainedSave();
+  await Promise.resolve();
+  expect(save).toHaveBeenCalledTimes(2);
+  expect(p.onSaved).not.toHaveBeenCalled();
+});

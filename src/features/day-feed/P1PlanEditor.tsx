@@ -256,6 +256,7 @@ export function P1PlanEditor({
   );
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
+  const unavailableRef = useRef(false);
   const firstAttemptRef = useRef<ManualPlanFields | null>(null);
   const handoffRef = useRef<symbol | null>(null);
   const pickerOpen = useRef({ date: false, start: false, end: false });
@@ -300,6 +301,7 @@ export function P1PlanEditor({
           fieldsRef.current = value;
           setFields(value);
           initialRef.current = JSON.stringify(value);
+          unavailableRef.current = false;
           setStatus("READY");
         } catch {
           if (alive.current && generation === getAccountGeneration())
@@ -518,6 +520,7 @@ export function P1PlanEditor({
       !fieldsRef.current ||
       handoffRef.current ||
       busyRef.current ||
+      unavailableRef.current ||
       !current()
     )
       return;
@@ -548,22 +551,19 @@ export function P1PlanEditor({
     } catch (error) {
       if (current()) {
         const code = error instanceof Error ? error.message : "";
-        setStatus(
-          [
-            "MANUAL_PLAN_UNAVAILABLE",
-            "MANUAL_PLAN_SCOPE_CHANGED",
-            "MANUAL_PLAN_CONFLICT",
-            "MANUAL_PLAN_RETRY_MISMATCH",
-            "MANUAL_PLAN_DRAFT_UNAVAILABLE",
-            "MANUAL_PLAN_DRAFT_FROZEN",
-            "REVISION_CONFLICT",
-            "NOT_VISIBLE",
-            "CROSS_TRIP_PERSON",
-            "CORE_ACCESS_REVOKED",
-          ].includes(code)
-            ? "UNAVAILABLE"
-            : "ERROR",
-        );
+        unavailableRef.current = [
+          "MANUAL_PLAN_UNAVAILABLE",
+          "MANUAL_PLAN_SCOPE_CHANGED",
+          "MANUAL_PLAN_CONFLICT",
+          "MANUAL_PLAN_RETRY_MISMATCH",
+          "MANUAL_PLAN_DRAFT_UNAVAILABLE",
+          "MANUAL_PLAN_DRAFT_FROZEN",
+          "REVISION_CONFLICT",
+          "NOT_VISIBLE",
+          "CROSS_TRIP_PERSON",
+          "CORE_ACCESS_REVOKED",
+        ].includes(code);
+        setStatus(unavailableRef.current ? "UNAVAILABLE" : "ERROR");
       }
     } finally {
       busyRef.current = false;

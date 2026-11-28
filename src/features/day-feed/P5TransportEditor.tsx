@@ -181,6 +181,7 @@ export function P5TransportEditor({
   const initialRef = useRef(opened ? JSON.stringify(opened.draft.fields) : "");
   const busyRef = useRef(false);
   const frozenRef = useRef(false);
+  const unavailableRef = useRef(false);
   const firstAttemptRef = useRef<ManualTransportFields | null>(null);
   const [status, setStatus] = useState<"LOADING" | "READY" | "ERROR" | "UNAVAILABLE">(
     opened ? "READY" : "LOADING",
@@ -203,6 +204,7 @@ export function P5TransportEditor({
           fieldsRef.current = value;
           setFields(value);
           initialRef.current = JSON.stringify(value);
+          unavailableRef.current = false;
           setStatus("READY");
         } catch {
           if (alive.current && generation === getAccountGeneration())
@@ -247,7 +249,8 @@ export function P5TransportEditor({
     ]);
   };
   const save = async () => {
-    if (!source || !fieldsRef.current || busyRef.current || !current()) return;
+    if (!source || !fieldsRef.current || busyRef.current || unavailableRef.current || !current())
+      return;
     const attempt = firstAttemptRef.current ?? structuredClone(fieldsRef.current);
     firstAttemptRef.current = attempt;
     busyRef.current = true;
@@ -261,21 +264,18 @@ export function P5TransportEditor({
     } catch (error) {
       if (current()) {
         const code = error instanceof Error ? error.message : "";
-        setStatus(
-          [
-            "MANUAL_TRANSPORT_UNAVAILABLE",
-            "MANUAL_TRANSPORT_SCOPE_CHANGED",
-            "MANUAL_TRANSPORT_CONFLICT",
-            "MANUAL_TRANSPORT_RETRY_MISMATCH",
-            "MANUAL_TRANSPORT_DRAFT_FROZEN",
-            "REVISION_CONFLICT",
-            "NOT_VISIBLE",
-            "CROSS_TRIP_PERSON",
-            "CORE_ACCESS_REVOKED",
-          ].includes(code)
-            ? "UNAVAILABLE"
-            : "ERROR",
-        );
+        unavailableRef.current = [
+          "MANUAL_TRANSPORT_UNAVAILABLE",
+          "MANUAL_TRANSPORT_SCOPE_CHANGED",
+          "MANUAL_TRANSPORT_CONFLICT",
+          "MANUAL_TRANSPORT_RETRY_MISMATCH",
+          "MANUAL_TRANSPORT_DRAFT_FROZEN",
+          "REVISION_CONFLICT",
+          "NOT_VISIBLE",
+          "CROSS_TRIP_PERSON",
+          "CORE_ACCESS_REVOKED",
+        ].includes(code);
+        setStatus(unavailableRef.current ? "UNAVAILABLE" : "ERROR");
       }
     } finally {
       busyRef.current = false;
