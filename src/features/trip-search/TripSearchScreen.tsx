@@ -91,15 +91,18 @@ export function TripSearchScreen() {
   return (
     <SearchContent
       key={JSON.stringify([generation, params.entry, params.tripId])}
+      generation={generation}
       entry={parameter(params.entry)}
       currentTripId={parameter(params.tripId) ?? null}
     />
   );
 }
 function SearchContent({
+  generation,
   entry,
   currentTripId,
 }: {
+  generation: number;
   entry?: string;
   currentTripId: string | null;
 }) {
@@ -161,6 +164,7 @@ function SearchContent({
   const { resumeView } = useTripView();
   const load = useCallback(
     async (more = false) => {
+      if (generation !== getAccountGeneration()) return;
       if (!input.query.trim()) {
         setPage(null);
         setBusy(false);
@@ -218,8 +222,9 @@ function SearchContent({
             [...(previous?.proofs ?? []), ...next.proofs].map((p) => [p.tripId, p]),
           ).values(),
         ];
-        if (!(await repository.validate(proofs, next)) || !request.isCurrent(id))
-          throw new Error("SEARCH_STALE");
+        const valid = await repository.validate(proofs, next);
+        if (generation !== getAccountGeneration() || !request.isCurrent(id)) return;
+        if (!valid) throw new Error("SEARCH_STALE");
         setPage({
           ...next,
           proofs,
@@ -242,7 +247,7 @@ function SearchContent({
         if (request.isCurrent(id)) setBusy(false);
       }
     },
-    [input.query, input.tripId, request, opener, setDetail],
+    [generation, input.query, input.tripId, request, opener, setDetail],
   );
   useEffect(() => {
     request.cancel();
@@ -306,6 +311,7 @@ function SearchContent({
     };
   }, [load, request, opener]);
   const open = async (result: SearchResult) => {
+    if (generation !== getAccountGeneration()) return;
     const current = pageRef.current,
       proof = current?.proofs.find((p) => p.tripId === result.tripId),
       id = opener.begin();
@@ -358,6 +364,7 @@ function SearchContent({
     : ["ALL", "TRIPS", "ITINERARY"];
   const count = (category: SearchCategory) => filterSearchRows(allRows, category).length;
   const updateRecents = async (operation: () => Promise<RecentSearch[]>) => {
+    if (generation !== getAccountGeneration()) return;
     const id = historyRequest.begin();
     try {
       const next = await operation();
@@ -390,6 +397,7 @@ function SearchContent({
     list.current?.scrollToOffset({ offset: 0, animated: false });
     setInput((value) => ({ ...value, category }));
   };
+  const scopedRecents = recents.filter((row) => row.tripId === input.tripId);
   const scopeName = visiblePage?.results.find(
     (row) => row.tripId === input.tripId,
   )?.tripName;
@@ -463,12 +471,12 @@ function SearchContent({
         <ScrollView style={styles.home} keyboardShouldPersistTaps="handled">
           <View style={styles.recentHeading}>
             <Text style={styles.section}>{t("comprehensiveSearch.recents")}</Text>
-            {recents.length ? (
+            {scopedRecents.length ? (
               <UiButton
                 label={t("comprehensiveSearch.clearRecents")}
                 variant="text"
                 onPress={() => {
-                  void updateRecents(() => searchRecentRepository.clear());
+                  void updateRecents(() => searchRecentRepository.clear(input.tripId));
                 }}
               />
             ) : null}
@@ -476,38 +484,36 @@ function SearchContent({
           {recentError ? (
             <Text style={styles.note}>{t("comprehensiveSearch.recentUnavailable")}</Text>
           ) : null}
-          {!recents.some((row) => row.tripId === input.tripId) ? (
+          {!scopedRecents.length ? (
             <Text style={styles.note}>{t("comprehensiveSearch.noRecents")}</Text>
           ) : null}
-          {recents
-            .filter((row) => row.tripId === input.tripId)
-            .map((row) => (
-              <View key={JSON.stringify(row)} style={styles.recentRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={row.query}
-                  style={styles.recentQuery}
-                  onPress={() => editQuery(row.query)}
-                >
-                  <AppIcon name="clock" color={colors.textSecondary} />
-                  <Text style={styles.recentText} numberOfLines={2}>
-                    {row.query}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("comprehensiveSearch.removeRecent", {
-                    query: row.query,
-                  })}
-                  style={styles.iconTarget}
-                  onPress={() => {
-                    void updateRecents(() => searchRecentRepository.remove(row));
-                  }}
-                >
-                  <AppIcon name="xmark" color={colors.textSecondary} size={16} />
-                </Pressable>
-              </View>
-            ))}
+          {scopedRecents.map((row) => (
+            <View key={JSON.stringify(row)} style={styles.recentRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={row.query}
+                style={styles.recentQuery}
+                onPress={() => editQuery(row.query)}
+              >
+                <AppIcon name="clock" color={colors.textSecondary} />
+                <Text style={styles.recentText} numberOfLines={2}>
+                  {row.query}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("comprehensiveSearch.removeRecent", {
+                  query: row.query,
+                })}
+                style={styles.iconTarget}
+                onPress={() => {
+                  void updateRecents(() => searchRecentRepository.remove(row));
+                }}
+              >
+                <AppIcon name="xmark" color={colors.textSecondary} size={16} />
+              </Pressable>
+            </View>
+          ))}
           <Text style={styles.section}>{t("comprehensiveSearch.browse")}</Text>
           {categories
             .filter((category) => category !== "ALL")

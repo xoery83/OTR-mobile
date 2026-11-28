@@ -443,6 +443,28 @@ it("restores the pre-navigation position when the native stack resets the covere
   state.list.onContentSizeChange();
   expect(state.scroll).toHaveBeenLastCalledWith({ offset: 0, animated: false });
 });
+it("offers Clear only for the current scope and sends that scope to the repository", async () => {
+  const global = { query: "Tokyo", tripId: null };
+  state.recents.list.mockResolvedValue([global]);
+  render();
+  state.effects[0]();
+  await Promise.resolve();
+  expect(render()).not.toContain("Clear recent searches");
+
+  state.recents.list.mockResolvedValue([global, { query: "Museum", tripId: "trip" }]);
+  state.recents.clear.mockResolvedValue([global]);
+  state.effects[0]();
+  await Promise.resolve();
+  expect(render()).toContain("Clear recent searches");
+  const clear = state.actions.find((p) => p.label === "Clear recent searches").onPress;
+  clear();
+  await Promise.resolve();
+  expect(state.recents.clear).toHaveBeenCalledWith("trip");
+  expect(render()).not.toContain("Clear recent searches");
+  state.generation += 1;
+  clear();
+  expect(state.recents.clear).toHaveBeenCalledTimes(1);
+});
 it("does not save typed prefixes; Return or opened results commit a scoped recent search", async () => {
   await query();
   expect(state.recents.record).not.toHaveBeenCalled();
@@ -492,6 +514,24 @@ it("a completed older query cannot overwrite a later query or its counts", async
   expect(state.actions.find((p) => p.label === "All (1)")).toBeDefined();
 });
 
+it("does not publish a synthetic old-account result when validation finishes after a switch", async () => {
+  let finish!: (value: boolean) => void;
+  state.reader.validate.mockReturnValueOnce(new Promise<boolean>((resolve) => {
+    finish = resolve;
+  }));
+  render();
+  state.input.onChangeText("Museum");
+  render();
+  state.effects[1]();
+  await vi.advanceTimersByTimeAsync(250);
+  expect(state.reader.validate).toHaveBeenCalledTimes(1);
+
+  state.generation += 1;
+  finish(true);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(render()).not.toContain("Original Trip");
+  expect(state.list.data).toEqual([]);
+});
 it("an old periodic permission check cannot clear a newer query after an async failure", async () => {
   await query();
   let reject!: (error: Error) => void;

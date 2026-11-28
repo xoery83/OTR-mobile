@@ -38,8 +38,12 @@ it("partitions accounts and keeps fixed entry scope; remove and clear stay local
   expect(await repo.list()).toHaveLength(2);
   await repo.remove({ query: "Tokyo", tripId: a });
   expect(await repo.list()).toEqual([{ query: "Tokyo", tripId: null }]);
-  await repo.clear();
-  expect(await repo.list()).toEqual([]);
+  await repo.record({ query: "Museum", tripId: a });
+  await repo.clear(null);
+  expect(await repo.list()).toEqual([{ query: "Museum", tripId: a }]);
+  await repo.record({ query: "Global", tripId: null });
+  await repo.clear(a);
+  expect(await repo.list()).toEqual([{ query: "Global", tripId: null }]);
   user = b;
   expect((await repo.list())[0].query).toBe("Private");
 });

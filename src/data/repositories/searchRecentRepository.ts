@@ -73,7 +73,8 @@ export function createSearchRecentRepository(
     },
     remove: (row: RecentSearch) =>
       access((rows) => rows.filter((item) => identity(item) !== identity(row))),
-    clear: () => access(() => []),
+    clear: (tripId: RecentSearch["tripId"]) =>
+      access((rows) => rows.filter((row) => row.tripId !== tripId)),
   };
 }
 async function currentRecents() {
@@ -105,5 +106,5 @@ export const searchRecentRepository = {
   list: async () => (await currentRecents()).list(),
   record: async (row: RecentSearch) => (await currentRecents()).record(row),
   remove: async (row: RecentSearch) => (await currentRecents()).remove(row),
-  clear: async () => (await currentRecents()).clear(),
+  clear: async (tripId: RecentSearch["tripId"]) => (await currentRecents()).clear(tripId),
 };
