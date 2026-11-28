@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { beforeEach, expect, it, vi } from "vitest";
+import { DocumentActions } from "./CoreDocumentDetail";
 import { ImportDocumentsPanel } from "./ImportDocumentsPanel";
 import { ImportDocumentsList, ImportDocumentDetail } from "./ImportDocuments";
 import type { ImportDocument } from "@/data/repositories/importDocumentsRepository";
@@ -8,7 +9,7 @@ vi.mock("@/ui/controls", () => ({
   UiSection: () => null,
   UiButton: () => null,
 }));
-vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useUiTheme: () => ({ textPrimary: "themed-primary", textSecondary: "themed-secondary" }) }));
 vi.mock("react-native", () => ({ ScrollView: "viewer" }));
 vi.mock("./CoreDocumentDetail", () => ({ DocumentActions: () => null }));
 const h = vi.hoisted(() => ({
@@ -95,6 +96,7 @@ function Harness(
   showHistoricalLinks = true,
   originalBatchId?: string,
   onOriginalDismiss?: () => void,
+  informationOnly = false,
 ) {
   h.cursor = 0;
   h.effects = [];
@@ -106,6 +108,8 @@ function Harness(
     showHistoricalLinks,
     originalBatchId,
     onOriginalDismiss,
+    informationOnly,
+    detailActions: informationOnly,
     isCurrent,
     onOpenDocument: vi.fn(),
     onOpenActivity: vi.fn(),
@@ -603,4 +607,25 @@ it("opens the native viewer once for Batch media and returns only after dismissa
   dismiss();
   await vi.waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   expect(h.read).not.toHaveBeenCalled();
+});
+
+
+it("uses theme text colors for read-only File Info and inaccessible file states", async () => {
+  Harness(doc.captureId, undefined, undefined, false, undefined, undefined, true);
+  await settle();
+  const result = Harness(doc.captureId, undefined, undefined, false, undefined, undefined, true);
+  const [actions] = result.props.children as ReactElement<{ children: (ReactElement<{ style?: object }> | null)[] }>[];
+  expect(actions.type).toBe(DocumentActions);
+  const metadata = actions.props.children.filter((entry) => entry !== null);
+  expect(metadata[0].props.style).toEqual({ color: "themed-primary" });
+  expect(metadata.slice(1).map((entry) => entry.props.style)).toEqual(
+    Array.from({ length: metadata.length - 1 }, () => ({ color: "themed-secondary" })),
+  );
+  h.slots = [];
+  h.read.mockRejectedValueOnce(Error("DOCUMENTS_TRIP_ACCESS"));
+  Harness(doc.captureId, undefined, undefined, false, undefined, undefined, true);
+  await settle();
+  const unavailable = Harness(doc.captureId, undefined, undefined, false, undefined, undefined, true);
+  expect(unavailable.props.accessibilityRole).toBe("alert");
+  expect(unavailable.props.style).toEqual({ color: "themed-primary" });
 });

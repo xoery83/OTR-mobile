@@ -335,7 +335,7 @@ function ScopedDocuments(props: Props) {
     );
   }
   if (props.informationOnly && !document) return (
-    <UiText accessibilityRole={error ? "alert" : undefined}>
+    <UiText accessibilityRole={error ? "alert" : undefined} style={{ color: colors.textPrimary }}>
       {t(error ? "documents.denied" : "common.loading")}
     </UiText>
   );
@@ -364,6 +364,7 @@ function ScopedDocuments(props: Props) {
       />
     );
     if (!props.detailActions) return detail;
+    const metadata = { color: colors.textSecondary };
     return (
       <>
         <DocumentActions
@@ -397,9 +398,9 @@ function ScopedDocuments(props: Props) {
               });
           }}
         >
-          <UiText>{document.originalFilename ?? t("capture.ai.submittedText")}</UiText>
+          <UiText style={{ color: colors.textPrimary }}>{document.originalFilename ?? t("capture.ai.submittedText")}</UiText>
           {document.acquisitionSource ? (
-            <UiText>
+            <UiText style={metadata}>
               {t("documents.sourceMetadata", {
                 source: t(
                   document.acquisitionSource === "files"
@@ -415,19 +416,19 @@ function ScopedDocuments(props: Props) {
               })}
             </UiText>
           ) : null}
-          <UiText>
+          <UiText style={metadata}>
             {t("documents.acquiredAt", {
               date: formatUiDate(new Date(document.recordedAt)),
             })}
           </UiText>
-          <UiText>
+          <UiText style={metadata}>
             {t(
               document.localAvailable
                 ? "documents.originalLocal"
                 : "documents.originalUnavailable",
             )}
           </UiText>
-          <UiText>{t("importDocuments.private")}</UiText>
+          <UiText style={metadata}>{t("importDocuments.private")}</UiText>
         </DocumentActions>
         {props.informationOnly ? null : detail}
       </>
