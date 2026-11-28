@@ -70,13 +70,21 @@ it("reads an already recorded original without requesting a new preview or execu
   expect(f.execute).toHaveBeenCalledOnce(); expect(f.recover).not.toHaveBeenCalled(); expect(f.preview).toHaveBeenCalledOnce();
 });
 it("denies foreign or expired invitation before preview and rejects preview identity drift", async () => {
-  for (const kind of ["foreign", "expired", "preview"] as const) {
+  for (const kind of ["foreign", "expired", "claimed", "revoked", "preview"] as const) {
     const f = await fixture(), c = f.open();
     if (kind === "foreign") f.invitation.mockResolvedValueOnce({ ...await f.invitation(), accountId: randomUUID() });
-    if (kind === "expired") f.invitation.mockResolvedValueOnce({ ...await f.invitation(), invitation: { ...(await f.invitation()).invitation, status: "EXPIRED" as "PENDING" } });
+    const terminal = { expired: "EXPIRED", claimed: "CLAIMED", revoked: "REVOKED" } as const;
+    if (kind in terminal) {
+      const detail = await f.invitation();
+      f.invitation.mockResolvedValueOnce({
+        ...detail,
+        invitation: { ...detail.invitation, status: terminal[kind as keyof typeof terminal] as "PENDING" },
+      });
+    }
     if (kind === "preview") f.preview.mockImplementationOnce(async (_context, input) => ({ ...input, tripId: f.context.tripId,
       claimantAccountId: randomUUID(), proposedAccess: "READ", previewDigest: "a".repeat(64), expiresAt: "2026-11-22T00:00:00Z" }));
-    await c.load(); await c.submit(); expect(c.getSnapshot().phase).toBe(kind === "expired" ? "NOT_VISIBLE" : "UNAVAILABLE");
+    await c.load(); await c.submit(); expect(c.getSnapshot().phase).toBe(kind in terminal ? terminal[kind as keyof typeof terminal] : "UNAVAILABLE");
+    expect(c.getSnapshot().invitation).toBeNull();
     expect(f.execute).not.toHaveBeenCalled(); if (kind !== "preview") expect(f.preview).not.toHaveBeenCalled();
   }
 });

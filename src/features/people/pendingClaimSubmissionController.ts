@@ -20,7 +20,7 @@ export type PendingClaimSubmissionPorts = Readonly<{
   attempts: Pick<Attempts, "readResolution" | "executeResolutionOnce" | "recoverResolution" | "clearResolvedResolution">;
 }>;
 export type PendingClaimSubmissionState = Readonly<{
-  phase: "LOADING" | "READY" | "BUSY" | "RECORDED" | "UNKNOWN" | "UNAVAILABLE" | "NOT_VISIBLE";
+  phase: "LOADING" | "READY" | "BUSY" | "RECORDED" | "UNKNOWN" | "UNAVAILABLE" | "NOT_VISIBLE" | "EXPIRED" | "CLAIMED" | "REVOKED";
   invitation: Detail["invitation"] | null;
   preview: Preview | null;
   requestId: string | null;
@@ -75,7 +75,7 @@ export function createPendingClaimSubmissionController(context: AccountRequestCo
         const invitation = detail.invitation;
         if (detail.accountId !== context.accountId || invitation.tripId !== context.tripId || invitation.inviteId !== inviteId)
           throw Error("PENDING_CLAIM_INVITATION_SCOPE_MISMATCH");
-        if (invitation.status !== "PENDING") { model.update({ phase: "NOT_VISIBLE" }); return; }
+        if (invitation.status !== "PENDING") { model.update({ phase: invitation.status }); return; }
         const requestId = createUuid();
         const preview = pendingClaimPreviewSchema.nullable().parse(await ports.reader.preview(context, {
           requestId, inviteId, requestedPersonId: invitation.personId,

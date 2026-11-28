@@ -10,6 +10,11 @@ import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import type { createPendingClaimSubmissionController } from "./pendingClaimSubmissionController";
 
+const terminalInvitationMessage = {
+  EXPIRED: "people.directedClaim.expired",
+  CLAIMED: "people.directedClaim.claimed",
+  REVOKED: "people.directedClaim.revoked",
+} as const;
 type Controller = ReturnType<typeof createPendingClaimSubmissionController>;
 // Auth owns the original intent, receipt and lifecycle; opening this view never submits.
 export function PendingClaimSubmissionScreen({ controller }: { controller: Controller }) {
@@ -50,7 +55,9 @@ export function PendingClaimSubmissionScreen({ controller }: { controller: Contr
                   ? "people.claimResolution.unknown"
                   : state.phase === "BUSY" || state.phase === "LOADING"
                     ? "people.claimResolution.busy"
-                    : "people.claimResolution.unavailable",
+                    : state.phase === "EXPIRED" || state.phase === "CLAIMED" || state.phase === "REVOKED"
+                      ? terminalInvitationMessage[state.phase]
+                      : "people.claimResolution.unavailable",
           )}
         </UiText>
         {state.invitation ? (

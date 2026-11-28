@@ -54,6 +54,7 @@ export const en = {
   "people.directedClaim.readback":
     "Connection recorded. Checking current trip access…",
   "people.directedClaim.expired": "Invitation expired",
+  "people.directedClaim.claimed": "This invitation has already been used.",
   "people.directedClaim.revoked": "Invitation revoked",
   "people.directedClaim.unavailable": "This invitation is not available.",
   "people.directedInvite.title": "Choose a recipient",
@@ -3784,6 +3785,7 @@ export const zhHans: Record<MessageKey, string> = {
   "people.directedClaim.unknown": "结果尚未确认，请查询原请求。",
   "people.directedClaim.readback": "已记录连接结果，正在核实当前旅行访问权限…",
   "people.directedClaim.expired": "邀请已过期",
+  "people.directedClaim.claimed": "此邀请已使用。",
   "people.directedClaim.revoked": "邀请已撤销",
   "people.directedClaim.unavailable": "此邀请暂不可用。",
   "people.directedInvite.title": "选择邀请对象",
