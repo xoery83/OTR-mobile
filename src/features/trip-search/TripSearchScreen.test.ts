@@ -79,6 +79,7 @@ vi.mock("react-native", async () => {
     AppState: { addEventListener: () => ({ remove: vi.fn() }) },
   };
 });
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "div" }));
 vi.mock("expo-network", () => ({
   useNetworkState: () => ({ isConnected: !state.offline }),
 }));
@@ -233,7 +234,7 @@ it("fresh normal resolution uses existing directItem overlay; close preserves qu
     kind: "ITEM",
     itemId: "item",
     proof,
-    projection: { version: 2 },
+    projection: { version: 2, items: [] },
     date: "2027-01-27",
     zone: "Pacific/Auckland",
     services: {},
@@ -247,6 +248,7 @@ it("fresh normal resolution uses existing directItem overlay; close preserves qu
     generation: 1,
   });
   expect(state.direct.directItem.itemId).toBe("item");
+  expect(state.direct.presentation).toBeUndefined();
   state.direct.directItem.onClose();
   render();
   expect(state.direct).toBeNull();
@@ -302,7 +304,7 @@ it("a delayed earlier Item tap cannot replace the latest detail or reopen after 
       kind: "ITEM",
       itemId: "later",
       proof,
-      projection: { version: 2 },
+      projection: { version: 2, items: [] },
       date: "2027-01-27",
       zone: "Pacific/Auckland",
       services: {},
@@ -318,7 +320,7 @@ it("a delayed earlier Item tap cannot replace the latest detail or reopen after 
     kind: "ITEM",
     itemId: "item",
     proof,
-    projection: { version: 2 },
+    projection: { version: 2, items: [] },
     date: "2027-01-27",
     zone: "Pacific/Auckland",
     services: {},
@@ -374,7 +376,7 @@ it("restores the exact scroll after Immersive Close while retaining query and se
     kind: "ITEM",
     itemId: "item",
     proof,
-    projection: { version: 2 },
+    projection: { version: 2, items: [{ itemId: "item", family: "P6" }] },
     date: "2027-01-27",
     zone: "Pacific/Auckland",
     services: {},
@@ -385,7 +387,9 @@ it("restores the exact scroll after Immersive Close while retaining query and se
   state.list.onScroll({ nativeEvent: { contentOffset: { y: 678 } } });
   await state.actions.find((p) => p.label === "Museum").onPress();
   render();
-  state.direct.directItem.onClose();
+  const header = state.direct.presentation.renderImmersiveHeader(state.direct.directItem.onClose);
+  expect(header.props.children.props.label).toBe("Close");
+  header.props.children.props.onPress();
   render();
   expect(state.scroll).toHaveBeenLastCalledWith({ offset: 678, animated: false });
   expect(state.input.value).toBe("Museum");

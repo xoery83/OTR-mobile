@@ -17,6 +17,8 @@ import {
   type TextInput,
 } from "react-native";
 import { useNetworkState } from "expo-network";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { AppIcon } from "@/components/AppIcon";
 import {
   searchRecentRepository,
@@ -642,6 +644,23 @@ function SearchContent({
           zone={detail.zone}
           services={detail.services}
           renderer={createCoreExperienceRenderer(detail.projection)}
+          presentation={
+            detail.projection.items.some(
+              (item) => item.itemId === detail.itemId && item.family === "P6",
+            )
+              ? {
+                  renderImmersiveHeader: (onClose) => (
+                    <SafeAreaView edges={["top", "left", "right"]} style={styles.immersiveDismiss}>
+                      <OverlayDismissAction
+                        label={t("common.close")}
+                        color={colors.textPrimary}
+                        onPress={onClose}
+                      />
+                    </SafeAreaView>
+                  ),
+                }
+              : undefined
+          }
           directItem={{
             itemId: detail.itemId,
             onClose: () => {
@@ -658,6 +677,7 @@ function SearchContent({
 const createStyles = (colors: UiColors) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.background },
+    immersiveDismiss: { alignItems: "flex-start", paddingHorizontal: visual.space.heading },
     controls: {
       paddingHorizontal: visual.space.page,
       paddingVertical: visual.space.heading,
