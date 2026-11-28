@@ -52,6 +52,10 @@ vi.mock("./hostedTripPhotos", async (original) => ({
 vi.mock("react-native", () => ({
   Modal: "aside",
   ScrollView: "main",
+  Pressable: (props: any) => {
+    state.buttons.push({ ...props, label: props.accessibilityLabel });
+    return createElement("button", null, props.children);
+  },
   AppState: { addEventListener: () => ({ remove: vi.fn() }) },
   Image: (props: any) => createElement("img", {
     src: props.source.uri,
@@ -61,7 +65,13 @@ vi.mock("react-native", () => ({
   Text: (props: any) => createElement("span", null, props.children),
   View: (props: any) => createElement("div", null, props.children),
 }));
-vi.mock("react-native-safe-area-context", () => ({ SafeAreaView: "div" }));
+vi.mock("react-native-safe-area-context", () => ({ SafeAreaProvider: "div", SafeAreaView: "div" }));
+vi.mock("@/components/OverlayDismissAction", () => ({
+  OverlayDismissAction: (props: any) => {
+    state.buttons.push(props);
+    return null;
+  },
+}));
 vi.mock("@/components/SheetHeader", () => ({
   SheetHeader: (props: { onLeft(): void }) => {
     state.buttons.push({ label: "close", onPress: props.onLeft, disabled: false });
@@ -89,7 +99,7 @@ vi.mock("@/ui/forms", () => ({
 }));
 vi.mock("@/ui/locale", () => ({ t: (key: string) => key }));
 vi.mock("@/ui/useUiLocale", () => ({ useUiLocale: () => "en" }));
-vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}) }));
+vi.mock("@/ui/theme", () => ({ useThemedStyles: () => ({}), useUiTheme: () => ({}) }));
 
 const tripId = "11111111-1111-4111-8111-111111111111";
 const flush = async () => {
@@ -407,4 +417,31 @@ it("drops a late system Photos result once the gallery route has left its owning
   complete({ canceled: false, assets: [{ uri: "file:///late-photo.jpg" }] });
   await flush();
   expect(repo.addTripPhoto).not.toHaveBeenCalled();
+});
+
+
+it("read-only gallery opens a local photo preview, closes to the gallery, and retires on Account switch", async () => {
+  const repository = {
+    listTripPhotos: vi.fn(async () => [{ assetId: "visible", localUri: "file:///visible.jpg" }]),
+    addTripPhoto: vi.fn(),
+  };
+  state.repository.mockResolvedValue(repository);
+  state.hosted = true;
+  render(tripId, true, undefined, true);
+  await flush();
+  render(tripId, true, undefined, true);
+  state.buttons.find((button) => button.label === "tripPhotos.title")!.onPress();
+  const id = state.push.mock.calls[0][0].params.invocation;
+  const gallery = () => renderToStaticMarkup(readTripPhotosSheet(id)!.content);
+  expect(gallery()).not.toContain("tripPhotos.choose");
+  state.buttons.find((button) => button.label === "tripPhotos.photoNumber")!.onPress();
+  render(tripId, true, undefined, true);
+  expect(gallery()).toContain("<aside");
+  state.buttons.find((button) => button.label === "common.close")!.onPress();
+  render(tripId, true, undefined, true);
+  expect(gallery()).not.toContain("<aside");
+  expect(gallery()).toContain("file:///visible.jpg");
+  advanceAccountGeneration();
+  expect(readTripPhotosSheet(id)).toBeUndefined();
+  expect(repository.addTripPhoto).not.toHaveBeenCalled();
 });

@@ -4,8 +4,9 @@ import {
   readTripPhotosSheet, releaseTripPhotosSheet, stageTripPhotosSheet, updateTripPhotosSheet,
 } from "./hostedTripPhotos";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { AppState, Image, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { AppState, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { OverlayDismissAction } from "@/components/OverlayDismissAction";
 import { SheetHeader } from "@/components/SheetHeader";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -20,7 +21,7 @@ import { UiFormRow } from "@/ui/forms";
 import { UiButton, UiSection } from "@/ui/controls";
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
-import { useThemedStyles } from "@/ui/theme";
+import { useThemedStyles, useUiTheme } from "@/ui/theme";
 import type { UiColors } from "@/ui/palette";
 import { visual } from "@/ui/visual";
 
@@ -73,6 +74,7 @@ function LocalTripPhotoContent({
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
+  const colors = useUiTheme();
   const generation = getAccountGeneration();
   const alive = useRef(true);
   const request = useRef(0);
@@ -85,6 +87,7 @@ function LocalTripPhotoContent({
   const [adding, setAdding] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [addError, setAddError] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [broken, setBroken] = useState<Set<string>>(new Set());
   const current = useCallback(
     () => alive.current && generation === getAccountGeneration(),
@@ -164,6 +167,24 @@ function LocalTripPhotoContent({
     );
     return () => registerAdd?.(null);
   }, [registerAdd, status, add, readOnly]);
+  const previewPhoto = () => {
+    if (generation !== getAccountGeneration()) return null;
+    const preview = photos.find((photo) => photo.assetId === previewId && !broken.has(photo.assetId));
+    if (!preview?.localUri) return null;
+    const closePreview = () => setPreviewId(null);
+    return (
+      <Modal visible presentationStyle="fullScreen" animationType="fade" onRequestClose={closePreview}>
+        <SafeAreaProvider style={styles.preview}>
+          <SafeAreaView style={styles.preview}>
+            <View style={styles.previewHeader}>
+              <OverlayDismissAction label={t("common.close")} color={colors.textPrimary} onPress={closePreview} />
+            </View>
+            <Image source={{ uri: preview.localUri }} style={styles.previewImage} resizeMode="contain" />
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </Modal>
+    );
+  };
   const content = (invocationId?: string) => (
     <>
       {!readOnly ? (
@@ -185,28 +206,38 @@ function LocalTripPhotoContent({
       ) : photos.length === 0 ? (
         <Text style={styles.status}>{t("tripPhotos.empty")}</Text>
       ) : (
-        photos.map((photo, index) => (
-          <View key={photo.assetId}>
-            {photo.localUri && !broken.has(photo.assetId) ? (
-              <Image
-                source={{ uri: photo.localUri }}
-                style={styles.photo}
-                resizeMode="contain"
-                accessible
-                accessibilityRole="image"
-                accessibilityLabel={t("tripPhotos.photoNumber", {
-                  number: index + 1,
-                })}
-                onError={() =>
-                  setBroken((previous) => new Set(previous).add(photo.assetId))
-                }
-              />
-            ) : (
-              <Text style={styles.status}>{t("tripPhotos.missing")}</Text>
-            )}
-          </View>
-        ))
+        photos.map((photo, index) => {
+          if (!photo.localUri || broken.has(photo.assetId)) {
+            return <Text key={photo.assetId} style={styles.status}>{t("tripPhotos.missing")}</Text>;
+          }
+          const label = t("tripPhotos.photoNumber", { number: index + 1 });
+          const image = (
+            <Image
+              source={{ uri: photo.localUri }}
+              style={styles.photo}
+              resizeMode="contain"
+              accessible={!compact}
+              accessibilityRole="image"
+              accessibilityLabel={label}
+              onError={() => setBroken((previous) => new Set(previous).add(photo.assetId))}
+            />
+          );
+          return compact ? (
+            <Pressable
+              key={photo.assetId}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              onPress={() => {
+                if (current() && (!invocationId || readTripPhotosSheet(invocationId)))
+                  setPreviewId(photo.assetId);
+              }}
+            >
+              {image}
+            </Pressable>
+          ) : <View key={photo.assetId}>{image}</View>;
+        })
       )}
+      {previewPhoto()}
     </>
   );
   const gallery = (id: string) => <View style={styles.gallery}>{content(id)}</View>;
@@ -225,6 +256,7 @@ function LocalTripPhotoContent({
             if (!current()) return;
             if (hostedTripPhotosEnabled && (busy.current || readTripPhotosSheet(invocation.current)))
               return;
+            setPreviewId(null);
             onOpenGallery?.();
             if (hostedTripPhotosEnabled) {
               const id = stageTripPhotosSheet({
@@ -276,5 +308,8 @@ const createStyles = (colors: UiColors) =>
     sheet: { flex: 1, backgroundColor: colors.surface },
     gallery: { padding: visual.space.page, gap: visual.space.card },
     photo: { width: "100%", height: 220, borderRadius: visual.radius.card },
+    preview: { flex: 1, backgroundColor: colors.surface },
+    previewHeader: { alignItems: "flex-start", paddingHorizontal: visual.space.heading },
+    previewImage: { flex: 1, width: "100%" },
     status: { color: colors.textSecondary, ...visual.type.meta },
   });
