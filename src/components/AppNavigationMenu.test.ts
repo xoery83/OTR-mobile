@@ -60,3 +60,23 @@ it("disabled future menu entries are inaccessible to presses without closing the
   expect(enabled).toHaveBeenCalledOnce();
   expect(state.setVisible).toHaveBeenCalledWith(false);
 });
+
+it("exposes the qualified badge count and closes before opening Updates", () => {
+  const onVisibilityChange = vi.fn(), onPress = vi.fn();
+  const tree = AppNavigationMenu({
+    identity: { primary: "QA" },
+    onIdentityPress: vi.fn(),
+    onVisibilityChange,
+    sections: [[{
+      label: "Updates",
+      icon: "tray",
+      badge: { label: "3", accessibilityHint: "3 unread updates need attention." },
+      onPress,
+    }]],
+  });
+  const target = rows(tree).find((row) => row.props.accessibilityLabel === "Updates");
+  expect(target.props.accessibilityHint).toBe("3 unread updates need attention.");
+  target.props.onPress();
+  expect(onVisibilityChange).toHaveBeenCalledWith(false);
+  expect(onPress).toHaveBeenCalledOnce();
+});

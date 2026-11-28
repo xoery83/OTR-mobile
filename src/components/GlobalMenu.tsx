@@ -4,7 +4,8 @@ import {
   type TripPreparationSetup,
 } from "@/data/repositories/tripPreparationSetupRepository";
 import { shellShowsUpdates } from "./bottomBarVisibility";
-import { t } from "@/ui/locale";
+import { formatUiNumber, t } from "@/ui/locale";
+import { useUpdatesSignal } from "@/features/updates/useUpdatesSignal";
 import { useUiLocale } from "@/ui/useUiLocale";
 import {
   useEffect,
@@ -215,6 +216,14 @@ export function GlobalMenu({
       ]
     : [];
   const returnTo = moduleReturnPath(module);
+  const showUpdates = Boolean(identity?.userId) &&
+    !shellShowsUpdates(pathname, params, Boolean(workingTrip));
+  const [menuVisible, setMenuVisible] = useState(false);
+  // The fallback menu is personal. A remembered Trip must not add its cards here.
+  const unreadUpdates = useUpdatesSignal(null, pathname, menuVisible && showUpdates);
+  const count = unreadUpdates && unreadUpdates > 0
+    ? formatUiNumber(unreadUpdates)
+    : null;
   const sections: AppNavigationMenuItem[][] = [
     ...(hasTripItems
       ? [tripItems]
@@ -283,11 +292,15 @@ export function GlobalMenu({
           ] as AppNavigationMenuItem[],
         ]),
     [
-      ...(identity?.userId && !shellShowsUpdates(pathname, params, Boolean(workingTrip))
+      ...(showUpdates
         ? [
             {
               icon: "tray" as const,
               label: t("updates.title"),
+              badge: count ? {
+                label: count,
+                accessibilityHint: t("updates.unreadActionableBadge", { count }),
+              } : undefined,
               onPress: () => router.navigate("/updates" as never),
             },
           ]
@@ -364,6 +377,7 @@ export function GlobalMenu({
     <>
       <AppNavigationMenu
         nativeToolbar={nativeToolbar}
+        onVisibilityChange={setMenuVisible}
         identity={{
           primary: displayName ?? identity?.displayName ?? t("common.currentAccount"),
           secondary: detail || null,

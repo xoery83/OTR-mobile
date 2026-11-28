@@ -75,6 +75,7 @@ vi.mock("@/features/day-feed/TripMembersSheet", () => ({
 vi.mock("@/data/repositories/tripPreparationSetupRepository", () => ({
   readTripPreparationSetupRepository: async () => ({ read: state.readMembers }),
 }));
+vi.mock("@/features/updates/useUpdatesSignal", () => ({ useUpdatesSignal: () => null }));
 vi.mock("./AppNavigationMenu", () => ({ AppNavigationMenu: "Menu" }));
 const render = (module: GlobalMenuModule = "TRIP") => {
   state.cursor = 0;

@@ -1,6 +1,7 @@
 import { t } from "@/ui/locale";
 import { useUiLocale } from "@/ui/useUiLocale";
 import { useThemedStyles, useUiTheme } from "@/ui/theme";
+import { visual } from "@/ui/visual";
 import type { UiColors } from "@/ui/palette";
 import { useRef, useState } from "react";
 import {
@@ -24,6 +25,7 @@ export type AppNavigationMenuItem = {
   selected?: boolean;
   disabled?: boolean;
   destructive?: boolean;
+  badge?: { label: string; accessibilityHint: string };
 };
 
 export type AppNavigationMenuIdentity = {
@@ -36,11 +38,13 @@ export function AppNavigationMenu({
   onIdentityPress,
   sections,
   nativeToolbar = false,
+  onVisibilityChange,
 }: {
   identity: AppNavigationMenuIdentity;
   onIdentityPress: () => void;
   sections: AppNavigationMenuItem[][];
   nativeToolbar?: boolean;
+  onVisibilityChange?: (visible: boolean) => void;
 }) {
   useUiLocale();
   const styles = useThemedStyles(createStyles);
@@ -50,13 +54,17 @@ export function AppNavigationMenu({
   const { height: windowHeight, width } = useWindowDimensions();
   const [anchor, setAnchor] = useState({ x: 12, y: 80, height: 44 });
   const [visible, setVisible] = useState(false);
+  const show = (next: boolean) => {
+    setVisible(next);
+    onVisibilityChange?.(next);
+  };
   const menuWidth = Math.min(280, width - 24);
   const menuLeft = Math.max(12, Math.min(anchor.x, width - menuWidth - 12));
   const menuTop = anchor.y + anchor.height + 4;
   const open = () =>
     trigger.current?.measureInWindow((x, y, _width, height) => {
       setAnchor({ x, y, height });
-      setVisible(true);
+      show(true);
     });
 
   return (
@@ -70,7 +78,7 @@ export function AppNavigationMenu({
             accessibilityLabel={t("navigation.openMenu")}
             onPress={() => {
               setAnchor({ x: 12, y: headerHeight, height: 0 });
-              setVisible(true);
+              show(true);
             }}
           />
         </Stack.Toolbar>
@@ -88,14 +96,14 @@ export function AppNavigationMenu({
       )}
       <Modal
         animationType="fade"
-        onRequestClose={() => setVisible(false)}
+        onRequestClose={() => show(false)}
         transparent
         visible={visible}
       >
         <View style={styles.overlay}>
           <Pressable
             accessible={false}
-            onPress={() => setVisible(false)}
+            onPress={() => show(false)}
             style={StyleSheet.absoluteFill}
           />
           <View
@@ -124,7 +132,7 @@ export function AppNavigationMenu({
                 accessibilityHint={t("navigation.openAccount")}
                 accessibilityRole="button"
                 onPress={() => {
-                  setVisible(false);
+                  show(false);
                   onIdentityPress();
                 }}
                 style={styles.identity}
@@ -159,6 +167,8 @@ export function AppNavigationMenu({
                     return (
                       <Pressable
                         accessibilityRole="button"
+                        accessibilityLabel={item.label}
+                        accessibilityHint={item.badge?.accessibilityHint}
                         accessibilityState={{
                           selected: Boolean(item.selected),
                           disabled: !!item.disabled,
@@ -167,7 +177,7 @@ export function AppNavigationMenu({
                         key={item.label}
                         onPress={() => {
                           if (item.disabled) return;
-                          setVisible(false);
+                          show(false);
                           item.onPress();
                         }}
                         style={[styles.row, item.selected && styles.selectedRow]}
@@ -183,6 +193,15 @@ export function AppNavigationMenu({
                         >
                           {item.label}
                         </Text>
+                        {item.badge ? (
+                          <View
+                            accessibilityElementsHidden
+                            importantForAccessibility="no-hide-descendants"
+                            style={styles.badge}
+                          >
+                            <Text style={styles.badgeText}>{item.badge.label}</Text>
+                          </View>
+                        ) : null}
                         {item.selected ? (
                           <AppIcon color={colors.accent} name="checkmark" size={14} />
                         ) : null}
@@ -247,6 +266,12 @@ const createStyles = (colors: UiColors) =>
       paddingHorizontal: 10,
       paddingVertical: 8,
     },
+    badge: {
+      borderRadius: visual.radius.pill,
+      backgroundColor: colors.destructiveSurface,
+      paddingHorizontal: visual.space.heading,
+    },
+    badgeText: { ...visual.type.meta, color: colors.destructive },
     selectedRow: { backgroundColor: colors.selected },
     label: { color: colors.textPrimary, flex: 1, fontSize: 16, fontWeight: "500" },
     selectedLabel: { color: colors.accent, fontWeight: "700" },
